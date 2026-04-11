@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-canvas text-slate-900 antialiased;
+  background-image:
+    radial-gradient(circle at top right, rgba(37, 163, 133, 0.12), transparent 24%),
+    linear-gradient(180deg, #fbfcfa 0%, #f3f5f1 100%);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #b2c2b5 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #b2c2b5;
+  border-radius: 999px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
