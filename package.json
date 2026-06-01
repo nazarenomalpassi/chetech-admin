@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "import:excel": "tsx scripts/import-chetech.ts"
+    "import:excel": "tsx scripts/import-chetech.ts",
+    "import:repair-clients": "tsx scripts/import-repair-access-customers.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

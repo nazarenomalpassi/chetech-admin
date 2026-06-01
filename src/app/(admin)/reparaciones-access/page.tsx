@@ -8,10 +8,10 @@ export default async function ReparacionesAccessPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const { orders, summary } = await getRepairsAccessDashboard();
+  const { orders, customers, latestImport, summary } = await getRepairsAccessDashboard();
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
 
-  return <RepairsAccessView message={message} orders={orders} summary={summary} />;
+  return <RepairsAccessView customers={customers} latestImport={latestImport} message={message} orders={orders} summary={summary} />;
 }

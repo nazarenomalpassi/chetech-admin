@@ -21,6 +21,14 @@ function emptyToNull(value?: string | null) {
   return trimmed.length ? trimmed : null;
 }
 
+function normalizePhone(value?: string | null) {
+  const text = emptyToNull(value);
+  if (!text) return null;
+
+  const digits = text.replace(/\D+/g, "");
+  return digits.length >= 6 ? digits : null;
+}
+
 export async function saveRepairAccessOrderAction(formData: FormData) {
   const parsed = repairAccessOrderSchema.safeParse({
     id: formData.get("id") || undefined,
@@ -28,6 +36,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     deviceId: formData.get("deviceId") || undefined,
     customerName: formData.get("customerName"),
     customerPhone: formData.get("customerPhone"),
+    customerAlternatePhone: formData.get("customerAlternatePhone"),
     customerDni: formData.get("customerDni"),
     customerEmail: formData.get("customerEmail"),
     customerAddress: formData.get("customerAddress"),
@@ -41,12 +50,17 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     intakeDate: formData.get("intakeDate"),
     issueReported: formData.get("issueReported"),
     technicalDiagnosis: formData.get("technicalDiagnosis"),
+    workPerformed: formData.get("workPerformed"),
+    usedParts: formData.get("usedParts"),
+    internalObservations: formData.get("internalObservations"),
     budgetAmount: formData.get("budgetAmount") || 0,
     approvedAmount: formData.get("approvedAmount") || 0,
     finalAmount: formData.get("finalAmount") || 0,
     paymentMethod: formData.get("paymentMethod"),
     paymentNotes: formData.get("paymentNotes"),
+    warrantyDays: formData.get("warrantyDays") || 0,
     warrantyUntil: formData.get("warrantyUntil"),
+    warrantyConditions: formData.get("warrantyConditions"),
     priority: formData.get("priority"),
     notes: formData.get("notes"),
     status: formData.get("status"),
@@ -63,10 +77,14 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
   const customerPayload = {
     full_name: parsed.data.customerName,
     phone: emptyToNull(parsed.data.customerPhone),
+    phone_normalized: normalizePhone(parsed.data.customerPhone),
+    alternate_phone: emptyToNull(parsed.data.customerAlternatePhone),
+    alternate_phone_normalized: normalizePhone(parsed.data.customerAlternatePhone),
     dni: emptyToNull(parsed.data.customerDni),
     email: emptyToNull(parsed.data.customerEmail),
     address: emptyToNull(parsed.data.customerAddress),
     notes: emptyToNull(parsed.data.customerNotes),
+    source: "manual",
     created_by: user.id,
     updated_at: new Date().toISOString()
   };
@@ -88,6 +106,8 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     accessory_details: emptyToNull(parsed.data.accessoryDetails),
     visual_condition: emptyToNull(parsed.data.visualCondition),
     notes: emptyToNull(parsed.data.customerNotes),
+    created_by: user.id,
+    updated_by: user.id,
     updated_at: new Date().toISOString()
   };
 
@@ -105,6 +125,9 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     intake_date: parsed.data.intakeDate,
     issue_reported: parsed.data.issueReported,
     technical_diagnosis: emptyToNull(parsed.data.technicalDiagnosis),
+    work_performed: emptyToNull(parsed.data.workPerformed),
+    used_parts: emptyToNull(parsed.data.usedParts),
+    internal_observations: emptyToNull(parsed.data.internalObservations),
     budget_amount: parsed.data.budgetAmount || 0,
     approved_amount: parsed.data.approvedAmount || 0,
     final_amount: parsed.data.finalAmount || 0,
@@ -112,11 +135,15 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     payment_notes: emptyToNull(parsed.data.paymentNotes),
     is_paid: parsed.data.isPaid,
     paid_at: parsed.data.isPaid ? new Date().toISOString() : null,
+    warranty_days: parsed.data.warrantyDays || 0,
     warranty_until: emptyToNull(parsed.data.warrantyUntil),
+    warranty_conditions: emptyToNull(parsed.data.warrantyConditions),
+    warranty_active: Boolean(parsed.data.warrantyUntil),
     notes: emptyToNull(parsed.data.notes),
     priority: emptyToNull(parsed.data.priority),
     status: parsed.data.status,
     created_by: user.id,
+    updated_by: user.id,
     updated_at: new Date().toISOString()
   };
 
@@ -168,4 +195,3 @@ export async function deleteRepairAccessOrderAction(formData: FormData) {
   revalidatePath("/reparaciones-access");
   redirect("/reparaciones-access?status=repair_access_deleted");
 }
-

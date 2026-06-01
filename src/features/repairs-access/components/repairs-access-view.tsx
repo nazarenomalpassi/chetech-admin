@@ -17,12 +17,36 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 
 export function RepairsAccessView({
   orders,
+  customers,
+  latestImport,
   summary,
   message
 }: {
   orders: RepairAccessOrderRecord[];
+  customers: {
+    id: string;
+    fullName: string;
+    phone: string;
+    alternatePhone: string;
+    dni: string;
+    email: string;
+    address: string;
+    source: string;
+    createdAt: string;
+  }[];
+  latestImport: {
+    id: string;
+    fileName: string;
+    totalRows: number;
+    importedCount: number;
+    updatedCount: number;
+    duplicateCount: number;
+    errorCount: number;
+    createdAt: string;
+  } | null;
   summary: {
     totalOrders: number;
+    totalCustomers: number;
     activeOrders: number;
     paidOrders: number;
     pendingBudget: number;
@@ -52,6 +76,10 @@ export function RepairsAccessView({
             <div className="rounded-2xl bg-brand-50 px-4 py-3">
               <p className="text-xs uppercase tracking-[0.2em] text-brand-700">Ordenes</p>
               <p className="mt-1 text-lg font-semibold text-slate-950">{summary.totalOrders}</p>
+            </div>
+            <div className="rounded-2xl bg-sky-50 px-4 py-3">
+              <p className="text-xs uppercase tracking-[0.2em] text-sky-700">Clientes</p>
+              <p className="mt-1 text-lg font-semibold text-slate-950">{summary.totalCustomers}</p>
             </div>
             <div className="rounded-2xl bg-amber-50 px-4 py-3">
               <p className="text-xs uppercase tracking-[0.2em] text-amber-700">Activas</p>
@@ -86,6 +114,10 @@ export function RepairsAccessView({
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Telefono</label>
             <Input defaultValue={editing?.customer.phone ?? ""} key={`${editing?.id}-customer-phone`} name="customerPhone" placeholder="WhatsApp" />
+          </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Tel. alternativo</label>
+            <Input defaultValue={editing?.customer.alternatePhone ?? ""} key={`${editing?.id}-customer-alt-phone`} name="customerAlternatePhone" placeholder="Opcional" />
           </div>
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">DNI</label>
@@ -151,6 +183,10 @@ export function RepairsAccessView({
             <label className="mb-2 block text-sm font-medium text-slate-700">Prioridad</label>
             <Input defaultValue={editing?.priority ?? ""} key={`${editing?.id}-priority`} name="priority" placeholder="Normal, urgente..." />
           </div>
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">Garantia dias</label>
+            <Input defaultValue={editing?.warrantyDays ?? 0} key={`${editing?.id}-warranty-days`} min={0} name="warrantyDays" type="number" />
+          </div>
           <div className="flex items-end">
             <label className="flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-3 text-sm text-slate-700">
               <input defaultChecked={editing?.isPaid ?? false} key={`${editing?.id}-is-paid`} name="isPaid" type="checkbox" />
@@ -184,6 +220,19 @@ export function RepairsAccessView({
             <Input defaultValue={editing?.paymentNotes ?? ""} key={`${editing?.id}-payment-notes`} name="paymentNotes" placeholder="Senia, saldo, acuerdo..." />
           </div>
 
+          <div className="lg:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">Trabajo realizado</label>
+            <Textarea defaultValue={editing?.workPerformed ?? ""} key={`${editing?.id}-work`} name="workPerformed" placeholder="Detalle tecnico" />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">Repuestos usados</label>
+            <Textarea defaultValue={editing?.usedParts ?? ""} key={`${editing?.id}-parts`} name="usedParts" placeholder="Repuestos o insumos" />
+          </div>
+          <div className="lg:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700">Condiciones garantia</label>
+            <Textarea defaultValue={editing?.warrantyConditions ?? ""} key={`${editing?.id}-warranty-conditions`} name="warrantyConditions" placeholder="Condiciones" />
+          </div>
+
           <div className="lg:col-span-6">
             <label className="mb-2 block text-sm font-medium text-slate-700">Notas generales</label>
             <Textarea defaultValue={editing?.notes ?? ""} key={`${editing?.id}-notes`} name="notes" placeholder="Observaciones internas, checklist o detalle del service" />
@@ -194,6 +243,46 @@ export function RepairsAccessView({
             <Button type="submit">{editing ? "Actualizar orden" : "Crear orden Access"}</Button>
           </div>
         </form>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm text-slate-500">Clientes importados desde Access</p>
+            <h2 className="text-xl font-semibold text-slate-950">Base de clientes</h2>
+          </div>
+          {latestImport ? (
+            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              Ultima importacion: {latestImport.importedCount} cargados, {latestImport.errorCount} con error
+            </div>
+          ) : null}
+        </div>
+        <div className="mt-4 overflow-hidden rounded-3xl border border-slate-100">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Cliente</th>
+                  <th className="px-4 py-3 font-medium">Telefono</th>
+                  <th className="px-4 py-3 font-medium">DNI</th>
+                  <th className="px-4 py-3 font-medium">Direccion</th>
+                  <th className="px-4 py-3 font-medium">Origen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {customers.map((customer) => (
+                  <tr className="border-t border-slate-100" key={customer.id}>
+                    <td className="px-4 py-3 font-medium text-slate-900">{customer.fullName}</td>
+                    <td className="px-4 py-3 text-slate-600">{customer.phone || customer.alternatePhone || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">{customer.dni || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">{customer.address || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">{customer.source}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </Card>
 
       <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white">
@@ -213,7 +302,7 @@ export function RepairsAccessView({
             <tbody>
               {orders.map((order) => {
                 const orderAmount = order.finalAmount || order.approvedAmount || order.budgetAmount;
-                const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" · ");
+                const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
 
                 return (
                   <tr className="border-t border-slate-100" key={order.id}>
@@ -235,7 +324,7 @@ export function RepairsAccessView({
                     </td>
                     <td className="px-4 py-3 text-slate-600">{formatCurrency(orderAmount)}</td>
                     <td className="px-4 py-3 text-slate-600">
-                      {order.isPaid ? `Cobrada · ${order.paymentMethod}` : order.paymentMethod}
+                      {order.isPaid ? `Cobrada - ${order.paymentMethod}` : order.paymentMethod}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex justify-end gap-2">

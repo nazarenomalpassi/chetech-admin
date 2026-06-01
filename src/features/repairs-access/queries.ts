@@ -14,6 +14,12 @@ type RawOrder = {
   paid_at: string | null;
   delivered_at: string | null;
   warranty_until: string | null;
+  warranty_days: number | null;
+  warranty_conditions: string | null;
+  warranty_active: boolean;
+  work_performed: string | null;
+  used_parts: string | null;
+  internal_observations: string | null;
   notes: string | null;
   priority: string | null;
   status: string;
@@ -22,6 +28,8 @@ type RawOrder = {
     id: string;
     full_name: string;
     phone: string | null;
+    alternate_phone: string | null;
+    phone_normalized: string | null;
     dni: string | null;
     email: string | null;
     address: string | null;
@@ -53,6 +61,12 @@ export type RepairAccessOrderRecord = {
   paidAt: string | null;
   deliveredAt: string | null;
   warrantyUntil: string | null;
+  warrantyDays: number;
+  warrantyConditions: string | null;
+  warrantyActive: boolean;
+  workPerformed: string | null;
+  usedParts: string | null;
+  internalObservations: string | null;
   notes: string | null;
   priority: string | null;
   status: string;
@@ -61,6 +75,8 @@ export type RepairAccessOrderRecord = {
     id: string;
     fullName: string;
     phone: string;
+    alternatePhone: string;
+    phoneNormalized: string;
     dni: string;
     email: string;
     address: string;
@@ -97,6 +113,12 @@ export async function getRepairsAccessDashboard() {
         paid_at,
         delivered_at,
         warranty_until,
+        warranty_days,
+        warranty_conditions,
+        warranty_active,
+        work_performed,
+        used_parts,
+        internal_observations,
         notes,
         priority,
         status,
@@ -105,6 +127,8 @@ export async function getRepairsAccessDashboard() {
           id,
           full_name,
           phone,
+          alternate_phone,
+          phone_normalized,
           dni,
           email,
           address,
@@ -141,6 +165,12 @@ export async function getRepairsAccessDashboard() {
     paidAt: order.paid_at,
     deliveredAt: order.delivered_at,
     warrantyUntil: order.warranty_until,
+    warrantyDays: Number(order.warranty_days ?? 0),
+    warrantyConditions: order.warranty_conditions,
+    warrantyActive: order.warranty_active,
+    workPerformed: order.work_performed,
+    usedParts: order.used_parts,
+    internalObservations: order.internal_observations,
     notes: order.notes,
     priority: order.priority,
     status: order.status,
@@ -149,6 +179,8 @@ export async function getRepairsAccessDashboard() {
       id: order.repair_access_customers?.id ?? "",
       fullName: order.repair_access_customers?.full_name ?? "Sin cliente",
       phone: order.repair_access_customers?.phone ?? "",
+      alternatePhone: order.repair_access_customers?.alternate_phone ?? "",
+      phoneNormalized: order.repair_access_customers?.phone_normalized ?? "",
       dni: order.repair_access_customers?.dni ?? "",
       email: order.repair_access_customers?.email ?? "",
       address: order.repair_access_customers?.address ?? "",
@@ -171,10 +203,55 @@ export async function getRepairsAccessDashboard() {
   const pendingBudget = orders.filter((order: RepairAccessOrderRecord) => order.status === "presupuestado").length;
   const totalProjected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.finalAmount || order.approvedAmount || order.budgetAmount || 0), 0);
 
+  const [customerCount, recentCustomers, latestImport] = await Promise.all([
+    (supabase as any)
+      .from("repair_access_customers")
+      .select("id", { count: "exact", head: true }),
+    (supabase as any)
+      .from("repair_access_customers")
+      .select("id, full_name, phone, alternate_phone, dni, email, address, source, created_at")
+      .order("created_at", { ascending: false })
+      .limit(12),
+    (supabase as any)
+      .from("repair_access_import_batches")
+      .select("id, file_name, total_rows, imported_count, updated_count, duplicate_count, error_count, created_at")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+  ]);
+
+  if (customerCount.error) throw new Error(customerCount.error.message);
+  if (recentCustomers.error) throw new Error(recentCustomers.error.message);
+  if (latestImport.error) throw new Error(latestImport.error.message);
+
   return {
     orders,
+    customers: (recentCustomers.data ?? []).map((customer: any) => ({
+      id: customer.id,
+      fullName: customer.full_name,
+      phone: customer.phone ?? "",
+      alternatePhone: customer.alternate_phone ?? "",
+      dni: customer.dni ?? "",
+      email: customer.email ?? "",
+      address: customer.address ?? "",
+      source: customer.source,
+      createdAt: customer.created_at
+    })),
+    latestImport: latestImport.data
+      ? {
+          id: latestImport.data.id,
+          fileName: latestImport.data.file_name,
+          totalRows: latestImport.data.total_rows,
+          importedCount: latestImport.data.imported_count,
+          updatedCount: latestImport.data.updated_count,
+          duplicateCount: latestImport.data.duplicate_count,
+          errorCount: latestImport.data.error_count,
+          createdAt: latestImport.data.created_at
+        }
+      : null,
     summary: {
       totalOrders: orders.length,
+      totalCustomers: customerCount.count ?? 0,
       activeOrders,
       paidOrders,
       pendingBudget,

@@ -2,14 +2,19 @@ import { z } from "zod";
 
 export const repairAccessStatusValues = [
   "ingresado",
+  "pendiente_revision",
   "en_revision",
   "presupuestado",
-  "aprobado",
-  "rechazado",
+  "esperando_confirmacion_cliente",
+  "aprobado_por_cliente",
+  "rechazado_por_cliente",
   "en_reparacion",
+  "esperando_repuesto",
   "terminado",
+  "listo_para_retirar",
   "entregado",
   "cobrado",
+  "cancelado",
   "dado_de_baja"
 ] as const;
 
@@ -19,6 +24,7 @@ export const repairAccessOrderSchema = z.object({
   deviceId: z.string().uuid().optional(),
   customerName: z.string().min(2, "Ingresa el nombre del cliente."),
   customerPhone: z.string().optional(),
+  customerAlternatePhone: z.string().optional(),
   customerDni: z.string().optional(),
   customerEmail: z.string().email("Ingresa un email valido.").optional().or(z.literal("")),
   customerAddress: z.string().optional(),
@@ -32,15 +38,19 @@ export const repairAccessOrderSchema = z.object({
   intakeDate: z.string().min(1, "Ingresa la fecha de ingreso."),
   issueReported: z.string().min(3, "Ingresa la falla declarada."),
   technicalDiagnosis: z.string().optional(),
+  workPerformed: z.string().optional(),
+  usedParts: z.string().optional(),
+  internalObservations: z.string().optional(),
   budgetAmount: z.coerce.number().min(0, "El presupuesto no puede ser negativo.").optional(),
   approvedAmount: z.coerce.number().min(0, "El aprobado no puede ser negativo.").optional(),
   finalAmount: z.coerce.number().min(0, "El monto final no puede ser negativo.").optional(),
   paymentMethod: z.string().min(1, "Selecciona un medio de pago."),
   paymentNotes: z.string().optional(),
+  warrantyDays: z.coerce.number().int().min(0, "La garantia no puede ser negativa.").optional(),
   warrantyUntil: z.string().optional(),
+  warrantyConditions: z.string().optional(),
   priority: z.string().optional(),
   notes: z.string().optional(),
   status: z.enum(repairAccessStatusValues).default("ingresado"),
   isPaid: z.coerce.boolean().default(false)
 });
-
