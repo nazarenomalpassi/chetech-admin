@@ -1,3 +1,4 @@
+﻿import { repairAccessStatusValues } from "@/features/repairs-access/schemas";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type RawOrder = {
@@ -93,6 +94,58 @@ export type RepairAccessOrderRecord = {
     notes: string;
   };
 };
+
+export type RepairAccessCustomerSummary = {
+  id: string;
+  fullName: string;
+  phone: string;
+  alternatePhone: string;
+  dni: string;
+  email: string;
+  address: string;
+  source: string;
+  createdAt: string;
+};
+
+export type RepairAccessImportSummary = {
+  id: string;
+  fileName: string;
+  totalRows: number;
+  importedCount: number;
+  updatedCount: number;
+  duplicateCount: number;
+  errorCount: number;
+  createdAt: string;
+};
+
+export type RepairAccessSummary = {
+  totalOrders: number;
+  totalCustomers: number;
+  activeOrders: number;
+  paidOrders: number;
+  pendingBudget: number;
+  totalProjected: number;
+  totalCollected: number;
+  intakeToday: number;
+  deliveredToday: number;
+  collectedToday: number;
+  readyToPickup: number;
+  waitingCustomer: number;
+  delayedOrders: number;
+  activeWarranties: number;
+  statusCounts: Record<string, number>;
+};
+
+function toDateOnly(value: string | null) {
+  return value?.slice(0, 10) ?? "";
+}
+
+function getDaysOpen(intakeDate: string) {
+  const intake = new Date(`${intakeDate}T00:00:00`);
+  if (Number.isNaN(intake.getTime())) return 0;
+  const diff = Date.now() - intake.getTime();
+  return Math.floor(diff / 86_400_000);
+}
 
 export async function getRepairsAccessDashboard() {
   const supabase = await createServerSupabaseClient();
@@ -198,10 +251,23 @@ export async function getRepairsAccessDashboard() {
     }
   }));
 
-  const activeOrders = orders.filter((order: RepairAccessOrderRecord) => !["entregado", "cobrado", "rechazado", "dado_de_baja"].includes(order.status)).length;
-  const paidOrders = orders.filter((order: RepairAccessOrderRecord) => order.isPaid).length;
-  const pendingBudget = orders.filter((order: RepairAccessOrderRecord) => order.status === "presupuestado").length;
-  const totalProjected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.finalAmount || order.approvedAmount || order.budgetAmount || 0), 0);
+  const today = new Date().toISOString().slice(0, 10);
+  const statusCounts = repairAccessStatusValues.reduce<Record<string, number>>((acc, status) => {
+    acc[status] = 0;
+    return acc;
+  }, {});
+
+  orders.forEach((order) => {
+    statusCounts[order.status] = (statusCounts[order.status] ?? 0) + 1;
+  });
+
+  const closedStatuses = ["entregado", "cobrado", "rechazado_por_cliente", "cancelado", "dado_de_baja"];
+  const activeOrders = orders.filter((order) => !closedStatuses.includes(order.status)).length;
+  const paidOrders = orders.filter((order) => order.isPaid).length;
+  const pendingBudget = orders.filter((order) => ["pendiente_revision", "en_revision"].includes(order.status)).length;
+  const totalProjected = orders.reduce((acc, order) => acc + (order.finalAmount || order.approvedAmount || order.budgetAmount || 0), 0);
+  const totalCollected = orders.reduce((acc, order) => acc + (order.isPaid ? order.finalAmount || order.approvedAmount || order.budgetAmount || 0 : 0), 0);
+  const delayedOrders = orders.filter((order) => !closedStatuses.includes(order.status) && getDaysOpen(order.intakeDate) >= 7).length;
 
   const [customerCount, recentCustomers, latestImport] = await Promise.all([
     (supabase as any)
@@ -211,7 +277,7 @@ export async function getRepairsAccessDashboard() {
       .from("repair_access_customers")
       .select("id, full_name, phone, alternate_phone, dni, email, address, source, created_at")
       .order("created_at", { ascending: false })
-      .limit(12),
+      .limit(24),
     (supabase as any)
       .from("repair_access_import_batches")
       .select("id, file_name, total_rows, imported_count, updated_count, duplicate_count, error_count, created_at")
@@ -255,7 +321,16 @@ export async function getRepairsAccessDashboard() {
       activeOrders,
       paidOrders,
       pendingBudget,
-      totalProjected
+      totalProjected,
+      totalCollected,
+      intakeToday: orders.filter((order) => toDateOnly(order.intakeDate) === today).length,
+      deliveredToday: orders.filter((order) => toDateOnly(order.deliveredAt) === today).length,
+      collectedToday: orders.filter((order) => toDateOnly(order.paidAt) === today).length,
+      readyToPickup: orders.filter((order) => ["terminado", "listo_para_retirar"].includes(order.status)).length,
+      waitingCustomer: orders.filter((order) => order.status === "esperando_confirmacion_cliente").length,
+      delayedOrders,
+      activeWarranties: orders.filter((order) => order.warrantyActive).length,
+      statusCounts
     }
   };
 }
