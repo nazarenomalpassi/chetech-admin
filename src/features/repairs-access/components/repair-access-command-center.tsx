@@ -17,7 +17,7 @@ export function RepairAccessCommandCenter({
   const readyOrders = orders.filter((order) => order.status === "listo_para_retirar").slice(0, 5);
   const waitingOrders = orders.filter((order) => order.status === "presupuestado").slice(0, 5);
   const delayedOrders = orders
-    .filter((order) => !["comprado", "sin_solucion", "presupuestado_rechazado"].includes(order.status))
+    .filter((order) => !["retirado", "sin_solucion", "presupuestado_rechazado"].includes(order.status))
     .slice(0, 5);
 
   return (
@@ -45,7 +45,7 @@ export function RepairAccessCommandCenter({
             <MetricCard label="Ingresadas hoy" value={summary.intakeToday} />
             <MetricCard label="Pendientes/revision" value={summary.pendingBudget} />
             <MetricCard label="Listas p/retiro" value={summary.readyToPickup} />
-            <MetricCard label="Cobradas/compradas" value={summary.paidOrders} />
+            <MetricCard label="Cobro informado" value={summary.paidOrders} />
           </div>
         </Card>
 
@@ -53,7 +53,7 @@ export function RepairAccessCommandCenter({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Caja protegida</p>
           <p className="mt-3 text-3xl font-semibold tracking-[-0.04em]">{formatCurrency(summary.totalCollected)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Total cobrado marcado en ordenes Access. La integracion real con caja queda aislada para la etapa de cobros y no se duplica automaticamente.
+            Total informado en fichas Access. No impacta caja: la caja se mueve solo cuando facturas desde Reparaciones.
           </p>
           <div className="mt-5 rounded-2xl bg-white/10 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Proyectado</p>

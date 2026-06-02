@@ -20,6 +20,7 @@ type RawOrder = {
   is_paid: boolean;
   paid_at: string | null;
   delivered_at: string | null;
+  warranty_start: string | null;
   warranty_until: string | null;
   warranty_days: number | null;
   warranty_conditions: string | null;
@@ -73,6 +74,7 @@ export type RepairAccessOrderRecord = {
   isPaid: boolean;
   paidAt: string | null;
   deliveredAt: string | null;
+  warrantyStart: string | null;
   warrantyUntil: string | null;
   warrantyDays: number;
   warrantyConditions: string | null;
@@ -180,6 +182,7 @@ function mapOrder(order: RawOrder): RepairAccessOrderRecord {
     isPaid: order.is_paid,
     paidAt: order.paid_at,
     deliveredAt: order.delivered_at,
+    warrantyStart: order.warranty_start,
     warrantyUntil: order.warranty_until,
     warrantyDays: Number(order.warranty_days ?? 0),
     warrantyConditions: order.warranty_conditions,
@@ -239,6 +242,7 @@ export async function getRepairsAccessDashboard() {
         is_paid,
         paid_at,
         delivered_at,
+        warranty_start,
         warranty_until,
         warranty_days,
         warranty_conditions,

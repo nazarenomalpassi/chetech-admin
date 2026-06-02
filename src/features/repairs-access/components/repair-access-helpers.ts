@@ -24,7 +24,7 @@ export const repairAccessStatusMeta: Record<RepairAccessStatus, { label: string;
   presupuestado_aceptado: { label: "Presupuestado y aceptado", shortLabel: "Aceptado", tone: "success", lane: "Presupuesto" },
   presupuestado_rechazado: { label: "Presupuestado y rechazado", shortLabel: "Rechazado", tone: "danger", lane: "Presupuesto" },
   listo_para_retirar: { label: "Listo para retirar", shortLabel: "Retirar", tone: "success", lane: "Entrega" },
-  comprado: { label: "Comprado", shortLabel: "Comprado", tone: "success", lane: "Cierre" },
+  retirado: { label: "Retirado por cliente", shortLabel: "Retirado", tone: "success", lane: "Cierre" },
   sin_solucion: { label: "Sin solución", shortLabel: "Sin solución", tone: "danger", lane: "Cierre" }
 };
 
@@ -35,7 +35,7 @@ export const repairAccessStatusOptions = repairAccessStatusValues.map((status) =
 
 export const repairAccessIntakeStatusOptions = repairAccessStatusOptions;
 
-export const repairAccessClosedStatuses = ["comprado", "sin_solucion", "presupuestado_rechazado"] as const;
+export const repairAccessClosedStatuses = ["retirado", "sin_solucion", "presupuestado_rechazado"] as const;
 
 export const repairAccessLanes = [
   {
@@ -59,8 +59,8 @@ export const repairAccessLanes = [
   {
     key: "salida",
     title: "Salida",
-    description: "Equipo listo, comprado/cobrado o cerrado sin solucion.",
-    statuses: ["listo_para_retirar", "comprado", "sin_solucion"]
+    description: "Equipo listo, retirado por el cliente o cerrado sin solucion.",
+    statuses: ["listo_para_retirar", "retirado", "sin_solucion"]
   }
 ] as const;
 

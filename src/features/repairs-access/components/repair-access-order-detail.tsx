@@ -53,7 +53,7 @@ export function RepairAccessOrderDetail({
           <HeaderMetric label="Presupuesto" value={formatCurrency(order.budgetAmount)} />
           <HeaderMetric label="Total final" value={formatCurrency(order.finalAmount)} />
           <HeaderMetric label="Medio" value={getRepairAccessPaymentLabel(order.paymentMethod)} />
-          <HeaderMetric label="Cobro" value={order.isPaid ? "Cobrada" : "Sin cobrar"} />
+          <HeaderMetric label="Cobro en ficha" value={order.isPaid ? "Informado" : "Sin informar"} />
         </div>
       </Card>
 
@@ -138,7 +138,10 @@ export function RepairAccessOrderDetail({
             </Field>
 
             <div className="rounded-3xl bg-slate-50 p-4 lg:col-span-6">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Cobro y garantia</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Ficha de cobro informativa y garantia</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Estos datos no impactan caja ni balances. El movimiento real de plata se registra en Reparaciones usando el numero de orden.
+              </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-6">
                 <Field className="lg:col-span-2" label="Total final">
                   <Input defaultValue={order.finalAmount || visibleAmount || 0} min={0} name="finalAmount" step="0.01" type="number" />
@@ -148,17 +151,22 @@ export function RepairAccessOrderDetail({
                 </Field>
                 <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
                   <input defaultChecked={order.isPaid} name="isPaid" type="checkbox" />
-                  Marcar como cobrada
+                  Registrar cobro informado en ficha
                 </label>
                 <Field className="lg:col-span-2" label="Garantia en dias">
                   <Input defaultValue={order.warrantyDays || 0} min={0} name="warrantyDays" type="number" />
                 </Field>
-                <Field className="lg:col-span-2" label="Garantia hasta">
-                  <Input defaultValue={order.warrantyUntil ?? ""} name="warrantyUntil" type="date" />
-                </Field>
                 <Field className="lg:col-span-2" label="Notas de cobro">
                   <Input defaultValue={order.paymentNotes ?? ""} name="paymentNotes" placeholder="Senia, saldo o acuerdo" />
                 </Field>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:col-span-2">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Inicio garantia</span>
+                  <span className="mt-1 block text-slate-800">{order.warrantyStart ? formatDate(order.warrantyStart) : "Arranca al facturar en Reparaciones"}</span>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:col-span-2">
+                  <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Garantia hasta</span>
+                  <span className="mt-1 block text-slate-800">{order.warrantyUntil ? formatDate(order.warrantyUntil) : "Pendiente de retiro/facturacion"}</span>
+                </div>
                 <Field className="lg:col-span-6" label="Condiciones de garantia">
                   <Textarea defaultValue={order.warrantyConditions ?? ""} name="warrantyConditions" placeholder="Condiciones de garantia entregadas al cliente" />
                 </Field>

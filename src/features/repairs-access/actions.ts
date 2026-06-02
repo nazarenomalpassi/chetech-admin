@@ -247,7 +247,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
   const now = new Date().toISOString();
   const budgetAmount = parsed.data.budgetAmount || 0;
   const isBudgetResponseStatus = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
-  const isReadyOrClosed = ["listo_para_retirar", "comprado"].includes(parsed.data.status);
+  const isReadyOrClosed = ["listo_para_retirar", "retirado"].includes(parsed.data.status);
 
   const orderPayload = {
     technician_name: emptyToNull(parsed.data.technicianName),
@@ -268,9 +268,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
     paid_at: parsed.data.isPaid ? previousOrder.data.paid_at ?? now : null,
     finished_at: isReadyOrClosed ? now : null,
     warranty_days: parsed.data.warrantyDays || 0,
-    warranty_until: emptyToNull(parsed.data.warrantyUntil),
     warranty_conditions: emptyToNull(parsed.data.warrantyConditions),
-    warranty_active: Boolean(parsed.data.warrantyUntil),
     status: parsed.data.status,
     updated_by: user.id,
     updated_at: now
