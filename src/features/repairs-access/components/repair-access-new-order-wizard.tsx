@@ -13,7 +13,6 @@ import {
   repairAccessPriorityOptions
 } from "@/features/repairs-access/components/repair-access-helpers";
 import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/features/repairs-access/queries";
-import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 const wizardSteps = [
   { key: "cliente", label: "Cliente", helper: "Buscar o crear" },
@@ -80,30 +79,16 @@ export function RepairAccessNewOrderWizard({
 
     const timeoutId = window.setTimeout(async () => {
       setIsSearchingCustomers(true);
-      const firstToken = query.split(" ").filter(Boolean)[0] ?? query;
-      const supabase = createClientSupabaseClient();
-      const { data, error } = await (supabase as any)
-        .from("repair_access_customers")
-        .select("id, full_name, phone, alternate_phone, dni, email, address, notes, source, created_at")
-        .or(`full_name.ilike.%${firstToken}%,phone.ilike.%${firstToken}%,alternate_phone.ilike.%${firstToken}%,dni.ilike.%${firstToken}%`)
-        .order("full_name", { ascending: true })
-        .limit(15);
-
-      if (!error) {
-        setRemoteSuggestions(
-          (data ?? []).map((customer: any) => ({
-            id: customer.id,
-            fullName: customer.full_name,
-            phone: customer.phone ?? "",
-            alternatePhone: customer.alternate_phone ?? "",
-            dni: customer.dni ?? "",
-            email: customer.email ?? "",
-            address: customer.address ?? "",
-            notes: customer.notes ?? "",
-            source: customer.source ?? "manual",
-            createdAt: customer.created_at
-          }))
-        );
+      try {
+        const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(customerLookup)}`);
+        if (response.ok) {
+          const payload = await response.json();
+          setRemoteSuggestions(payload.customers ?? []);
+        } else {
+          setRemoteSuggestions([]);
+        }
+      } catch {
+        setRemoteSuggestions([]);
       }
       setIsSearchingCustomers(false);
     }, 180);
@@ -124,6 +109,18 @@ export function RepairAccessNewOrderWizard({
       })
       .slice(0, 7);
   }, [customerLookup, customers, remoteSuggestions]);
+
+  useEffect(() => {
+    const query = normalizeLookup(customerLookup);
+    if (!showSuggestions || customerForm.id || query.length < 4 || suggestions.length !== 1) return;
+
+    const onlyMatch = suggestions[0];
+    const matchText = normalizeLookup([onlyMatch.fullName, onlyMatch.phone, onlyMatch.alternatePhone, onlyMatch.dni].join(" "));
+    const queryTokens = query.split(" ").filter(Boolean);
+    if (queryTokens.every((token) => matchText.includes(token))) {
+      selectCustomer(onlyMatch);
+    }
+  }, [customerForm.id, customerLookup, showSuggestions, suggestions]);
 
   function updateCustomerField(field: keyof CustomerForm, value: string) {
     setCustomerForm((current) => ({ ...current, [field]: value }));
