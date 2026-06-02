@@ -184,6 +184,23 @@ export function RepairAccessNewOrderWizard({
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
         <section className={activeStep === "cliente" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
+          <Field className="lg:col-span-6" label="Cliente existente">
+            <Select
+              name="existingCustomerPicker"
+              onChange={(event) => {
+                const customer = customers.find((item) => item.id === event.target.value);
+                if (customer) selectCustomer(customer);
+              }}
+              options={[
+                { value: "", label: "Seleccionar cliente creado..." },
+                ...customers.map((customer) => ({
+                  value: customer.id,
+                  label: `${customer.fullName}${customer.phone ? ` - ${customer.phone}` : ""}${customer.dni ? ` - DNI ${customer.dni}` : ""}`
+                }))
+              ]}
+              value={customerForm.id}
+            />
+          </Field>
           <Field className="relative lg:col-span-3" label="Nombre completo">
             <Input
               autoComplete="off"
