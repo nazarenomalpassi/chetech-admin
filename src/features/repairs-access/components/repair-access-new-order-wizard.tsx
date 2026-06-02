@@ -13,6 +13,7 @@ import {
   repairAccessPriorityOptions
 } from "@/features/repairs-access/components/repair-access-helpers";
 import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+import { createClientSupabaseClient } from "@/lib/supabase/client";
 
 const wizardSteps = [
   { key: "cliente", label: "Cliente", helper: "Buscar o crear" },
@@ -60,6 +61,8 @@ export function RepairAccessNewOrderWizard({
   const [customerLookup, setCustomerLookup] = useState("");
   const [activeLookupField, setActiveLookupField] = useState<"name" | "phone" | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [remoteSuggestions, setRemoteSuggestions] = useState<RepairAccessCustomerSummary[]>([]);
+  const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
 
   useEffect(() => {
     setCustomerForm(getInitialCustomer(editing));
@@ -68,18 +71,59 @@ export function RepairAccessNewOrderWizard({
     setActiveStep("cliente");
   }, [editing]);
 
+  useEffect(() => {
+    const query = normalizeLookup(customerLookup);
+    if (query.length < 2 || !showSuggestions) {
+      setRemoteSuggestions([]);
+      return;
+    }
+
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearchingCustomers(true);
+      const firstToken = query.split(" ").filter(Boolean)[0] ?? query;
+      const supabase = createClientSupabaseClient();
+      const { data, error } = await (supabase as any)
+        .from("repair_access_customers")
+        .select("id, full_name, phone, alternate_phone, dni, email, address, notes, source, created_at")
+        .or(`full_name.ilike.%${firstToken}%,phone.ilike.%${firstToken}%,alternate_phone.ilike.%${firstToken}%,dni.ilike.%${firstToken}%`)
+        .order("full_name", { ascending: true })
+        .limit(15);
+
+      if (!error) {
+        setRemoteSuggestions(
+          (data ?? []).map((customer: any) => ({
+            id: customer.id,
+            fullName: customer.full_name,
+            phone: customer.phone ?? "",
+            alternatePhone: customer.alternate_phone ?? "",
+            dni: customer.dni ?? "",
+            email: customer.email ?? "",
+            address: customer.address ?? "",
+            notes: customer.notes ?? "",
+            source: customer.source ?? "manual",
+            createdAt: customer.created_at
+          }))
+        );
+      }
+      setIsSearchingCustomers(false);
+    }, 180);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [customerLookup, showSuggestions]);
+
   const suggestions = useMemo(() => {
     const query = normalizeLookup(customerLookup);
     if (query.length < 2) return [];
     const queryTokens = query.split(" ").filter(Boolean);
+    const sourceCustomers = mergeCustomers(remoteSuggestions, customers);
 
-    return customers
+    return sourceCustomers
       .filter((customer) => {
         const haystack = normalizeLookup([customer.fullName, customer.phone, customer.alternatePhone, customer.dni].join(" "));
         return queryTokens.every((token) => haystack.includes(token));
       })
       .slice(0, 7);
-  }, [customerLookup, customers]);
+  }, [customerLookup, customers, remoteSuggestions]);
 
   function updateCustomerField(field: keyof CustomerForm, value: string) {
     setCustomerForm((current) => ({ ...current, [field]: value }));
@@ -103,6 +147,7 @@ export function RepairAccessNewOrderWizard({
     });
     setCustomerLookup("");
     setActiveLookupField(null);
+    setRemoteSuggestions([]);
     setShowSuggestions(false);
   }
 
@@ -155,7 +200,7 @@ export function RepairAccessNewOrderWizard({
               placeholder="Ej: Malpassi Nazareno"
               value={customerForm.fullName}
             />
-            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions && activeLookupField === "name"} suggestions={suggestions} />
+            <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "name"} suggestions={suggestions} />
           </Field>
           <Field className="relative lg:col-span-3" label="Telefono / WhatsApp">
             <Input
@@ -170,7 +215,7 @@ export function RepairAccessNewOrderWizard({
               placeholder="Ej: 3571 573744"
               value={customerForm.phone}
             />
-            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions && activeLookupField === "phone"} suggestions={suggestions} />
+            <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "phone"} suggestions={suggestions} />
           </Field>
           <Field className="lg:col-span-2" label="Telefono alternativo">
             <Input name="customerAlternatePhone" onChange={(event) => updateCustomerField("alternatePhone", event.target.value)} placeholder="Opcional" value={customerForm.alternatePhone} />
@@ -269,20 +314,28 @@ function normalizeLookup(value: string) {
     .toLowerCase();
 }
 
+function mergeCustomers(primary: RepairAccessCustomerSummary[], fallback: RepairAccessCustomerSummary[]) {
+  const byId = new Map<string, RepairAccessCustomerSummary>();
+  [...primary, ...fallback].forEach((customer) => byId.set(customer.id, customer));
+  return Array.from(byId.values());
+}
+
 function CustomerSuggestions({
   show,
   suggestions,
+  isSearching,
   onSelect
 }: {
   show: boolean;
   suggestions: RepairAccessCustomerSummary[];
+  isSearching: boolean;
   onSelect: (customer: RepairAccessCustomerSummary) => void;
 }) {
-  if (!show || !suggestions.length) return null;
+  if (!show) return null;
 
   return (
     <div className="absolute left-0 right-0 top-[76px] z-20 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft">
-      {suggestions.map((customer) => (
+      {suggestions.length ? suggestions.map((customer) => (
         <button
           className="block w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50"
           key={customer.id}
@@ -297,7 +350,11 @@ function CustomerSuggestions({
             {[customer.phone, customer.dni ? `DNI ${customer.dni}` : ""].filter(Boolean).join(" - ")}
           </span>
         </button>
-      ))}
+      )) : (
+        <div className="px-4 py-3 text-sm text-slate-500">
+          {isSearching ? "Buscando cliente..." : "Sin coincidencias. Podes cargarlo como cliente nuevo."}
+        </div>
+      )}
     </div>
   );
 }
