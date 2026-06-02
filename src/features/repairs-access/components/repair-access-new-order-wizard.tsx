@@ -110,18 +110,6 @@ export function RepairAccessNewOrderWizard({
       .slice(0, 7);
   }, [customerLookup, customers, remoteSuggestions]);
 
-  useEffect(() => {
-    const query = normalizeLookup(customerLookup);
-    if (!showSuggestions || customerForm.id || query.length < 4 || suggestions.length !== 1) return;
-
-    const onlyMatch = suggestions[0];
-    const matchText = normalizeLookup([onlyMatch.fullName, onlyMatch.phone, onlyMatch.alternatePhone, onlyMatch.dni].join(" "));
-    const queryTokens = query.split(" ").filter(Boolean);
-    if (queryTokens.every((token) => matchText.includes(token))) {
-      selectCustomer(onlyMatch);
-    }
-  }, [customerForm.id, customerLookup, showSuggestions, suggestions]);
-
   function updateCustomerField(field: keyof CustomerForm, value: string) {
     setCustomerForm((current) => ({ ...current, [field]: value }));
     if (field === "fullName" || field === "phone") {
@@ -184,28 +172,17 @@ export function RepairAccessNewOrderWizard({
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
         <section className={activeStep === "cliente" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
-          <Field className="lg:col-span-6" label="Cliente existente">
-            <Select
-              name="existingCustomerPicker"
-              onChange={(event) => {
-                const customer = customers.find((item) => item.id === event.target.value);
-                if (customer) selectCustomer(customer);
-              }}
-              options={[
-                { value: "", label: "Seleccionar cliente creado..." },
-                ...customers.map((customer) => ({
-                  value: customer.id,
-                  label: `${customer.fullName}${customer.phone ? ` - ${customer.phone}` : ""}${customer.dni ? ` - DNI ${customer.dni}` : ""}`
-                }))
-              ]}
-              value={customerForm.id}
-            />
-          </Field>
           <Field className="relative lg:col-span-3" label="Nombre completo">
             <Input
               autoComplete="off"
               name="customerName"
               onChange={(event) => updateCustomerField("fullName", event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && suggestions[0]) {
+                  event.preventDefault();
+                  selectCustomer(suggestions[0]);
+                }
+              }}
               onFocus={() => {
                 setCustomerLookup(customerForm.fullName);
                 setActiveLookupField("name");
@@ -221,6 +198,12 @@ export function RepairAccessNewOrderWizard({
               autoComplete="off"
               name="customerPhone"
               onChange={(event) => updateCustomerField("phone", event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && suggestions[0]) {
+                  event.preventDefault();
+                  selectCustomer(suggestions[0]);
+                }
+              }}
               onFocus={() => {
                 setCustomerLookup(customerForm.phone);
                 setActiveLookupField("phone");
