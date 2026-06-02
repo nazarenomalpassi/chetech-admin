@@ -58,24 +58,25 @@ export function RepairAccessNewOrderWizard({
   const [activeStep, setActiveStep] = useState<(typeof wizardSteps)[number]["key"]>("cliente");
   const [customerForm, setCustomerForm] = useState<CustomerForm>(() => getInitialCustomer(editing));
   const [customerLookup, setCustomerLookup] = useState("");
+  const [activeLookupField, setActiveLookupField] = useState<"name" | "phone" | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     setCustomerForm(getInitialCustomer(editing));
     setCustomerLookup("");
+    setActiveLookupField(null);
     setActiveStep("cliente");
   }, [editing]);
 
   const suggestions = useMemo(() => {
-    const query = customerLookup.trim().toLowerCase();
+    const query = normalizeLookup(customerLookup);
     if (query.length < 2) return [];
+    const queryTokens = query.split(" ").filter(Boolean);
 
     return customers
       .filter((customer) => {
-        const haystack = [customer.fullName, customer.phone, customer.alternatePhone, customer.dni]
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(query);
+        const haystack = normalizeLookup([customer.fullName, customer.phone, customer.alternatePhone, customer.dni].join(" "));
+        return queryTokens.every((token) => haystack.includes(token));
       })
       .slice(0, 7);
   }, [customerLookup, customers]);
@@ -84,6 +85,7 @@ export function RepairAccessNewOrderWizard({
     setCustomerForm((current) => ({ ...current, [field]: value }));
     if (field === "fullName" || field === "phone") {
       setCustomerLookup(value);
+      setActiveLookupField(field === "fullName" ? "name" : "phone");
       setShowSuggestions(true);
     }
   }
@@ -100,6 +102,7 @@ export function RepairAccessNewOrderWizard({
       notes: customer.notes
     });
     setCustomerLookup("");
+    setActiveLookupField(null);
     setShowSuggestions(false);
   }
 
@@ -144,22 +147,30 @@ export function RepairAccessNewOrderWizard({
               autoComplete="off"
               name="customerName"
               onChange={(event) => updateCustomerField("fullName", event.target.value)}
-              onFocus={() => setShowSuggestions(true)}
+              onFocus={() => {
+                setCustomerLookup(customerForm.fullName);
+                setActiveLookupField("name");
+                setShowSuggestions(true);
+              }}
               placeholder="Ej: Malpassi Nazareno"
               value={customerForm.fullName}
             />
-            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions} suggestions={suggestions} />
+            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions && activeLookupField === "name"} suggestions={suggestions} />
           </Field>
           <Field className="relative lg:col-span-3" label="Telefono / WhatsApp">
             <Input
               autoComplete="off"
               name="customerPhone"
               onChange={(event) => updateCustomerField("phone", event.target.value)}
-              onFocus={() => setShowSuggestions(true)}
+              onFocus={() => {
+                setCustomerLookup(customerForm.phone);
+                setActiveLookupField("phone");
+                setShowSuggestions(true);
+              }}
               placeholder="Ej: 3571 573744"
               value={customerForm.phone}
             />
-            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions && !customerForm.fullName} suggestions={suggestions} />
+            <CustomerSuggestions onSelect={selectCustomer} show={showSuggestions && activeLookupField === "phone"} suggestions={suggestions} />
           </Field>
           <Field className="lg:col-span-2" label="Telefono alternativo">
             <Input name="customerAlternatePhone" onChange={(event) => updateCustomerField("alternatePhone", event.target.value)} placeholder="Opcional" value={customerForm.alternatePhone} />
@@ -246,6 +257,16 @@ export function RepairAccessNewOrderWizard({
       </form>
     </Card>
   );
+}
+
+function normalizeLookup(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\d a-zA-Z]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
 }
 
 function CustomerSuggestions({
