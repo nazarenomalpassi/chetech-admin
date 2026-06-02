@@ -14,6 +14,7 @@ import {
   repairAccessStatusOptions
 } from "@/features/repairs-access/components/repair-access-helpers";
 import { RepairAccessStatusBadge } from "@/features/repairs-access/components/repair-access-status-badge";
+import { RepairAccessWhatsAppPanel } from "@/features/repairs-access/components/repair-access-whatsapp-actions";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -55,6 +56,8 @@ export function RepairAccessOrderDetail({
           <HeaderMetric label="Medio" value={getRepairAccessPaymentLabel(order.paymentMethod)} />
           <HeaderMetric label="Cobro en ficha" value={order.isPaid ? "Informado" : "Sin informar"} />
         </div>
+
+        <RepairAccessWhatsAppPanel order={order} />
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">

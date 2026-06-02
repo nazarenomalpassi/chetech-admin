@@ -11,6 +11,7 @@ import {
   repairAccessStatusOptions
 } from "@/features/repairs-access/components/repair-access-helpers";
 import { RepairAccessStatusBadge } from "@/features/repairs-access/components/repair-access-status-badge";
+import { RepairAccessWhatsAppButton } from "@/features/repairs-access/components/repair-access-whatsapp-actions";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -125,6 +126,7 @@ export function RepairAccessOrdersSection({
                       <td className="px-4 py-4 text-slate-600">{order.technicianName || "-"}</td>
                       <td className="px-4 py-4">
                         <div className="flex flex-wrap justify-end gap-2">
+                          <RepairAccessWhatsAppButton order={order} />
                           <Button onClick={() => onOpenDetail(order)} size="sm" type="button">Ver detalle</Button>
                           <Button onClick={() => onEdit(order)} size="sm" type="button" variant="secondary">Editar ingreso</Button>
                           <form action={deleteRepairAccessOrderAction}>
