@@ -1,29 +1,22 @@
 import { z } from "zod";
 
 export const repairAccessStatusValues = [
-  "ingresado",
   "pendiente_revision",
   "en_revision",
   "presupuestado",
-  "esperando_confirmacion_cliente",
-  "aprobado_por_cliente",
-  "rechazado_por_cliente",
-  "en_reparacion",
-  "esperando_repuesto",
-  "terminado",
+  "presupuestado_aceptado",
+  "presupuestado_rechazado",
   "listo_para_retirar",
-  "entregado",
-  "cobrado",
-  "cancelado",
-  "dado_de_baja"
+  "comprado",
+  "sin_solucion"
 ] as const;
 
-export const repairAccessOrderSchema = z.object({
+export const repairAccessIntakeSchema = z.object({
   id: z.string().uuid().optional(),
   customerId: z.string().uuid().optional(),
   deviceId: z.string().uuid().optional(),
   customerName: z.string().min(2, "Ingresa el nombre del cliente."),
-  customerPhone: z.string().optional(),
+  customerPhone: z.string().min(6, "Ingresa el telefono del cliente."),
   customerAlternatePhone: z.string().optional(),
   customerDni: z.string().optional(),
   customerEmail: z.string().email("Ingresa un email valido.").optional().or(z.literal("")),
@@ -37,20 +30,44 @@ export const repairAccessOrderSchema = z.object({
   visualCondition: z.string().optional(),
   intakeDate: z.string().min(1, "Ingresa la fecha de ingreso."),
   issueReported: z.string().min(3, "Ingresa la falla declarada."),
+  priority: z.string().optional(),
+  notes: z.string().optional(),
+  status: z.enum(repairAccessStatusValues).default("pendiente_revision")
+});
+
+export const repairAccessTechnicalSchema = z.object({
+  id: z.string().uuid("No se pudo identificar la orden."),
+  technicianName: z.string().optional(),
   technicalDiagnosis: z.string().optional(),
-  workPerformed: z.string().optional(),
-  usedParts: z.string().optional(),
+  repairProgress: z.string().optional(),
   internalObservations: z.string().optional(),
+  usedParts: z.string().optional(),
+  workPerformed: z.string().optional(),
   budgetAmount: z.coerce.number().min(0, "El presupuesto no puede ser negativo.").optional(),
-  approvedAmount: z.coerce.number().min(0, "El aprobado no puede ser negativo.").optional(),
+  budgetDetail: z.string().optional(),
+  budgetResponseNotes: z.string().optional(),
   finalAmount: z.coerce.number().min(0, "El monto final no puede ser negativo.").optional(),
-  paymentMethod: z.string().min(1, "Selecciona un medio de pago."),
+  paymentMethod: z.string().optional(),
   paymentNotes: z.string().optional(),
   warrantyDays: z.coerce.number().int().min(0, "La garantia no puede ser negativa.").optional(),
   warrantyUntil: z.string().optional(),
   warrantyConditions: z.string().optional(),
-  priority: z.string().optional(),
-  notes: z.string().optional(),
-  status: z.enum(repairAccessStatusValues).default("ingresado"),
+  status: z.enum(repairAccessStatusValues),
   isPaid: z.coerce.boolean().default(false)
+}).superRefine((data, ctx) => {
+  if (data.isPaid && !data.paymentMethod) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Selecciona un medio de pago para marcar la orden como cobrada.",
+      path: ["paymentMethod"]
+    });
+  }
+
+  if (data.isPaid && !data.finalAmount) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Ingresa el total final antes de marcar la orden como cobrada.",
+      path: ["finalAmount"]
+    });
+  }
 });

@@ -4,14 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { repairAccessIntakeSchema, repairAccessTechnicalSchema } from "@/features/repairs-access/schemas";
 import { createAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { repairAccessOrderSchema } from "@/features/repairs-access/schemas";
 
 function redirectWithError(message: string, id?: string): never {
   const params = new URLSearchParams({ error: message });
-  if (id) params.set("edit", id);
+  if (id) params.set("order", id);
   redirect(`/reparaciones-access?${params.toString()}`);
 }
 
@@ -29,8 +29,45 @@ function normalizePhone(value?: string | null) {
   return digits.length >= 6 ? digits : null;
 }
 
+async function getNextRepairNumber(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+  const { data, error } = await (supabase as any).rpc("generate_repair_access_number");
+  if (error || !data) {
+    throw new Error(error?.message ?? "No se pudo generar el numero de orden.");
+  }
+
+  return String(data);
+}
+
+async function insertStatusHistory({
+  supabase,
+  repairOrderId,
+  previousStatus,
+  nextStatus,
+  userId,
+  notes
+}: {
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  repairOrderId: string;
+  previousStatus: string | null;
+  nextStatus: string;
+  userId: string;
+  notes?: string | null;
+}) {
+  if (previousStatus === nextStatus) return;
+
+  await (supabase as any)
+    .from("repair_access_status_history")
+    .insert({
+      repair_order_id: repairOrderId,
+      previous_status: previousStatus,
+      next_status: nextStatus,
+      changed_by: userId,
+      notes: emptyToNull(notes)
+    });
+}
+
 export async function saveRepairAccessOrderAction(formData: FormData) {
-  const parsed = repairAccessOrderSchema.safeParse({
+  const parsed = repairAccessIntakeSchema.safeParse({
     id: formData.get("id") || undefined,
     customerId: formData.get("customerId") || undefined,
     deviceId: formData.get("deviceId") || undefined,
@@ -49,22 +86,9 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     visualCondition: formData.get("visualCondition"),
     intakeDate: formData.get("intakeDate"),
     issueReported: formData.get("issueReported"),
-    technicalDiagnosis: formData.get("technicalDiagnosis"),
-    workPerformed: formData.get("workPerformed"),
-    usedParts: formData.get("usedParts"),
-    internalObservations: formData.get("internalObservations"),
-    budgetAmount: formData.get("budgetAmount") || 0,
-    approvedAmount: formData.get("approvedAmount") || 0,
-    finalAmount: formData.get("finalAmount") || 0,
-    paymentMethod: formData.get("paymentMethod"),
-    paymentNotes: formData.get("paymentNotes"),
-    warrantyDays: formData.get("warrantyDays") || 0,
-    warrantyUntil: formData.get("warrantyUntil"),
-    warrantyConditions: formData.get("warrantyConditions"),
     priority: formData.get("priority"),
     notes: formData.get("notes"),
-    status: formData.get("status"),
-    isPaid: formData.get("isPaid") === "on"
+    status: formData.get("status")
   });
 
   if (!parsed.success) {
@@ -84,7 +108,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     email: emptyToNull(parsed.data.customerEmail),
     address: emptyToNull(parsed.data.customerAddress),
     notes: emptyToNull(parsed.data.customerNotes),
-    source: "manual",
+    source: parsed.data.customerId ? undefined : "manual",
     created_by: user.id,
     updated_at: new Date().toISOString()
   };
@@ -105,7 +129,6 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     serial_number: emptyToNull(parsed.data.serialNumber),
     accessory_details: emptyToNull(parsed.data.accessoryDetails),
     visual_condition: emptyToNull(parsed.data.visualCondition),
-    notes: emptyToNull(parsed.data.customerNotes),
     created_by: user.id,
     updated_by: user.id,
     updated_at: new Date().toISOString()
@@ -119,26 +142,33 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     redirectWithError(deviceOperation.error?.message ?? "No se pudo guardar el equipo.", parsed.data.id);
   }
 
+  const previousOrder = parsed.data.id
+    ? await (supabase as any)
+        .from("repair_access_orders")
+        .select("id, status, repair_number")
+        .eq("id", parsed.data.id)
+        .maybeSingle()
+    : null;
+
+  if (previousOrder?.error) {
+    redirectWithError(previousOrder.error.message, parsed.data.id);
+  }
+
+  let repairNumber = previousOrder?.data?.repair_number ?? null;
+  if (!repairNumber) {
+    try {
+      repairNumber = await getNextRepairNumber(supabase);
+    } catch (error) {
+      redirectWithError(error instanceof Error ? error.message : "No se pudo generar el numero de orden.", parsed.data.id);
+    }
+  }
+
   const orderPayload = {
+    repair_number: repairNumber,
     customer_id: customerOperation.data.id,
     device_id: deviceOperation.data.id,
     intake_date: parsed.data.intakeDate,
     issue_reported: parsed.data.issueReported,
-    technical_diagnosis: emptyToNull(parsed.data.technicalDiagnosis),
-    work_performed: emptyToNull(parsed.data.workPerformed),
-    used_parts: emptyToNull(parsed.data.usedParts),
-    internal_observations: emptyToNull(parsed.data.internalObservations),
-    budget_amount: parsed.data.budgetAmount || 0,
-    approved_amount: parsed.data.approvedAmount || 0,
-    final_amount: parsed.data.finalAmount || 0,
-    payment_method: parsed.data.paymentMethod,
-    payment_notes: emptyToNull(parsed.data.paymentNotes),
-    is_paid: parsed.data.isPaid,
-    paid_at: parsed.data.isPaid ? new Date().toISOString() : null,
-    warranty_days: parsed.data.warrantyDays || 0,
-    warranty_until: emptyToNull(parsed.data.warrantyUntil),
-    warranty_conditions: emptyToNull(parsed.data.warrantyConditions),
-    warranty_active: Boolean(parsed.data.warrantyUntil),
     notes: emptyToNull(parsed.data.notes),
     priority: emptyToNull(parsed.data.priority),
     status: parsed.data.status,
@@ -148,22 +178,21 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
   };
 
   const orderOperation = parsed.data.id
-    ? await (supabase as any).from("repair_access_orders").update(orderPayload).eq("id", parsed.data.id).select("id, status").single()
-    : await (supabase as any).from("repair_access_orders").insert(orderPayload).select("id, status").single();
+    ? await (supabase as any).from("repair_access_orders").update(orderPayload).eq("id", parsed.data.id).select("id, status, repair_number").single()
+    : await (supabase as any).from("repair_access_orders").insert(orderPayload).select("id, status, repair_number").single();
 
   if (orderOperation.error || !orderOperation.data) {
     redirectWithError(orderOperation.error?.message ?? "No se pudo guardar la orden.", parsed.data.id);
   }
 
-  await (supabase as any)
-    .from("repair_access_status_history")
-    .insert({
-      repair_order_id: orderOperation.data.id,
-      previous_status: null,
-      next_status: parsed.data.status,
-      changed_by: user.id,
-      notes: emptyToNull(parsed.data.notes)
-    });
+  await insertStatusHistory({
+    supabase,
+    repairOrderId: orderOperation.data.id,
+    previousStatus: previousOrder?.data?.status ?? null,
+    nextStatus: parsed.data.status,
+    userId: user.id,
+    notes: parsed.data.notes
+  });
 
   await createAuditLog({
     entityType: "repair_access_orders",
@@ -175,6 +204,108 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
 
   revalidatePath("/reparaciones-access");
   redirect(`/reparaciones-access?status=${parsed.data.id ? "repair_access_updated" : "repair_access_created"}`);
+}
+
+export async function updateRepairAccessTechnicalAction(formData: FormData) {
+  const parsed = repairAccessTechnicalSchema.safeParse({
+    id: formData.get("id"),
+    technicianName: formData.get("technicianName"),
+    technicalDiagnosis: formData.get("technicalDiagnosis"),
+    repairProgress: formData.get("repairProgress"),
+    internalObservations: formData.get("internalObservations"),
+    usedParts: formData.get("usedParts"),
+    workPerformed: formData.get("workPerformed"),
+    budgetAmount: formData.get("budgetAmount") || 0,
+    budgetDetail: formData.get("budgetDetail"),
+    budgetResponseNotes: formData.get("budgetResponseNotes"),
+    finalAmount: formData.get("finalAmount") || 0,
+    paymentMethod: formData.get("paymentMethod"),
+    paymentNotes: formData.get("paymentNotes"),
+    warrantyDays: formData.get("warrantyDays") || 0,
+    warrantyUntil: formData.get("warrantyUntil"),
+    warrantyConditions: formData.get("warrantyConditions"),
+    status: formData.get("status"),
+    isPaid: formData.get("isPaid") === "on"
+  });
+
+  if (!parsed.success) {
+    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el seguimiento tecnico.", String(formData.get("id") ?? ""));
+  }
+
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
+  const previousOrder = await (supabase as any)
+    .from("repair_access_orders")
+    .select("id, status, is_paid, paid_at")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+
+  if (previousOrder.error || !previousOrder.data) {
+    redirectWithError(previousOrder.error?.message ?? "No se encontro la orden.", parsed.data.id);
+  }
+
+  const now = new Date().toISOString();
+  const budgetAmount = parsed.data.budgetAmount || 0;
+  const isBudgetResponseStatus = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
+  const isReadyOrClosed = ["listo_para_retirar", "comprado"].includes(parsed.data.status);
+
+  const orderPayload = {
+    technician_name: emptyToNull(parsed.data.technicianName),
+    technical_diagnosis: emptyToNull(parsed.data.technicalDiagnosis),
+    repair_progress: emptyToNull(parsed.data.repairProgress),
+    internal_observations: emptyToNull(parsed.data.internalObservations),
+    used_parts: emptyToNull(parsed.data.usedParts),
+    work_performed: emptyToNull(parsed.data.workPerformed),
+    budget_amount: budgetAmount,
+    budget_detail: emptyToNull(parsed.data.budgetDetail),
+    budget_response_notes: emptyToNull(parsed.data.budgetResponseNotes),
+    budget_response_at: isBudgetResponseStatus ? now : null,
+    budgeted_at: budgetAmount > 0 ? now : null,
+    final_amount: parsed.data.finalAmount || 0,
+    payment_method: emptyToNull(parsed.data.paymentMethod),
+    payment_notes: emptyToNull(parsed.data.paymentNotes),
+    is_paid: parsed.data.isPaid,
+    paid_at: parsed.data.isPaid ? previousOrder.data.paid_at ?? now : null,
+    finished_at: isReadyOrClosed ? now : null,
+    warranty_days: parsed.data.warrantyDays || 0,
+    warranty_until: emptyToNull(parsed.data.warrantyUntil),
+    warranty_conditions: emptyToNull(parsed.data.warrantyConditions),
+    warranty_active: Boolean(parsed.data.warrantyUntil),
+    status: parsed.data.status,
+    updated_by: user.id,
+    updated_at: now
+  };
+
+  const orderOperation = await (supabase as any)
+    .from("repair_access_orders")
+    .update(orderPayload)
+    .eq("id", parsed.data.id)
+    .select("id")
+    .single();
+
+  if (orderOperation.error || !orderOperation.data) {
+    redirectWithError(orderOperation.error?.message ?? "No se pudo actualizar la orden.", parsed.data.id);
+  }
+
+  await insertStatusHistory({
+    supabase,
+    repairOrderId: parsed.data.id,
+    previousStatus: previousOrder.data.status,
+    nextStatus: parsed.data.status,
+    userId: user.id,
+    notes: parsed.data.budgetResponseNotes || parsed.data.internalObservations
+  });
+
+  await createAuditLog({
+    entityType: "repair_access_orders",
+    entityId: parsed.data.id,
+    action: "update",
+    userId: user.id,
+    changes: orderPayload
+  });
+
+  revalidatePath("/reparaciones-access");
+  redirect("/reparaciones-access?status=repair_access_updated");
 }
 
 export async function deleteRepairAccessOrderAction(formData: FormData) {

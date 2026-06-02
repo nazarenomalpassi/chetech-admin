@@ -1,12 +1,18 @@
-﻿import { repairAccessStatusValues } from "@/features/repairs-access/schemas";
+import { repairAccessClosedStatuses } from "@/features/repairs-access/components/repair-access-helpers";
+import { repairAccessStatusValues } from "@/features/repairs-access/schemas";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type RawOrder = {
   id: string;
+  repair_number: string | null;
   intake_date: string;
   issue_reported: string;
   technical_diagnosis: string | null;
+  repair_progress: string | null;
   budget_amount: number | null;
+  budget_detail: string | null;
+  budget_response_notes: string | null;
+  budget_response_at: string | null;
   approved_amount: number | null;
   final_amount: number | null;
   payment_method: string | null;
@@ -21,6 +27,7 @@ type RawOrder = {
   work_performed: string | null;
   used_parts: string | null;
   internal_observations: string | null;
+  technician_name: string | null;
   notes: string | null;
   priority: string | null;
   status: string;
@@ -50,10 +57,15 @@ type RawOrder = {
 
 export type RepairAccessOrderRecord = {
   id: string;
+  repairNumber: string;
   intakeDate: string;
   issueReported: string;
   technicalDiagnosis: string | null;
+  repairProgress: string | null;
   budgetAmount: number;
+  budgetDetail: string | null;
+  budgetResponseNotes: string | null;
+  budgetResponseAt: string | null;
   approvedAmount: number;
   finalAmount: number;
   paymentMethod: string;
@@ -68,6 +80,7 @@ export type RepairAccessOrderRecord = {
   workPerformed: string | null;
   usedParts: string | null;
   internalObservations: string | null;
+  technicianName: string | null;
   notes: string | null;
   priority: string | null;
   status: string;
@@ -103,6 +116,7 @@ export type RepairAccessCustomerSummary = {
   dni: string;
   email: string;
   address: string;
+  notes: string;
   source: string;
   createdAt: string;
 };
@@ -147,6 +161,61 @@ function getDaysOpen(intakeDate: string) {
   return Math.floor(diff / 86_400_000);
 }
 
+function mapOrder(order: RawOrder): RepairAccessOrderRecord {
+  return {
+    id: order.id,
+    repairNumber: order.repair_number ?? "Sin numero",
+    intakeDate: order.intake_date,
+    issueReported: order.issue_reported,
+    technicalDiagnosis: order.technical_diagnosis,
+    repairProgress: order.repair_progress,
+    budgetAmount: Number(order.budget_amount ?? 0),
+    budgetDetail: order.budget_detail,
+    budgetResponseNotes: order.budget_response_notes,
+    budgetResponseAt: order.budget_response_at,
+    approvedAmount: Number(order.approved_amount ?? 0),
+    finalAmount: Number(order.final_amount ?? 0),
+    paymentMethod: order.payment_method ?? "",
+    paymentNotes: order.payment_notes,
+    isPaid: order.is_paid,
+    paidAt: order.paid_at,
+    deliveredAt: order.delivered_at,
+    warrantyUntil: order.warranty_until,
+    warrantyDays: Number(order.warranty_days ?? 0),
+    warrantyConditions: order.warranty_conditions,
+    warrantyActive: order.warranty_active,
+    workPerformed: order.work_performed,
+    usedParts: order.used_parts,
+    internalObservations: order.internal_observations,
+    technicianName: order.technician_name,
+    notes: order.notes,
+    priority: order.priority,
+    status: order.status,
+    createdAt: order.created_at,
+    customer: {
+      id: order.repair_access_customers?.id ?? "",
+      fullName: order.repair_access_customers?.full_name ?? "Sin cliente",
+      phone: order.repair_access_customers?.phone ?? "",
+      alternatePhone: order.repair_access_customers?.alternate_phone ?? "",
+      phoneNormalized: order.repair_access_customers?.phone_normalized ?? "",
+      dni: order.repair_access_customers?.dni ?? "",
+      email: order.repair_access_customers?.email ?? "",
+      address: order.repair_access_customers?.address ?? "",
+      notes: order.repair_access_customers?.notes ?? ""
+    },
+    device: {
+      id: order.repair_access_devices?.id ?? "",
+      deviceType: order.repair_access_devices?.device_type ?? "Equipo",
+      brand: order.repair_access_devices?.brand ?? "",
+      model: order.repair_access_devices?.model ?? "",
+      serialNumber: order.repair_access_devices?.serial_number ?? "",
+      accessoryDetails: order.repair_access_devices?.accessory_details ?? "",
+      visualCondition: order.repair_access_devices?.visual_condition ?? "",
+      notes: order.repair_access_devices?.notes ?? ""
+    }
+  };
+}
+
 export async function getRepairsAccessDashboard() {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await (supabase as any)
@@ -154,10 +223,15 @@ export async function getRepairsAccessDashboard() {
     .select(
       `
         id,
+        repair_number,
         intake_date,
         issue_reported,
         technical_diagnosis,
+        repair_progress,
         budget_amount,
+        budget_detail,
+        budget_response_notes,
+        budget_response_at,
         approved_amount,
         final_amount,
         payment_method,
@@ -172,6 +246,7 @@ export async function getRepairsAccessDashboard() {
         work_performed,
         used_parts,
         internal_observations,
+        technician_name,
         notes,
         priority,
         status,
@@ -200,57 +275,11 @@ export async function getRepairsAccessDashboard() {
       `
     )
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(150);
 
   if (error) throw new Error(error.message);
 
-  const orders: RepairAccessOrderRecord[] = (data ?? []).map((order: RawOrder) => ({
-    id: order.id,
-    intakeDate: order.intake_date,
-    issueReported: order.issue_reported,
-    technicalDiagnosis: order.technical_diagnosis,
-    budgetAmount: Number(order.budget_amount ?? 0),
-    approvedAmount: Number(order.approved_amount ?? 0),
-    finalAmount: Number(order.final_amount ?? 0),
-    paymentMethod: order.payment_method ?? "efectivo",
-    paymentNotes: order.payment_notes,
-    isPaid: order.is_paid,
-    paidAt: order.paid_at,
-    deliveredAt: order.delivered_at,
-    warrantyUntil: order.warranty_until,
-    warrantyDays: Number(order.warranty_days ?? 0),
-    warrantyConditions: order.warranty_conditions,
-    warrantyActive: order.warranty_active,
-    workPerformed: order.work_performed,
-    usedParts: order.used_parts,
-    internalObservations: order.internal_observations,
-    notes: order.notes,
-    priority: order.priority,
-    status: order.status,
-    createdAt: order.created_at,
-    customer: {
-      id: order.repair_access_customers?.id ?? "",
-      fullName: order.repair_access_customers?.full_name ?? "Sin cliente",
-      phone: order.repair_access_customers?.phone ?? "",
-      alternatePhone: order.repair_access_customers?.alternate_phone ?? "",
-      phoneNormalized: order.repair_access_customers?.phone_normalized ?? "",
-      dni: order.repair_access_customers?.dni ?? "",
-      email: order.repair_access_customers?.email ?? "",
-      address: order.repair_access_customers?.address ?? "",
-      notes: order.repair_access_customers?.notes ?? ""
-    },
-    device: {
-      id: order.repair_access_devices?.id ?? "",
-      deviceType: order.repair_access_devices?.device_type ?? "Equipo",
-      brand: order.repair_access_devices?.brand ?? "",
-      model: order.repair_access_devices?.model ?? "",
-      serialNumber: order.repair_access_devices?.serial_number ?? "",
-      accessoryDetails: order.repair_access_devices?.accessory_details ?? "",
-      visualCondition: order.repair_access_devices?.visual_condition ?? "",
-      notes: order.repair_access_devices?.notes ?? ""
-    }
-  }));
-
+  const orders: RepairAccessOrderRecord[] = (data ?? []).map((order: RawOrder) => mapOrder(order));
   const today = new Date().toISOString().slice(0, 10);
   const statusCounts = repairAccessStatusValues.reduce<Record<string, number>>((acc, status) => {
     acc[status] = 0;
@@ -261,13 +290,12 @@ export async function getRepairsAccessDashboard() {
     statusCounts[order.status] = (statusCounts[order.status] ?? 0) + 1;
   });
 
-  const closedStatuses = ["entregado", "cobrado", "rechazado_por_cliente", "cancelado", "dado_de_baja"];
-  const activeOrders = orders.filter((order) => !closedStatuses.includes(order.status)).length;
-  const paidOrders = orders.filter((order) => order.isPaid).length;
-  const pendingBudget = orders.filter((order) => ["pendiente_revision", "en_revision"].includes(order.status)).length;
-  const totalProjected = orders.reduce((acc, order) => acc + (order.finalAmount || order.approvedAmount || order.budgetAmount || 0), 0);
-  const totalCollected = orders.reduce((acc, order) => acc + (order.isPaid ? order.finalAmount || order.approvedAmount || order.budgetAmount || 0 : 0), 0);
-  const delayedOrders = orders.filter((order) => !closedStatuses.includes(order.status) && getDaysOpen(order.intakeDate) >= 7).length;
+  const activeOrders = orders.filter((order: RepairAccessOrderRecord) => !repairAccessClosedStatuses.includes(order.status as any)).length;
+  const paidOrders = orders.filter((order: RepairAccessOrderRecord) => order.isPaid).length;
+  const pendingBudget = orders.filter((order: RepairAccessOrderRecord) => ["pendiente_revision", "en_revision"].includes(order.status)).length;
+  const totalProjected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.finalAmount || order.budgetAmount || 0), 0);
+  const totalCollected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.isPaid ? order.finalAmount || order.budgetAmount || 0 : 0), 0);
+  const delayedOrders = orders.filter((order: RepairAccessOrderRecord) => !repairAccessClosedStatuses.includes(order.status as any) && getDaysOpen(order.intakeDate) >= 7).length;
 
   const [customerCount, recentCustomers, latestImport] = await Promise.all([
     (supabase as any)
@@ -275,9 +303,9 @@ export async function getRepairsAccessDashboard() {
       .select("id", { count: "exact", head: true }),
     (supabase as any)
       .from("repair_access_customers")
-      .select("id, full_name, phone, alternate_phone, dni, email, address, source, created_at")
-      .order("created_at", { ascending: false })
-      .limit(24),
+      .select("id, full_name, phone, alternate_phone, dni, email, address, notes, source, created_at")
+      .order("full_name", { ascending: true })
+      .limit(500),
     (supabase as any)
       .from("repair_access_import_batches")
       .select("id, file_name, total_rows, imported_count, updated_count, duplicate_count, error_count, created_at")
@@ -300,6 +328,7 @@ export async function getRepairsAccessDashboard() {
       dni: customer.dni ?? "",
       email: customer.email ?? "",
       address: customer.address ?? "",
+      notes: customer.notes ?? "",
       source: customer.source,
       createdAt: customer.created_at
     })),
@@ -323,13 +352,13 @@ export async function getRepairsAccessDashboard() {
       pendingBudget,
       totalProjected,
       totalCollected,
-      intakeToday: orders.filter((order) => toDateOnly(order.intakeDate) === today).length,
-      deliveredToday: orders.filter((order) => toDateOnly(order.deliveredAt) === today).length,
-      collectedToday: orders.filter((order) => toDateOnly(order.paidAt) === today).length,
-      readyToPickup: orders.filter((order) => ["terminado", "listo_para_retirar"].includes(order.status)).length,
-      waitingCustomer: orders.filter((order) => order.status === "esperando_confirmacion_cliente").length,
+      intakeToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.intakeDate) === today).length,
+      deliveredToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.deliveredAt) === today).length,
+      collectedToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.paidAt) === today).length,
+      readyToPickup: orders.filter((order: RepairAccessOrderRecord) => order.status === "listo_para_retirar").length,
+      waitingCustomer: orders.filter((order: RepairAccessOrderRecord) => order.status === "presupuestado").length,
       delayedOrders,
-      activeWarranties: orders.filter((order) => order.warrantyActive).length,
+      activeWarranties: orders.filter((order: RepairAccessOrderRecord) => order.warrantyActive).length,
       statusCounts
     }
   };

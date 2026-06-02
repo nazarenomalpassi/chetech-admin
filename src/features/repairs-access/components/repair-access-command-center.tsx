@@ -14,10 +14,10 @@ export function RepairAccessCommandCenter({
   summary: RepairAccessSummary;
   onNavigate: (section: string) => void;
 }) {
-  const readyOrders = orders.filter((order) => ["terminado", "listo_para_retirar"].includes(order.status)).slice(0, 5);
-  const waitingOrders = orders.filter((order) => order.status === "esperando_confirmacion_cliente").slice(0, 5);
+  const readyOrders = orders.filter((order) => order.status === "listo_para_retirar").slice(0, 5);
+  const waitingOrders = orders.filter((order) => order.status === "presupuestado").slice(0, 5);
   const delayedOrders = orders
-    .filter((order) => !["entregado", "cobrado", "cancelado", "dado_de_baja"].includes(order.status))
+    .filter((order) => !["comprado", "sin_solucion", "presupuestado_rechazado"].includes(order.status))
     .slice(0, 5);
 
   return (
@@ -43,9 +43,9 @@ export function RepairAccessCommandCenter({
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Ingresadas hoy" value={summary.intakeToday} />
-            <MetricCard label="Pendientes" value={summary.pendingBudget} />
+            <MetricCard label="Pendientes/revision" value={summary.pendingBudget} />
             <MetricCard label="Listas p/retiro" value={summary.readyToPickup} />
-            <MetricCard label="Cobradas hoy" value={summary.collectedToday} />
+            <MetricCard label="Cobradas/compradas" value={summary.paidOrders} />
           </div>
         </Card>
 
@@ -95,7 +95,7 @@ export function RepairAccessCommandCenter({
 
       <section className="grid gap-4 xl:grid-cols-3">
         <AttentionList empty="No hay equipos listos para retirar." orders={readyOrders} title="Terminadas / listas para retirar" />
-        <AttentionList empty="No hay presupuestos esperando respuesta." orders={waitingOrders} title="Esperando confirmacion" />
+        <AttentionList empty="No hay presupuestos esperando respuesta." orders={waitingOrders} title="Presupuestadas sin decision" />
         <Card>
           <div className="flex items-start justify-between gap-3">
             <div>
@@ -105,7 +105,7 @@ export function RepairAccessCommandCenter({
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{summary.delayedOrders} demoradas</span>
           </div>
           <div className="mt-4 space-y-3">
-            <AlertRow label="Esperando cliente" value={summary.waitingCustomer} />
+            <AlertRow label="Presupuestadas" value={summary.waitingCustomer} />
             <AlertRow label="Garantias vigentes" value={summary.activeWarranties} />
             <AlertRow label="Entregadas hoy" value={summary.deliveredToday} />
             <AlertRow label="Clientes importados" value={summary.totalCustomers} />

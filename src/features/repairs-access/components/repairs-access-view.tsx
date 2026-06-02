@@ -8,6 +8,7 @@ import { saveRepairAccessOrderAction } from "@/features/repairs-access/actions";
 import { RepairAccessCommandCenter } from "@/features/repairs-access/components/repair-access-command-center";
 import { RepairAccessCustomersSection } from "@/features/repairs-access/components/repair-access-customers-section";
 import { RepairAccessNewOrderWizard } from "@/features/repairs-access/components/repair-access-new-order-wizard";
+import { RepairAccessOrderDetail } from "@/features/repairs-access/components/repair-access-order-detail";
 import { RepairAccessOrdersSection } from "@/features/repairs-access/components/repair-access-orders-section";
 import type {
   RepairAccessCustomerSummary,
@@ -18,7 +19,7 @@ import type {
 import type { ActionResult } from "@/lib/form-state";
 import { formatDate } from "@/lib/utils";
 
-type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "consultas" | "importar";
+type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
 
 const sections: { key: RepairAccessSection; label: string; helper: string }[] = [
   { key: "panel", label: "Panel", helper: "Resumen operativo" },
@@ -44,6 +45,7 @@ export function RepairsAccessView({
 }) {
   const [activeSection, setActiveSection] = useState<RepairAccessSection>("panel");
   const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(null);
   const [customerSearch, setCustomerSearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -55,6 +57,12 @@ export function RepairsAccessView({
   function startEdit(order: RepairAccessOrderRecord) {
     setEditing(order);
     setActiveSection("nueva");
+  }
+
+  function openDetail(order: RepairAccessOrderRecord) {
+    setSelectedOrder(order);
+    setEditing(null);
+    setActiveSection("detalle");
   }
 
   function stopEdit() {
@@ -88,7 +96,7 @@ export function RepairsAccessView({
       {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} orders={orders} summary={summary} /> : null}
 
       {activeSection === "nueva" ? (
-        <RepairAccessNewOrderWizard action={saveRepairAccessOrderAction} editing={editing} onCancel={stopEdit} />
+        <RepairAccessNewOrderWizard action={saveRepairAccessOrderAction} customers={customers} editing={editing} onCancel={stopEdit} />
       ) : null}
 
       {activeSection === "clientes" ? (
@@ -98,11 +106,20 @@ export function RepairsAccessView({
       {activeSection === "ordenes" ? (
         <RepairAccessOrdersSection
           onEdit={startEdit}
+          onOpenDetail={openDetail}
           onSearchChange={setOrderSearch}
           onStatusFilterChange={setStatusFilter}
           orders={orders}
           search={orderSearch}
           statusFilter={statusFilter}
+        />
+      ) : null}
+
+      {activeSection === "detalle" && selectedOrder ? (
+        <RepairAccessOrderDetail
+          onBack={() => setActiveSection("ordenes")}
+          onEditIntake={startEdit}
+          order={selectedOrder}
         />
       ) : null}
 
