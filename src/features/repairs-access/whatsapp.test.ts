@@ -36,5 +36,16 @@ assert.ok(decodeURIComponent(href ?? "").includes("listo para retirar"));
 const budgetHref = buildRepairAccessWhatsAppHref({ ...baseOrder, status: "presupuestado" }, "budget");
 assert.ok(decodeURIComponent(budgetHref ?? "").includes("presupuesto"));
 assert.ok(decodeURIComponent(budgetHref ?? "").includes("Cambio de leds"));
+assert.ok(decodeURIComponent(budgetHref ?? "").includes("le saldria $"));
+assert.ok(decodeURIComponent(budgetHref ?? "").includes("90.000,00"));
+assert.ok(decodeURIComponent(budgetHref ?? "").includes("tiene de garantia 30 dias"));
+
+const noSolutionHref = buildRepairAccessWhatsAppHref(
+  { ...baseOrder, deviceLabel: "TV Samsung 43", status: "sin_solucion" },
+  "no_solution"
+);
+assert.ok(decodeURIComponent(noSolutionHref ?? "").includes("lamentamos informarle"));
+assert.ok(decodeURIComponent(noSolutionHref ?? "").includes("TV Samsung 43"));
+assert.ok(decodeURIComponent(noSolutionHref ?? "").includes("no va a tener reparacion"));
 
 console.log("repair access whatsapp helpers ok");

@@ -5,7 +5,7 @@ import { getStatusMessage } from "@/lib/form-state";
 export default async function ReparacionesAccessPage({
   searchParams
 }: {
-  searchParams: Promise<{ status?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; error?: string; order?: string }>;
 }) {
   const params = await searchParams;
   const { orders, customers, latestImport, summary } = await getRepairsAccessDashboard();
@@ -13,5 +13,14 @@ export default async function ReparacionesAccessPage({
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
 
-  return <RepairsAccessView customers={customers} latestImport={latestImport} message={message} orders={orders} summary={summary} />;
+  return (
+    <RepairsAccessView
+      customers={customers}
+      initialOrderId={params.order}
+      latestImport={latestImport}
+      message={message}
+      orders={orders}
+      summary={summary}
+    />
+  );
 }

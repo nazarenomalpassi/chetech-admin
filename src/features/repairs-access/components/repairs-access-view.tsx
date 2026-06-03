@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -35,17 +35,23 @@ export function RepairsAccessView({
   customers,
   latestImport,
   summary,
-  message
+  message,
+  initialOrderId
 }: {
   orders: RepairAccessOrderRecord[];
   customers: RepairAccessCustomerSummary[];
   latestImport: RepairAccessImportSummary | null;
   summary: RepairAccessSummary;
   message: ActionResult | null;
+  initialOrderId?: string;
 }) {
-  const [activeSection, setActiveSection] = useState<RepairAccessSection>("panel");
+  const initialSelectedOrder = useMemo(
+    () => orders.find((order) => order.id === initialOrderId) ?? null,
+    [initialOrderId, orders]
+  );
+  const [activeSection, setActiveSection] = useState<RepairAccessSection>(initialSelectedOrder ? "detalle" : "panel");
   const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(initialSelectedOrder);
   const [customerSearch, setCustomerSearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
@@ -68,6 +74,25 @@ export function RepairsAccessView({
   function stopEdit() {
     setEditing(null);
   }
+
+  useEffect(() => {
+    if (!initialSelectedOrder) return;
+
+    setSelectedOrder(initialSelectedOrder);
+    setEditing(null);
+    setActiveSection("detalle");
+  }, [initialSelectedOrder]);
+
+  useEffect(() => {
+    setSelectedOrder((current) => {
+      if (!current) return current;
+      return orders.find((order) => order.id === current.id) ?? current;
+    });
+    setEditing((current) => {
+      if (!current) return current;
+      return orders.find((order) => order.id === current.id) ?? current;
+    });
+  }, [orders]);
 
   return (
     <div className="space-y-5">

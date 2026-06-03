@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,6 +30,25 @@ export function RepairAccessOrderDetail({
 }) {
   const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
   const visibleAmount = order.finalAmount || order.budgetAmount;
+  const [status, setStatus] = useState(order.status);
+  const [budgetAmount, setBudgetAmount] = useState(String(order.budgetAmount || ""));
+  const [finalAmount, setFinalAmount] = useState(String(order.finalAmount || visibleAmount || ""));
+  const [finalAmountWasEdited, setFinalAmountWasEdited] = useState(Boolean(order.finalAmount));
+
+  useEffect(() => {
+    const nextVisibleAmount = order.finalAmount || order.budgetAmount;
+    setStatus(order.status);
+    setBudgetAmount(String(order.budgetAmount || ""));
+    setFinalAmount(String(order.finalAmount || nextVisibleAmount || ""));
+    setFinalAmountWasEdited(Boolean(order.finalAmount));
+  }, [order.id, order.status, order.budgetAmount, order.finalAmount]);
+
+  function handleBudgetAmountChange(value: string) {
+    setBudgetAmount(value);
+    if (!finalAmountWasEdited || !finalAmount || finalAmount === "0") {
+      setFinalAmount(value);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -106,34 +126,31 @@ export function RepairAccessOrderDetail({
             <input name="id" type="hidden" value={order.id} />
 
             <Field className="lg:col-span-2" label="Estado actual">
-              <Select defaultValue={order.status} name="status" options={repairAccessStatusOptions} />
-            </Field>
-            <Field className="lg:col-span-2" label="Tecnico asignado">
-              <Input defaultValue={order.technicianName ?? ""} name="technicianName" placeholder="Nombre del tecnico" />
+              <Select
+                name="status"
+                onChange={(event) => setStatus(event.target.value)}
+                options={repairAccessStatusOptions}
+                value={status}
+              />
             </Field>
             <Field className="lg:col-span-2" label="Presupuesto">
-              <Input defaultValue={order.budgetAmount || 0} min={0} name="budgetAmount" step="0.01" type="number" />
+              <Input min={0} name="budgetAmount" onChange={(event) => handleBudgetAmountChange(event.target.value)} step="0.01" type="number" value={budgetAmount} />
             </Field>
+            <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
+              <input
+                checked={status === "sin_solucion"}
+                onChange={(event) => setStatus(event.target.checked ? "sin_solucion" : "en_revision")}
+                type="checkbox"
+              />
+              No tiene reparacion
+            </label>
 
-            <Field className="lg:col-span-3" label="Diagnostico por tecnico">
-              <Textarea defaultValue={order.technicalDiagnosis ?? ""} name="technicalDiagnosis" placeholder="Diagnostico tecnico del problema" />
-            </Field>
             <Field className="lg:col-span-3" label="Avance de reparacion">
-              <Textarea defaultValue={order.repairProgress ?? ""} name="repairProgress" placeholder="Que se reviso, que falta, estado interno" />
+              <Textarea defaultValue={order.repairProgress ?? ""} name="repairProgress" placeholder="Que se reviso, que falta o en que estado esta" />
             </Field>
 
             <Field className="lg:col-span-3" label="Detalle del presupuesto">
-              <Textarea defaultValue={order.budgetDetail ?? ""} name="budgetDetail" placeholder="Mano de obra, repuestos, condiciones del presupuesto" />
-            </Field>
-            <Field className="lg:col-span-3" label="Observaciones tecnicas">
-              <Textarea defaultValue={order.internalObservations ?? ""} name="internalObservations" placeholder="Notas internas para taller" />
-            </Field>
-
-            <Field className="lg:col-span-3" label="Repuestos necesarios / usados">
-              <Textarea defaultValue={order.usedParts ?? ""} name="usedParts" placeholder="Repuestos, insumos o piezas pendientes" />
-            </Field>
-            <Field className="lg:col-span-3" label="Trabajo realizado">
-              <Textarea defaultValue={order.workPerformed ?? ""} name="workPerformed" placeholder="Trabajo final realizado" />
+              <Textarea defaultValue={order.budgetDetail ?? ""} name="budgetDetail" placeholder="Detalle para enviar al cliente por WhatsApp" />
             </Field>
 
             <Field className="lg:col-span-6" label="Respuesta del cliente / comentario de estado">
@@ -147,7 +164,17 @@ export function RepairAccessOrderDetail({
               </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-6">
                 <Field className="lg:col-span-2" label="Total final">
-                  <Input defaultValue={order.finalAmount || visibleAmount || 0} min={0} name="finalAmount" step="0.01" type="number" />
+                  <Input
+                    min={0}
+                    name="finalAmount"
+                    onChange={(event) => {
+                      setFinalAmountWasEdited(true);
+                      setFinalAmount(event.target.value);
+                    }}
+                    step="0.01"
+                    type="number"
+                    value={finalAmount}
+                  />
                 </Field>
                 <Field className="lg:col-span-2" label="Medio de pago">
                   <Select defaultValue={order.paymentMethod || ""} name="paymentMethod" options={[{ value: "", label: "Sin seleccionar" }, ...repairAccessPaymentOptions.map((method) => ({ value: method.value, label: method.label }))]} />

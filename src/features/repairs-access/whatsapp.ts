@@ -24,6 +24,10 @@ function firstName(fullName: string) {
   return fullName.trim().split(/\s+/)[0] || "como estas";
 }
 
+function customerGreeting() {
+  return "Hola buen dia, le hablamos de parte de Chetech.";
+}
+
 function formatAmount(amount: number) {
   return amount > 0 ? formatCurrency(amount) : "";
 }
@@ -71,10 +75,11 @@ export function getRepairAccessWhatsAppTemplate(
       kind: "budget",
       label: "Enviar presupuesto",
       message: [
-        `Hola ${name}, te escribimos de Chetech por la orden ${order.repairNumber}.`,
-        `Ya tenemos el presupuesto de tu ${device}${amount ? `: ${amount}` : "."}`,
-        budgetDetail ? `Detalle: ${budgetDetail}.` : "",
-        "Si estas de acuerdo, respondeme por aca para avanzar con la reparacion. Gracias."
+        customerGreeting(),
+        `Le paso el presupuesto de la reparacion de su equipo ${device}.`,
+        budgetDetail ? `${budgetDetail}.` : "",
+        amount ? `le saldria ${amount}.` : "",
+        `tiene de garantia ${order.warrantyDays || 0} dias.`
       ].filter(Boolean).join(" ")
     };
   }
@@ -97,9 +102,8 @@ export function getRepairAccessWhatsAppTemplate(
       kind: "no_solution",
       label: "Avisar sin solucion",
       message: [
-        `Hola ${name}, te escribimos de Chetech por la orden ${order.repairNumber}.`,
-        `Revisamos tu ${device} y por el momento no tiene solucion viable.`,
-        "Cuando puedas, coordinamos el retiro del equipo. Gracias."
+        customerGreeting().replace("le hablamos", "le hablo"),
+        `lamentamos informarle que su equipo ${device} no va a tener reparacion.`
       ].join(" ")
     };
   }

@@ -209,12 +209,12 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
 export async function updateRepairAccessTechnicalAction(formData: FormData) {
   const parsed = repairAccessTechnicalSchema.safeParse({
     id: formData.get("id"),
-    technicianName: formData.get("technicianName"),
-    technicalDiagnosis: formData.get("technicalDiagnosis"),
+    technicianName: formData.get("technicianName") || undefined,
+    technicalDiagnosis: formData.get("technicalDiagnosis") || undefined,
     repairProgress: formData.get("repairProgress"),
-    internalObservations: formData.get("internalObservations"),
-    usedParts: formData.get("usedParts"),
-    workPerformed: formData.get("workPerformed"),
+    internalObservations: formData.get("internalObservations") || undefined,
+    usedParts: formData.get("usedParts") || undefined,
+    workPerformed: formData.get("workPerformed") || undefined,
     budgetAmount: formData.get("budgetAmount") || 0,
     budgetDetail: formData.get("budgetDetail"),
     budgetResponseNotes: formData.get("budgetResponseNotes"),
@@ -246,6 +246,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
 
   const now = new Date().toISOString();
   const budgetAmount = parsed.data.budgetAmount || 0;
+  const finalAmount = parsed.data.finalAmount || budgetAmount;
   const isBudgetResponseStatus = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
   const isReadyOrClosed = ["listo_para_retirar", "retirado"].includes(parsed.data.status);
 
@@ -261,7 +262,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
     budget_response_notes: emptyToNull(parsed.data.budgetResponseNotes),
     budget_response_at: isBudgetResponseStatus ? now : null,
     budgeted_at: budgetAmount > 0 ? now : null,
-    final_amount: parsed.data.finalAmount || 0,
+    final_amount: finalAmount,
     payment_method: emptyToNull(parsed.data.paymentMethod),
     payment_notes: emptyToNull(parsed.data.paymentNotes),
     is_paid: parsed.data.isPaid,
@@ -303,7 +304,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
   });
 
   revalidatePath("/reparaciones-access");
-  redirect("/reparaciones-access?status=repair_access_updated");
+  redirect(`/reparaciones-access?status=repair_access_updated&order=${parsed.data.id}`);
 }
 
 export async function deleteRepairAccessOrderAction(formData: FormData) {
