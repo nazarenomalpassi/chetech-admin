@@ -33,6 +33,8 @@ export function RepairAccessOrderDetail({
   const [status, setStatus] = useState(order.status);
   const [budgetAmount, setBudgetAmount] = useState(String(order.budgetAmount || ""));
   const [finalAmount, setFinalAmount] = useState(String(order.finalAmount || visibleAmount || ""));
+  const [budgetDetail, setBudgetDetail] = useState(order.budgetDetail ?? "");
+  const [warrantyDays, setWarrantyDays] = useState(String(order.warrantyDays || ""));
   const [finalAmountWasEdited, setFinalAmountWasEdited] = useState(Boolean(order.finalAmount));
 
   useEffect(() => {
@@ -40,8 +42,10 @@ export function RepairAccessOrderDetail({
     setStatus(order.status);
     setBudgetAmount(String(order.budgetAmount || ""));
     setFinalAmount(String(order.finalAmount || nextVisibleAmount || ""));
+    setBudgetDetail(order.budgetDetail ?? "");
+    setWarrantyDays(String(order.warrantyDays || ""));
     setFinalAmountWasEdited(Boolean(order.finalAmount));
-  }, [order.id, order.status, order.budgetAmount, order.finalAmount]);
+  }, [order.id, order.status, order.budgetAmount, order.finalAmount, order.budgetDetail, order.warrantyDays]);
 
   function handleBudgetAmountChange(value: string) {
     setBudgetAmount(value);
@@ -49,6 +53,19 @@ export function RepairAccessOrderDetail({
       setFinalAmount(value);
     }
   }
+
+  function toNumber(value: string) {
+    return Number(value.replace(",", ".")) || 0;
+  }
+
+  const liveOrder = {
+    ...order,
+    status,
+    budgetAmount: toNumber(budgetAmount),
+    finalAmount: toNumber(finalAmount),
+    budgetDetail,
+    warrantyDays: toNumber(warrantyDays)
+  };
 
   return (
     <div className="space-y-5">
@@ -58,7 +75,7 @@ export function RepairAccessOrderDetail({
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Seguimiento tecnico</p>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <h1 className="text-4xl font-semibold tracking-[-0.05em] text-slate-950">{order.repairNumber}</h1>
-              <RepairAccessStatusBadge status={order.status} />
+              <RepairAccessStatusBadge status={status} />
             </div>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
               {order.customer.fullName} - {order.customer.phone || "sin telefono"} - {deviceLabel || "Equipo"} - ingreso {formatDate(order.intakeDate)}
@@ -71,13 +88,13 @@ export function RepairAccessOrderDetail({
         </div>
 
         <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <HeaderMetric label="Presupuesto" value={formatCurrency(order.budgetAmount)} />
-          <HeaderMetric label="Total final" value={formatCurrency(order.finalAmount)} />
+          <HeaderMetric label="Presupuesto" value={formatCurrency(liveOrder.budgetAmount)} />
+          <HeaderMetric label="Total final" value={formatCurrency(liveOrder.finalAmount)} />
           <HeaderMetric label="Medio" value={getRepairAccessPaymentLabel(order.paymentMethod)} />
           <HeaderMetric label="Cobro en ficha" value={order.isPaid ? "Informado" : "Sin informar"} />
         </div>
 
-        <RepairAccessWhatsAppPanel order={order} />
+        <RepairAccessWhatsAppPanel order={liveOrder} />
       </Card>
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
@@ -150,7 +167,12 @@ export function RepairAccessOrderDetail({
             </Field>
 
             <Field className="lg:col-span-3" label="Detalle del presupuesto">
-              <Textarea defaultValue={order.budgetDetail ?? ""} name="budgetDetail" placeholder="Detalle para enviar al cliente por WhatsApp" />
+              <Textarea
+                name="budgetDetail"
+                onChange={(event) => setBudgetDetail(event.target.value)}
+                placeholder="Detalle para enviar al cliente por WhatsApp"
+                value={budgetDetail}
+              />
             </Field>
 
             <Field className="lg:col-span-6" label="Respuesta del cliente / comentario de estado">
@@ -184,7 +206,13 @@ export function RepairAccessOrderDetail({
                   Registrar cobro informado en ficha
                 </label>
                 <Field className="lg:col-span-2" label="Garantia en dias">
-                  <Input defaultValue={order.warrantyDays || 0} min={0} name="warrantyDays" type="number" />
+                  <Input
+                    min={0}
+                    name="warrantyDays"
+                    onChange={(event) => setWarrantyDays(event.target.value)}
+                    type="number"
+                    value={warrantyDays}
+                  />
                 </Field>
                 <Field className="lg:col-span-2" label="Notas de cobro">
                   <Input defaultValue={order.paymentNotes ?? ""} name="paymentNotes" placeholder="Senia, saldo o acuerdo" />

@@ -20,12 +20,13 @@ export type RepairAccessWhatsAppTemplate = {
   message: string;
 };
 
-function firstName(fullName: string) {
-  return fullName.trim().split(/\s+/)[0] || "como estas";
+function customerName(fullName: string) {
+  return fullName.trim() || "cliente";
 }
 
-function customerGreeting() {
-  return "Hola buen dia, le hablamos de parte de Chetech.";
+function customerGreeting(fullName: string, singular = false) {
+  const verb = singular ? "le hablo" : "le hablamos";
+  return `Hola ${customerName(fullName)}, buen dia. ${verb} de parte de Chetech.`;
 }
 
 function formatAmount(amount: number) {
@@ -64,7 +65,7 @@ export function getRepairAccessWhatsAppTemplate(
   kind?: RepairAccessWhatsAppKind
 ): RepairAccessWhatsAppTemplate {
   const selectedKind = kind ?? getDefaultWhatsAppKind(order.status);
-  const name = firstName(order.customerName);
+  const name = customerName(order.customerName);
   const device = order.deviceLabel || "equipo";
   const amount = formatAmount(getAmount(order));
   const budgetDetail = order.budgetDetail?.trim();
@@ -75,10 +76,10 @@ export function getRepairAccessWhatsAppTemplate(
       kind: "budget",
       label: "Enviar presupuesto",
       message: [
-        customerGreeting(),
+        customerGreeting(order.customerName),
         `Le paso el presupuesto de la reparacion de su equipo ${device}.`,
-        budgetDetail ? `${budgetDetail}.` : "",
-        amount ? `le saldria ${amount}.` : "",
+        budgetDetail ? `Detalle del presupuesto: ${budgetDetail}.` : "",
+        amount ? `El total final seria ${amount}.` : "",
         `tiene de garantia ${order.warrantyDays || 0} dias.`
       ].filter(Boolean).join(" ")
     };
@@ -102,7 +103,7 @@ export function getRepairAccessWhatsAppTemplate(
       kind: "no_solution",
       label: "Avisar sin solucion",
       message: [
-        customerGreeting().replace("le hablamos", "le hablo"),
+        customerGreeting(order.customerName, true),
         `lamentamos informarle que su equipo ${device} no va a tener reparacion.`
       ].join(" ")
     };
