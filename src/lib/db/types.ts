@@ -285,6 +285,7 @@ export type Database = {
         Row: {
           id: string;
           full_name: string;
+          full_name_normalized: string | null;
           phone: string | null;
           dni: string | null;
           email: string | null;
@@ -297,6 +298,7 @@ export type Database = {
         Insert: {
           id?: string;
           full_name: string;
+          full_name_normalized?: string | null;
           phone?: string | null;
           dni?: string | null;
           email?: string | null;
@@ -308,6 +310,7 @@ export type Database = {
         };
         Update: {
           full_name?: string;
+          full_name_normalized?: string | null;
           phone?: string | null;
           dni?: string | null;
           email?: string | null;

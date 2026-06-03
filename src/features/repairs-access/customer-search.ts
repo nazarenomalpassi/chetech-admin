@@ -16,7 +16,7 @@ export function buildRepairAccessCustomerSearchFilters(value: string) {
   const query = normalizeRepairAccessLookup(value);
   if (query.length < 2) return [];
 
-  const filters = [`full_name.ilike.%${query}%`];
+  const filters = [`full_name.ilike.%${query}%`, `full_name_normalized.ilike.%${query}%`];
   const digits = getDigits(value);
 
   if (digits.length >= 2) {

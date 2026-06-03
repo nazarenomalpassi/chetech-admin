@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { normalizeRepairAccessLookup } from "@/features/repairs-access/customer-search";
 import { repairAccessIntakeSchema, repairAccessTechnicalSchema } from "@/features/repairs-access/schemas";
 import { createAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
@@ -105,6 +106,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
 
   const customerPayload = {
     full_name: parsed.data.customerName,
+    full_name_normalized: normalizeRepairAccessLookup(parsed.data.customerName),
     phone: emptyToNull(parsed.data.customerPhone),
     phone_normalized: normalizePhone(parsed.data.customerPhone),
     alternate_phone: emptyToNull(parsed.data.customerAlternatePhone),

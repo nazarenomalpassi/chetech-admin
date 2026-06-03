@@ -5,6 +5,8 @@ import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import xlsx from "xlsx";
 
+import { normalizeRepairAccessLookup } from "@/features/repairs-access/customer-search";
+
 const workbookPath =
   process.argv[2] ?? "C:\\Users\\nazar\\Downloads\\ClientesExportados_20260601_164216.xlsx";
 const dryRun = process.argv.includes("--dry-run");
@@ -228,6 +230,7 @@ async function main() {
     if (existing) {
       const payload = {
         full_name: customer.fullName || existing.full_name,
+        full_name_normalized: normalizeRepairAccessLookup(customer.fullName || existing.full_name),
         phone: customer.phone ?? existing.phone,
         phone_normalized: customer.phoneNormalized ?? existing.phone_normalized,
         alternate_phone: customer.alternatePhone ?? existing.alternate_phone,
@@ -275,6 +278,7 @@ async function main() {
       .from("repair_access_customers")
       .insert({
         full_name: customer.fullName,
+        full_name_normalized: normalizeRepairAccessLookup(customer.fullName),
         phone: customer.phone,
         phone_normalized: customer.phoneNormalized,
         alternate_phone: customer.alternatePhone,
