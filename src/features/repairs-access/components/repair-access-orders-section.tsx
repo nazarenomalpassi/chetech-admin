@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { deleteRepairAccessOrderAction } from "@/features/repairs-access/actions";
+import { cancelRepairAccessOrderAction } from "@/features/repairs-access/actions";
 import {
   getRepairAccessPaymentLabel,
   getRepairAccessStatusLabel,
@@ -129,9 +129,9 @@ export function RepairAccessOrdersSection({
                           <RepairAccessWhatsAppButton order={order} />
                           <Button onClick={() => onOpenDetail(order)} size="sm" type="button">Ver detalle</Button>
                           <Button onClick={() => onEdit(order)} size="sm" type="button" variant="secondary">Editar ingreso</Button>
-                          <form action={deleteRepairAccessOrderAction}>
+                          <form action={cancelRepairAccessOrderAction}>
                             <input name="id" type="hidden" value={order.id} />
-                            <Button size="sm" type="submit" variant="danger">Eliminar</Button>
+                            <Button size="sm" type="submit" variant="danger">Anular</Button>
                           </form>
                         </div>
                       </td>

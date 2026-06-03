@@ -19,7 +19,7 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     repair_deleted: { success: true, message: "Reparacion eliminada correctamente." },
     repair_access_created: { success: true, message: "Orden Access guardada correctamente." },
     repair_access_updated: { success: true, message: "Orden Access actualizada correctamente." },
-    repair_access_deleted: { success: true, message: "Orden Access eliminada correctamente." },
+    repair_access_cancelled: { success: true, message: "Orden Access anulada correctamente, sin borrar el historial." },
     invoice_created: { success: true, message: "Comprobante creado correctamente." },
     invoice_updated: { success: true, message: "Comprobante actualizado correctamente." },
     invoice_payment_added: { success: true, message: "Pago registrado correctamente." },

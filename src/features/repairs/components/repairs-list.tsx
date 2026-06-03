@@ -9,25 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteRepairAction, saveRepairAction } from "@/features/repairs/actions";
+import { buildRepairFormFromRepair, canUsePaymentMethod, type RepairFormValues, type RepairListRecord } from "@/features/repairs/repair-form";
 import { repairStatusValues } from "@/features/repairs/schemas";
 import type { ActionResult } from "@/lib/form-state";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { formatCurrency, formatDate } from "@/lib/utils";
-
-type Repair = {
-  id: string;
-  repairAccessOrderId: string | null;
-  repairAccessOrderNumber: string;
-  customerName: string;
-  customerPhone: string;
-  device: string;
-  issueDescription: string;
-  finalPrice: number;
-  estimatedPrice: number;
-  status: string;
-  observations: string | null;
-  createdAt: string;
-};
 
 type AccessOrder = {
   id: string;
@@ -40,20 +26,6 @@ type AccessOrder = {
   paymentMethod: string;
   warrantyDays: number;
   warrantyConditions: string;
-  observations: string;
-};
-
-type RepairFormValues = {
-  id: string;
-  repairAccessOrderId: string;
-  accessOrderNumber: string;
-  customerName: string;
-  customerPhone: string;
-  device: string;
-  issueDescription: string;
-  status: string;
-  amount: string;
-  paymentMethod: string;
   observations: string;
 };
 
@@ -81,34 +53,14 @@ const repairStatusLabels: Record<string, string> = {
   cancelado: "Cancelado"
 };
 
-function canUsePaymentMethod(value: string) {
-  return PAYMENT_METHODS.some((method) => method.value === value);
-}
-
-function buildFormFromRepair(repair: Repair): RepairFormValues {
-  return {
-    id: repair.id,
-    repairAccessOrderId: repair.repairAccessOrderId ?? "",
-    accessOrderNumber: repair.repairAccessOrderNumber ?? "",
-    customerName: repair.customerName,
-    customerPhone: repair.customerPhone ?? "",
-    device: repair.device,
-    issueDescription: repair.issueDescription,
-    status: repair.status,
-    amount: String(repair.finalPrice || repair.estimatedPrice || ""),
-    paymentMethod: "efectivo",
-    observations: repair.observations ?? ""
-  };
-}
-
 export function RepairsList({
   repairs,
   message
 }: {
-  repairs: Repair[];
+  repairs: RepairListRecord[];
   message: ActionResult | null;
 }) {
-  const [editing, setEditing] = useState<Repair | null>(null);
+  const [editing, setEditing] = useState<RepairListRecord | null>(null);
   const [formValues, setFormValues] = useState<RepairFormValues>(emptyFormValues);
   const [lookupStatus, setLookupStatus] = useState<{ loading: boolean; message: string; success: boolean }>({
     loading: false,
@@ -128,10 +80,10 @@ export function RepairsList({
     setFormValues(emptyFormValues);
   }
 
-  function startEdit(repair: Repair) {
+  function startEdit(repair: RepairListRecord) {
     setEditing(repair);
     setLookupStatus({ loading: false, message: "", success: false });
-    setFormValues(buildFormFromRepair(repair));
+    setFormValues(buildRepairFormFromRepair(repair));
   }
 
   async function loadAccessOrder() {

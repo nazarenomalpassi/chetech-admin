@@ -18,14 +18,14 @@ export type RepairAccessStatus = (typeof repairAccessStatusValues)[number];
 type StatusTone = "default" | "success" | "warning" | "danger";
 
 export const repairAccessStatusMeta: Record<RepairAccessStatus, { label: string; shortLabel: string; tone: StatusTone; lane: string }> = {
-  pendiente_revision: { label: "Pendiente de revisión", shortLabel: "Pendiente", tone: "warning", lane: "Recepción" },
-  en_revision: { label: "En revisión", shortLabel: "Revisión", tone: "warning", lane: "Técnica" },
+  pendiente_revision: { label: "Pendiente de revision", shortLabel: "Pendiente", tone: "warning", lane: "Recepcion" },
+  en_revision: { label: "En revision", shortLabel: "Revision", tone: "warning", lane: "Tecnica" },
   presupuestado: { label: "Presupuestado", shortLabel: "Presupuesto", tone: "default", lane: "Presupuesto" },
   presupuestado_aceptado: { label: "Presupuestado y aceptado", shortLabel: "Aceptado", tone: "success", lane: "Presupuesto" },
   presupuestado_rechazado: { label: "Presupuestado y rechazado", shortLabel: "Rechazado", tone: "danger", lane: "Presupuesto" },
   listo_para_retirar: { label: "Listo para retirar", shortLabel: "Retirar", tone: "success", lane: "Entrega" },
   retirado: { label: "Retirado por cliente", shortLabel: "Retirado", tone: "success", lane: "Cierre" },
-  sin_solucion: { label: "Sin solución", shortLabel: "Sin solución", tone: "danger", lane: "Cierre" }
+  sin_solucion: { label: "Sin solucion", shortLabel: "Sin solucion", tone: "danger", lane: "Cierre" }
 };
 
 export const repairAccessStatusOptions = repairAccessStatusValues.map((status) => ({
@@ -40,13 +40,13 @@ export const repairAccessClosedStatuses = ["retirado", "sin_solucion", "presupue
 export const repairAccessLanes = [
   {
     key: "recepcion",
-    title: "Recepción",
+    title: "Recepcion",
     description: "Ingreso del equipo, falla declarada y prioridad del mostrador.",
     statuses: ["pendiente_revision"]
   },
   {
     key: "tecnica",
-    title: "Mesa técnica",
+    title: "Mesa tecnica",
     description: "Revision, diagnostico, avance y decisiones del tecnico.",
     statuses: ["en_revision"]
   },

@@ -312,21 +312,56 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
   redirect(`/reparaciones-access?status=repair_access_updated&order=${parsed.data.id}`);
 }
 
-export async function deleteRepairAccessOrderAction(formData: FormData) {
+export async function cancelRepairAccessOrderAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
+  const previousOrder = await (supabase as any)
+    .from("repair_access_orders")
+    .select("id, status, notes, is_paid")
+    .eq("id", id)
+    .maybeSingle();
 
-  const { error } = await (supabase as any).from("repair_access_orders").delete().eq("id", id);
+  if (previousOrder.error || !previousOrder.data) {
+    redirectWithError(previousOrder.error?.message ?? "No se encontro la orden.", id);
+  }
+
+  if (previousOrder.data.is_paid) {
+    redirectWithError("La orden ya esta cobrada. Primero reverti el cobro desde Reparaciones para no desincronizar caja.", id);
+  }
+
+  const now = new Date().toISOString();
+  const cancellationNote = `Orden anulada desde Reparaciones Access el ${now.slice(0, 10)}.`;
+  const notes = [emptyToNull(previousOrder.data.notes), cancellationNote].filter(Boolean).join("\n\n");
+
+  const { error } = await (supabase as any)
+    .from("repair_access_orders")
+    .update({
+      status: "sin_solucion",
+      notes,
+      updated_by: user.id,
+      updated_at: now
+    })
+    .eq("id", id);
   if (error) redirectWithError(error.message);
+
+  await insertStatusHistory({
+    supabase,
+    repairOrderId: id,
+    previousStatus: previousOrder.data.status,
+    nextStatus: "sin_solucion",
+    userId: user.id,
+    notes: cancellationNote
+  });
 
   await createAuditLog({
     entityType: "repair_access_orders",
     entityId: id,
-    action: "delete",
-    userId: user.id
+    action: "update",
+    userId: user.id,
+    changes: { status: "sin_solucion", notes }
   });
 
   revalidatePath("/reparaciones-access");
-  redirect("/reparaciones-access?status=repair_access_deleted");
+  redirect("/reparaciones-access?status=repair_access_cancelled");
 }

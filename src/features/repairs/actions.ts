@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { buildAccessPaidPayload, buildAccessUnpaidPayload } from "@/features/repairs/repair-access-sync";
 import { repairStatusValues } from "@/features/repairs/schemas";
 import { createAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
@@ -26,14 +27,6 @@ function redirectWithError(message: string, id?: string): never {
   const params = new URLSearchParams({ error: message });
   if (id) params.set("edit", id);
   redirect(`/reparaciones?${params.toString()}`);
-}
-
-function addDaysToDate(date: string, days: number) {
-  if (days <= 0) return null;
-
-  const result = new Date(`${date}T00:00:00.000Z`);
-  result.setUTCDate(result.getUTCDate() + days);
-  return result.toISOString().slice(0, 10);
 }
 
 async function markAccessOrderAsRetired({
@@ -63,26 +56,8 @@ async function markAccessOrderAsRetired({
     redirectWithError(previousAccessOrder.error?.message ?? "No se encontro la orden Access vinculada.", repairId);
   }
 
-  const now = new Date();
-  const nowIso = now.toISOString();
-  const today = nowIso.slice(0, 10);
   const warrantyDays = Number(previousAccessOrder.data.warranty_days ?? 0);
-  const warrantyUntil = addDaysToDate(today, warrantyDays);
-  const accessPayload = {
-    status: "retirado",
-    final_amount: amount,
-    payment_method: paymentMethod,
-    payment_notes: paymentNotes,
-    is_paid: true,
-    paid_at: nowIso,
-    picked_up_at: nowIso,
-    delivered_at: nowIso,
-    warranty_start: warrantyDays > 0 ? today : null,
-    warranty_until: warrantyUntil,
-    warranty_active: Boolean(warrantyUntil),
-    updated_by: userId,
-    updated_at: nowIso
-  };
+  const accessPayload = buildAccessPaidPayload({ amount, paymentMethod, paymentNotes, userId, warrantyDays });
 
   const { error: accessUpdateError } = await (supabase as any)
     .from("repair_access_orders")
@@ -100,6 +75,50 @@ async function markAccessOrderAsRetired({
         next_status: "retirado",
         changed_by: userId,
         notes: `Facturada desde Reparaciones (${repairId})`
+      });
+  }
+}
+
+async function markAccessOrderAsUnpaid({
+  supabase,
+  repairId,
+  repairAccessOrderId,
+  userId,
+  notes
+}: {
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>;
+  repairId: string;
+  repairAccessOrderId: string;
+  userId: string;
+  notes: string;
+}) {
+  const previousAccessOrder = await (supabase as any)
+    .from("repair_access_orders")
+    .select("id, status")
+    .eq("id", repairAccessOrderId)
+    .maybeSingle();
+
+  if (previousAccessOrder.error || !previousAccessOrder.data) {
+    redirectWithError(previousAccessOrder.error?.message ?? "No se encontro la orden Access vinculada.", repairId);
+  }
+
+  const accessPayload = buildAccessUnpaidPayload({ userId });
+  const { error: accessUpdateError } = await (supabase as any)
+    .from("repair_access_orders")
+    .update(accessPayload)
+    .eq("id", repairAccessOrderId);
+
+  if (accessUpdateError) redirectWithError(accessUpdateError.message, repairId);
+
+  if (previousAccessOrder.data.status !== accessPayload.status) {
+    await (supabase as any)
+      .from("repair_access_status_history")
+      .insert({
+        repair_order_id: repairAccessOrderId,
+        previous_status: previousAccessOrder.data.status,
+        next_status: accessPayload.status,
+        changed_by: userId,
+        notes
       });
   }
 }
@@ -124,6 +143,18 @@ export async function saveRepairAction(formData: FormData) {
 
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
+  const previousRepair = parsed.data.id
+    ? await (supabase as any)
+        .from("repairs")
+        .select("id, repair_access_order_id")
+        .eq("id", parsed.data.id)
+        .maybeSingle()
+    : null;
+
+  if (previousRepair?.error) {
+    redirectWithError(previousRepair.error.message, parsed.data.id);
+  }
+
   const payload = {
     repair_access_order_id: parsed.data.repairAccessOrderId ?? null,
     customer_name: parsed.data.customerName,
@@ -148,6 +179,18 @@ export async function saveRepairAction(formData: FormData) {
 
   await (supabase as any).from("repair_payments").delete().eq("repair_id", data.id);
 
+  const previousAccessOrderId = previousRepair?.data?.repair_access_order_id ?? null;
+  const nextAccessOrderId = parsed.data.repairAccessOrderId ?? null;
+  if (previousAccessOrderId && previousAccessOrderId !== nextAccessOrderId) {
+    await markAccessOrderAsUnpaid({
+      supabase,
+      repairId: data.id,
+      repairAccessOrderId: previousAccessOrderId,
+      userId: user.id,
+      notes: `Cobro desvinculado desde Reparaciones (${data.id})`
+    });
+  }
+
   if (parsed.data.amount > 0) {
     const paymentNotes = parsed.data.observations || null;
     const { error: paymentError } = await (supabase as any).from("repair_payments").insert({
@@ -171,6 +214,14 @@ export async function saveRepairAction(formData: FormData) {
         userId: user.id
       });
     }
+  } else if (nextAccessOrderId) {
+    await markAccessOrderAsUnpaid({
+      supabase,
+      repairId: data.id,
+      repairAccessOrderId: nextAccessOrderId,
+      userId: user.id,
+      notes: `Cobro revertido desde Reparaciones (${data.id})`
+    });
   }
 
   await createAuditLog({
@@ -191,12 +242,33 @@ export async function deleteRepairAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
+  const existingRepair = await (supabase as any)
+    .from("repairs")
+    .select("id, repair_access_order_id")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (existingRepair.error || !existingRepair.data) {
+    redirectWithError(existingRepair.error?.message ?? "No se encontro la reparacion.", id);
+  }
+
+  if (existingRepair.data.repair_access_order_id) {
+    await markAccessOrderAsUnpaid({
+      supabase,
+      repairId: id,
+      repairAccessOrderId: existingRepair.data.repair_access_order_id,
+      userId: user.id,
+      notes: `Reparacion eliminada y cobro revertido (${id})`
+    });
+  }
+
   const { error } = await (supabase as any).from("repairs").delete().eq("id", id);
 
   if (error) redirectWithError(error.message);
 
   await createAuditLog({ entityType: "repairs", entityId: id, action: "delete", userId: user.id });
   revalidatePath("/reparaciones");
+  revalidatePath("/reparaciones-access");
   revalidatePath("/dashboard");
   redirect("/reparaciones?status=repair_deleted");
 }
