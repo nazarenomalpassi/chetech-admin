@@ -21,6 +21,11 @@ function emptyToNull(value?: string | null) {
   return trimmed.length ? trimmed : null;
 }
 
+function optionalFormString(formData: FormData, key: string) {
+  const value = formData.get(key);
+  return typeof value === "string" ? value : undefined;
+}
+
 function normalizePhone(value?: string | null) {
   const text = emptyToNull(value);
   if (!text) return null;
@@ -209,21 +214,21 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
 export async function updateRepairAccessTechnicalAction(formData: FormData) {
   const parsed = repairAccessTechnicalSchema.safeParse({
     id: formData.get("id"),
-    technicianName: formData.get("technicianName") || undefined,
-    technicalDiagnosis: formData.get("technicalDiagnosis") || undefined,
-    repairProgress: formData.get("repairProgress"),
-    internalObservations: formData.get("internalObservations") || undefined,
-    usedParts: formData.get("usedParts") || undefined,
-    workPerformed: formData.get("workPerformed") || undefined,
+    technicianName: optionalFormString(formData, "technicianName"),
+    technicalDiagnosis: optionalFormString(formData, "technicalDiagnosis"),
+    repairProgress: optionalFormString(formData, "repairProgress"),
+    internalObservations: optionalFormString(formData, "internalObservations"),
+    usedParts: optionalFormString(formData, "usedParts"),
+    workPerformed: optionalFormString(formData, "workPerformed"),
     budgetAmount: formData.get("budgetAmount") || 0,
-    budgetDetail: formData.get("budgetDetail"),
-    budgetResponseNotes: formData.get("budgetResponseNotes"),
+    budgetDetail: optionalFormString(formData, "budgetDetail"),
+    budgetResponseNotes: optionalFormString(formData, "budgetResponseNotes"),
     finalAmount: formData.get("finalAmount") || 0,
-    paymentMethod: formData.get("paymentMethod"),
-    paymentNotes: formData.get("paymentNotes"),
+    paymentMethod: optionalFormString(formData, "paymentMethod"),
+    paymentNotes: optionalFormString(formData, "paymentNotes"),
     warrantyDays: formData.get("warrantyDays") || 0,
-    warrantyUntil: formData.get("warrantyUntil"),
-    warrantyConditions: formData.get("warrantyConditions"),
+    warrantyUntil: optionalFormString(formData, "warrantyUntil"),
+    warrantyConditions: optionalFormString(formData, "warrantyConditions"),
     status: formData.get("status"),
     isPaid: formData.get("isPaid") === "on"
   });
