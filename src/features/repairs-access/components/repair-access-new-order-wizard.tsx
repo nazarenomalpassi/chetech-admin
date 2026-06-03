@@ -236,11 +236,7 @@ export function RepairAccessNewOrderWizard({
 
         <section className={activeStep === "equipo" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
           <Field className="lg:col-span-2" label="Tipo de equipo">
-            <Select
-              defaultValue={editing?.device.deviceType ?? "TV"}
-              name="deviceType"
-              options={["TV", "Notebook", "PC", "Celular", "Consola", "Monitor", "Tablet", "Electrodomestico", "Otro"].map((value) => ({ value, label: value }))}
-            />
+            <Input defaultValue={editing?.device.deviceType ?? ""} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
           </Field>
           <Field className="lg:col-span-2" label="Marca">
             <Input defaultValue={editing?.device.brand ?? ""} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
