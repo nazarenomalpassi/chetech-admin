@@ -1,7 +1,6 @@
 import { toOperationalDateTime } from "@/lib/utils";
-import { normalizeCashMethodValue } from "@/lib/cash";
+import { normalizeCashMethodValue, type CashMovementType } from "@/lib/cash";
 
-type CashMovementType = "venta" | "reparacion" | "gasto" | "facturacion" | "sueldo";
 type CashMethod = "efectivo" | "mp" | "nx";
 
 export function normalizeAccountingMethod(method: string | null | undefined): CashMethod | null {

@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { closeCashAction } from "@/features/cash/actions";
 import type { ActionResult } from "@/lib/form-state";
-import { formatCashMethod } from "@/lib/cash";
+import { formatCashMethod, isCashIncomeMovement } from "@/lib/cash";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 type CashData = {
@@ -44,11 +44,13 @@ function formatMovementType(type: string) {
   if (type === "gasto") return "Gasto";
   if (type === "facturacion") return "Facturacion";
   if (type === "sueldo") return "Sueldo";
+  if (type === "ajuste_ingreso") return "Ajuste de caja";
+  if (type === "ajuste_egreso") return "Ajuste de caja";
   return type;
 }
 
 function isIncome(type: string) {
-  return type === "venta" || type === "reparacion" || type === "facturacion";
+  return isCashIncomeMovement(type);
 }
 
 export function CashView({ canClose, data, message }: { canClose: boolean; data: CashData; message: ActionResult | null }) {

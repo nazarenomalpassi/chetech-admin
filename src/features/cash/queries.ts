@@ -1,6 +1,12 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCashSettings } from "@/lib/app-settings";
-import { CASH_METHODS, normalizeCashMethodValue, type CashMethod } from "@/lib/cash";
+import {
+  CASH_METHODS,
+  isCashIncomeMovement,
+  isCashOutcomeMovement,
+  normalizeCashMethodValue,
+  type CashMethod
+} from "@/lib/cash";
 
 const ARGENTINA_UTC_OFFSET_HOURS = 3;
 
@@ -34,11 +40,11 @@ function getArgentinaDayRange(date: Date) {
 }
 
 function isIncome(type: string) {
-  return type === "venta" || type === "reparacion" || type === "facturacion";
+  return isCashIncomeMovement(type);
 }
 
 function isOutcome(type: string) {
-  return type === "gasto" || type === "sueldo";
+  return isCashOutcomeMovement(type);
 }
 
 export async function getCashData() {

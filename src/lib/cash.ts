@@ -2,6 +2,19 @@ export const CASH_METHODS = ["efectivo", "nx", "mp"] as const;
 
 export type CashMethod = (typeof CASH_METHODS)[number];
 export type CashLabelContext = "general" | "salary";
+export type CashMovementType =
+  | "venta"
+  | "reparacion"
+  | "gasto"
+  | "facturacion"
+  | "sueldo"
+  | "ajuste_ingreso"
+  | "ajuste_egreso";
+
+const CASH_INCOME_MOVEMENT_TYPES = ["venta", "reparacion", "facturacion", "ajuste_ingreso"];
+const CASH_OUTCOME_MOVEMENT_TYPES = ["gasto", "sueldo", "ajuste_egreso"];
+const PROFIT_INCOME_MOVEMENT_TYPES = ["venta", "reparacion", "facturacion"];
+const PROFIT_OUTCOME_MOVEMENT_TYPES = ["gasto"];
 
 export const CASH_OPENING_BALANCES: Record<CashMethod, number> = {
   efectivo: 193573,
@@ -55,4 +68,20 @@ export function getCashMethodOptions(context: CashLabelContext = "general") {
     value: method,
     label: labels[method]
   }));
+}
+
+export function isCashIncomeMovement(type: string) {
+  return CASH_INCOME_MOVEMENT_TYPES.includes(type);
+}
+
+export function isCashOutcomeMovement(type: string) {
+  return CASH_OUTCOME_MOVEMENT_TYPES.includes(type);
+}
+
+export function isProfitIncomeMovement(type: string) {
+  return PROFIT_INCOME_MOVEMENT_TYPES.includes(type);
+}
+
+export function isProfitOutcomeMovement(type: string) {
+  return PROFIT_OUTCOME_MOVEMENT_TYPES.includes(type);
 }
