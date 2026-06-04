@@ -10,3 +10,4 @@ dist
 .vercel
 .agents
 skills-lock.json
+supabase/.temp
