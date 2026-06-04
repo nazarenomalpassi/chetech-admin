@@ -9,20 +9,61 @@ import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { deleteRepairAction, saveRepairAction } from "@/features/repairs/actions";
+import { canUsePaymentMethod } from "@/features/repairs/repair-form";
 import type { ActionResult } from "@/lib/form-state";
 import type { PaymentSplit } from "@/lib/payment-splits";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 
 type Repair = {
   id: string;
+  repairAccessOrderId: string | null;
+  repairAccessOrderNumber: string;
   customerName: string;
+  customerPhone: string;
   device: string;
   orderNumber: string | null;
+  issueDescription: string;
   finalPrice: number;
   estimatedPrice: number;
+  paymentMethod: string;
   status: string;
+  observations: string | null;
   createdAt: string;
   payments: { method: string; amount: number }[];
+};
+
+type AccessOrder = {
+  id: string;
+  repairNumber: string;
+  customerName: string;
+  customerPhone: string;
+  device: string;
+  issueDescription: string;
+  amount: number;
+  paymentMethod: string;
+  observations: string;
+};
+
+type RepairFormFields = {
+  id: string;
+  repairAccessOrderId: string;
+  accessOrderNumber: string;
+  customerName: string;
+  customerPhone: string;
+  device: string;
+  orderNumber: string;
+  issueDescription: string;
+};
+
+const emptyRepairFormFields: RepairFormFields = {
+  id: "",
+  repairAccessOrderId: "",
+  accessOrderNumber: "",
+  customerName: "",
+  customerPhone: "",
+  device: "",
+  orderNumber: "",
+  issueDescription: ""
 };
 
 export function RepairsList({
@@ -37,6 +78,12 @@ export function RepairsList({
   const today = getLocalDateInputValue();
   const [editing, setEditing] = useState<Repair | null>(null);
   const [search, setSearch] = useState("");
+  const [formValues, setFormValues] = useState<RepairFormFields>(emptyRepairFormFields);
+  const [lookupStatus, setLookupStatus] = useState<{ loading: boolean; message: string; success: boolean }>({
+    loading: false,
+    message: "",
+    success: false
+  });
   const [entryDate, setEntryDate] = useState(today);
   const [amount, setAmount] = useState("");
   const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "efectivo", amount: 0 }]);
@@ -48,13 +95,28 @@ export function RepairsList({
 
     return [repair.customerName, repair.device, repair.orderNumber ?? ""].some((value) =>
       value.toLowerCase().includes(query)
-    );
+    ) || repair.repairAccessOrderNumber.toLowerCase().includes(query);
   });
 
   const amountValue = Number(amount || 0);
 
+  function updateField(field: keyof RepairFormFields, value: string) {
+    setFormValues((current) => ({ ...current, [field]: value }));
+  }
+
   function startEdit(repair: Repair) {
     setEditing(repair);
+    setLookupStatus({ loading: false, message: "", success: false });
+    setFormValues({
+      id: repair.id,
+      repairAccessOrderId: repair.repairAccessOrderId ?? "",
+      accessOrderNumber: repair.repairAccessOrderNumber || repair.orderNumber || "",
+      customerName: repair.customerName,
+      customerPhone: repair.customerPhone ?? "",
+      device: repair.device,
+      orderNumber: repair.orderNumber ?? repair.repairAccessOrderNumber ?? "",
+      issueDescription: repair.issueDescription ?? ""
+    });
     setEntryDate(repair.createdAt.slice(0, 10));
     setAmount(String(repair.finalPrice || repair.estimatedPrice || 0));
     setPayments(
@@ -66,9 +128,60 @@ export function RepairsList({
 
   function resetForm() {
     setEditing(null);
+    setLookupStatus({ loading: false, message: "", success: false });
+    setFormValues(emptyRepairFormFields);
     setEntryDate(today);
     setAmount("");
     setPayments([{ method: "efectivo", amount: 0 }]);
+  }
+
+  async function loadAccessOrder() {
+    const requestedNumber = formValues.accessOrderNumber.trim();
+
+    if (!requestedNumber) {
+      setLookupStatus({ loading: false, message: "Ingresa un numero de orden Access.", success: false });
+      return;
+    }
+
+    setLookupStatus({ loading: true, message: "Buscando orden Access...", success: false });
+
+    try {
+      const response = await fetch(`/api/repair-access/orders/${encodeURIComponent(requestedNumber)}`, {
+        headers: { accept: "application/json" }
+      });
+      const result = await response.json();
+
+      if (!response.ok || !result.order) {
+        setLookupStatus({ loading: false, message: "No encontre una orden Access con ese numero.", success: false });
+        return;
+      }
+
+      const order = result.order as AccessOrder;
+      const paymentMethod = canUsePaymentMethod(order.paymentMethod) ? order.paymentMethod : "efectivo";
+
+      setEditing(null);
+      setFormValues({
+        id: "",
+        repairAccessOrderId: order.id,
+        accessOrderNumber: order.repairNumber,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        device: order.device,
+        orderNumber: order.repairNumber,
+        issueDescription: order.issueDescription
+      });
+      if (order.amount > 0) {
+        setAmount(String(order.amount));
+        setPayments([{ method: paymentMethod, amount: order.amount }]);
+      }
+      setLookupStatus({
+        loading: false,
+        message: `Orden ${order.repairNumber} cargada. Al guardar el cobro aca, impacta caja y la ficha Access pasa a retirado.`,
+        success: true
+      });
+    } catch {
+      setLookupStatus({ loading: false, message: "No pude consultar la orden Access. Proba de nuevo.", success: false });
+    }
   }
 
   return (
@@ -120,27 +233,79 @@ export function RepairsList({
         ) : null}
 
         <form action={saveRepairAction} className="mt-6 space-y-4">
-          <input name="id" type="hidden" value={editing?.id ?? ""} />
+          <input name="id" type="hidden" value={formValues.id} />
+          <input name="repairAccessOrderId" type="hidden" value={formValues.repairAccessOrderId} />
+          <input name="customerPhone" type="hidden" value={formValues.customerPhone} />
+          <input name="issueDescription" type="hidden" value={formValues.issueDescription} />
           <input name="paymentsJson" type="hidden" value={JSON.stringify(payments)} />
+
+          <div className="rounded-[30px] border border-brand-100 bg-brand-50/70 p-4">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+              <label>
+                <span className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Cargar desde Reparaciones Access
+                </span>
+                <Input
+                  name="accessOrderNumber"
+                  onChange={(event) => updateField("accessOrderNumber", event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void loadAccessOrder();
+                    }
+                  }}
+                  placeholder="REP-000001 o 1"
+                  value={formValues.accessOrderNumber}
+                />
+              </label>
+              <Button disabled={lookupStatus.loading} onClick={() => void loadAccessOrder()} type="button">
+                {lookupStatus.loading ? "Buscando..." : "Cargar orden"}
+              </Button>
+            </div>
+            {lookupStatus.message ? (
+              <p className={`mt-3 rounded-[22px] px-4 py-3 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+                {lookupStatus.message}
+              </p>
+            ) : (
+              <p className="mt-3 text-sm text-slate-500">
+                La orden Access trae cliente, telefono, equipo y falla. El saldo se modifica recien cuando guardas el cobro en esta pantalla.
+              </p>
+            )}
+          </div>
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-5">
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Cliente
               </label>
-              <Input defaultValue={editing?.customerName ?? ""} key={`${editing?.id}-customer`} name="customerName" placeholder="Nombre del cliente" />
+              <Input
+                name="customerName"
+                onChange={(event) => updateField("customerName", event.target.value)}
+                placeholder="Nombre del cliente"
+                value={formValues.customerName}
+              />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Equipo
               </label>
-              <Input defaultValue={editing?.device ?? ""} key={`${editing?.id}-device`} name="device" placeholder="Celular, notebook..." />
+              <Input
+                name="device"
+                onChange={(event) => updateField("device", event.target.value)}
+                placeholder="Celular, notebook..."
+                value={formValues.device}
+              />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Numero de orden
               </label>
-              <Input defaultValue={editing?.orderNumber ?? ""} key={`${editing?.id}-order`} name="orderNumber" placeholder="Ej: 12345" />
+              <Input
+                name="orderNumber"
+                onChange={(event) => updateField("orderNumber", event.target.value)}
+                placeholder="Ej: REP-000001"
+                value={formValues.orderNumber}
+              />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
@@ -175,9 +340,9 @@ export function RepairsList({
                 idleLabel={editing ? "Actualizar reparacion" : "Guardar reparacion"}
                 pendingLabel={editing ? "Actualizando..." : "Guardando..."}
               />
-              {editing ? (
+              {editing || formValues.repairAccessOrderId || formValues.customerName ? (
                 <Button onClick={resetForm} type="button" variant="secondary">
-                  Cancelar
+                  Limpiar
                 </Button>
               ) : null}
             </div>
@@ -208,7 +373,7 @@ export function RepairsList({
               <tr>
                 <th className="px-4 py-4 font-medium">Cliente</th>
                 <th className="px-4 py-4 font-medium">Equipo</th>
-                <th className="px-4 py-4 font-medium">Numero de orden</th>
+                <th className="px-4 py-4 font-medium">Orden</th>
                 <th className="px-4 py-4 font-medium">Ingreso</th>
                 <th className="px-4 py-4 font-medium">Precio final</th>
                 <th className="px-4 py-4 font-medium text-right">Acciones</th>
@@ -217,9 +382,14 @@ export function RepairsList({
             <tbody>
               {filteredRepairs.map((repair) => (
                 <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={repair.id}>
-                  <td className="px-4 py-4 font-medium text-slate-950">{repair.customerName}</td>
+                  <td className="px-4 py-4">
+                    <p className="font-medium text-slate-950">{repair.customerName}</p>
+                    <p className="text-xs text-slate-500">{repair.customerPhone || repair.issueDescription || "-"}</p>
+                  </td>
                   <td className="px-4 py-4 text-slate-600">{repair.device}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{repair.orderNumber || "-"}</td>
+                  <td className="px-4 py-4 font-medium text-slate-950">
+                    {repair.repairAccessOrderNumber || repair.orderNumber || "-"}
+                  </td>
                   <td className="px-4 py-4 text-slate-600">{formatDate(repair.createdAt)}</td>
                   <td className="px-4 py-4 font-medium text-slate-950">
                     {formatCurrency(repair.finalPrice || repair.estimatedPrice)}

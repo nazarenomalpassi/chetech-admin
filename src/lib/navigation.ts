@@ -32,6 +32,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/caja", label: "Caja", icon: Landmark },
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart },
   { href: "/reparaciones", label: "Reparaciones", icon: Wrench },
+  { href: "/reparaciones-access" as Route, label: "Reparaciones Access", icon: Wrench },
   { href: "/facturacion", label: "Facturacion", icon: FileText },
   { href: "/configuracion", label: "Configuracion", icon: Settings }
 ];
