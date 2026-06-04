@@ -1,17 +1,10 @@
-import { subDays } from "date-fns";
-
+import { getCashSettings } from "@/lib/app-settings";
+import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-const CASH_METHODS = ["efectivo", "nx", "mp", "transferencia", "otro"] as const;
-
-function normalizeCashMethod(method: string) {
-  const normalized = (method || "otro").toLowerCase();
-  if (normalized.includes("efectivo")) return "efectivo";
-  if (normalized.includes("nx")) return "nx";
-  if (normalized.includes("mp") || normalized.includes("mercado")) return "mp";
-  if (normalized.includes("transfer")) return "transferencia";
-  return "otro";
-}
+import { getPendingTvBoardsReleaseAmount } from "@/features/dashboard/financial-summary";
+import { getDashboardRange } from "@/features/dashboard/range";
+import { getDashboardInstallmentsData } from "@/features/installments/queries";
+import { getLocalDateInputValue } from "@/lib/utils";
 
 export async function getDashboardData({
   dateFrom,
@@ -21,148 +14,102 @@ export async function getDashboardData({
   dateTo?: string;
 }) {
   const supabase = await createServerSupabaseClient();
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const from = dateFrom ?? subDays(now, 6).toISOString();
-  const to = dateTo ?? now.toISOString();
+  const cashSettings = await getCashSettings();
+  const range = getDashboardRange(dateFrom, dateTo);
 
-  const [
-    salesToday,
-    expensesToday,
-    repairsToday,
-    lowStockProductsRaw,
-    paymentBreakdown,
-    topProducts,
-    recentSales,
-    saleCashRows,
-    repairCashRows,
-    expenseCashRows,
-    invoiceCashRows,
-    invoicePendingRows,
-    invoicesToday
-  ] = await Promise.all([
-    supabase
-      .from("sales")
-      .select("subtotal, profit_total")
-      .gte("sold_at", startOfToday),
-    supabase
-      .from("expenses")
-      .select("amount")
-      .eq("is_voided", false)
-      .gte("expense_date", startOfToday.slice(0, 10)),
-    supabase
-      .from("repair_payments")
-      .select("amount")
-      .gte("payment_date", startOfToday.slice(0, 10)),
+  const todayDate = getLocalDateInputValue();
+  const [lowStockProductsRaw, topProducts, invoicesInRange, cashMovements, tvBoardSales, installmentsDashboard] = await Promise.all([
     supabase
       .from("products")
       .select("id, name, stock, min_stock")
       .order("stock", { ascending: true })
       .limit(24),
-    supabase
-      .from("sale_payments")
-      .select("method, amount")
-      .gte("created_at", from)
-      .lte("created_at", to),
-    (supabase as any).rpc("get_top_products", { date_from: from, date_to: to }),
-    supabase
-      .from("sales")
-      .select("sold_at, subtotal")
-      .gte("sold_at", from)
-      .lte("sold_at", to)
-      .order("sold_at", { ascending: true }),
-    (supabase as any)
-      .from("sale_payments")
-      .select("method, amount")
-      .gte("created_at", from)
-      .lte("created_at", to),
-    (supabase as any)
-      .from("repair_payments")
-      .select("method, amount, payment_date")
-      .gte("payment_date", from.slice(0, 10))
-      .lte("payment_date", to.slice(0, 10)),
-    (supabase as any)
-      .from("expenses")
-      .select("payment_method, amount, expense_date")
-      .eq("is_voided", false)
-      .gte("expense_date", from.slice(0, 10))
-      .lte("expense_date", to.slice(0, 10)),
-    (supabase as any)
-      .from("invoice_payments")
-      .select("method, amount, payment_date")
-      .gte("payment_date", from.slice(0, 10))
-      .lte("payment_date", to.slice(0, 10)),
+    (supabase as any).rpc("get_top_products", {
+      date_from: range.startIso,
+      date_to: range.endIso
+    }),
     (supabase as any)
       .from("invoices")
-      .select("balance")
+      .select("total, created_at")
       .neq("status", "anulado")
-      .gt("balance", 0),
+      .gte("created_at", range.startIso)
+      .lt("created_at", range.endIso),
     (supabase as any)
-      .from("invoice_payments")
-      .select("amount, payment_date")
-      .gte("payment_date", startOfToday.slice(0, 10))
+      .from("movimientos_caja")
+      .select("tipo, monto, medio_pago, fecha")
+      .gte("fecha", cashSettings.movementCutoff),
+    (supabase as any)
+      .from("tv_boards")
+      .select("sold_at, release_date, mercado_libre_net_amount")
+      .not("sold_at", "is", null),
+    getDashboardInstallmentsData(supabase as any, todayDate)
   ]);
 
   const lowStockProducts = ((lowStockProductsRaw.data ?? []) as any[]).filter(
     (product) => Number(product.stock) <= Number(product.min_stock)
   );
 
-  const paymentMap = new Map<string, number>();
-  for (const item of (paymentBreakdown.data ?? []) as any[]) {
-    const method = item.method || "sin_especificar";
-    paymentMap.set(method, (paymentMap.get(method) ?? 0) + Number(item.amount));
-  }
+  const allMovements = cashMovements.error ? [] : ((cashMovements.data ?? []) as any[]);
+  const rangeMovements = allMovements.filter((row) => row.fecha >= range.startIso && row.fecha < range.endIso);
+  const pendingReleaseAmount = tvBoardSales.error
+    ? 0
+    : getPendingTvBoardsReleaseAmount(
+        ((tvBoardSales.data ?? []) as any[]).map((board) => ({
+          soldAt: board.sold_at,
+          releaseDate: board.release_date,
+          netAmount: board.mercado_libre_net_amount === null ? null : Number(board.mercado_libre_net_amount)
+        })),
+        todayDate
+      );
 
-  const chartMap = new Map<string, number>();
-  for (const sale of (recentSales.data ?? []) as any[]) {
-    const key = sale.sold_at.slice(0, 10);
-    chartMap.set(key, (chartMap.get(key) ?? 0) + Number(sale.subtotal));
-  }
-
-  const cashSummary = CASH_METHODS.map((method) => {
-    const salesIncome = ((saleCashRows.data ?? []) as any[])
-      .filter((row) => normalizeCashMethod(row.method) === method)
-      .reduce((acc, row) => acc + Number(row.amount), 0);
-    const repairsIncome = ((repairCashRows.data ?? []) as any[])
-      .filter((row) => normalizeCashMethod(row.method) === method)
-      .reduce((acc, row) => acc + Number(row.amount), 0);
-    const invoicesIncome = ((invoiceCashRows.data ?? []) as any[])
-      .filter((row) => normalizeCashMethod(row.method) === method)
-      .reduce((acc, row) => acc + Number(row.amount), 0);
-    const expensesOutcome = ((expenseCashRows.data ?? []) as any[])
-      .filter((row) => normalizeCashMethod(row.payment_method) === method)
-      .reduce((acc, row) => acc + Number(row.amount), 0);
+  const accountBalances = CASH_METHODS.map((method) => {
+    const methodMovements = allMovements.filter((row) => normalizeCashMethodValue(row.medio_pago) === method);
+    const income = methodMovements
+      .filter((row) => ["venta", "reparacion", "facturacion"].includes(row.tipo))
+      .reduce((acc, row) => acc + Number(row.monto), 0);
+    const outcome = methodMovements
+      .filter((row) => ["gasto", "sueldo"].includes(row.tipo))
+      .reduce((acc, row) => acc + Number(row.monto), 0);
 
     return {
       method,
-      salesIncome,
-      repairsIncome,
-      invoicesIncome,
-      expensesOutcome,
-      balance: salesIncome + repairsIncome + invoicesIncome - expensesOutcome
+      openingBalance: cashSettings.openingBalances[method],
+      balance: cashSettings.openingBalances[method] + income - outcome
     };
   });
 
-  const invoiceIncomeToday = ((invoicesToday.data ?? []) as any[]).reduce(
-    (acc, row) => acc + Number(row.amount),
+  const salesTodayTotal = rangeMovements
+    .filter((row) => row.tipo === "venta")
+    .reduce((acc, row) => acc + Number(row.monto), 0);
+  const expensesTodayTotal = rangeMovements
+    .filter((row) => row.tipo === "gasto")
+    .reduce((acc, row) => acc + Number(row.monto), 0);
+  const repairsTodayTotal = rangeMovements
+    .filter((row) => row.tipo === "reparacion")
+    .reduce((acc, row) => acc + Number(row.monto), 0);
+  const invoiceIncomeToday = ((invoicesInRange.data ?? []) as any[]).reduce(
+    (acc, row) => acc + Number(row.total),
     0
   );
-  const invoicePendingBalance = ((invoicePendingRows.data ?? []) as any[]).reduce(
-    (acc, row) => acc + Number(row.balance),
-    0
-  );
+  const movementIncome = rangeMovements
+    .filter((row) => ["venta", "reparacion", "facturacion"].includes(row.tipo))
+    .reduce((acc, row) => acc + Number(row.monto), 0);
+  const movementOutcome = rangeMovements
+    .filter((row) => ["gasto"].includes(row.tipo))
+    .reduce((acc, row) => acc + Number(row.monto), 0);
+  const realProfitToday = movementIncome - movementOutcome;
 
   return {
-    salesToday: salesToday.data ?? [],
-    expensesToday: expensesToday.data ?? [],
-    repairsToday: repairsToday.data ?? [],
+    salesTodayTotal,
+    expensesTodayTotal,
+    repairsTodayTotal,
     lowStockProducts,
-    paymentBreakdown: Array.from(paymentMap.entries()).map(([method, amount]) => ({ method, amount })),
+    accountBalances,
+    pendingMercadoPagoReleaseAmount: pendingReleaseAmount,
     topProducts: topProducts.data ?? [],
-    recentSales: Array.from(chartMap.entries()).map(([date, total]) => ({ date, total })),
-    cashSummary,
     invoiceIncomeToday,
-    invoicePendingBalance,
-    invoicePendingCount: (invoicePendingRows.data ?? []).length
+    realProfitToday,
+    installmentsDashboard,
+    range
   };
 }

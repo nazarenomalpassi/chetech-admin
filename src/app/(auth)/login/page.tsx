@@ -31,7 +31,7 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[linear-gradient(140deg,#f6faf7_0%,#e8f2ee_42%,#dbe7e1_100%)] lg:grid-cols-[1.15fr_0.85fr]">
+    <main className="grid min-h-screen bg-[linear-gradient(140deg,#f8f8f5_0%,#ecece8_48%,#d8d8d2_100%)] lg:grid-cols-[1.15fr_0.85fr]">
       <section className="hidden flex-col justify-between px-10 py-12 lg:flex">
         <div className="max-w-xl">
           <p className="text-sm font-semibold uppercase tracking-[0.32em] text-brand-700">Chetech</p>
@@ -46,16 +46,16 @@ export default async function LoginPage() {
 
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-soft">
-            <MonitorSmartphone className="h-6 w-6 text-brand-700" />
+            <MonitorSmartphone className="h-6 w-6 text-graphite" />
             <h2 className="mt-4 text-lg font-semibold text-slate-900">Operación omnicanal</h2>
             <p className="mt-2 text-sm text-slate-500">
               Inventario, ventas y reparaciones conectados sobre una misma base.
             </p>
           </div>
-          <div className="rounded-3xl border border-white/60 bg-[#12332c] p-6 text-white shadow-soft">
-            <LockKeyhole className="h-6 w-6 text-brand-200" />
+          <div className="rounded-3xl border border-white/10 bg-graphite p-6 text-white shadow-soft">
+            <LockKeyhole className="h-6 w-6 text-white/70" />
             <h2 className="mt-4 text-lg font-semibold">Acceso seguro</h2>
-            <p className="mt-2 text-sm text-emerald-100/80">
+            <p className="mt-2 text-sm text-white/65">
               Roles, auditoría y protección de rutas listos para crecer con el negocio.
             </p>
           </div>

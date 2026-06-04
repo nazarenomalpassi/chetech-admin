@@ -1,5 +1,6 @@
 import { RepairsList } from "@/features/repairs/components/repairs-list";
 import { getRepairs } from "@/features/repairs/queries";
+import { getCurrentProfile } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
 
 export default async function ReparacionesPage({
@@ -8,10 +9,10 @@ export default async function ReparacionesPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const repairs = await getRepairs();
+  const [{ profile }, repairs] = await Promise.all([getCurrentProfile(), getRepairs()]);
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
 
-  return <RepairsList message={message} repairs={repairs} />;
+  return <RepairsList canDelete={profile.role === "admin"} message={message} repairs={repairs} />;
 }

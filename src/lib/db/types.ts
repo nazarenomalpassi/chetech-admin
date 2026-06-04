@@ -84,6 +84,50 @@ export type Database = {
           updated_at?: string;
         };
       };
+      tv_boards: {
+        Row: {
+          id: string;
+          brand: string;
+          model: string;
+          board_type: "fuente" | "main" | "tcom" | "placa_unica";
+          listed_price: number;
+          is_active: boolean;
+          sold_at: string | null;
+          mercado_libre_net_amount: number | null;
+          release_date: string | null;
+          sale_notes: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          brand: string;
+          model: string;
+          board_type: "fuente" | "main" | "tcom" | "placa_unica";
+          listed_price: number;
+          is_active?: boolean;
+          sold_at?: string | null;
+          mercado_libre_net_amount?: number | null;
+          release_date?: string | null;
+          sale_notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          brand?: string;
+          model?: string;
+          board_type?: "fuente" | "main" | "tcom" | "placa_unica";
+          listed_price?: number;
+          is_active?: boolean;
+          sold_at?: string | null;
+          mercado_libre_net_amount?: number | null;
+          release_date?: string | null;
+          sale_notes?: string | null;
+          updated_at?: string;
+        };
+      };
       sales: {
         Row: {
           id: string;
@@ -198,12 +242,111 @@ export type Database = {
           is_voided?: boolean;
         };
       };
+      salary_withdrawals: {
+        Row: {
+          id: string;
+          withdrawal_date: string;
+          amount: number;
+          payment_method: "efectivo" | "nx" | "mp";
+          notes: string | null;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          withdrawal_date: string;
+          amount: number;
+          payment_method: "efectivo" | "nx" | "mp";
+          notes?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          withdrawal_date?: string;
+          amount?: number;
+          payment_method?: "efectivo" | "nx" | "mp";
+          notes?: string | null;
+        };
+      };
+      installment_sales: {
+        Row: {
+          id: string;
+          product_name: string;
+          customer_name: string;
+          total_amount: number;
+          installments_count: number;
+          notes: string | null;
+          status: "activa" | "finalizada" | "cancelada";
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_name: string;
+          customer_name: string;
+          total_amount: number;
+          installments_count: number;
+          notes?: string | null;
+          status?: "activa" | "finalizada" | "cancelada";
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          product_name?: string;
+          customer_name?: string;
+          total_amount?: number;
+          installments_count?: number;
+          notes?: string | null;
+          status?: "activa" | "finalizada" | "cancelada";
+          updated_at?: string;
+        };
+      };
+      installments: {
+        Row: {
+          id: string;
+          installment_sale_id: string;
+          installment_number: number;
+          due_date: string;
+          amount: number;
+          payment_method: "efectivo" | "nx" | "mp";
+          status: "pendiente" | "pagada" | "vencida" | "cancelada";
+          paid_at: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          installment_sale_id: string;
+          installment_number: number;
+          due_date: string;
+          amount: number;
+          payment_method: "efectivo" | "nx" | "mp";
+          status?: "pendiente" | "pagada" | "vencida" | "cancelada";
+          paid_at?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          due_date?: string;
+          amount?: number;
+          payment_method?: "efectivo" | "nx" | "mp";
+          status?: "pendiente" | "pagada" | "vencida" | "cancelada";
+          paid_at?: string | null;
+          notes?: string | null;
+          updated_at?: string;
+        };
+      };
       repairs: {
         Row: {
           id: string;
           customer_name: string;
           customer_phone: string | null;
           device: string;
+          order_number: string | null;
           brand: string | null;
           model: string | null;
           issue_description: string;
@@ -229,6 +372,7 @@ export type Database = {
           customer_name: string;
           customer_phone?: string | null;
           device: string;
+          order_number?: string | null;
           brand?: string | null;
           model?: string | null;
           issue_description: string;
@@ -246,6 +390,7 @@ export type Database = {
           customer_name?: string;
           customer_phone?: string | null;
           device?: string;
+          order_number?: string | null;
           brand?: string | null;
           model?: string | null;
           issue_description?: string;
@@ -266,6 +411,7 @@ export type Database = {
           method: string;
           amount: number;
           notes: string | null;
+          created_at: string;
         };
         Insert: {
           id?: string;
@@ -274,11 +420,13 @@ export type Database = {
           method: string;
           amount: number;
           notes?: string | null;
+          created_at?: string;
         };
         Update: {
           method?: string;
           amount?: number;
           notes?: string | null;
+          created_at?: string;
         };
       };
       stock_movements: {

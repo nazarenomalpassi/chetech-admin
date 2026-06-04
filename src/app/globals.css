@@ -2,20 +2,198 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Montech";
+  src: url("/brand/MONTECHV02-Bold.otf") format("opentype");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Input Sans";
+  src: url("/brand/InputSans.otf") format("opentype");
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
+  --font-brand: "Montech", "Input Sans", sans-serif;
+  --font-sans: "Input Sans", sans-serif;
+  --canvas: oklch(0.972 0.004 95);
+  --canvas-strong: oklch(0.948 0.005 95);
+  --surface: oklch(0.99 0.002 95);
+  --surface-muted: oklch(0.975 0.004 95);
+  --surface-subtle: oklch(0.958 0.006 95);
+  --line: oklch(0.89 0.01 95);
+  --line-strong: oklch(0.78 0.01 95);
+  --text: oklch(0.225 0.008 95);
+  --text-soft: oklch(0.51 0.011 95);
+  --text-faint: oklch(0.63 0.012 95);
+  --graphite: oklch(0.24 0.008 95);
+  --graphite-strong: oklch(0.18 0.006 95);
+  --success: oklch(0.63 0.11 150);
+  --success-soft: oklch(0.95 0.02 150);
+  --warning: oklch(0.8 0.08 85);
+  --warning-soft: oklch(0.96 0.02 85);
+  --danger: oklch(0.64 0.18 20);
+  --danger-soft: oklch(0.96 0.02 20);
+  --shadow-soft: 0 22px 48px rgba(27, 27, 25, 0.08);
+  --shadow-card: 0 16px 36px rgba(27, 27, 25, 0.06);
+  --shadow-pop: 0 28px 48px rgba(27, 27, 25, 0.12);
+}
+
+html {
+  min-height: 100%;
 }
 
 body {
-  @apply bg-canvas text-slate-900 antialiased;
-  background-image:
-    radial-gradient(circle at top right, rgba(37, 163, 133, 0.12), transparent 24%),
-    linear-gradient(180deg, #fbfcfa 0%, #f3f5f1 100%);
+  min-height: 100vh;
+  color: var(--text);
+  font-family: var(--font-sans);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(circle at top right, rgba(16, 18, 23, 0.075), transparent 24%),
+    radial-gradient(circle at 10% 12%, rgba(16, 18, 23, 0.045), transparent 18%),
+    linear-gradient(90deg, rgba(29, 29, 27, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(29, 29, 27, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, #fafaf8 0%, #f1f1ec 48%, #f7f7f4 100%);
+  background-size: auto, auto, 24px 24px, 24px 24px, auto;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.6;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 18%),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.55), transparent 22%);
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+}
+
+::selection {
+  background: rgba(29, 29, 27, 0.14);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@keyframes surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.page-shell {
+  @apply space-y-5 lg:space-y-6;
+  animation: surface-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.panel-kicker {
+  @apply text-[0.68rem] font-semibold uppercase tracking-[0.34em] text-slate-500;
+}
+
+.panel-heading {
+  @apply mt-2 text-[2rem] font-semibold tracking-[-0.04em] text-slate-950;
+}
+
+.panel-subheading {
+  @apply mt-2 max-w-[72ch] text-sm leading-6 text-slate-500;
+}
+
+.metric-tile {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid rgba(29, 29, 27, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-card);
+}
+
+.metric-tile::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), transparent 38%);
+}
+
+.metric-tile > * {
+  position: relative;
+  z-index: 1;
+}
+
+.table-shell {
+  overflow: hidden;
+  border-radius: 30px;
+  border: 1px solid rgba(29, 29, 27, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: var(--shadow-card);
+}
+
+.table-toolbar {
+  border-bottom: 1px solid rgba(29, 29, 27, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 246, 241, 0.92));
+  padding: 1rem 1.25rem;
+}
+
+.empty-panel {
+  border-radius: 28px;
+  border: 1px dashed rgba(29, 29, 27, 0.15);
+  background: rgba(255, 255, 255, 0.7);
+  padding: 2rem 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  color: rgb(100 116 139);
+}
+
+.status-banner {
+  border-radius: 22px;
+  border-width: 1px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.status-banner--success {
+  border-color: color-mix(in oklab, var(--success) 18%, white);
+  background: var(--success-soft);
+  color: oklch(0.34 0.05 150);
+}
+
+.status-banner--error {
+  border-color: color-mix(in oklab, var(--danger) 22%, white);
+  background: var(--danger-soft);
+  color: oklch(0.42 0.11 20);
 }
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #b2c2b5 transparent;
+  scrollbar-color: rgba(94, 94, 92, 0.55) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -24,10 +202,114 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #b2c2b5;
+  background: rgba(94, 94, 92, 0.5);
+  border: 2px solid transparent;
   border-radius: 999px;
+  background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@media (max-width: 1023px) {
+  .panel-heading {
+    font-size: 1.72rem;
+  }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+
+  body {
+    background-image: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body::before {
+    display: none !important;
+  }
+
+  .admin-shell {
+    min-height: auto !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  .admin-shell > div {
+    display: block !important;
+    max-width: none !important;
+    min-height: auto !important;
+  }
+
+  .admin-sidebar,
+  .admin-topbar,
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-main {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .invoice-page {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .invoice-print-root {
+    width: 100% !important;
+    max-width: 186mm !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+  }
+
+  .invoice-print-root * {
+    box-shadow: none !important;
+  }
+
+  .invoice-header,
+  .invoice-section,
+  .invoice-totals,
+  .invoice-payments {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .invoice-print-root table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .invoice-print-root th,
+  .invoice-print-root td {
+    padding: 8px 10px !important;
+  }
+
+  .invoice-print-root h1 {
+    font-size: 24px !important;
+  }
+
+  .invoice-print-root img {
+    max-width: 150px !important;
+  }
 }

@@ -8,3 +8,5 @@ dist
 *.tsbuildinfo
 
 .vercel
+.agents
+skills-lock.json

@@ -6,9 +6,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
-import { requireUser } from "@/lib/auth";
+import { deleteCashMovement } from "@/lib/accounting";
+import { requireAdmin, requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { invoiceFormSchema, invoicePaymentFormSchema } from "@/features/invoices/schemas";
+import { invoiceFormSchema } from "@/features/invoices/schemas";
 
 function redirectWithError(path: string, message: string, id?: string): never {
   const params = new URLSearchParams({ error: message });
@@ -41,8 +42,7 @@ export async function saveInvoiceAction(formData: FormData) {
     saleId: formData.get("saleId") || null,
     discount: formData.get("discount") || 0,
     notes: formData.get("notes"),
-    items: parseJsonField(formData, "itemsJson", []),
-    payments: parseJsonField(formData, "paymentsJson", [])
+    items: parseJsonField(formData, "itemsJson", [])
   });
 
   if (!parsed.success) {
@@ -106,6 +106,7 @@ export async function saveInvoiceAction(formData: FormData) {
 
   await (supabase as any).from("invoice_items").delete().eq("invoice_id", invoiceId);
   await (supabase as any).from("invoice_payments").delete().eq("invoice_id", invoiceId);
+  await deleteCashMovement(supabase as any, "invoices", invoiceId!);
 
   const items = input.items.map((item) => ({
     invoice_id: invoiceId,
@@ -120,20 +121,27 @@ export async function saveInvoiceAction(formData: FormData) {
   const { error: itemsError } = await (supabase as any).from("invoice_items").insert(items);
   if (itemsError) redirectWithError("/facturacion", itemsError.message, invoiceId);
 
-  if (input.payments.length) {
-    const payments = input.payments.map((payment) => ({
-      invoice_id: invoiceId,
-      method: payment.method,
-      amount: payment.amount,
-      notes: payment.notes || null
-    }));
-
-    const { error: paymentsError } = await (supabase as any).from("invoice_payments").insert(payments);
-    if (paymentsError) redirectWithError("/facturacion", paymentsError.message, invoiceId);
-  }
-
   try {
     await refreshInvoice(supabase as any, invoiceId!);
+    const { data: totals, error: totalsError } = await (supabase as any)
+      .from("invoices")
+      .select("total")
+      .eq("id", invoiceId)
+      .single();
+
+    if (totalsError || !totals) throw totalsError ?? new Error("No se pudo leer el total del comprobante");
+
+    const { error: statusError } = await (supabase as any)
+      .from("invoices")
+      .update({
+        paid_total: Number(totals.total),
+        balance: 0,
+        status: "pagado",
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", invoiceId);
+
+    if (statusError) throw statusError;
   } catch (error) {
     redirectWithError("/facturacion", error instanceof Error ? error.message : "No se pudo recalcular el comprobante", invoiceId);
   }
@@ -151,60 +159,9 @@ export async function saveInvoiceAction(formData: FormData) {
   redirect(`/facturacion?status=${auditAction === "insert" ? "invoice_created" : "invoice_updated"}`);
 }
 
-export async function addInvoicePaymentAction(formData: FormData) {
-  const parsed = invoicePaymentFormSchema.safeParse({
-    invoiceId: formData.get("invoiceId"),
-    method: formData.get("method"),
-    amount: formData.get("amount"),
-    notes: formData.get("notes")
-  });
-
-  if (!parsed.success) redirectWithError("/facturacion", parsed.error.issues[0]?.message ?? "No se pudo validar el pago");
-
-  const user = await requireUser();
-  const supabase = await createServerSupabaseClient();
-  const { data: invoice } = await (supabase as any).from("invoices").select("status").eq("id", parsed.data.invoiceId).single();
-
-  if (invoice?.status === "anulado") redirectWithError("/facturacion", "No se puede pagar un comprobante anulado");
-
-  const { error } = await (supabase as any).from("invoice_payments").insert({
-    invoice_id: parsed.data.invoiceId,
-    method: parsed.data.method,
-    amount: parsed.data.amount,
-    notes: parsed.data.notes || null
-  });
-
-  if (error) redirectWithError("/facturacion", error.message);
-
-  await refreshInvoice(supabase as any, parsed.data.invoiceId);
-  await createAuditLog({ entityType: "invoice_payments", entityId: parsed.data.invoiceId, action: "insert", userId: user.id, changes: parsed.data });
-
-  revalidatePath("/facturacion");
-  revalidatePath("/dashboard");
-  redirect("/facturacion?status=invoice_payment_added");
-}
-
-export async function deleteInvoicePaymentAction(formData: FormData) {
-  const paymentId = z.string().uuid().parse(formData.get("paymentId"));
-  const invoiceId = z.string().uuid().parse(formData.get("invoiceId"));
-  const user = await requireUser();
-  const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).from("invoice_payments").delete().eq("id", paymentId);
-
-  if (error) redirectWithError(`/facturacion/${invoiceId}`, error.message);
-
-  await refreshInvoice(supabase as any, invoiceId);
-  await createAuditLog({ entityType: "invoice_payments", entityId: paymentId, action: "delete", userId: user.id });
-
-  revalidatePath("/facturacion");
-  revalidatePath(`/facturacion/${invoiceId}`);
-  revalidatePath("/dashboard");
-  redirect(`/facturacion/${invoiceId}?status=invoice_payment_deleted`);
-}
-
 export async function voidInvoiceAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { error } = await (supabase as any)
     .from("invoices")
@@ -214,6 +171,7 @@ export async function voidInvoiceAction(formData: FormData) {
   if (error) redirectWithError("/facturacion", error.message);
 
   await createAuditLog({ entityType: "invoices", entityId: id, action: "update", userId: user.id, changes: { status: "anulado" } });
+  await deleteCashMovement(supabase as any, "invoices", id);
   revalidatePath("/facturacion");
   revalidatePath("/dashboard");
   redirect("/facturacion?status=invoice_voided");

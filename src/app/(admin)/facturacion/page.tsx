@@ -1,5 +1,6 @@
 import { InvoicesView } from "@/features/invoices/components/invoices-view";
 import { getInvoiceById, getInvoiceFormOptions, getInvoices } from "@/features/invoices/queries";
+import { getCurrentProfile } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
 
 export default async function FacturacionPage({
@@ -8,7 +9,8 @@ export default async function FacturacionPage({
   searchParams: Promise<{ status?: string; error?: string; edit?: string }>;
 }) {
   const params = await searchParams;
-  const [invoices, options, editingInvoice] = await Promise.all([
+  const [{ profile }, invoices, options, editingInvoice] = await Promise.all([
+    getCurrentProfile(),
     getInvoices(),
     getInvoiceFormOptions(),
     params.edit ? getInvoiceById(params.edit) : Promise.resolve(null)
@@ -20,6 +22,7 @@ export default async function FacturacionPage({
   return (
     <InvoicesView
       editingInvoice={editingInvoice}
+      canVoid={profile.role === "admin"}
       invoices={invoices}
       message={message}
       options={options}

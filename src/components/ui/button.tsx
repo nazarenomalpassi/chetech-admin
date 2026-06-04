@@ -4,19 +4,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-2xl text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 rounded-[18px] text-sm font-semibold tracking-[-0.01em] transition duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/20 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: "bg-brand-600 text-white hover:bg-brand-700",
-        secondary: "bg-white text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50",
-        ghost: "text-slate-600 hover:bg-slate-100",
-        danger: "bg-rose-600 text-white hover:bg-rose-700"
+        default:
+          "bg-graphite text-white shadow-[0_18px_34px_rgba(20,20,19,0.16)] hover:-translate-y-0.5 hover:bg-black",
+        secondary:
+          "border border-graphite/10 bg-white/90 text-graphite shadow-[inset_0_1px_0_rgba(255,255,255,0.72)] hover:bg-brand-50 hover:text-graphite",
+        ghost: "bg-transparent text-slate-600 hover:bg-brand-100 hover:text-graphite",
+        danger: "bg-rose-600 text-white shadow-[0_16px_30px_rgba(190,45,45,0.18)] hover:-translate-y-0.5 hover:bg-rose-700"
       },
       size: {
-        default: "h-11 px-4 py-2",
-        sm: "h-9 px-3",
-        lg: "h-12 px-6"
+        default: "h-11 px-4 py-2.5",
+        sm: "h-9 rounded-2xl px-3 text-[0.82rem]",
+        lg: "h-12 px-6 text-[0.95rem]"
       }
     },
     defaultVariants: {

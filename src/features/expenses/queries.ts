@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { normalizeCashMethodValue } from "@/lib/cash";
 
 export async function getExpenses() {
   const supabase = await createServerSupabaseClient();
@@ -18,7 +19,7 @@ export async function getExpenses() {
     type: expense.type,
     description: expense.description,
     amount: Number(expense.amount),
-    paymentMethod: expense.payment_method,
+    paymentMethod: normalizeCashMethodValue(expense.payment_method) ?? expense.payment_method,
     impactsCash: expense.impacts_cash,
     isVoided: expense.is_voided,
     observations: expense.observations ?? ""

@@ -5,11 +5,13 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
-import { requireUser } from "@/lib/auth";
+import { deleteCashMovement, replaceCashMovement } from "@/lib/accounting";
+import { requireAdmin, requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const expenseFormSchema = z.object({
   id: z.string().uuid().optional(),
+  expenseDate: z.string().min(1, "Seleccioná la fecha del gasto"),
   type: z.string().min(1, "Ingresá una categoría"),
   description: z.string().min(1, "Ingresá una descripción"),
   amount: z.coerce.number().positive("Ingresá un monto válido"),
@@ -26,6 +28,7 @@ function redirectWithError(message: string, id?: string): never {
 export async function saveExpenseAction(formData: FormData) {
   const parsed = expenseFormSchema.safeParse({
     id: formData.get("id") || undefined,
+    expenseDate: formData.get("expenseDate"),
     type: formData.get("type"),
     description: formData.get("description"),
     amount: formData.get("amount"),
@@ -40,7 +43,7 @@ export async function saveExpenseAction(formData: FormData) {
   const user = await requireUser();
   const supabase = await createServerSupabaseClient();
   const payload = {
-    expense_date: new Date().toISOString().slice(0, 10),
+    expense_date: parsed.data.expenseDate,
     type: parsed.data.type,
     description: parsed.data.description,
     amount: parsed.data.amount,
@@ -63,6 +66,17 @@ export async function saveExpenseAction(formData: FormData) {
     redirectWithError(error?.message ?? "No se pudo guardar el gasto", parsed.data.id);
   }
 
+  await replaceCashMovement(supabase as any, {
+    tipo: "gasto",
+    monto: parsed.data.amount,
+    medioPago: parsed.data.paymentMethod,
+    descripcion: parsed.data.description,
+    referenciaTabla: "expenses",
+    referenciaId: data.id,
+    userId: user.id,
+    fecha: parsed.data.expenseDate
+  });
+
   await createAuditLog({
     entityType: "expenses",
     entityId: data.id,
@@ -73,13 +87,15 @@ export async function saveExpenseAction(formData: FormData) {
 
   revalidatePath("/gastos");
   revalidatePath("/dashboard");
+  revalidatePath("/caja");
   redirect(`/gastos?status=${parsed.data.id ? "expense_updated" : "expense_created"}`);
 }
 
 export async function deleteExpenseAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
+  await deleteCashMovement(supabase as any, "expenses", id);
   const { error } = await (supabase as any).from("expenses").delete().eq("id", id);
 
   if (error) redirectWithError(error.message);
@@ -87,5 +103,6 @@ export async function deleteExpenseAction(formData: FormData) {
   await createAuditLog({ entityType: "expenses", entityId: id, action: "delete", userId: user.id });
   revalidatePath("/gastos");
   revalidatePath("/dashboard");
+  revalidatePath("/caja");
   redirect("/gastos?status=expense_deleted");
 }

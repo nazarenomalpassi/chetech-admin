@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function getProducts(filters?: {
@@ -50,7 +52,7 @@ export async function getProducts(filters?: {
   }));
 }
 
-export async function getProductCategories() {
+export const getProductCategories = cache(async () => {
   const supabase = await createServerSupabaseClient();
   const { data, error } = await (supabase as any)
     .from("categories")
@@ -66,4 +68,4 @@ export async function getProductCategories() {
     name: category.name,
     skuPrefix: null
   }));
-}
+});

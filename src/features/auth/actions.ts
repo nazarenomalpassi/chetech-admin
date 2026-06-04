@@ -1,14 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { z } from "zod";
 
+import { getLoginErrorMessage, loginSchema } from "@/features/auth/login-schema";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-const loginSchema = z.object({
-  email: z.string().email("Ingresá un email válido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
-});
 
 export async function loginAction(_: unknown, formData: FormData) {
   const result = loginSchema.safeParse({
@@ -29,7 +24,7 @@ export async function loginAction(_: unknown, formData: FormData) {
   if (error) {
     return {
       success: false,
-      message: error.message
+      message: getLoginErrorMessage(error.message)
     };
   }
 

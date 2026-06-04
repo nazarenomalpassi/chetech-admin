@@ -11,12 +11,6 @@ export const invoiceItemSchema = z.object({
   repairId: z.string().uuid().nullable().optional()
 });
 
-export const invoicePaymentSchema = z.object({
-  method: z.string().min(1, "Selecciona medio de pago"),
-  amount: z.coerce.number().positive("El pago debe ser mayor a 0"),
-  notes: z.string().optional()
-});
-
 export const invoiceFormSchema = z.object({
   id: z.string().uuid().optional(),
   customerName: z.string().min(1, "El cliente es obligatorio"),
@@ -26,13 +20,5 @@ export const invoiceFormSchema = z.object({
   saleId: z.string().uuid().nullable().optional(),
   discount: z.coerce.number().min(0).default(0),
   notes: z.string().optional(),
-  items: z.array(invoiceItemSchema).min(1, "Agrega al menos un item"),
-  payments: z.array(invoicePaymentSchema).default([])
-});
-
-export const invoicePaymentFormSchema = z.object({
-  invoiceId: z.string().uuid(),
-  method: z.string().min(1, "Selecciona medio de pago"),
-  amount: z.coerce.number().positive("El pago debe ser mayor a 0"),
-  notes: z.string().optional()
+  items: z.array(invoiceItemSchema).min(1, "Agrega al menos un item")
 });

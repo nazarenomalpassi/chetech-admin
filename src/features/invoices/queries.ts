@@ -17,8 +17,6 @@ export async function getInvoices() {
     customerPhone: invoice.customer_phone ?? "",
     sourceType: invoice.source_type,
     total: Number(invoice.total),
-    paidTotal: Number(invoice.paid_total),
-    balance: Number(invoice.balance),
     status: invoice.status,
     createdAt: invoice.created_at
   }));
@@ -26,19 +24,13 @@ export async function getInvoices() {
 
 export async function getInvoiceById(id: string) {
   const supabase = await createServerSupabaseClient();
-  const [invoiceResult, itemsResult, paymentsResult] = await Promise.all([
+  const [invoiceResult, itemsResult] = await Promise.all([
     (supabase as any).from("invoices").select("*").eq("id", id).single(),
-    (supabase as any).from("invoice_items").select("*").eq("invoice_id", id).order("id"),
-    (supabase as any)
-      .from("invoice_payments")
-      .select("*")
-      .eq("invoice_id", id)
-      .order("payment_date", { ascending: true })
+    (supabase as any).from("invoice_items").select("*").eq("invoice_id", id).order("id")
   ]);
 
   if (invoiceResult.error) throw new Error(invoiceResult.error.message);
   if (itemsResult.error) throw new Error(itemsResult.error.message);
-  if (paymentsResult.error) throw new Error(paymentsResult.error.message);
 
   const invoice = invoiceResult.data;
   return {
@@ -63,13 +55,6 @@ export async function getInvoiceById(id: string) {
       quantity: Number(item.quantity),
       unitPrice: Number(item.unit_price),
       total: Number(item.total)
-    })),
-    payments: (paymentsResult.data ?? []).map((payment: any) => ({
-      id: payment.id,
-      paymentDate: payment.payment_date,
-      method: payment.method,
-      amount: Number(payment.amount),
-      notes: payment.notes ?? ""
     }))
   };
 }

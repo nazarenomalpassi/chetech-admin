@@ -3,10 +3,12 @@
 import { revalidatePath } from "next/cache";
 
 import { createAuditLog } from "@/lib/audit";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { productSchema } from "@/features/products/schemas";
 
 export async function upsertProductAction(input: unknown) {
+  await requireAdmin();
   const parsed = productSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -73,6 +75,7 @@ export async function upsertProductAction(input: unknown) {
 }
 
 export async function toggleProductStatusAction(id: string, nextValue: boolean) {
+  await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { error } = await (supabase as any).from("products").update({ is_active: nextValue }).eq("id", id);
 
@@ -95,5 +98,34 @@ export async function toggleProductStatusAction(id: string, nextValue: boolean) 
   return {
     success: true,
     message: nextValue ? "Producto reactivado" : "Producto desactivado"
+  };
+}
+
+export async function deleteProductAction(id: string) {
+  await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const { error } = await (supabase as any).from("products").delete().eq("id", id);
+
+  if (error) {
+    return {
+      success: false,
+      message:
+        error.code === "23503"
+          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podés desactivarlo."
+          : error.message
+    };
+  }
+
+  await createAuditLog({
+    entityType: "products",
+    entityId: id,
+    action: "delete"
+  });
+
+  revalidatePath("/productos");
+
+  return {
+    success: true,
+    message: "Producto eliminado"
   };
 }
