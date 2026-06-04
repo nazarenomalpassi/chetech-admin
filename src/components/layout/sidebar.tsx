@@ -12,19 +12,19 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="relative flex h-full w-full overflow-hidden rounded-[34px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(19,19,18,0.96),rgba(28,27,25,0.98))] p-3.5 text-white shadow-pop lg:p-4">
+    <aside className="relative flex h-full max-h-full w-full overflow-hidden rounded-[34px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(19,19,18,0.96),rgba(28,27,25,0.98))] p-3.5 text-white shadow-pop lg:p-4">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.08),transparent_26%),linear-gradient(180deg,rgba(255,255,255,0.05),transparent_28%)]" />
 
-      <div className="relative z-10 flex h-full w-full flex-col">
-        <div className="flex min-h-[138px] items-center justify-center rounded-[28px] border border-white/8 bg-white/[0.045] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] lg:min-h-[148px]">
+      <div className="relative z-10 flex h-full min-h-0 w-full flex-col">
+        <div className="flex min-h-[138px] flex-none items-center justify-center rounded-[28px] border border-white/8 bg-white/[0.045] p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] lg:min-h-[148px]">
           <img alt="Chetech" className="h-auto w-[168px] max-w-full lg:w-[178px]" src="/brand/chetech-horizontal-white.svg" />
         </div>
 
-        <div className="mt-5">
+        <div className="mt-5 flex min-h-0 flex-1 flex-col">
           <p className="px-2 text-[0.68rem] font-semibold uppercase tracking-[0.32em] text-white/32">
             Navegacion
           </p>
-          <nav className="mt-3 space-y-1.5">
+          <nav className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
             {sidebarItems.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
@@ -55,7 +55,7 @@ export function Sidebar() {
           </nav>
         </div>
 
-        <div className="mt-auto rounded-[26px] border border-white/7 bg-white/[0.035] p-3">
+        <div className="mt-4 flex-none rounded-[26px] border border-white/7 bg-white/[0.035] p-3">
           <p className="mb-3 px-2 text-[0.68rem] font-semibold uppercase tracking-[0.28em] text-white/32">
             Sesion
           </p>
