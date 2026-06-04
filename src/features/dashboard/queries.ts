@@ -1,12 +1,5 @@
 import { getCashSettings } from "@/lib/app-settings";
-import {
-  CASH_METHODS,
-  isCashIncomeMovement,
-  isCashOutcomeMovement,
-  isProfitIncomeMovement,
-  isProfitOutcomeMovement,
-  normalizeCashMethodValue
-} from "@/lib/cash";
+import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPendingTvBoardsReleaseAmount } from "@/features/dashboard/financial-summary";
 import { getDashboardRange } from "@/features/dashboard/range";
@@ -72,10 +65,10 @@ export async function getDashboardData({
   const accountBalances = CASH_METHODS.map((method) => {
     const methodMovements = allMovements.filter((row) => normalizeCashMethodValue(row.medio_pago) === method);
     const income = methodMovements
-      .filter((row) => isCashIncomeMovement(row.tipo))
+      .filter((row) => ["venta", "reparacion", "facturacion"].includes(row.tipo))
       .reduce((acc, row) => acc + Number(row.monto), 0);
     const outcome = methodMovements
-      .filter((row) => isCashOutcomeMovement(row.tipo))
+      .filter((row) => ["gasto", "sueldo"].includes(row.tipo))
       .reduce((acc, row) => acc + Number(row.monto), 0);
 
     return {
@@ -99,10 +92,10 @@ export async function getDashboardData({
     0
   );
   const movementIncome = rangeMovements
-    .filter((row) => isProfitIncomeMovement(row.tipo))
+    .filter((row) => ["venta", "reparacion", "facturacion"].includes(row.tipo))
     .reduce((acc, row) => acc + Number(row.monto), 0);
   const movementOutcome = rangeMovements
-    .filter((row) => isProfitOutcomeMovement(row.tipo))
+    .filter((row) => ["gasto"].includes(row.tipo))
     .reduce((acc, row) => acc + Number(row.monto), 0);
   const realProfitToday = movementIncome - movementOutcome;
 

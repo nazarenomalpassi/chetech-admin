@@ -1,7 +1,6 @@
 import { getDashboardRange } from "@/features/dashboard/range";
 import { calculateVariation, getMonthlyComparisonPeriods } from "@/features/reports/comparison";
 import { getBusinessGoals } from "@/lib/app-settings";
-import { isCashIncomeMovement, isCashOutcomeMovement } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type SummaryRow = {
@@ -89,10 +88,10 @@ async function getPeriodMetrics(
   const expenses = (expensesResult.data ?? []).filter((expense: any) => !expense.is_voided);
   const movements = movementsResult.data ?? [];
   const cashIncome = movements
-    .filter((movement: any) => isCashIncomeMovement(movement.tipo))
+    .filter((movement: any) => ["venta", "reparacion", "facturacion"].includes(movement.tipo))
     .reduce((acc: number, movement: any) => acc + Number(movement.monto), 0);
   const cashOutcome = movements
-    .filter((movement: any) => isCashOutcomeMovement(movement.tipo))
+    .filter((movement: any) => ["gasto", "sueldo"].includes(movement.tipo))
     .reduce((acc: number, movement: any) => acc + Number(movement.monto), 0);
 
   return {
