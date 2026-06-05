@@ -13,6 +13,7 @@ import {
   ReceiptText,
   Settings,
   ShoppingCart,
+  Truck,
   Wrench
 } from "lucide-react";
 
@@ -34,6 +35,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart },
   { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign },
   { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench },
+  { href: "/terciarizaciones" as Route, label: "Terciarizaciones", icon: Truck },
   { href: "/facturacion", label: "Facturacion", icon: FileText },
   { href: "/configuracion", label: "Configuracion", icon: Settings }
 ];

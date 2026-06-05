@@ -832,6 +832,44 @@ export type Database = {
           updated_at?: string;
         };
       };
+      repair_outsourcings: {
+        Row: {
+          id: string;
+          repair_access_order_id: string;
+          workshop_name: string;
+          sent_at: string;
+          retrieved_at: string | null;
+          status: "en_taller" | "retirado" | "cancelado";
+          notes: string | null;
+          created_by: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          repair_access_order_id: string;
+          workshop_name: string;
+          sent_at?: string;
+          retrieved_at?: string | null;
+          status?: "en_taller" | "retirado" | "cancelado";
+          notes?: string | null;
+          created_by?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          repair_access_order_id?: string;
+          workshop_name?: string;
+          sent_at?: string;
+          retrieved_at?: string | null;
+          status?: "en_taller" | "retirado" | "cancelado";
+          notes?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
+      };
       stock_movements: {
         Row: {
           id: string;
