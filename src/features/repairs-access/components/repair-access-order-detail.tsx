@@ -182,7 +182,7 @@ export function RepairAccessOrderDetail({
             <div className="rounded-3xl bg-slate-50 p-4 lg:col-span-6">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Ficha de cobro informativa y garantia</p>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Estos datos no impactan caja ni balances. El movimiento real de plata se registra en Reparaciones usando el numero de orden.
+                Estos datos no impactan caja ni balances. El movimiento real de plata se registra en Pagos de reparaciones usando el numero de orden.
               </p>
               <div className="mt-4 grid gap-4 lg:grid-cols-6">
                 <Field className="lg:col-span-2" label="Total final">
@@ -219,7 +219,7 @@ export function RepairAccessOrderDetail({
                 </Field>
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:col-span-2">
                   <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Inicio garantia</span>
-                  <span className="mt-1 block text-slate-800">{order.warrantyStart ? formatDate(order.warrantyStart) : "Arranca al facturar en Reparaciones"}</span>
+                  <span className="mt-1 block text-slate-800">{order.warrantyStart ? formatDate(order.warrantyStart) : "Arranca al facturar en Pagos de reparaciones"}</span>
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 lg:col-span-2">
                   <span className="block text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Garantia hasta</span>

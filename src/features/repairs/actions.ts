@@ -105,7 +105,7 @@ async function markAccessOrderAsRetired({
         previous_status: previousAccessOrder.data.status,
         next_status: "retirado",
         changed_by: userId,
-        notes: `Facturada desde Reparaciones (${repairId})`
+        notes: `Facturada desde Pagos de reparaciones (${repairId})`
       });
   }
 }
@@ -287,7 +287,7 @@ export async function saveRepairAction(formData: FormData) {
       repairId: data.id,
       repairAccessOrderId: previousAccessOrderId,
       userId: user.id,
-      notes: `Cobro desvinculado desde Reparaciones (${data.id})`
+      notes: `Cobro desvinculado desde Pagos de reparaciones (${data.id})`
     });
   }
 
@@ -339,7 +339,7 @@ export async function saveRepairAction(formData: FormData) {
       repairId: data.id,
       repairAccessOrderId: nextAccessOrderId,
       userId: user.id,
-      notes: `Cobro revertido desde Reparaciones (${data.id})`
+      notes: `Cobro revertido desde Pagos de reparaciones (${data.id})`
     });
   }
 

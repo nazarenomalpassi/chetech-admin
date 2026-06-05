@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarRange, Search, ShieldCheck, Wrench } from "lucide-react";
+import { BadgeDollarSign, CalendarRange, Search, ShieldCheck } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
 import { Button } from "@/components/ui/button";
@@ -190,9 +190,9 @@ export function RepairsList({
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
             <p className="panel-kicker">Servicio tecnico</p>
-            <h1 className="panel-heading mt-3">Nueva reparacion rapida</h1>
+            <h1 className="panel-heading mt-3">Nuevo pago de reparacion</h1>
             <p className="panel-subheading mt-3">
-              Registra cliente, equipo, numero de orden, fecha y cobro con una vista mas limpia para el taller.
+              Registra el cobro de una orden de reparacion y actualiza caja recien cuando el cliente paga.
             </p>
           </div>
 
@@ -204,7 +204,7 @@ export function RepairsList({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Reparaciones listadas
+                    Pagos listados
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{totalRepairs}</p>
                 </div>
@@ -213,7 +213,7 @@ export function RepairsList({
             <div className="metric-tile min-h-[unset] p-4">
               <div className="flex items-center gap-3">
                 <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
-                  <Wrench className="h-4 w-4" />
+                  <BadgeDollarSign className="h-4 w-4" />
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
@@ -243,7 +243,7 @@ export function RepairsList({
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <label>
                 <span className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Cargar desde Reparaciones Access
+                  Cargar desde Reparaciones
                 </span>
                 <Input
                   name="accessOrderNumber"
@@ -268,7 +268,7 @@ export function RepairsList({
               </p>
             ) : (
               <p className="mt-3 text-sm text-slate-500">
-                La orden Access trae cliente, telefono, equipo y falla. El saldo se modifica recien cuando guardas el cobro en esta pantalla.
+                La orden de Reparaciones trae cliente, telefono, equipo y falla. El saldo se modifica recien cuando guardas el cobro en esta pantalla.
               </p>
             )}
           </div>
@@ -337,7 +337,7 @@ export function RepairsList({
             <div className="flex items-end gap-2">
               <FormSubmitButton
                 className="w-full"
-                idleLabel={editing ? "Actualizar reparacion" : "Guardar reparacion"}
+                idleLabel={editing ? "Actualizar pago" : "Guardar pago"}
                 pendingLabel={editing ? "Actualizando..." : "Guardando..."}
               />
               {editing || formValues.repairAccessOrderId || formValues.customerName ? (
@@ -355,7 +355,7 @@ export function RepairsList({
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-md">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Buscar reparacion
+                Buscar pago
               </label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -363,7 +363,7 @@ export function RepairsList({
               </div>
             </div>
             <p className="text-sm text-slate-500">
-              Mostrando las ultimas 100 reparaciones para sostener buena velocidad en mostrador.
+              Mostrando los ultimos 100 pagos de reparaciones para sostener buena velocidad en mostrador.
             </p>
           </div>
         </div>
@@ -403,7 +403,7 @@ export function RepairsList({
                         <form
                           action={deleteRepairAction}
                           onSubmit={(event) => {
-                            if (!window.confirm(`Eliminar la reparacion de ${repair.customerName}?`)) {
+                            if (!window.confirm(`Eliminar el pago de reparacion de ${repair.customerName}?`)) {
                               event.preventDefault();
                             }
                           }}
@@ -422,7 +422,7 @@ export function RepairsList({
           </table>
           {!filteredRepairs.length ? (
             <div className="empty-panel border-t border-graphite/8">
-              No encontre reparaciones con esa busqueda.
+              No encontre pagos de reparaciones con esa busqueda.
             </div>
           ) : null}
         </div>

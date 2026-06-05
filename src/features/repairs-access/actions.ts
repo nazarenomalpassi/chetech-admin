@@ -330,11 +330,11 @@ export async function cancelRepairAccessOrderAction(formData: FormData) {
   }
 
   if (previousOrder.data.is_paid) {
-    redirectWithError("La orden ya esta cobrada. Primero reverti el cobro desde Reparaciones para no desincronizar caja.", id);
+    redirectWithError("La orden ya esta cobrada. Primero reverti el cobro desde Pagos de reparaciones para no desincronizar caja.", id);
   }
 
   const now = new Date().toISOString();
-  const cancellationNote = `Orden anulada desde Reparaciones Access el ${now.slice(0, 10)}.`;
+  const cancellationNote = `Orden anulada desde Reparaciones el ${now.slice(0, 10)}.`;
   const notes = [emptyToNull(previousOrder.data.notes), cancellationNote].filter(Boolean).join("\n\n");
 
   const { error } = await (supabase as any)

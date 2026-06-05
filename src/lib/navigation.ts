@@ -1,6 +1,7 @@
 import type { Route } from "next";
 import type { LucideIcon } from "lucide-react";
 import {
+  BadgeDollarSign,
   BarChart3,
   Boxes,
   CreditCard,
@@ -31,8 +32,8 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard },
   { href: "/caja", label: "Caja", icon: Landmark },
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart },
-  { href: "/reparaciones", label: "Reparaciones", icon: Wrench },
-  { href: "/reparaciones-access" as Route, label: "Reparaciones Access", icon: Wrench },
+  { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign },
+  { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench },
   { href: "/facturacion", label: "Facturacion", icon: FileText },
   { href: "/configuracion", label: "Configuracion", icon: Settings }
 ];

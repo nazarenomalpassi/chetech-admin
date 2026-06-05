@@ -28,7 +28,7 @@ export function RepairAccessCommandCenter({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Centro de servicio</p>
               <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-slate-950">
-                Reparaciones Access
+                Reparaciones
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
                 Flujo paralelo para recepcion, mesa tecnica y administracion. Aca vemos donde esta cada equipo sin mezclar ingreso, diagnostico, presupuesto y cobro.
@@ -53,7 +53,7 @@ export function RepairAccessCommandCenter({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Caja protegida</p>
           <p className="mt-3 text-3xl font-semibold tracking-[-0.04em]">{formatCurrency(summary.totalCollected)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Total informado en fichas Access. No impacta caja: la caja se mueve solo cuando facturas desde Reparaciones.
+            Total informado en fichas de reparacion. No impacta caja: la caja se mueve solo cuando facturas desde Pagos de reparaciones.
           </p>
           <div className="mt-5 rounded-2xl bg-white/10 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Proyectado</p>
