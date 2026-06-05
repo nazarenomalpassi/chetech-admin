@@ -6,7 +6,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { normalizeRepairAccessLookup } from "@/features/repairs-access/customer-search";
-import { repairAccessIntakeSchema, repairAccessTechnicalSchema } from "@/features/repairs-access/schemas";
+import {
+  repairAccessIntakeSchema,
+  repairAccessStatusValues,
+  repairAccessTechnicalSchema
+} from "@/features/repairs-access/schemas";
 import { createAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -301,6 +305,72 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
     nextStatus: parsed.data.status,
     userId: user.id,
     notes: parsed.data.budgetResponseNotes || parsed.data.internalObservations
+  });
+
+  await createAuditLog({
+    entityType: "repair_access_orders",
+    entityId: parsed.data.id,
+    action: "update",
+    userId: user.id,
+    changes: orderPayload
+  });
+
+  revalidatePath("/reparaciones-access");
+  redirect(`/reparaciones-access?status=repair_access_updated&order=${parsed.data.id}` as Route);
+}
+
+export async function updateRepairAccessStatusAction(formData: FormData) {
+  const parsed = z.object({
+    id: z.string().uuid("No se pudo identificar la orden."),
+    status: z.enum(repairAccessStatusValues)
+  }).safeParse({
+    id: formData.get("id"),
+    status: formData.get("status")
+  });
+
+  if (!parsed.success) {
+    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo actualizar el estado.", String(formData.get("id") ?? ""));
+  }
+
+  const user = await requireUser();
+  const supabase = await createServerSupabaseClient();
+  const previousOrder = await (supabase as any)
+    .from("repair_access_orders")
+    .select("id, status, finished_at")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
+
+  if (previousOrder.error || !previousOrder.data) {
+    redirectWithError(previousOrder.error?.message ?? "No se encontro la orden.", parsed.data.id);
+  }
+
+  const now = new Date().toISOString();
+  const isReadyOrClosed = ["listo_para_retirar", "retirado"].includes(parsed.data.status);
+  const orderPayload = {
+    status: parsed.data.status,
+    finished_at: isReadyOrClosed ? previousOrder.data.finished_at ?? now : null,
+    updated_by: user.id,
+    updated_at: now
+  };
+
+  const orderOperation = await (supabase as any)
+    .from("repair_access_orders")
+    .update(orderPayload)
+    .eq("id", parsed.data.id)
+    .select("id")
+    .single();
+
+  if (orderOperation.error || !orderOperation.data) {
+    redirectWithError(orderOperation.error?.message ?? "No se pudo actualizar el estado.", parsed.data.id);
+  }
+
+  await insertStatusHistory({
+    supabase,
+    repairOrderId: parsed.data.id,
+    previousStatus: previousOrder.data.status,
+    nextStatus: parsed.data.status,
+    userId: user.id,
+    notes: "Cambio rapido desde la lista de ordenes."
   });
 
   await createAuditLog({
