@@ -1,5 +1,6 @@
 import { RepairsAccessView } from "@/features/repairs-access/components/repairs-access-view";
 import { getRepairsAccessDashboard } from "@/features/repairs-access/queries";
+import { requireUser } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
 
 export default async function ReparacionesAccessPage({
@@ -8,6 +9,8 @@ export default async function ReparacionesAccessPage({
   searchParams: Promise<{ status?: string; error?: string; order?: string }>;
 }) {
   const params = await searchParams;
+  await requireUser();
+
   const { orders, customers, latestImport, summary } = await getRepairsAccessDashboard();
   const message = params.error
     ? { success: false, message: params.error }
