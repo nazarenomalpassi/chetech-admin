@@ -43,10 +43,14 @@
 
 html {
   min-height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
+  min-height: 100svh;
+  overflow-x: hidden;
   color: var(--text);
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
@@ -85,6 +89,22 @@ input,
 select,
 textarea {
   -webkit-tap-highlight-color: transparent;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+textarea {
+  font-size: 1rem;
+}
+
+.admin-main {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 @keyframes surface-in {
@@ -155,6 +175,11 @@ textarea {
   box-shadow: var(--shadow-card);
 }
 
+.table-shell .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 246, 241, 0.92));
@@ -215,6 +240,68 @@ textarea {
 @media (max-width: 1023px) {
   .panel-heading {
     font-size: 1.72rem;
+  }
+}
+
+@media (max-width: 640px) {
+  body {
+    background-size: auto, auto, 18px 18px, 18px 18px, auto;
+  }
+
+  .page-shell {
+    @apply space-y-3;
+  }
+
+  .panel-kicker {
+    letter-spacing: 0.22em;
+  }
+
+  .panel-heading {
+    font-size: 1.5rem;
+    line-height: 1.08;
+  }
+
+  .panel-subheading {
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .metric-tile {
+    border-radius: 22px;
+    padding: 1rem;
+  }
+
+  .table-shell {
+    border-radius: 24px;
+  }
+
+  .table-toolbar {
+    padding: 0.875rem;
+  }
+
+  .table-shell table {
+    min-width: 44rem;
+  }
+
+  .table-shell th,
+  .table-shell td {
+    padding-left: 0.875rem !important;
+    padding-right: 0.875rem !important;
+  }
+
+  .empty-panel {
+    border-radius: 22px;
+    padding: 1.25rem 1rem;
+  }
+
+  textarea {
+    min-height: 7rem;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    min-height: 100svh;
   }
 }
 

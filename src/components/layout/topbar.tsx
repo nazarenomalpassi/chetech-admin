@@ -15,12 +15,12 @@ export function Topbar() {
   const dateLabel = getArgentinaDateLabel();
 
   return (
-    <div className="relative overflow-hidden rounded-[34px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,248,244,0.94))] p-5 shadow-panel lg:p-6">
+    <div className="relative overflow-hidden rounded-[26px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,248,244,0.94))] p-4 shadow-panel sm:rounded-[34px] lg:p-6">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(29,29,27,0.1),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.64),transparent_30%)]" />
       <div className="relative z-10 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between xl:flex-1">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-graphite/10 bg-graphite shadow-[0_14px_28px_rgba(20,20,19,0.18)]">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-graphite shadow-[0_14px_28px_rgba(20,20,19,0.18)] sm:h-12 sm:w-12 sm:rounded-[20px]">
               <img alt="" className="h-7 w-7" src="/brand/chetech-isologo-white.svg" />
             </div>
             <div>
@@ -28,7 +28,7 @@ export function Topbar() {
                 <ShieldCheck className="h-3.5 w-3.5" />
                 Operacion diaria
               </p>
-              <h2 className="font-brand mt-1 text-[2rem] tracking-[-0.05em] text-graphite">Chetech</h2>
+              <h2 className="font-brand mt-1 text-[1.6rem] tracking-[-0.05em] text-graphite sm:text-[2rem]">Chetech</h2>
             </div>
           </div>
 
