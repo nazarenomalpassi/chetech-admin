@@ -1,12 +1,15 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { Topbar } from "@/components/layout/topbar";
+import { requireUser } from "@/lib/auth";
 
 export default async function AdminLayout({
   children
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await requireUser();
+
   return (
     <div className="admin-shell min-h-svh px-2 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 sm:px-3 lg:py-4 lg:pr-5 lg:pl-2">
       <MobileNavigation />

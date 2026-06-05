@@ -11,12 +11,14 @@ type InstallmentFilters = {
   paymentMethod?: string;
 };
 
-function isMissingInstallmentsTableError(error: { code?: string; message?: string } | null | undefined) {
+export function isInstallmentsUnavailableError(error: { code?: string; message?: string } | null | undefined) {
   const message = error?.message?.toLowerCase() ?? "";
 
   return (
     error?.code === "42P01" ||
     error?.code === "PGRST205" ||
+    message.includes("permission denied for table installments") ||
+    message.includes("permission denied for table installment_sales") ||
     message.includes("public.installment_sales") ||
     message.includes("public.installments") ||
     message.includes("could not find the table")
@@ -52,7 +54,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
     .limit(200);
 
   if (salesResult.error) {
-    if (isMissingInstallmentsTableError(salesResult.error)) {
+    if (isInstallmentsUnavailableError(salesResult.error)) {
       return {
         migrationReady: false,
         today,
@@ -79,7 +81,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
     : { data: [], error: null };
 
   if (installmentsResult.error) {
-    if (isMissingInstallmentsTableError(installmentsResult.error)) {
+    if (isInstallmentsUnavailableError(installmentsResult.error)) {
       return {
         migrationReady: false,
         today,
@@ -222,7 +224,7 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
     .in("status", ["pendiente", "vencida"]);
 
   if (installmentsResult.error) {
-    if (isMissingInstallmentsTableError(installmentsResult.error)) {
+    if (isInstallmentsUnavailableError(installmentsResult.error)) {
       return {
         dueTodayCount: 0,
         overdueCount: 0,
@@ -256,6 +258,17 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
     : { data: [], error: null };
 
   if (salesResult.error) {
+    if (isInstallmentsUnavailableError(salesResult.error)) {
+      return {
+        dueTodayCount: 0,
+        overdueCount: 0,
+        dueTodayTotal: 0,
+        overdueTotal: 0,
+        dueToday: [],
+        overdue: []
+      };
+    }
+
     throw new Error(salesResult.error.message);
   }
 
