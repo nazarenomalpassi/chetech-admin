@@ -284,9 +284,9 @@ export function InstallmentsView({
                 ...getCashMethodOptions()
               ]}
             />
-            <div className="sm:col-span-2 xl:col-span-6 flex gap-2">
-              <Button type="submit">Aplicar filtros</Button>
-              <Button type="button" variant="secondary" onClick={() => (window.location.href = "/cuotas")}>
+            <div className="flex flex-col gap-2 sm:col-span-2 sm:flex-row xl:col-span-6">
+              <Button className="w-full sm:w-auto" type="submit">Aplicar filtros</Button>
+              <Button className="w-full sm:w-auto" type="button" variant="secondary" onClick={() => (window.location.href = "/cuotas")}>
                 Limpiar
               </Button>
             </div>
@@ -342,8 +342,8 @@ export function InstallmentsView({
                           </span>
                         </div>
                         <p className="mt-2 text-sm text-slate-500">
-                          Vence {formatDate(installment.dueDate)} · Medio {formatCashMethod(installment.paymentMethod)}
-                          {installment.paidAt ? ` · Cobrada ${formatDate(installment.paidAt)}` : ""}
+                          Vence {formatDate(installment.dueDate)} - Medio {formatCashMethod(installment.paymentMethod)}
+                          {installment.paidAt ? ` - Cobrada ${formatDate(installment.paidAt)}` : ""}
                         </p>
                       </div>
                       <p className="text-xl font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(installment.amount)}</p>
@@ -359,7 +359,7 @@ export function InstallmentsView({
                         <Input defaultValue={installment.amount} min={0} name="amount" step="0.01" type="number" />
                         <Select defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
                         <Input defaultValue={installment.notes} name="notes" placeholder="Nota de cuota" />
-                        <Button type="submit" variant="secondary">
+                        <Button className="w-full xl:w-auto" type="submit" variant="secondary">
                           Guardar cuota
                         </Button>
                       </form>
@@ -370,7 +370,7 @@ export function InstallmentsView({
                             <input name="id" type="hidden" value={installment.id} />
                             <Select defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
                             <Input defaultValue={data.today} name="paidDate" type="date" />
-                            <Button type="submit">Marcar pagada</Button>
+                            <Button className="w-full" type="submit">Marcar pagada</Button>
                           </form>
                         ) : (
                           <div className="rounded-[22px] border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
@@ -381,7 +381,7 @@ export function InstallmentsView({
                         {installment.status !== "pagada" ? (
                           <form action={cancelInstallmentAction}>
                             <input name="id" type="hidden" value={installment.id} />
-                            <Button type="submit" variant="danger">Cancelar cuota</Button>
+                            <Button className="w-full" type="submit" variant="danger">Cancelar cuota</Button>
                           </form>
                         ) : null}
                       </div>
@@ -394,7 +394,7 @@ export function InstallmentsView({
                 <div className="mt-5 flex justify-end">
                   <form action={cancelInstallmentSaleAction}>
                     <input name="id" type="hidden" value={sale.id} />
-                    <Button type="submit" variant="danger">Cancelar venta en cuotas</Button>
+                    <Button className="w-full sm:w-auto" type="submit" variant="danger">Cancelar venta en cuotas</Button>
                   </form>
                 </div>
               ) : null}

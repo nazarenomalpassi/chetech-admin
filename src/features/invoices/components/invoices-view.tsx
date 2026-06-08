@@ -347,7 +347,61 @@ export function InvoicesView({
             <p className="text-sm text-slate-500">Listado listo para imprimir, revisar o anular desde admin.</p>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-3 lg:hidden">
+          {invoices.map((invoice) => (
+            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={invoice.id}>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-950">{invoice.invoiceNumber}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(invoice.createdAt)}</p>
+                </div>
+                <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
+              </div>
+              <div className="mt-4 grid gap-2 text-sm">
+                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Cliente</p>
+                  <p className="mt-1 font-semibold text-slate-800">{invoice.customerName || "Sin cliente"}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Origen</p>
+                    <p className="mt-1 font-semibold text-slate-800">{formatInvoiceSource(invoice.sourceType)}</p>
+                  </div>
+                  <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Total</p>
+                    <p className="mt-1 font-semibold text-slate-950">{formatCurrency(invoice.total)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                  href={`/facturacion/${invoice.id}`}
+                >
+                  Ver / imprimir
+                </Link>
+                {invoice.status !== "anulado" ? (
+                  <Link
+                    className="inline-flex min-h-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                    href={`/facturacion?edit=${invoice.id}`}
+                  >
+                    Editar
+                  </Link>
+                ) : null}
+                {canVoid && invoice.status !== "anulado" ? (
+                  <form action={voidInvoiceAction}>
+                    <input name="id" type="hidden" value={invoice.id} />
+                    <Button className="w-full" type="submit" variant="danger">
+                      Anular
+                    </Button>
+                  </form>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-white/80 text-left text-slate-500">
               <tr>

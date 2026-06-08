@@ -34,10 +34,10 @@ export function RepairAccessCommandCenter({
                 Flujo paralelo para recepcion, mesa tecnica y administracion. Aca vemos donde esta cada equipo sin mezclar ingreso, diagnostico, presupuesto y cobro.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              <Button onClick={() => onNavigate("nueva")} type="button">Nueva orden</Button>
-              <Button onClick={() => onNavigate("clientes")} type="button" variant="secondary">Buscar cliente</Button>
-              <Button onClick={() => onNavigate("ordenes")} type="button" variant="secondary">Ver ordenes</Button>
+            <div className="grid gap-2 sm:flex sm:flex-wrap">
+              <Button className="w-full sm:w-auto" onClick={() => onNavigate("nueva")} type="button">Nueva orden</Button>
+              <Button className="w-full sm:w-auto" onClick={() => onNavigate("clientes")} type="button" variant="secondary">Buscar cliente</Button>
+              <Button className="w-full sm:w-auto" onClick={() => onNavigate("ordenes")} type="button" variant="secondary">Ver ordenes</Button>
             </div>
           </div>
 
@@ -144,12 +144,14 @@ function CompactOrder({ order }: { order: RepairAccessOrderRecord }) {
 
   return (
     <div className="rounded-2xl border border-slate-100 p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
           <p className="mt-1 text-xs text-slate-500">{deviceLabel || "Equipo"} - {formatDate(order.intakeDate)}</p>
         </div>
-        <RepairAccessStatusBadge status={order.status} />
+        <div className="shrink-0">
+          <RepairAccessStatusBadge status={order.status} />
+        </div>
       </div>
     </div>
   );

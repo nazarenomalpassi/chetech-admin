@@ -41,6 +41,12 @@
   --shadow-pop: 0 28px 48px rgba(27, 27, 25, 0.12);
 }
 
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html {
   min-height: 100%;
   overflow-x: hidden;
@@ -62,6 +68,13 @@ body {
     linear-gradient(180deg, rgba(29, 29, 27, 0.03) 1px, transparent 1px),
     linear-gradient(180deg, #fafaf8 0%, #f1f1ec 48%, #f7f7f4 100%);
   background-size: auto, auto, 24px 24px, 24px 24px, auto;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
 }
 
 body::before {
@@ -89,6 +102,20 @@ input,
 select,
 textarea {
   -webkit-tap-highlight-color: transparent;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+p,
+span,
+td,
+th,
+dd,
+dt {
+  overflow-wrap: break-word;
 }
 
 button,
@@ -175,10 +202,11 @@ textarea {
   box-shadow: var(--shadow-card);
 }
 
-.table-shell .overflow-x-auto {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-x: contain;
-}
+  .table-shell .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    max-width: 100%;
+  }
 
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
@@ -287,6 +315,13 @@ textarea {
   .table-shell td {
     padding-left: 0.875rem !important;
     padding-right: 0.875rem !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .admin-shell {
+    padding-left: max(0.5rem, env(safe-area-inset-left));
+    padding-right: max(0.5rem, env(safe-area-inset-right));
   }
 
   .empty-panel {

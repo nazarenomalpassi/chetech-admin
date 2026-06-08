@@ -346,7 +346,36 @@ export function SalesList({
               <p className="text-2xl font-semibold tracking-[-0.05em] text-slate-950">{formatCurrency(cartTotal)}</p>
             </div>
             {cart.length ? (
-              <div className="overflow-x-auto">
+              <div className="grid gap-3 p-3 lg:hidden">
+                {cart.map((item) => (
+                  <article className="rounded-[22px] border border-graphite/8 bg-white/86 p-4" key={item.productId}>
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-950">{item.label}</p>
+                        <p className="mt-1 text-xs text-slate-500">Stock visible {item.stock}</p>
+                      </div>
+                      <p className="shrink-0 font-semibold text-slate-950">{formatCurrency(item.quantity * item.unitPrice)}</p>
+                    </div>
+                    <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+                      <div className="rounded-[18px] bg-brand-50 px-3 py-2">
+                        <span className="text-xs text-slate-500">Cantidad</span>
+                        <p className="font-semibold text-slate-800">{item.quantity}</p>
+                      </div>
+                      <div className="rounded-[18px] bg-brand-50 px-3 py-2">
+                        <span className="text-xs text-slate-500">Precio</span>
+                        <p className="font-semibold text-slate-800">{formatCurrency(item.unitPrice)}</p>
+                      </div>
+                    </div>
+                    <Button className="mt-3 w-full" onClick={() => removeFromCart(item.productId)} type="button" variant="danger">
+                      <Trash2 className="h-4 w-4" />
+                      Quitar
+                    </Button>
+                  </article>
+                ))}
+              </div>
+            ) : null}
+            {cart.length ? (
+              <div className="hidden overflow-x-auto lg:block">
                 <table className="min-w-full text-sm">
                   <thead className="bg-white/80 text-left text-slate-500">
                     <tr>
@@ -419,7 +448,55 @@ export function SalesList({
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 text-sm text-slate-600">
           Mostrando las ultimas 100 ventas para sostener velocidad aunque crezca el historial.
         </div>
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-3 lg:hidden">
+          {sales.map((sale) => (
+            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={sale.id}>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-950">{sale.saleNumber}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(sale.soldAt)}</p>
+                </div>
+                <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(sale.subtotal)}</p>
+              </div>
+              <p className="mt-3 break-words text-sm leading-6 text-slate-600">
+                {sale.items.length
+                  ? sale.items.map((item) => `${item.productName ?? "Producto"} x${item.quantity}`).join(", ")
+                  : "Sin producto vinculado"}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-slate-500">{renderPaymentSummary(sale)}</p>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {canManageHistory ? (
+                  <>
+                    <Button className="w-full" onClick={() => startEdit(sale)} type="button" variant="secondary">
+                      Editar
+                    </Button>
+                    <form
+                      action={deleteSaleAction}
+                      onSubmit={(event) => {
+                        if (
+                          !window.confirm(
+                            `Eliminar la venta ${sale.saleNumber}? Esto restaura stock y borra el historial de cobro.`
+                          )
+                        ) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      <input name="id" type="hidden" value={sale.id} />
+                      <Button className="w-full" type="submit" variant="danger">
+                        Eliminar
+                      </Button>
+                    </form>
+                  </>
+                ) : (
+                  <p className="rounded-[18px] bg-brand-50 px-3 py-2 text-sm text-slate-500">Historial protegido</p>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-white/80 text-left text-slate-500">
               <tr>

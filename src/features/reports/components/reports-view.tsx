@@ -148,11 +148,11 @@ function VariationBadge({
         : "bg-slate-100 text-slate-600";
 
   return (
-    <span className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", tone)}>
+    <span className={cn("inline-flex max-w-full flex-wrap items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", tone)}>
       <Icon className="h-3.5 w-3.5" />
       {difference === 0
         ? "Sin cambio"
-        : `${difference > 0 ? "+" : ""}${formatCurrency(difference)}${percentage !== null ? ` · ${difference > 0 ? "+" : ""}${percentage.toFixed(1)}%` : ""}`}
+        : `${difference > 0 ? "+" : ""}${formatCurrency(difference)}${percentage !== null ? ` - ${difference > 0 ? "+" : ""}${percentage.toFixed(1)}%` : ""}`}
     </span>
   );
 }
@@ -169,8 +169,8 @@ function GoalCard({
 
   return (
     <div className="rounded-3xl border border-slate-100 bg-white/70 p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-sm text-slate-500">{title}</p>
           <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(progress.actual)}</p>
         </div>
@@ -183,11 +183,11 @@ function GoalCard({
         />
       </div>
       <div className="mt-3 space-y-1 text-sm text-slate-600">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <span>Objetivo</span>
           <span className="font-semibold text-slate-950">{formatCurrency(progress.target)}</span>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <span>{reached ? "Superavit" : "Pendiente"}</span>
           <span className="font-semibold text-slate-950">{formatCurrency(Math.abs(progress.difference))}</span>
         </div>
@@ -282,8 +282,8 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {monthlyComparison.rows.map((row) => (
             <div key={row.key} className="rounded-3xl border border-slate-100 bg-white/70 p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
                   <p className="text-sm text-slate-500">{row.label}</p>
                   <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(row.current)}</p>
                 </div>
@@ -294,11 +294,11 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                 />
               </div>
               <div className="mt-4 rounded-2xl border border-slate-100 bg-[#fbfbf8] px-4 py-3 text-sm text-slate-600">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>{monthlyComparison.currentLabel}</span>
                   <span className="font-semibold text-slate-950">{formatCurrency(row.current)}</span>
                 </div>
-                <div className="mt-2 flex items-center justify-between">
+                <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>{monthlyComparison.previousLabel}</span>
                   <span className="font-semibold text-slate-950">{formatCurrency(row.previous)}</span>
                 </div>
@@ -343,17 +343,17 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             {sellerSummary.length ? (
               sellerSummary.map((row) => (
                 <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className="rounded-2xl bg-brand-100 p-2 text-graphite">
                         <UserRound className="h-4 w-4" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium text-slate-900">{row.label}</p>
                         <p className="text-xs text-slate-500">{row.count} ventas registradas</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.total)}</p>
+                    <p className="text-sm font-semibold text-slate-950 sm:text-right">{formatCurrency(row.total)}</p>
                   </div>
                 </div>
               ))
@@ -375,17 +375,17 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             {technicianSummary.length ? (
               technicianSummary.map((row) => (
                 <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
                       <div className="rounded-2xl bg-brand-100 p-2 text-graphite">
                         <Wrench className="h-4 w-4" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="font-medium text-slate-900">{row.label}</p>
                         <p className="text-xs text-slate-500">{row.count} reparaciones registradas</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.total)}</p>
+                    <p className="text-sm font-semibold text-slate-950 sm:text-right">{formatCurrency(row.total)}</p>
                   </div>
                 </div>
               ))
@@ -401,20 +401,20 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             <h3 className="text-xl font-semibold text-slate-950">Lectura rapida del periodo</h3>
           </div>
           <div className="space-y-3 rounded-3xl border border-slate-100 bg-white/70 p-4">
-            <div className="flex items-center justify-between text-sm text-slate-600">
+            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Facturacion total</span>
               <span className="font-semibold text-slate-950">{formatCurrency(metrics.invoicesTotal)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-slate-600">
+            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Gastos operativos</span>
               <span className="font-semibold text-slate-950">{formatCurrency(metrics.expensesTotal)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-slate-600">
+            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Retiros de sueldo</span>
               <span className="font-semibold text-slate-950">{formatCurrency(metrics.salariesTotal)}</span>
             </div>
             <div className="border-t border-slate-200 pt-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm font-medium text-slate-700">Resultado de caja</span>
                 <span className="text-lg font-semibold text-slate-950">{formatCurrency(metrics.netCash)}</span>
               </div>
@@ -444,12 +444,12 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             {rankings.products.length ? (
               rankings.products.map((row) => (
                 <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="font-medium text-slate-900">{row.label}</p>
                       <p className="text-xs text-slate-500">{row.quantity} unidades vendidas</p>
                     </div>
-                    <div className="text-right">
+                    <div className="sm:text-right">
                       <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
                       <p className="text-xs text-slate-500">Ganancia {formatCurrency(row.profit)}</p>
                     </div>
@@ -474,12 +474,12 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             {rankings.categories.length ? (
               rankings.categories.map((row) => (
                 <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
                       <p className="font-medium text-slate-900">{row.label}</p>
                       <p className="text-xs text-slate-500">{row.quantity} unidades vendidas</p>
                     </div>
-                    <div className="text-right">
+                    <div className="sm:text-right">
                       <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
                       <p className="text-xs text-slate-500">Ganancia {formatCurrency(row.profit)}</p>
                     </div>

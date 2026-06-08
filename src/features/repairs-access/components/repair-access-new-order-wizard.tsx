@@ -148,7 +148,7 @@ export function RepairAccessNewOrderWizard({
             Esta pantalla es solo para recepcion: cliente, equipo, falla declarada y prioridad. Diagnostico, presupuesto y cobro se cargan despues en el detalle tecnico.
           </p>
         </div>
-        {editing ? <Button onClick={onCancel} type="button" variant="secondary">Cancelar edicion</Button> : null}
+        {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar edicion</Button> : null}
       </div>
 
       <div className="grid gap-2 lg:grid-cols-3">
@@ -283,13 +283,13 @@ export function RepairAccessNewOrderWizard({
           <p className="text-sm text-slate-500">
             Al guardar, el sistema genera un numero REP correlativo para pegar en el equipo fisico.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {activeStep !== "cliente" ? <Button onClick={() => setActiveStep(activeStep === "ingreso" ? "equipo" : "cliente")} type="button" variant="secondary">Anterior</Button> : null}
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
+            {activeStep !== "cliente" ? <Button className="w-full sm:w-auto" onClick={() => setActiveStep(activeStep === "ingreso" ? "equipo" : "cliente")} type="button" variant="secondary">Anterior</Button> : null}
             {activeStep !== "ingreso" ? (
-              <Button onClick={() => setActiveStep(activeStep === "cliente" ? "equipo" : "ingreso")} type="button" variant="secondary">Siguiente</Button>
+              <Button className="w-full sm:w-auto" onClick={() => setActiveStep(activeStep === "cliente" ? "equipo" : "ingreso")} type="button" variant="secondary">Siguiente</Button>
             ) : null}
-            {editing ? <Button onClick={onCancel} type="button" variant="secondary">Cancelar</Button> : null}
-            <Button type="submit">{editing ? "Actualizar ingreso" : "Crear orden"}</Button>
+            {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar</Button> : null}
+            <Button className="w-full sm:w-auto" type="submit">{editing ? "Actualizar ingreso" : "Crear orden"}</Button>
           </div>
         </div>
       </form>

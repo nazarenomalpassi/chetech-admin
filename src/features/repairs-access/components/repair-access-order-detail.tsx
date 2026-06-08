@@ -81,9 +81,9 @@ export function RepairAccessOrderDetail({
               {order.customer.fullName} - {order.customer.phone || "sin telefono"} - {deviceLabel || "Equipo"} - ingreso {formatDate(order.intakeDate)}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={onBack} type="button" variant="secondary">Volver a ordenes</Button>
-            <Button onClick={() => onEditIntake(order)} type="button" variant="secondary">Editar ingreso</Button>
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
+            <Button className="w-full sm:w-auto" onClick={onBack} type="button" variant="secondary">Volver a ordenes</Button>
+            <Button className="w-full sm:w-auto" onClick={() => onEditIntake(order)} type="button" variant="secondary">Editar ingreso</Button>
           </div>
         </div>
 
@@ -232,7 +232,7 @@ export function RepairAccessOrderDetail({
             </div>
 
             <div className="flex justify-end lg:col-span-6">
-              <Button type="submit">Guardar seguimiento tecnico</Button>
+              <Button className="w-full sm:w-auto" type="submit">Guardar seguimiento tecnico</Button>
             </div>
           </form>
         </Card>
@@ -256,9 +256,9 @@ function InfoBlock({ title, rows }: { title: string; rows: [string, string | nul
       <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 space-y-2">
         {rows.map(([label, value]) => (
-          <div className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm" key={label}>
-            <span className="w-32 shrink-0 text-slate-400">{label}</span>
-            <span className="text-slate-700">{value || "-"}</span>
+          <div className="flex min-w-0 flex-col gap-1 rounded-2xl bg-slate-50 px-4 py-3 text-sm sm:flex-row sm:gap-3" key={label}>
+            <span className="shrink-0 text-slate-400 sm:w-32">{label}</span>
+            <span className="min-w-0 break-words text-slate-700">{value || "-"}</span>
           </div>
         ))}
       </div>

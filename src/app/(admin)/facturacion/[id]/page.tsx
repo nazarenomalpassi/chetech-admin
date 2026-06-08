@@ -29,13 +29,13 @@ export default async function InvoiceDetailPage({
 
   return (
     <div className="invoice-page space-y-4">
-      <div className="no-print flex items-center justify-between">
+      <div className="no-print flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link className="text-sm font-medium text-graphite underline decoration-graphite/30 underline-offset-4" href="/facturacion">
           Volver a facturacion
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Link
-            className="inline-flex h-10 items-center justify-center rounded-full border border-graphite/10 bg-white px-4 text-sm font-medium text-slate-950 shadow-sm transition hover:bg-slate-50"
+            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-graphite/10 bg-white px-4 text-sm font-medium text-slate-950 shadow-sm transition hover:bg-slate-50 sm:h-10 sm:w-auto"
             href={`/api/invoices/${invoice.id}/pdf`}
           >
             Descargar PDF
@@ -84,7 +84,26 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
 
-        <div className="invoice-section mt-8 overflow-x-auto">
+        <div className="invoice-section mt-8 grid gap-3 md:hidden print:hidden">
+          {invoice.items.map((item: any) => (
+            <article className="rounded-3xl border border-slate-100 bg-white px-4 py-4" key={item.id}>
+              <p className="font-semibold text-slate-950">{item.description}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-600">
+                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                  <span className="text-xs text-slate-400">Cantidad</span>
+                  <p className="font-semibold text-slate-800">{item.quantity}</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                  <span className="text-xs text-slate-400">Precio</span>
+                  <p className="font-semibold text-slate-800">{formatCurrency(item.unitPrice)}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-right text-lg font-semibold text-slate-950">{formatCurrency(item.total)}</p>
+            </article>
+          ))}
+        </div>
+
+        <div className="invoice-section mt-8 hidden overflow-x-auto md:block print:block">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>

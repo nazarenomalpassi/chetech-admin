@@ -217,9 +217,9 @@ function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessI
 
 function ImportMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-3xl border border-slate-100 bg-slate-50 p-4">
+    <div className="min-w-0 rounded-3xl border border-slate-100 bg-slate-50 p-4">
       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
-      <p className="mt-2 truncate text-lg font-semibold text-slate-950">{value}</p>
+      <p className="mt-2 break-words text-lg font-semibold text-slate-950">{value}</p>
     </div>
   );
 }

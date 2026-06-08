@@ -169,7 +169,55 @@ export function ExpensesList({
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 text-sm text-slate-600">
           Historial operativo: se muestran los ultimos 100 gastos para mantener la pantalla veloz.
         </div>
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-3 lg:hidden">
+          {expenses.map((expense) => (
+            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={expense.id}>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-950">{expense.type}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(expense.expenseDate)}</p>
+                </div>
+                <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(expense.amount)}</p>
+              </div>
+              <p className="mt-3 break-words text-sm leading-6 text-slate-600">{expense.description}</p>
+              <div className="mt-3 rounded-[18px] bg-brand-50 px-3 py-2.5 text-sm">
+                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Cuenta</span>
+                <p className="mt-1 font-semibold text-slate-800">{formatCashMethod(expense.paymentMethod)}</p>
+              </div>
+              {expense.observations ? <p className="mt-3 text-xs leading-5 text-slate-500">{expense.observations}</p> : null}
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setEditing(expense);
+                    setExpenseDate(expense.expenseDate);
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  Editar
+                </Button>
+                {canDelete ? (
+                  <form
+                    action={deleteExpenseAction}
+                    onSubmit={(event) => {
+                      if (!window.confirm(`Eliminar el gasto "${expense.description}"?`)) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
+                    <input name="id" type="hidden" value={expense.id} />
+                    <Button className="w-full" type="submit" variant="danger">
+                      Eliminar
+                    </Button>
+                  </form>
+                ) : null}
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-white/80 text-left text-slate-500">
               <tr>

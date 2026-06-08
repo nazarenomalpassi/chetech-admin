@@ -62,7 +62,82 @@ export function ProductTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 p-3 lg:hidden">
+        {products.map((product) => {
+          const lowStock = product.stock <= product.minStock;
+
+          return (
+            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={product.id}>
+              <div className="flex min-w-0 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="break-words font-semibold text-slate-950">{product.name}</p>
+                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{product.sku}</p>
+                </div>
+                <Badge variant={product.isActive ? "success" : "default"}>
+                  {product.isActive ? "Activo" : "Inactivo"}
+                </Badge>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Categoria</p>
+                  <p className="mt-1 font-semibold text-slate-800">{product.category ?? "Sin categoria"}</p>
+                </div>
+                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Stock</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-800">{product.stock}</span>
+                    {lowStock ? <Badge variant="warning">Bajo</Badge> : <Badge variant="success">OK</Badge>}
+                  </div>
+                </div>
+                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Costo</p>
+                  <p className="mt-1 font-semibold text-slate-800">{formatCurrency(product.cost)}</p>
+                </div>
+                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Precio</p>
+                  <p className="mt-1 font-semibold text-slate-950">{formatCurrency(product.salePrice)}</p>
+                </div>
+              </div>
+
+              <p className="mt-3 text-xs text-slate-500">
+                Margen visible {formatCurrency(product.salePrice - product.cost)}
+              </p>
+
+              {canManage ? (
+                <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                  <Button className="w-full" onClick={() => onEdit(product.id)} variant="secondary">
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button
+                    className="w-full"
+                    disabled={isPending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        await toggleProductStatusAction(product.id, !product.isActive);
+                      })
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
+                    <Power className="h-4 w-4" />
+                    {product.isActive ? "Desactivar" : "Reactivar"}
+                  </Button>
+                  <Button className="w-full" disabled={isPending} onClick={() => handleDelete(product)} variant="danger">
+                    <Trash2 className="h-4 w-4" />
+                    Eliminar
+                  </Button>
+                </div>
+              ) : (
+                <p className="mt-4 rounded-[18px] bg-brand-50 px-3 py-2 text-sm text-slate-500">Solo administracion</p>
+              )}
+            </article>
+          );
+        })}
+      </div>
+
+      <div className="hidden overflow-x-auto lg:block">
         <table className="min-w-full text-sm">
           <thead className="bg-white/80 text-left text-slate-500">
             <tr>

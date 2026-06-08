@@ -93,7 +93,94 @@ export function BoardTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="grid gap-3 p-3 lg:hidden">
+        {boards.map((board) => (
+          <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={board.id}>
+            <div className="flex min-w-0 items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-950">{board.brand}</p>
+                <p className="mt-1 break-words text-sm text-slate-600">{board.model}</p>
+              </div>
+              <Badge variant="default">{TYPE_LABELS[board.boardType]}</Badge>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Publicado</p>
+                <p className="mt-1 font-semibold text-slate-950">{formatCurrency(board.price)}</p>
+              </div>
+              <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Neto real</p>
+                <p className="mt-1 font-semibold text-slate-950">
+                  {board.netAmount === null ? "-" : formatCurrency(board.netAmount)}
+                </p>
+              </div>
+              <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Alta</p>
+                <p className="mt-1 font-semibold text-slate-800">{formatDate(board.createdAt)}</p>
+              </div>
+              <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Stock</p>
+                <div className="mt-1"><Badge variant={board.isActive ? "success" : "default"}>{board.isActive ? "Activa" : "Baja"}</Badge></div>
+              </div>
+            </div>
+
+            <div className="mt-3">{renderSaleBadge(board)}</div>
+            {board.releaseDate ? (
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                Liberacion {formatDate(board.releaseDate)}. {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
+              </p>
+            ) : null}
+            {board.saleNotes ? <p className="mt-2 text-xs leading-5 text-slate-500">{board.saleNotes}</p> : null}
+
+            {canManage ? (
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <Button className="w-full" onClick={() => onEdit(board.id)} variant="secondary">
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Button>
+                {!board.isSold ? (
+                  <Button className="w-full" disabled={isPending} onClick={() => onSell(board.id)}>
+                    <WalletCards className="h-4 w-4" />
+                    Vendida
+                  </Button>
+                ) : (
+                  <Button className="w-full" disabled variant="secondary">
+                    <WalletCards className="h-4 w-4" />
+                    Venta cargada
+                  </Button>
+                )}
+                {!board.isSold ? (
+                  <Button
+                    className="w-full"
+                    disabled={isPending}
+                    onClick={() =>
+                      startTransition(async () => {
+                        const result = await toggleTvBoardStatusAction(board.id, !board.isActive);
+                        if (!result.success) {
+                          window.alert(result.message);
+                        }
+                      })
+                    }
+                    variant="ghost"
+                  >
+                    <Power className="h-4 w-4" />
+                    {board.isActive ? "Dar de baja" : "Reactivar"}
+                  </Button>
+                ) : null}
+                <Button className="w-full" disabled={isPending} onClick={() => handleDelete(board)} variant="danger">
+                  <Trash2 className="h-4 w-4" />
+                  Eliminar
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-4 rounded-[18px] bg-brand-50 px-3 py-2 text-sm text-slate-500">Solo administracion</p>
+            )}
+          </article>
+        ))}
+      </div>
+
+      <div className="hidden overflow-x-auto lg:block">
         <table className="min-w-full text-sm">
           <thead className="bg-white/80 text-left text-slate-500">
             <tr>

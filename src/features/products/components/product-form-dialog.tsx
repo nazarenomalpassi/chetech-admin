@@ -86,14 +86,14 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,15,15,0.42)] p-4 backdrop-blur-md">
-      <div className="w-full max-w-4xl rounded-[32px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,247,243,0.96))] p-6 shadow-[0_30px_90px_rgba(20,20,19,0.18)]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(15,15,15,0.42)] px-3 py-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:p-4">
+      <div className="max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-4xl overflow-y-auto rounded-[26px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,247,243,0.96))] p-4 shadow-[0_30px_90px_rgba(20,20,19,0.18)] sm:rounded-[32px] sm:p-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex items-start gap-4">
+          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
               <PackagePlus className="h-5 w-5" />
             </span>
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="panel-kicker">Gestion de productos</p>
                 <span className="inline-flex items-center gap-1 rounded-full border border-graphite/8 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">

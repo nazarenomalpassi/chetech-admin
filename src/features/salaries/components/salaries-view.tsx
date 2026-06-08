@@ -185,7 +185,44 @@ export function SalariesView({
         <Card>
           <p className="text-sm text-slate-500">Historial de retiros</p>
           <h2 className="text-xl font-semibold text-slate-950">Ultimos movimientos</h2>
-          <div className="mt-4 overflow-x-auto">
+          <div className="mt-4 grid gap-3 lg:hidden">
+            {data.withdrawals.map((withdrawal) => (
+              <article className="rounded-[22px] border border-slate-100 bg-white px-4 py-3" key={withdrawal.id}>
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold text-slate-950">{formatCashMethod(withdrawal.paymentMethod, { context: "salary" })}</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatDate(withdrawal.withdrawalDate)}</p>
+                  </div>
+                  <p className="text-lg font-semibold text-slate-950">{formatCurrency(withdrawal.amount)}</p>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{withdrawal.notes || "-"}</p>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {canManage ? (
+                    <>
+                      <Button className="w-full" onClick={() => setEditing(withdrawal)} type="button" variant="secondary">
+                        Editar
+                      </Button>
+                      <form action={deleteSalaryWithdrawalAction}>
+                        <input name="id" type="hidden" value={withdrawal.id} />
+                        <Button className="w-full" disabled={!data.migrationReady} type="submit" variant="danger">
+                          Eliminar
+                        </Button>
+                      </form>
+                    </>
+                  ) : (
+                    <p className="text-xs text-slate-500">Solo admin</p>
+                  )}
+                </div>
+              </article>
+            ))}
+            {!data.withdrawals.length ? (
+              <div className="border-t border-slate-100 bg-white px-4 py-8 text-sm text-slate-500">
+                Todavia no cargaste retiros de sueldo.
+              </div>
+            ) : null}
+          </div>
+
+          <div className="mt-4 hidden overflow-x-auto lg:block">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-slate-500">
                 <tr>

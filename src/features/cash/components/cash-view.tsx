@@ -176,7 +176,36 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           </div>
 
           <div className="mt-4 overflow-hidden rounded-3xl border border-graphite/10">
-            <div className="max-h-[560px] overflow-auto">
+            <div className="grid max-h-[560px] gap-3 overflow-auto bg-white p-3 md:hidden">
+              {data.recentMovements.map((movement) => {
+                const income = isIncome(movement.type);
+                const Icon = income ? ArrowUpRight : ArrowDownLeft;
+                return (
+                  <article className="rounded-[22px] border border-graphite/8 bg-white px-4 py-3 shadow-[0_8px_18px_rgba(20,20,19,0.04)]" key={movement.id}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-brand-100 p-1 text-graphite">
+                            <Icon className="h-3.5 w-3.5" />
+                          </span>
+                          <p className="font-semibold text-graphite">{formatMovementType(movement.type)}</p>
+                        </div>
+                        <p className="mt-1 text-xs text-slate-500">{formatDate(movement.date)} - {formatCashMethod(movement.method)}</p>
+                      </div>
+                      <p className="shrink-0 font-semibold text-graphite">
+                        {income ? "+" : "-"} {formatCurrency(movement.amount)}
+                      </p>
+                    </div>
+                    {movement.description ? <p className="mt-2 break-words text-xs leading-5 text-slate-500">{movement.description}</p> : null}
+                  </article>
+                );
+              })}
+              {!data.recentMovements.length ? (
+                <div className="bg-white px-4 py-8 text-sm text-slate-500">Todavia no hay movimientos de caja.</div>
+              ) : null}
+            </div>
+
+            <div className="hidden max-h-[560px] overflow-auto md:block">
               <table className="min-w-full text-sm">
                 <thead className="sticky top-0 bg-brand-50 text-left text-slate-500">
                   <tr>
