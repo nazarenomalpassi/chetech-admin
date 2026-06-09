@@ -44,8 +44,18 @@ type Options = {
     issueDescription: string;
     amount: number;
     observations: string;
+    description: string;
   }>;
-  sales: Array<{ id: string; label: string; saleNumber: string; amount: number; notes: string }>;
+  sales: Array<{
+    id: string;
+    label: string;
+    saleNumber: string;
+    amount: number;
+    notes: string;
+    customerName: string;
+    customerPhone: string;
+    items: Array<{ description: string; quantity: number; unitPrice: number; total: number; productId?: string | null }>;
+  }>;
   products: Array<{ id: string; label: string; name: string; price: number }>;
 };
 
@@ -110,7 +120,7 @@ export function InvoicesView({
     setCustomerPhone(repair.customerPhone);
     setItems([
       {
-        description: `Reparacion de ${repair.device} - ${repair.issueDescription}`,
+        description: repair.description,
         quantity: 1,
         unitPrice: repair.amount,
         repairId: repair.id
@@ -122,7 +132,18 @@ export function InvoicesView({
     setSaleId(id);
     const sale = options.sales.find((item) => item.id === id);
     if (!sale) return;
-    setItems([{ description: `Venta ${sale.saleNumber}`, quantity: 1, unitPrice: sale.amount }]);
+    setCustomerName(sale.customerName || customerName);
+    setCustomerPhone(sale.customerPhone || customerPhone);
+    setItems(
+      sale.items.length
+        ? sale.items.map((item) => ({
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            productId: item.productId ?? null
+          }))
+        : [{ description: `Venta de productos ${sale.saleNumber}`, quantity: 1, unitPrice: sale.amount }]
+    );
   }
 
   const productOptions = useMemo(
