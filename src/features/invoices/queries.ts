@@ -25,8 +25,18 @@ export async function getInvoices() {
 export async function getInvoiceById(id: string) {
   const supabase = await createServerSupabaseClient();
   const [invoiceResult, itemsResult] = await Promise.all([
-    (supabase as any).from("invoices").select("*").eq("id", id).single(),
-    (supabase as any).from("invoice_items").select("*").eq("invoice_id", id).order("id")
+    (supabase as any)
+      .from("invoices")
+      .select(
+        "id, invoice_number, customer_name, customer_phone, source_type, repair_id, sale_id, subtotal, discount, total, paid_total, balance, status, notes, created_at"
+      )
+      .eq("id", id)
+      .single(),
+    (supabase as any)
+      .from("invoice_items")
+      .select("id, description, quantity, unit_price, total")
+      .eq("invoice_id", id)
+      .order("id")
   ]);
 
   if (invoiceResult.error) throw new Error(invoiceResult.error.message);
