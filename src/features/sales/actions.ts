@@ -64,8 +64,41 @@ function redirectWithError(message: string, id?: string): never {
 }
 
 async function getNextSaleNumber(supabase: any) {
-  const { count } = await supabase.from("sales").select("*", { count: "exact", head: true });
-  return `V-${String((count ?? 0) + 1).padStart(4, "0")}`;
+  const { data, error } = await supabase.from("sales").select("sale_number").like("sale_number", "V-%").limit(10000);
+  if (error) throw error;
+
+  const maxSaleNumber = Math.max(
+    0,
+    ...((data ?? []) as Array<{ sale_number: string | null }>).map((sale) => {
+      const match = String(sale.sale_number ?? "").match(/\d+/);
+      return match ? Number(match[0]) : 0;
+    })
+  );
+
+  return `V-${String(maxSaleNumber + 1).padStart(4, "0")}`;
+}
+
+function isDuplicateSaleNumberError(error: any) {
+  return error?.code === "23505" && String(error?.message ?? "").includes("sales_sale_number_key");
+}
+
+async function insertSaleWithUniqueNumber(supabase: any, payload: Record<string, unknown>) {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const saleNumber = await getNextSaleNumber(supabase);
+    const { data, error } = await supabase
+      .from("sales")
+      .insert({
+        ...payload,
+        sale_number: saleNumber
+      })
+      .select("id")
+      .single();
+
+    if (!error && data) return data;
+    if (!isDuplicateSaleNumberError(error)) throw error ?? new Error("No se pudo crear la venta.");
+  }
+
+  throw new Error("No se pudo generar un numero de venta unico. Intenta guardar nuevamente.");
 }
 
 function addQuantity(map: Map<string, number>, productId: string, quantity: number) {
@@ -164,21 +197,22 @@ export async function saveSaleAction(formData: FormData) {
     if (error) redirectWithError(error.message, saleId);
   } else {
     action = "insert";
-    const { data, error } = await (supabase as any)
-      .from("sales")
-      .insert({
-        sale_number: await getNextSaleNumber(supabase as any),
+    let data;
+
+    try {
+      data = await insertSaleWithUniqueNumber(supabase as any, {
         subtotal,
         cost_total: costTotal,
         profit_total: profitTotal,
         notes: input.notes || null,
         sold_at: toOperationalDateTime(input.saleDate),
         created_by: user.id
-      })
-      .select("id")
-      .single();
+      });
+    } catch (error) {
+      redirectWithError(error instanceof Error ? error.message : "No se pudo crear la venta.");
+    }
 
-    if (error || !data) redirectWithError(error?.message ?? "No se pudo crear la venta.");
+    if (!data) redirectWithError("No se pudo crear la venta.");
     saleId = data.id;
   }
 
