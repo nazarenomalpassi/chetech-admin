@@ -11,11 +11,11 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const expenseFormSchema = z.object({
   id: z.string().uuid().optional(),
-  expenseDate: z.string().min(1, "Seleccioná la fecha del gasto"),
-  type: z.string().min(1, "Ingresá una categoría"),
-  description: z.string().min(1, "Ingresá una descripción"),
-  amount: z.coerce.number().positive("Ingresá un monto válido"),
-  paymentMethod: z.string().min(1, "Seleccioná un medio de pago"),
+  expenseDate: z.string().min(1, "Selecciona la fecha del gasto"),
+  type: z.string().min(1, "Ingresa una categoria"),
+  description: z.string().min(1, "Ingresa una descripcion"),
+  amount: z.coerce.number().positive("Ingresa un monto valido"),
+  paymentMethod: z.string().min(1, "Selecciona un medio de pago"),
   observations: z.string().optional()
 });
 

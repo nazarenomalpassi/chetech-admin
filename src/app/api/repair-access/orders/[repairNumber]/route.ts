@@ -4,7 +4,14 @@ import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function normalizeRepairNumber(value: string) {
-  const text = decodeURIComponent(value).trim().toUpperCase();
+  let decoded = value;
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    decoded = value;
+  }
+
+  const text = decoded.trim().toUpperCase();
   const digitsOnly = text.match(/^\d+$/);
   if (digitsOnly) return `REP-${digitsOnly[0].padStart(6, "0")}`;
 
@@ -18,10 +25,18 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ repairNumber: string }> }
 ) {
-  await requireUser();
+  try {
+    await requireUser();
+  } catch {
+    return NextResponse.json({ error: "Necesitas iniciar sesion para consultar la orden." }, { status: 401 });
+  }
 
   const { repairNumber } = await params;
   const normalizedRepairNumber = normalizeRepairNumber(repairNumber);
+  if (!normalizedRepairNumber) {
+    return NextResponse.json({ error: "Ingresa un numero de orden valido." }, { status: 400 });
+  }
+
   const supabase = await createServerSupabaseClient();
   const { data, error } = await (supabase as any)
     .from("repair_access_orders")
@@ -63,7 +78,7 @@ export async function GET(
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "No se pudo consultar la orden de reparacion." }, { status: 500 });
   }
 
   if (!data) {

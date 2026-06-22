@@ -265,7 +265,6 @@ export function RepairOutsourcingsView({
               {[
                 { value: "en_taller", label: "En taller" },
                 { value: "retirado", label: "Buscadas" },
-                { value: "cancelado", label: "Anuladas" },
                 { value: "todos", label: "Todas" }
               ].map((option) => (
                 <button

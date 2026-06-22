@@ -132,6 +132,7 @@ export async function getRepairOutsourcingDashboard() {
         )
       `
     )
+    .neq("status", "cancelado")
     .order("created_at", { ascending: false })
     .limit(200);
 

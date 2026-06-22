@@ -33,7 +33,7 @@ export async function upsertProductAction(input: unknown) {
   if (!parsed.data.id && !parsed.data.categoryId) {
     return {
       success: false,
-      message: "Seleccioná una categoría para generar el SKU automáticamente"
+      message: "Selecciona una categoria para generar el SKU automaticamente"
     };
   }
 
@@ -111,7 +111,7 @@ export async function deleteProductAction(id: string) {
       success: false,
       message:
         error.code === "23503"
-          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podés desactivarlo."
+          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podes desactivarlo."
           : error.message
     };
   }

@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCashSettings } from "@/lib/app-settings";
-import { CASH_METHODS, normalizeCashMethodValue, type CashMethod } from "@/lib/cash";
+import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 
 const ARGENTINA_UTC_OFFSET_HOURS = 3;
 

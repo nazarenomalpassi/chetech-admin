@@ -5,7 +5,11 @@ import { requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  await requireUser();
+  try {
+    await requireUser();
+  } catch {
+    return NextResponse.json({ customers: [], error: "Necesitas iniciar sesion para buscar clientes." }, { status: 401 });
+  }
 
   const { searchParams } = new URL(request.url);
   const filters = buildRepairAccessCustomerSearchFilters(searchParams.get("q") ?? "");
@@ -22,7 +26,7 @@ export async function GET(request: Request) {
     .limit(12);
 
   if (error) {
-    return NextResponse.json({ customers: [], error: error.message }, { status: 500 });
+    return NextResponse.json({ customers: [], error: "No se pudieron cargar los clientes." }, { status: 500 });
   }
 
   const customers = (data ?? [])

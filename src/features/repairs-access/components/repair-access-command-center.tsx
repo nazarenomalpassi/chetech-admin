@@ -16,10 +16,6 @@ export function RepairAccessCommandCenter({
 }) {
   const readyOrders = orders.filter((order) => order.status === "listo_para_retirar").slice(0, 5);
   const waitingOrders = orders.filter((order) => order.status === "presupuestado").slice(0, 5);
-  const delayedOrders = orders
-    .filter((order) => !["retirado", "sin_solucion", "presupuestado_rechazado"].includes(order.status))
-    .slice(0, 5);
-
   return (
     <div className="space-y-5">
       <section className="grid gap-4 xl:grid-cols-[1.35fr_0.65fr]">

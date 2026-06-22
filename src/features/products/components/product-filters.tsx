@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Layers3, Search } from "lucide-react";
 
@@ -16,18 +16,24 @@ export function ProductFilters({
   const searchParams = useSearchParams();
   const [search, setSearch] = useState(searchParams.get("search") ?? "");
 
-  function updateParam(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
+  const updateParam = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString());
+      const previousQuery = params.toString();
 
-    if (!value || value === "all") {
-      params.delete(key);
-    } else {
-      params.set(key, value);
-    }
+      if (!value || value === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
 
-    const query = params.toString();
-    router.replace(query ? `/productos?${query}` : "/productos");
-  }
+      const query = params.toString();
+      if (query === previousQuery) return;
+
+      router.replace(query ? `/productos?${query}` : "/productos");
+    },
+    [router, searchParams]
+  );
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -35,7 +41,7 @@ export function ProductFilters({
     }, 220);
 
     return () => window.clearTimeout(timeout);
-  }, [search]);
+  }, [search, updateParam]);
 
   return (
     <div className="table-toolbar">

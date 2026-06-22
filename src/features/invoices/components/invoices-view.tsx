@@ -7,6 +7,7 @@ import { FileText, ReceiptText, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { saveInvoiceAction, voidInvoiceAction } from "@/features/invoices/actions";
@@ -331,7 +332,7 @@ export function InvoicesView({
                   <div className="flex h-11 items-center rounded-[18px] border border-graphite/8 bg-brand-50 px-4 text-sm font-semibold text-slate-950">
                     {formatCurrency(item.quantity * item.unitPrice)}
                   </div>
-                  <Button onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button" variant="ghost">
+                  <Button disabled={items.length <= 1} onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button" variant="ghost">
                     Quitar
                   </Button>
                 </div>
@@ -354,7 +355,10 @@ export function InvoicesView({
             </div>
           </div>
 
-          <Button type="submit">{editingInvoice ? "Actualizar comprobante" : "Crear comprobante"}</Button>
+          <FormSubmitButton
+            idleLabel={editingInvoice ? "Actualizar comprobante" : "Crear comprobante"}
+            pendingLabel="Guardando comprobante..."
+          />
         </form>
       </Card>
 
@@ -410,11 +414,16 @@ export function InvoicesView({
                   </Link>
                 ) : null}
                 {canVoid && invoice.status !== "anulado" ? (
-                  <form action={voidInvoiceAction}>
+                  <form
+                    action={voidInvoiceAction}
+                    onSubmit={(event) => {
+                      if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
                     <input name="id" type="hidden" value={invoice.id} />
-                    <Button className="w-full" type="submit" variant="danger">
-                      Anular
-                    </Button>
+                    <FormSubmitButton className="w-full" idleLabel="Anular" pendingLabel="Anulando..." variant="danger" />
                   </form>
                 ) : null}
               </div>
@@ -463,11 +472,16 @@ export function InvoicesView({
                         </Link>
                       ) : null}
                       {canVoid && invoice.status !== "anulado" ? (
-                        <form action={voidInvoiceAction}>
+                        <form
+                          action={voidInvoiceAction}
+                          onSubmit={(event) => {
+                            if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
+                              event.preventDefault();
+                            }
+                          }}
+                        >
                           <input name="id" type="hidden" value={invoice.id} />
-                          <Button size="sm" type="submit" variant="danger">
-                            Anular
-                          </Button>
+                          <FormSubmitButton idleLabel="Anular" pendingLabel="Anulando..." size="sm" variant="danger" />
                         </form>
                       ) : null}
                     </div>

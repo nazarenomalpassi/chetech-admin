@@ -9,9 +9,20 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 export const runtime = "nodejs";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
-  await requireUser();
-  const { id } = await context.params;
-  const invoice = await getInvoiceById(id);
+  try {
+    await requireUser();
+  } catch {
+    return NextResponse.json({ error: "Necesitas iniciar sesion para descargar el comprobante." }, { status: 401 });
+  }
+
+  let invoice: Awaited<ReturnType<typeof getInvoiceById>>;
+  try {
+    const { id } = await context.params;
+    invoice = await getInvoiceById(id);
+  } catch {
+    return NextResponse.json({ error: "No se pudo generar el PDF del comprobante." }, { status: 500 });
+  }
+
   const chunks: Buffer[] = [];
   const doc = new PDFDocument({ size: "A4", margin: 42 });
 
