@@ -9,7 +9,8 @@ export default async function SueldosPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, data] = await Promise.all([getCurrentProfile(), getSalaryWithdrawalsData()]);
+  const { profile } = await getCurrentProfile();
+  const data = await getSalaryWithdrawalsData();
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

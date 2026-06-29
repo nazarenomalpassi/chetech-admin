@@ -12,7 +12,8 @@ export default async function PlacasTvPage({
   }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, boards] = await Promise.all([getCurrentProfile(), getTvBoards(params)]);
+  const { profile } = await getCurrentProfile();
+  const boards = await getTvBoards(params);
 
   return <BoardsView boards={boards} canManage={profile.role === "admin"} />;
 }

@@ -4,6 +4,13 @@ import type { CookieOptions } from "@supabase/ssr";
 
 import type { Database } from "@/lib/db/types";
 import { getSupabasePublicKey, hasSupabaseEnv } from "@/lib/supabase/config";
+import { isSupabaseAuthRateLimitError } from "@/lib/supabase/auth-errors";
+
+function hasSupabaseAuthCookie(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token"));
+}
 
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
@@ -50,17 +57,26 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
+  let hasSession = false;
 
-  if (!user && isProtectedRoute) {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    hasSession = Boolean(data.session?.access_token);
+
+    if (!hasSession && isSupabaseAuthRateLimitError(error)) {
+      hasSession = hasSupabaseAuthCookie(request);
+    }
+  } catch (error) {
+    hasSession = isSupabaseAuthRateLimitError(error) && hasSupabaseAuthCookie(request);
+  }
+
+  if (!hasSession && isProtectedRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthRoute) {
+  if (hasSession && isAuthRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

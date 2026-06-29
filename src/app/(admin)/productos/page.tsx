@@ -8,11 +8,8 @@ export default async function ProductosPage({
   searchParams: Promise<{ search?: string; category?: string; status?: "all" | "active" | "inactive" }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, products, categories] = await Promise.all([
-    getCurrentProfile(),
-    getProducts(params),
-    getProductCategories()
-  ]);
+  const { profile } = await getCurrentProfile();
+  const [products, categories] = await Promise.all([getProducts(params), getProductCategories()]);
 
   return <ProductsView canManage={profile.role === "admin"} categories={categories} products={products} />;
 }

@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { matchesSearchText } from "@/lib/search";
 import { getLocalDateInputValue } from "@/lib/utils";
 
 type TvBoardRow = {
@@ -32,10 +33,6 @@ export async function getTvBoards(filters?: {
     )
     .order("brand")
     .order("model");
-
-  if (filters?.search) {
-    query = query.or(`brand.ilike.%${filters.search}%,model.ilike.%${filters.search}%`);
-  }
 
   if (filters?.boardType && filters.boardType !== "all") {
     query = query.eq("board_type", filters.boardType);
@@ -89,6 +86,10 @@ export async function getTvBoards(filters?: {
     });
 
   return boards.filter((board: TvBoardRow) => {
+    if (!matchesSearchText(`${board.brand} ${board.model}`, filters?.search)) {
+      return false;
+    }
+
     switch (filters?.status) {
       case "active":
         return !board.isSold && board.isActive;

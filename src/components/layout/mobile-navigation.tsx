@@ -17,7 +17,12 @@ export function MobileNavigation() {
     <div className="sticky top-0 z-40 -mx-1 px-1 pt-[env(safe-area-inset-top)] xl:hidden">
       <div className="rounded-[28px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(19,19,18,0.98),rgba(28,27,25,0.98))] p-3 text-white shadow-pop">
         <div className="flex items-center justify-between gap-3">
-          <Link className="flex min-w-0 items-center gap-3" href="/dashboard" onClick={() => setOpen(false)}>
+          <Link
+            className="flex min-w-0 items-center gap-3"
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            prefetch={false}
+          >
             <span className="flex h-12 w-12 flex-none items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.06]">
               <img alt="" className="h-7 w-7" src="/brand/chetech-isologo-white.svg" />
             </span>
@@ -57,6 +62,7 @@ export function MobileNavigation() {
                     href={item.href}
                     key={item.href}
                     onClick={() => setOpen(false)}
+                    prefetch={false}
                   >
                     <span className={cn("flex h-9 w-9 items-center justify-center rounded-2xl", active ? "bg-brand-100" : "bg-white/[0.06]")}>
                       <Icon className="h-4.5 w-4.5" />

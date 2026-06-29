@@ -8,10 +8,8 @@ export default async function ReportesPage({
   searchParams: Promise<{ from?: string; to?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, data] = await Promise.all([
-    getCurrentProfile(),
-    getReportsData(params.from, params.to)
-  ]);
+  const { profile } = await getCurrentProfile();
+  const data = await getReportsData(params.from, params.to);
 
   return <ReportsView canExport={profile.role === "admin"} data={data} />;
 }

@@ -9,8 +9,8 @@ export default async function FacturacionPage({
   searchParams: Promise<{ status?: string; error?: string; edit?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, invoices, options, editingInvoice] = await Promise.all([
-    getCurrentProfile(),
+  const { profile } = await getCurrentProfile();
+  const [invoices, options, editingInvoice] = await Promise.all([
     getInvoices(),
     getInvoiceFormOptions(),
     params.edit ? getInvoiceById(params.edit) : Promise.resolve(null)

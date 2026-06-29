@@ -1,5 +1,6 @@
 import { cache } from "react";
 
+import { matchesSearchText } from "@/lib/search";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function getProducts(filters?: {
@@ -12,10 +13,6 @@ export async function getProducts(filters?: {
     .from("products")
     .select("id, sku, name, cost, sale_price, stock, min_stock, is_active, notes, category_id, categories(name)")
     .order("name");
-
-  if (filters?.search) {
-    query = query.or(`name.ilike.%${filters.search}%,sku.ilike.%${filters.search}%`);
-  }
 
   if (filters?.category) {
     query = query.eq("category_id", filters.category);
@@ -35,21 +32,23 @@ export async function getProducts(filters?: {
     throw new Error(error.message);
   }
 
-  return (data ?? []).map((product: any) => ({
-    id: product.id,
-    sku: product.sku,
-    name: product.name,
-    cost: Number(product.cost),
-    salePrice: Number(product.sale_price),
-    stock: Number(product.stock),
-    minStock: Number(product.min_stock),
-    isActive: product.is_active,
-    notes: product.notes,
-    categoryId: product.category_id,
-    category: Array.isArray(product.categories)
-      ? product.categories[0]?.name ?? null
-      : product.categories?.name ?? null
-  }));
+  return (data ?? [])
+    .map((product: any) => ({
+      id: product.id,
+      sku: product.sku,
+      name: product.name,
+      cost: Number(product.cost),
+      salePrice: Number(product.sale_price),
+      stock: Number(product.stock),
+      minStock: Number(product.min_stock),
+      isActive: product.is_active,
+      notes: product.notes,
+      categoryId: product.category_id,
+      category: Array.isArray(product.categories)
+        ? product.categories[0]?.name ?? null
+        : product.categories?.name ?? null
+    }))
+    .filter((product: any) => matchesSearchText(`${product.name} ${product.sku ?? ""}`, filters?.search));
 }
 
 export const getProductCategories = cache(async () => {

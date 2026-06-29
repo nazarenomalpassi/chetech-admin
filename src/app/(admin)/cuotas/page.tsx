@@ -18,17 +18,15 @@ export default async function CuotasPage({
   }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, data] = await Promise.all([
-    getCurrentProfile(),
-    getInstallmentSalesData({
-      customer: params.customer,
-      product: params.product,
-      status: params.state,
-      dueFrom: params.dueFrom,
-      dueTo: params.dueTo,
-      paymentMethod: params.paymentMethod
-    })
-  ]);
+  const { profile } = await getCurrentProfile();
+  const data = await getInstallmentSalesData({
+    customer: params.customer,
+    product: params.product,
+    status: params.state,
+    dueFrom: params.dueFrom,
+    dueTo: params.dueTo,
+    paymentMethod: params.paymentMethod
+  });
 
   const message = params.error
     ? { success: false, message: params.error }

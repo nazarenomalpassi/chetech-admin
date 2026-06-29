@@ -9,7 +9,8 @@ export default async function ReparacionesPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, repairs] = await Promise.all([getCurrentProfile(), getRepairs()]);
+  const { profile } = await getCurrentProfile();
+  const repairs = await getRepairs();
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

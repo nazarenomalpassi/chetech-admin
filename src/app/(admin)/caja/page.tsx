@@ -10,7 +10,8 @@ export default async function CajaPage({
 }) {
   const sp = await searchParams;
   const message = sp.error ? { success: false, message: sp.error } : getStatusMessage(sp.status);
-  const [{ profile }, data] = await Promise.all([getCurrentProfile(), getCashData()]);
+  const { profile } = await getCurrentProfile();
+  const data = await getCashData();
 
   return <CashView canClose={profile.role === "admin"} data={data} message={message} />;
 }

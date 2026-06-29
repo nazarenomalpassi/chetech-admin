@@ -9,7 +9,8 @@ export default async function GastosPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, expenses] = await Promise.all([getCurrentProfile(), getExpenses()]);
+  const { profile } = await getCurrentProfile();
+  const expenses = await getExpenses();
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

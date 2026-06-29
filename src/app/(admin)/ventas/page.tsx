@@ -9,11 +9,8 @@ export default async function VentasPage({
   searchParams: Promise<{ status?: string; error?: string }>;
 }) {
   const params = await searchParams;
-  const [{ profile }, sales, products] = await Promise.all([
-    getCurrentProfile(),
-    getSalesHistory(),
-    getSaleProductOptions()
-  ]);
+  const { profile } = await getCurrentProfile();
+  const [sales, products] = await Promise.all([getSalesHistory(), getSaleProductOptions()]);
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

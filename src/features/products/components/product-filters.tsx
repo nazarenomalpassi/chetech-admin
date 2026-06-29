@@ -38,7 +38,7 @@ export function ProductFilters({
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       updateParam("search", search.trim());
-    }, 220);
+    }, 650);
 
     return () => window.clearTimeout(timeout);
   }, [search, updateParam]);
