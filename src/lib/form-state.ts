@@ -33,6 +33,8 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     outsourcing_created: { success: true, message: "Terciarizacion guardada correctamente." },
     outsourcing_retrieved: { success: true, message: "Equipo marcado como buscado correctamente." },
     outsourcing_cancelled: { success: true, message: "Terciarizacion anulada correctamente, sin borrar el historial." },
+    balance_transfer_created: { success: true, message: "Cambio de balance guardado correctamente." },
+    balance_transfer_voided: { success: true, message: "Cambio de balance anulado con movimiento inverso." },
     invoice_created: { success: true, message: "Comprobante creado correctamente." },
     invoice_updated: { success: true, message: "Comprobante actualizado correctamente." },
     invoice_payment_added: { success: true, message: "Pago registrado correctamente." },

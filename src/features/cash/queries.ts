@@ -1,5 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCashSettings } from "@/lib/app-settings";
+import { calculateBalanceTransferDeltas } from "@/features/balance-transfers/model";
+import { getBalanceTransfers } from "@/features/balance-transfers/queries";
 import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 
 const ARGENTINA_UTC_OFFSET_HOURS = 3;
@@ -46,7 +48,7 @@ export async function getCashData() {
   const cashSettings = await getCashSettings();
   const today = getArgentinaDayRange(new Date());
 
-  const [allMovementsResult, todayMovementsResult, closuresResult] = await Promise.all([
+  const [allMovementsResult, todayMovementsResult, closuresResult, balanceTransfers] = await Promise.all([
     (supabase as any)
       .from("movimientos_caja")
       .select("id, tipo, monto, medio_pago, descripcion, referencia_tabla, referencia_id, fecha")
@@ -63,7 +65,8 @@ export async function getCashData() {
       .from("cierres_caja")
       .select("id, fecha, saldo_inicial, ingresos, egresos, saldo_final, observaciones, created_at")
       .order("fecha", { ascending: false })
-      .limit(20)
+      .limit(20),
+    getBalanceTransfers(supabase as any)
   ]);
 
   if (allMovementsResult.error) throw new Error(allMovementsResult.error.message);
@@ -72,6 +75,14 @@ export async function getCashData() {
 
   const movements = (allMovementsResult.data ?? []) as any[];
   const todayMovements = (todayMovementsResult.data ?? []) as any[];
+  const transferDeltas = calculateBalanceTransferDeltas(
+    balanceTransfers.map((transfer) => ({
+      amount: transfer.amount,
+      fromPaymentMethod: transfer.fromPaymentMethod,
+      isVoided: transfer.isVoided,
+      toPaymentMethod: transfer.toPaymentMethod
+    }))
+  );
 
   const balances = CASH_METHODS.map((method) => {
     const methodMovements = movements.filter((movement) => normalizeCashMethodValue(movement.medio_pago) === method);
@@ -96,7 +107,7 @@ export async function getCashData() {
       outcome,
       todayIncome,
       todayOutcome,
-      balance: cashSettings.openingBalances[method] + income - outcome
+      balance: cashSettings.openingBalances[method] + income - outcome + transferDeltas[method]
     };
   });
 

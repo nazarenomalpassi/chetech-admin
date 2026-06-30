@@ -731,6 +731,56 @@ export type Database = {
           void_reason?: string | null;
         };
       };
+      balance_transfers: {
+        Row: {
+          id: string;
+          from_payment_method: "efectivo" | "nx_santi" | "nx_local";
+          to_payment_method: "efectivo" | "nx_santi" | "nx_local";
+          amount: number;
+          description: string | null;
+          transfer_date: string;
+          is_voided: boolean;
+          voided_at: string | null;
+          voided_by: string | null;
+          void_reason: string | null;
+          reversal_transfer_id: string | null;
+          reversal_of_transfer_id: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          from_payment_method: "efectivo" | "nx_santi" | "nx_local";
+          to_payment_method: "efectivo" | "nx_santi" | "nx_local";
+          amount: number;
+          description?: string | null;
+          transfer_date?: string;
+          is_voided?: boolean;
+          voided_at?: string | null;
+          voided_by?: string | null;
+          void_reason?: string | null;
+          reversal_transfer_id?: string | null;
+          reversal_of_transfer_id?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          from_payment_method?: "efectivo" | "nx_santi" | "nx_local";
+          to_payment_method?: "efectivo" | "nx_santi" | "nx_local";
+          amount?: number;
+          description?: string | null;
+          transfer_date?: string;
+          is_voided?: boolean;
+          voided_at?: string | null;
+          voided_by?: string | null;
+          void_reason?: string | null;
+          reversal_transfer_id?: string | null;
+          reversal_of_transfer_id?: string | null;
+          updated_at?: string;
+        };
+      };
       repair_access_import_batches: {
         Row: {
           id: string;

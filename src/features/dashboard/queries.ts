@@ -1,4 +1,6 @@
 import { getCashSettings } from "@/lib/app-settings";
+import { calculateBalanceTransferDeltas } from "@/features/balance-transfers/model";
+import { getBalanceTransfers } from "@/features/balance-transfers/queries";
 import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPendingTvBoardsReleaseAmount } from "@/features/dashboard/financial-summary";
@@ -18,7 +20,15 @@ export async function getDashboardData({
   const range = getDashboardRange(dateFrom, dateTo);
 
   const todayDate = getLocalDateInputValue();
-  const [lowStockProductsRaw, topProducts, invoicesInRange, cashMovements, tvBoardSales, installmentsDashboard] = await Promise.all([
+  const [
+    lowStockProductsRaw,
+    topProducts,
+    invoicesInRange,
+    cashMovements,
+    tvBoardSales,
+    installmentsDashboard,
+    balanceTransfers
+  ] = await Promise.all([
     supabase
       .from("products")
       .select("id, name, stock, min_stock")
@@ -42,7 +52,8 @@ export async function getDashboardData({
       .from("tv_boards")
       .select("sold_at, release_date, mercado_libre_net_amount")
       .not("sold_at", "is", null),
-    getDashboardInstallmentsData(supabase as any, todayDate)
+    getDashboardInstallmentsData(supabase as any, todayDate),
+    getBalanceTransfers(supabase as any)
   ]);
 
   const lowStockProducts = ((lowStockProductsRaw.data ?? []) as any[]).filter(
@@ -50,6 +61,14 @@ export async function getDashboardData({
   );
 
   const allMovements = cashMovements.error ? [] : ((cashMovements.data ?? []) as any[]);
+  const transferDeltas = calculateBalanceTransferDeltas(
+    balanceTransfers.map((transfer) => ({
+      amount: transfer.amount,
+      fromPaymentMethod: transfer.fromPaymentMethod,
+      isVoided: transfer.isVoided,
+      toPaymentMethod: transfer.toPaymentMethod
+    }))
+  );
   const rangeMovements = allMovements.filter((row) => row.fecha >= range.startIso && row.fecha < range.endIso);
   const pendingReleaseAmount = tvBoardSales.error
     ? 0
@@ -74,7 +93,7 @@ export async function getDashboardData({
     return {
       method,
       openingBalance: cashSettings.openingBalances[method],
-      balance: cashSettings.openingBalances[method] + income - outcome
+      balance: cashSettings.openingBalances[method] + income - outcome + transferDeltas[method]
     };
   });
 

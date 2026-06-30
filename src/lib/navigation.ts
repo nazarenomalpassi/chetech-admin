@@ -2,6 +2,7 @@ import type { Route } from "next";
 import type { LucideIcon } from "lucide-react";
 import {
   BadgeDollarSign,
+  ArrowRightLeft,
   BarChart3,
   Boxes,
   CreditCard,
@@ -32,6 +33,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/sueldos" as Route, label: "Sueldo", icon: HandCoins },
   { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard },
   { href: "/caja", label: "Caja", icon: Landmark },
+  { href: "/cambio-balance" as Route, label: "Cambio de balance", icon: ArrowRightLeft },
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart },
   { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign },
   { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench },
