@@ -13,6 +13,20 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+export function applyAutoScrollStep(
+  target: CarouselMetrics,
+  direction: "left" | "right",
+  step = 6
+) {
+  const previousValue = target.scrollLeft;
+  const maxScroll = Math.max(0, target.scrollWidth - target.clientWidth);
+  const delta = direction === "right" ? step : -step;
+
+  target.scrollLeft = clamp(previousValue + delta, 0, maxScroll);
+
+  return target.scrollLeft !== previousValue;
+}
+
 export function getCarouselScrollState(metrics: CarouselMetrics, tolerance = 8) {
   const maxScroll = Math.max(0, metrics.scrollWidth - metrics.clientWidth);
 
@@ -50,4 +64,8 @@ export function getRevealScrollLeft(
   const centeredOffset = target.itemStart - (metrics.clientWidth - target.itemWidth) / 2;
 
   return clamp(centeredOffset, 0, maxScroll);
+}
+
+export function getHorizontalWheelDelta(deltaX: number, deltaY: number) {
+  return Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
 }

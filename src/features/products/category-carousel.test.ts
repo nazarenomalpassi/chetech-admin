@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  applyAutoScrollStep,
   getCarouselScrollState,
-  getNextCarouselScrollLeft,
+  getHorizontalWheelDelta,
   getRevealScrollLeft
 } from "@/features/products/category-carousel";
 
@@ -21,17 +22,14 @@ describe("category carousel helpers", () => {
   });
 
   it("frena el hover scroll al llegar al final", () => {
-    expect(
-      getNextCarouselScrollLeft(
-        {
-          scrollLeft: 580,
-          clientWidth: 420,
-          scrollWidth: 1000
-        },
-        "right",
-        24
-      )
-    ).toBe(580);
+    const container = {
+      scrollLeft: 580,
+      clientWidth: 420,
+      scrollWidth: 1000
+    };
+
+    expect(applyAutoScrollStep(container, "right", 24)).toBe(false);
+    expect(container.scrollLeft).toBe(580);
   });
 
   it("calcula un scroll centrado para revelar la categoria activa fuera de vista", () => {
@@ -64,5 +62,21 @@ describe("category carousel helpers", () => {
         }
       )
     ).toBeNull();
+  });
+
+  it("mueve scrollLeft directamente cuando hay lugar para avanzar", () => {
+    const container = {
+      scrollLeft: 120,
+      clientWidth: 420,
+      scrollWidth: 1000
+    };
+
+    expect(applyAutoScrollStep(container, "right", 18)).toBe(true);
+    expect(container.scrollLeft).toBe(138);
+  });
+
+  it("convierte la rueda vertical en scroll horizontal para la barra", () => {
+    expect(getHorizontalWheelDelta(0, 64)).toBe(64);
+    expect(getHorizontalWheelDelta(32, 10)).toBe(32);
   });
 });

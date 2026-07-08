@@ -28,9 +28,9 @@ import { Select } from "@/components/ui/select";
 import { CategoryFormDialog } from "@/features/products/components/category-form-dialog";
 import { buildProductCategoryChips, type ProductCategoryIconKey } from "@/features/products/category-bar";
 import {
+  applyAutoScrollStep,
   getCarouselScrollState,
-  getNextCarouselScrollLeft,
-  getRevealScrollLeft
+  getHorizontalWheelDelta
 } from "@/features/products/category-carousel";
 import { cn } from "@/lib/utils";
 
@@ -67,16 +67,15 @@ export function ProductFilters({
     canScrollLeft: false,
     canScrollRight: false
   });
-  const carouselRef = useRef<HTMLDivElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const chipRefs = useRef(new Map<string, HTMLButtonElement>());
-  const animationFrameRef = useRef<number | null>(null);
-  const autoScrollDirectionRef = useRef<"left" | "right" | null>(null);
+  const animationRef = useRef<number | null>(null);
 
   const categoryChips = useMemo(() => buildProductCategoryChips(categories), [categories]);
   const selectedCategory = searchParams.get("category") ?? "all";
 
   const syncScrollState = useCallback(() => {
-    const container = carouselRef.current;
+    const container = scrollRef.current;
 
     if (!container) {
       return;
@@ -97,57 +96,43 @@ export function ProductFilters({
   }, []);
 
   const stopAutoScroll = useCallback(() => {
-    autoScrollDirectionRef.current = null;
-
-    if (animationFrameRef.current !== null) {
-      window.cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
+    if (animationRef.current !== null) {
+      window.cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     }
   }, []);
 
-  const runAutoScrollRef = useRef<() => void>(() => undefined);
-
-  runAutoScrollRef.current = () => {
-    const container = carouselRef.current;
-    const direction = autoScrollDirectionRef.current;
-
-    if (!container || !direction) {
-      animationFrameRef.current = null;
-      return;
-    }
-
-    const nextScrollLeft = getNextCarouselScrollLeft(
-      {
-        scrollLeft: container.scrollLeft,
-        clientWidth: container.clientWidth,
-        scrollWidth: container.scrollWidth
-      },
-      direction,
-      12
-    );
-
-    if (nextScrollLeft === container.scrollLeft) {
+  const startAutoScroll = useCallback(
+    (direction: "left" | "right") => {
       stopAutoScroll();
-      syncScrollState();
-      return;
-    }
 
-    container.scrollLeft = nextScrollLeft;
-    syncScrollState();
-    animationFrameRef.current = window.requestAnimationFrame(runAutoScrollRef.current);
-  };
+      const step = () => {
+        const container = scrollRef.current;
 
-  const startAutoScroll = useCallback((direction: "left" | "right") => {
-    autoScrollDirectionRef.current = direction;
+        if (!container) {
+          animationRef.current = null;
+          return;
+        }
 
-    if (animationFrameRef.current === null) {
-      animationFrameRef.current = window.requestAnimationFrame(runAutoScrollRef.current);
-    }
-  }, []);
+        const didScroll = applyAutoScrollStep(container, direction, 6);
+        syncScrollState();
+
+        if (!didScroll) {
+          stopAutoScroll();
+          return;
+        }
+
+        animationRef.current = window.requestAnimationFrame(step);
+      };
+
+      animationRef.current = window.requestAnimationFrame(step);
+    },
+    [stopAutoScroll, syncScrollState]
+  );
 
   const handleCategoryWheel = useCallback(
     (event: WheelEvent<HTMLDivElement>) => {
-      const container = carouselRef.current;
+      const container = scrollRef.current;
 
       if (!container) {
         return;
@@ -158,7 +143,7 @@ export function ProductFilters({
         return;
       }
 
-      const delta = Math.abs(event.deltaX) > 0 ? event.deltaX : event.deltaY;
+      const delta = getHorizontalWheelDelta(event.deltaX, event.deltaY);
       if (!delta) {
         return;
       }
@@ -203,7 +188,7 @@ export function ProductFilters({
   }, [search, updateParam]);
 
   useEffect(() => {
-    const container = carouselRef.current;
+    const container = scrollRef.current;
 
     if (!container) {
       return;
@@ -230,7 +215,7 @@ export function ProductFilters({
   }, [categoryChips.length, stopAutoScroll, syncScrollState]);
 
   useEffect(() => {
-    const container = carouselRef.current;
+    const container = scrollRef.current;
     const activeChip = chipRefs.current.get(selectedCategory);
 
     if (!container || !activeChip) {
@@ -238,26 +223,10 @@ export function ProductFilters({
       return;
     }
 
-    const revealScrollLeft = getRevealScrollLeft(
-      {
-        scrollLeft: container.scrollLeft,
-        clientWidth: container.clientWidth,
-        scrollWidth: container.scrollWidth
-      },
-      {
-        itemStart: activeChip.offsetLeft,
-        itemWidth: activeChip.offsetWidth
-      }
-    );
-
-    if (revealScrollLeft === null) {
-      syncScrollState();
-      return;
-    }
-
-    container.scrollTo({
-      left: revealScrollLeft,
-      behavior: "smooth"
+    activeChip.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest"
     });
 
     const syncTimeout = window.setTimeout(() => syncScrollState(), 220);
@@ -307,44 +276,36 @@ export function ProductFilters({
           <div
             aria-hidden={!scrollState.canScrollLeft}
             className={cn(
-              "absolute inset-y-0 left-0 z-10 w-16 rounded-l-[28px] transition-opacity duration-200",
+              "absolute inset-y-0 left-0 z-10 w-12 rounded-l-[28px] transition-opacity duration-200",
               scrollState.canScrollLeft ? "pointer-events-auto" : "pointer-events-none",
               scrollState.canScrollLeft ? "opacity-100" : "opacity-0"
             )}
+            onMouseEnter={() => startAutoScroll("left")}
+            onMouseLeave={stopAutoScroll}
           >
             <div className="absolute inset-y-0 left-0 w-full bg-[linear-gradient(90deg,rgba(248,248,244,0.98),rgba(248,248,244,0))]" />
-            <div className="absolute inset-y-1 left-1 flex w-12 items-center justify-start">
-              <div
-                className="flex h-full w-full cursor-w-resize items-center justify-center rounded-full text-slate-500/85"
-                onMouseEnter={() => startAutoScroll("left")}
-                onMouseLeave={stopAutoScroll}
-              >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/80 shadow-[0_8px_18px_rgba(20,20,19,0.08)]">
-                  <ChevronLeft className="h-4 w-4" />
-                </span>
-              </div>
+            <div className="absolute inset-y-1 left-0 flex w-full items-center justify-start pl-1">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/80 text-slate-500/85 shadow-[0_8px_18px_rgba(20,20,19,0.08)]">
+                <ChevronLeft className="h-4 w-4" />
+              </span>
             </div>
           </div>
 
           <div
             aria-hidden={!scrollState.canScrollRight}
             className={cn(
-              "absolute inset-y-0 right-0 z-10 w-16 rounded-r-[28px] transition-opacity duration-200",
+              "absolute inset-y-0 right-0 z-10 w-12 rounded-r-[28px] transition-opacity duration-200",
               scrollState.canScrollRight ? "pointer-events-auto" : "pointer-events-none",
               scrollState.canScrollRight ? "opacity-100" : "opacity-0"
             )}
+            onMouseEnter={() => startAutoScroll("right")}
+            onMouseLeave={stopAutoScroll}
           >
             <div className="absolute inset-y-0 right-0 w-full bg-[linear-gradient(270deg,rgba(248,248,244,0.98),rgba(248,248,244,0))]" />
-            <div className="absolute inset-y-1 right-1 flex w-12 items-center justify-end">
-              <div
-                className="flex h-full w-full cursor-e-resize items-center justify-center rounded-full text-slate-500/85"
-                onMouseEnter={() => startAutoScroll("right")}
-                onMouseLeave={stopAutoScroll}
-              >
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/80 shadow-[0_8px_18px_rgba(20,20,19,0.08)]">
-                  <ChevronRight className="h-4 w-4" />
-                </span>
-              </div>
+            <div className="absolute inset-y-1 right-0 flex w-full items-center justify-end pr-1">
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/90 bg-white/80 text-slate-500/85 shadow-[0_8px_18px_rgba(20,20,19,0.08)]">
+                <ChevronRight className="h-4 w-4" />
+              </span>
             </div>
           </div>
 
@@ -352,7 +313,7 @@ export function ProductFilters({
             className="overflow-x-auto overscroll-x-contain pb-1 pl-1 pr-1 scroll-smooth touch-pan-x [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             onScroll={syncScrollState}
             onWheel={handleCategoryWheel}
-            ref={carouselRef}
+            ref={scrollRef}
           >
             <div className="flex min-w-max items-center gap-2.5 px-1">
               {categoryChips.map((chip) => {
