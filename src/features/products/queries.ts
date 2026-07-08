@@ -53,18 +53,32 @@ export async function getProducts(filters?: {
 
 export const getProductCategories = cache(async () => {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await (supabase as any)
-    .from("categories")
-    .select("id, name")
-    .order("name");
+  const [{ data, error }, { data: productRefs, error: productRefsError }] = await Promise.all([
+    (supabase as any)
+      .from("categories")
+      .select("id, name, sku_prefix")
+      .order("name"),
+    (supabase as any).from("products").select("category_id")
+  ]);
 
   if (error) {
     throw new Error(error.message);
   }
 
+  if (productRefsError) {
+    throw new Error(productRefsError.message);
+  }
+
+  const countsByCategory = (productRefs ?? []).reduce((acc: Record<string, number>, product: any) => {
+    if (!product.category_id) return acc;
+    acc[product.category_id] = (acc[product.category_id] ?? 0) + 1;
+    return acc;
+  }, {});
+
   return (data ?? []).map((category: any) => ({
     id: category.id,
     name: category.name,
-    skuPrefix: null
+    skuPrefix: category.sku_prefix ?? null,
+    productCount: countsByCategory[category.id] ?? 0
   }));
 });

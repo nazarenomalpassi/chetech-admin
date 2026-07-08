@@ -16,7 +16,7 @@ export function ProductsView({
   products
 }: {
   canManage: boolean;
-  categories: { id: string; name: string; skuPrefix?: string | null }[];
+  categories: { id: string; name: string; skuPrefix?: string | null; productCount?: number }[];
   products: Array<{
     id: string;
     sku: string;
@@ -115,7 +115,7 @@ export function ProductsView({
 
         <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex-1">
-            <ProductFilters categories={categories} />
+            <ProductFilters canManage={canManage} categories={categories} />
           </div>
 
           {canManage ? (
