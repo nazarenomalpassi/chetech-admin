@@ -29,15 +29,21 @@ import { RepairAccessStatusBadge } from "@/features/repairs-access/components/re
 import { RepairAccessWarrantyBadge } from "@/features/repairs-access/components/repair-access-warranty-badge";
 import { RepairAccessWhatsAppButton } from "@/features/repairs-access/components/repair-access-whatsapp-actions";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+import { OrderCoordinationPanel, type WorkshopTechnician } from "./order-coordination-panel";
+import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
+import { RepairAttachments } from "./repair-attachments";
+import { WorkshopForm } from "./workshop-form";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 export function RepairAccessWorkshopCard({
   order,
+  technicians,
   canManageIntake,
   onEdit,
   onOpenDetail
 }: {
   order: RepairAccessOrderRecord;
+  technicians?: WorkshopTechnician[];
   canManageIntake: boolean;
   onEdit: (order: RepairAccessOrderRecord) => void;
   onOpenDetail: (order: RepairAccessOrderRecord) => void;
@@ -45,6 +51,7 @@ export function RepairAccessWorkshopCard({
   const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
   const phone = order.customer.phone || order.customer.alternatePhone;
   const repairAmount = order.finalAmount || order.budgetAmount;
+  const quoteAmount = order.budgetAmount || order.finalAmount;
 
   return (
     <article className="min-w-0 overflow-hidden rounded-[28px] border border-graphite/12 bg-[#fbfaf6] shadow-panel">
@@ -112,18 +119,19 @@ export function RepairAccessWorkshopCard({
           </>}
         >
 
-          <form action={updateRepairAccessWorkshopAction} className="grid gap-4 border-t border-graphite/10 p-4">
+          <WorkshopCardForm order={order}>
             <input name="id" type="hidden" value={order.id} />
+            {order.workflow ? <input name="expectedVersion" type="hidden" value={order.workflow.version} /> : null}
 
             <label>
               <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Estado de la orden</span>
-              <Select defaultValue={order.status} id={`workshop-${order.id}-status`} name="status" options={repairAccessStatusOptions} />
+              <Select defaultValue={order.status} id={`workshop-${order.id}-status`} name="status" options={repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status)} />
             </label>
 
             <label>
               <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Presupuesto · visible para el cliente</span>
               <Input
-                defaultValue={repairAmount ? String(repairAmount) : ""}
+                defaultValue={quoteAmount ? String(quoteAmount) : ""}
                 disabled={order.isPaid}
                 inputMode="decimal"
                 id={`workshop-${order.id}-amount`}
@@ -162,13 +170,18 @@ export function RepairAccessWorkshopCard({
               />
             </label>
 
+            <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input className="mt-1" type="checkbox" name="qualityChecked" defaultChecked={Boolean(order.workflow?.qualityCheckedAt)} />Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar listo.</label>
+            <label><span className="mb-2 block text-xs font-medium text-slate-500">Resultado de las pruebas (opcional)</span><Textarea name="qualityNotes" defaultValue={order.workflow?.qualityNotes || ""} maxLength={2000} /></label>
             <FormSubmitButton
               className="min-h-12 w-full"
               idleLabel="Guardar actualizacion"
               pendingLabel="Guardando cambios..."
             />
-          </form>
+          </WorkshopCardForm>
         </LazyDisclosure>
+
+        <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
+        {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
         <LazyDisclosure className="group overflow-hidden rounded-[22px] border border-graphite/12 bg-white"
           summaryClassName="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-slate-950 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/25 [&::-webkit-details-marker]:hidden"
@@ -190,7 +203,7 @@ export function RepairAccessWorkshopCard({
           />
         </LazyDisclosure>
 
-        <div data-workshop-contact-actions="true" className="hidden grid-cols-2 gap-2 lg:grid">
+        <div data-workshop-contact-actions="true" className={canManageIntake ? "hidden grid-cols-2 gap-2 lg:grid" : "hidden"}>
           <RepairAccessWhatsAppButton className="w-full" label="WhatsApp" order={order} size="default" />
           {phone ? (
             <a className={cn(buttonVariants({ variant: "secondary" }), "w-full")} href={`tel:${phone.replace(/\D+/g, "")}`}>
@@ -232,6 +245,10 @@ export function RepairAccessWorkshopCard({
       </div>
     </article>
   );
+}
+
+function WorkshopCardForm({ order, children }: { order: RepairAccessOrderRecord; children: React.ReactNode }) {
+  return order.workflow ? <WorkshopForm orderId={order.id} orderVersion={order.workflow.version}>{children}</WorkshopForm> : <form action={updateRepairAccessWorkshopAction} data-workshop-form className="grid gap-4 border-t border-graphite/10 p-4">{children}</form>;
 }
 
 function WorkshopInfo({

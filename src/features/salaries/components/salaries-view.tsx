@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteSalaryWithdrawalAction, saveSalaryPlanningConfigAction, saveSalaryWithdrawalAction } from "@/features/salaries/actions";
 import { SalaryDecisionPanel } from "@/features/salaries/components/salary-decision-panel";
+import { PurchaseCommitmentsNotice } from "./purchase-commitments-notice";
 import type { SalaryPlanningData, SalaryWithdrawal } from "@/features/salaries/types";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod, getCashMethodOptions } from "@/lib/cash";
@@ -75,6 +76,7 @@ export function SalariesView({ canManage, data, message }: { canManage: boolean;
         </Card>
       </div>
 
+      <PurchaseCommitmentsNotice commitments={data.purchaseCommitments} />
       <SalaryDecisionPanel accounts={data.accounts} members={data.members} monthKey={data.monthKey} monthLabel={data.monthLabel} suggestedAmount={data.suggestedSalaryAmount} />
 
       <Card className="rounded-[34px] p-5 lg:p-6">

@@ -2,10 +2,8 @@
 
 import { ArrowDownLeft, ArrowUpRight, Landmark, LockKeyhole, Wallet } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { closeCashAction } from "@/features/cash/actions";
+import { ReconciliationPanel } from "@/features/cash/components/reconciliation-panel";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod } from "@/lib/cash";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -52,7 +50,6 @@ function isIncome(type: string) {
 }
 
 export function CashView({ canClose, data, message }: { canClose: boolean; data: CashData; message: ActionResult | null }) {
-  const openingTotal = data.balances.reduce((acc, item) => acc + item.openingBalance, 0);
 
   return (
     <div className="space-y-4">
@@ -115,31 +112,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           </div>
 
           {canClose ? (
-            <form action={closeCashAction} className="mt-5 grid gap-4">
-              <input name="date" type="hidden" value={data.today} />
-              <input name="openingBalance" type="hidden" value={openingTotal} />
-              <input name="income" type="hidden" value={data.todayIncome} />
-              <input name="outcome" type="hidden" value={data.todayOutcome} />
-              <input name="finalBalance" type="hidden" value={data.totalBalance} />
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl bg-brand-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-fog">Ingresos del dia</p>
-                  <p className="mt-2 text-lg font-semibold text-graphite">{formatCurrency(data.todayIncome)}</p>
-                </div>
-                <div className="rounded-2xl bg-brand-50 p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-fog">Egresos del dia</p>
-                  <p className="mt-2 text-lg font-semibold text-graphite">{formatCurrency(data.todayOutcome)}</p>
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="observations">Observaciones</label>
-                <Input name="observations" placeholder="Ej: caja verificada, diferencia, retiro..." />
-              </div>
-
-              <Button type="submit">Guardar cierre de caja</Button>
-            </form>
+            <ReconciliationPanel today={data.today} balances={data.balances} />
           ) : (
             <div className="mt-5 rounded-3xl bg-brand-50 p-5 text-sm leading-6 text-slate-600">
               Podes consultar caja y movimientos, pero el cierre diario queda reservado para administradores.
@@ -147,7 +120,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           )}
 
           <div className="mt-6">
-            <p className="text-sm font-semibold text-slate-950">Ultimos cierres</p>
+            <p className="text-sm font-semibold text-slate-950">Cierres anteriores (sin arqueo por cuenta)</p>
             <div className="mt-3 space-y-2">
               {data.closures.length ? (
                 data.closures.map((closure) => (

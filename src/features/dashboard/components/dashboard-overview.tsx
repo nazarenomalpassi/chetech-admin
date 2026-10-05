@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Route } from "next";
+import type { ReactNode } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -22,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 type DashboardOverviewProps = {
+  workshopInbox?: ReactNode;
   salesTodayTotal: number;
   expensesTodayTotal: number;
   repairsTodayTotal: number;
@@ -98,7 +100,8 @@ export function DashboardOverview({
   realProfitToday,
   installmentsDashboard,
   visitsDashboard,
-  range
+  range,
+  workshopInbox
 }: DashboardOverviewProps) {
   const periodLabel = range.isToday ? "del dia" : "del periodo";
   const metrics = [
@@ -188,6 +191,8 @@ export function DashboardOverview({
           </form>
         </div>
       </Card>
+
+      {workshopInbox}
 
       <section aria-label="Metricas del periodo" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-5">
         {metrics.map((metric) => <MetricCard {...metric} format="currency" key={metric.key} />)}

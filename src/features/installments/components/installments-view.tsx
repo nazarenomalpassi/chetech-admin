@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod, getCashMethodOptions } from "@/lib/cash";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
@@ -58,6 +59,7 @@ export function InstallmentsView({
       paidCount: number;
       installments: Array<{
         id: string;
+        financialVersion: number;
         saleId: string;
         installmentNumber: number;
         dueDate: string;
@@ -87,6 +89,7 @@ export function InstallmentsView({
   const [firstDueDate, setFirstDueDate] = useState(getLocalDateInputValue());
   const [defaultPaymentMethod, setDefaultPaymentMethod] = useState("efectivo");
   const [notes, setNotes] = useState("");
+  const [requestId, setRequestId] = useState("");
   const [installments, setInstallments] = useState(
     generateInstallments({
       totalAmount: 0,
@@ -95,19 +98,21 @@ export function InstallmentsView({
       paymentMethod: "efectivo"
     })
   );
+  useEffect(() => { setRequestId(crypto.randomUUID()); }, [productName, customerName, totalAmount, installmentsCount, notes, installments]);
 
   useEffect(() => {
     const nextTotal = totalAmount > 0 ? totalAmount : 0;
     const nextCount = installmentsCount > 0 ? installmentsCount : 1;
 
-    setInstallments(
+    if (!firstDueDate) { setInstallments([]); return; }
+    try { setInstallments(
       generateInstallments({
         totalAmount: nextTotal,
         installmentsCount: nextCount,
         firstDueDate,
         paymentMethod: defaultPaymentMethod
       })
-    );
+    ); } catch { setInstallments([]); }
   }, [defaultPaymentMethod, firstDueDate, installmentsCount, totalAmount]);
 
   function updateInstallment(
@@ -172,6 +177,7 @@ export function InstallmentsView({
         ) : null}
 
         <form action={saveInstallmentSaleAction} className="mt-6 space-y-4">
+          <input name="requestId" type="hidden" value={requestId} />
           <input name="installmentsJson" type="hidden" value={JSON.stringify(installments)} />
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-6">
@@ -248,9 +254,7 @@ export function InstallmentsView({
             </div>
           </div>
 
-          <Button className="w-full sm:w-auto" disabled={!data.migrationReady} type="submit">
-            Guardar venta en cuotas
-          </Button>
+          <FormSubmitButton className="w-full sm:w-auto" disabled={!data.migrationReady || !requestId} idleLabel="Guardar venta en cuotas" pendingLabel="Guardando..." />
         </form>
       </Card>
 
@@ -352,8 +356,9 @@ export function InstallmentsView({
                     </div>
 
                     <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_200px]">
-                      <form action={updateInstallmentAction} className="grid gap-3 rounded-[22px] border border-graphite/8 bg-[#fbfbf8] p-4 xl:grid-cols-[140px_160px_160px_minmax(0,1fr)_auto]">
+                      {installment.status !== "pagada" && installment.status !== "cancelada" && sale.status !== "cancelada" ? <form key={`${installment.id}:${installment.financialVersion}`} action={updateInstallmentAction} className="grid gap-3 rounded-[22px] border border-graphite/8 bg-[#fbfbf8] p-4 xl:grid-cols-[140px_160px_160px_minmax(0,1fr)_auto]">
                         <input name="id" type="hidden" value={installment.id} />
+                        <input name="expectedVersion" type="hidden" value={installment.financialVersion} />
                         <div className="rounded-[18px] border border-graphite/8 bg-white px-4 py-3 text-sm font-semibold text-slate-900">
                           Editar cuota
                         </div>
@@ -361,29 +366,28 @@ export function InstallmentsView({
                         <Input aria-label={`Monto de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-amount`} defaultValue={installment.amount} min={0} name="amount" step="0.01" type="number" />
                         <Select aria-label={`Medio de pago de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-method`} defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
                         <Input aria-label={`Observaciones de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-notes`} defaultValue={installment.notes} name="notes" placeholder="Nota de cuota" />
-                        <Button className="w-full xl:w-auto" type="submit" variant="secondary">
-                          Guardar cuota
-                        </Button>
-                      </form>
+                        <FormSubmitButton className="w-full xl:w-auto" idleLabel="Guardar cuota" pendingLabel="Guardando..." variant="secondary" />
+                      </form> : <p className="rounded-2xl bg-brand-50 p-4 text-sm">Cuota cobrada o cancelada: su importe no se edita retroactivamente.</p>}
 
                       <div className="grid gap-3">
-                        {installment.status !== "pagada" ? (
+                        {installment.status !== "pagada" && installment.status !== "cancelada" && sale.status !== "cancelada" ? (
                           <form action={markInstallmentPaidAction} className="grid gap-3 rounded-[22px] border border-graphite/8 bg-brand-50/85 p-4">
                             <input name="id" type="hidden" value={installment.id} />
                             <Select aria-label="Cuenta de cobro de la cuota" id={`installment-${installment.id}-paid-method`} defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
                             <Input aria-label="Fecha de cobro de la cuota" id={`installment-${installment.id}-paid-date`} defaultValue={data.today} name="paidDate" type="date" />
-                            <Button className="w-full" type="submit">Marcar pagada</Button>
+                            <FormSubmitButton className="w-full" idleLabel="Marcar pagada" pendingLabel="Registrando..." />
                           </form>
                         ) : (
                           <div className="rounded-[22px] border border-emerald-100 bg-emerald-50 px-4 py-4 text-sm text-emerald-800">
-                            Cuota cobrada e impactada en caja.
+                            {installment.status === "pagada" ? "Cuota cobrada e impactada en caja." : "No se puede cobrar una cuota cancelada."}
                           </div>
                         )}
 
-                        {installment.status !== "pagada" ? (
+                        {installment.status !== "pagada" && installment.status !== "cancelada" && sale.status !== "cancelada" ? (
                           <form action={cancelInstallmentAction}>
                             <input name="id" type="hidden" value={installment.id} />
-                            <Button className="w-full" type="submit" variant="danger">Cancelar cuota</Button>
+                            <input name="expectedVersion" type="hidden" value={installment.financialVersion} />
+                            <FormSubmitButton className="w-full" idleLabel="Cancelar cuota" pendingLabel="Cancelando..." variant="danger" />
                           </form>
                         ) : null}
                       </div>
@@ -396,7 +400,7 @@ export function InstallmentsView({
                 <div className="mt-5 flex justify-end">
                   <form action={cancelInstallmentSaleAction}>
                     <input name="id" type="hidden" value={sale.id} />
-                    <Button className="w-full sm:w-auto" type="submit" variant="danger">Cancelar venta en cuotas</Button>
+                    <FormSubmitButton className="w-full sm:w-auto" idleLabel="Cancelar venta en cuotas" pendingLabel="Cancelando..." variant="danger" />
                   </form>
                 </div>
               ) : null}

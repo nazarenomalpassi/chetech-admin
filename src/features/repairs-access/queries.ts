@@ -8,6 +8,7 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyStableCreationOrder } from "@/lib/chronology";
 import { readRecordPages } from "@/lib/read-record-pages";
+import type { WorkshopOrderContext } from "./workflow";
 
 type RawOrder = {
   id: string;
@@ -102,6 +103,7 @@ export type StorefrontCustomerSummary = {
 };
 
 export type RepairAccessOrderRecord = {
+  workflow?: WorkshopOrderContext;
   id: string;
   repairNumber: string;
   intakeDate: string;
@@ -229,7 +231,7 @@ function getDaysOpen(intakeDate: string) {
   return Math.floor(diff / 86_400_000);
 }
 
-function mapOrder(order: RawOrder): RepairAccessOrderRecord {
+export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
   const storefrontCustomer = Array.isArray(order.storefront_customer)
     ? order.storefront_customer[0] ?? null
     : order.storefront_customer ?? null;
@@ -439,6 +441,15 @@ export async function getRepairsAccessDashboard({
     ? ordersResult
     : ordersResult.map((row: { payload: RawOrder }) => row.payload);
   const orders: RepairAccessOrderRecord[] = rawOrders.map((order: RawOrder) => mapOrder(order));
+  for (let from = 0; from < orders.length; from += 100) {
+    const contextResult = await (supabase as any).rpc("get_workshop_context", { p_order_ids: orders.slice(from, from + 100).map((order) => order.id) });
+    if (contextResult.error) {
+      if (contextResult.error.code === "PGRST202" || contextResult.error.code === "42883") break;
+      throw new Error(contextResult.error.message);
+    }
+    const contexts = new Map<string, WorkshopOrderContext>((contextResult.data ?? []).map((context: WorkshopOrderContext & { id: string }) => [context.id, context]));
+    orders.slice(from, from + 100).forEach((order) => { order.workflow = contexts.get(order.id); });
+  }
   const today = getOperationalDate();
   const statusCounts = repairAccessStatusValues.reduce<Record<string, number>>((acc, status) => {
     acc[status] = 0;

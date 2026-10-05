@@ -55,7 +55,7 @@ export function RepairAccessCommandCenter({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Caja protegida</p>
           <p className="mt-3 text-3xl font-semibold tracking-[-0.04em]">{formatCurrency(summary.totalCollected)}</p>
           <p className="mt-2 text-sm leading-6 text-slate-300">
-            Total informado en fichas de reparacion. No impacta caja: la caja se mueve solo cuando facturas desde Pagos de reparaciones.
+            El presupuesto no registra dinero. Los cobros reales se cargan en Pagos de reparaciones; emitir o reimprimir un documento no cambia la caja ni marca la entrega.
           </p>
           <div className="mt-5 rounded-2xl bg-white/10 p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Proyectado</p>
@@ -96,8 +96,8 @@ export function RepairAccessCommandCenter({
       </section>
 
       <section className="grid gap-4 xl:grid-cols-3">
-        <AttentionList empty="No hay equipos listos para retirar." onOpenDetail={onOpenDetail} onViewAll={() => onOpenStatus("listo_para_retirar")} orders={readyOrders} title="Listas para retirar" />
-        <AttentionList empty="No hay presupuestos esperando respuesta." onOpenDetail={onOpenDetail} onViewAll={() => onOpenStatus("presupuestado")} orders={waitingOrders} title="Esperando al cliente" />
+        <AttentionList empty={summary.readyToPickup ? `Hay ${summary.readyToPickup} equipos listos fuera de esta vista previa. Abri Ver todas.` : "No hay equipos listos para retirar."} onOpenDetail={onOpenDetail} onViewAll={() => onOpenStatus("listo_para_retirar")} orders={readyOrders} title="Listas para retirar" />
+        <AttentionList empty={summary.waitingCustomer ? `Hay ${summary.waitingCustomer} presupuestos fuera de esta vista previa. Abri Ver todas.` : "No hay presupuestos esperando respuesta."} onOpenDetail={onOpenDetail} onViewAll={() => onOpenStatus("presupuestado")} orders={waitingOrders} title="Esperando al cliente" />
         <Card>
           <div className="flex items-start justify-between gap-3">
             <div>

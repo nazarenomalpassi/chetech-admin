@@ -88,6 +88,7 @@ export type SalaryPlanningData = {
     grossMargin: number;
   };
   suggestedSalaryAmount: number;
+  purchaseCommitments: import("./commitments").PurchaseCommitments;
   liquidations: SalaryLiquidation[];
   withdrawals: SalaryWithdrawal[];
 };

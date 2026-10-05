@@ -1,8 +1,4 @@
-const CLOSED_REPAIR_STATUSES = new Set([
-  "retirado",
-  "sin_solucion",
-  "presupuestado_rechazado"
-]);
+const CLOSED_REPAIR_STATUSES = new Set(["retirado"]);
 
 export function buildTechnicianRepairSummary(
   orders: Array<{ status: string; technicianId: string | null }>,

@@ -4,11 +4,13 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { PrintButton } from "@/features/invoices/components/print-button";
+import { FiscalInvoicePanel } from "@/features/fiscal";
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import { getInvoiceById } from "@/features/invoices/queries";
 import { getStatusMessage } from "@/lib/form-state";
 import { requirePermission } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatCashMethod } from "@/lib/cash";
 
 export default async function InvoiceDetailPage({
   params,
@@ -64,7 +66,7 @@ export default async function InvoiceDetailPage({
             <p className="mt-2 text-sm text-slate-500">No valido como factura fiscal.</p>
           </div>
           <div className="rounded-3xl border border-graphite/10 bg-brand-100 px-5 py-4 text-left md:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-fog">Recibo interno</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-fog">Documento interno</p>
             <p className="text-2xl font-semibold text-slate-950">{invoice.invoiceNumber}</p>
             <p className="mt-1 text-sm text-slate-500">{formatDate(invoice.createdAt)}</p>
             <Badge className="mt-3" variant={invoice.status === "pagado" ? "success" : invoice.status === "parcial" ? "warning" : invoice.status === "anulado" ? "danger" : "default"}>
@@ -72,6 +74,13 @@ export default async function InvoiceDetailPage({
             </Badge>
           </div>
         </div>
+
+        {invoice.fiscalReference ? <div className="invoice-section mt-6 rounded-3xl border border-graphite/10 p-5">
+          <h2 className="font-semibold">Referencia fiscal externa</h2>
+          <p className="mt-2 break-words text-sm">{invoice.fiscalProvider}: {invoice.fiscalReference}</p>
+          {invoice.fiscalIssuedAt ? <p className="mt-1 text-sm">Emitida: {formatDate(invoice.fiscalIssuedAt)}</p> : null}
+          <p className="mt-2 text-sm text-slate-500">Referencia vinculada. Este documento interno no sustituye ni acredita autorizacion del comprobante fiscal.</p>
+        </div> : null}
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>
@@ -132,8 +141,11 @@ export default async function InvoiceDetailPage({
           <div className="rounded-3xl border border-graphite/10 bg-white p-5">
             <h2 className="font-semibold text-slate-950">Operacion registrada</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Este comprobante interno confirma la operacion registrada en Chetech. No es una factura fiscal.
+              Emitir o reimprimir este documento no registra dinero ni mueve stock. Los cobros provienen de la operacion vinculada. No es una factura fiscal.
             </p>
+            <h3 className="mt-4 font-semibold">Cobros efectivos vinculados</h3>
+            {invoice.payments.length ? invoice.payments.map((payment: any) => <p className="mt-2 text-sm" key={`${payment.source}:${payment.id}`}>{formatDate(payment.paymentDate)} / {formatCashMethod(payment.method)} / {formatCurrency(payment.amount)}</p>) : <p className="mt-2 text-sm text-slate-600">Sin cobros efectivos.</p>}
+            {invoice.status === "anulado" ? <p className="mt-3 text-sm">Anular el documento no revierte los pagos de la operacion.</p> : null}
           </div>
           <div className="invoice-totals rounded-3xl bg-slate-50 p-5">
             <div className="flex justify-between py-2">
@@ -149,12 +161,17 @@ export default async function InvoiceDetailPage({
               <strong>{formatCurrency(invoice.total)}</strong>
             </div>
             <div className="flex justify-between border-t border-slate-200 py-3 text-lg">
-              <span>Total final</span>
-              <strong>{formatCurrency(invoice.total)}</strong>
+              <span>Pagado real</span>
+              <strong>{formatCurrency(invoice.paidTotal)}</strong>
+            </div>
+            <div className="flex justify-between border-t border-slate-200 py-3 text-lg">
+              <span>Saldo pendiente</span>
+              <strong>{formatCurrency(invoice.balance)}</strong>
             </div>
           </div>
         </div>
       </Card>
+      <FiscalInvoicePanel className="no-print" invoiceId={invoice.id} />
     </div>
   );
 }

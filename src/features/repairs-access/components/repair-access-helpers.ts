@@ -20,6 +20,8 @@ export const repairAccessStatusMeta: Record<RepairAccessStatus, { label: string;
   presupuestado: { label: "Presupuestado", shortLabel: "Presupuesto", tone: "default", lane: "Presupuesto" },
   presupuestado_aceptado: { label: "Presupuestado y aceptado", shortLabel: "Aceptado", tone: "success", lane: "Presupuesto" },
   presupuestado_rechazado: { label: "Presupuestado y rechazado", shortLabel: "Rechazado", tone: "danger", lane: "Presupuesto" },
+  en_reparacion: { label: "En reparacion", shortLabel: "Reparacion", tone: "default", lane: "Tecnica" },
+  en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Tecnica" },
   listo_para_retirar: { label: "Listo para retirar", shortLabel: "Retirar", tone: "success", lane: "Entrega" },
   retirado: { label: "Retirado por cliente", shortLabel: "Retirado", tone: "success", lane: "Cierre" },
   sin_solucion: { label: "Sin solucion", shortLabel: "Sin solucion", tone: "danger", lane: "Cierre" }
@@ -32,7 +34,7 @@ export const repairAccessStatusOptions = repairAccessStatusValues.map((status) =
 
 export const repairAccessIntakeStatusOptions = repairAccessStatusOptions;
 
-export const repairAccessClosedStatuses = ["retirado", "sin_solucion", "presupuestado_rechazado"] as const;
+export const repairAccessClosedStatuses = ["retirado"] as const;
 
 export const repairAccessLanes = [
   {
@@ -45,7 +47,7 @@ export const repairAccessLanes = [
     key: "tecnica",
     title: "Mesa tecnica",
     description: "Revision, diagnostico, avance y decisiones del tecnico.",
-    statuses: ["en_revision"]
+    statuses: ["en_revision", "en_reparacion", "en_pruebas"]
   },
   {
     key: "presupuesto",
@@ -56,7 +58,7 @@ export const repairAccessLanes = [
   {
     key: "salida",
     title: "Salida",
-    description: "Equipo listo, retirado por el cliente o cerrado sin solucion.",
+    description: "Equipos listos, entregados o sin solucion. Sin solucion sigue pendiente de devolucion.",
     statuses: ["listo_para_retirar", "retirado", "sin_solucion"]
   }
 ] as const;

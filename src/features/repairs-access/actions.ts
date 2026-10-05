@@ -279,7 +279,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const previousOrder = await (supabase as any)
     .from("repair_access_orders")
-    .select("id, status, is_paid, paid_at, finished_at")
+    .select("id, status, is_paid, paid_at, finished_at, budget_response_at")
     .eq("id", parsed.data.id)
     .maybeSingle();
 
@@ -307,7 +307,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
     budget_amount: budgetAmount,
     budget_detail: emptyToNull(parsed.data.budgetDetail),
     budget_response_notes: emptyToNull(parsed.data.budgetResponseNotes),
-    budget_response_at: isBudgetResponseStatus ? now : null,
+    budget_response_at: isBudgetResponseStatus ? previousOrder.data.budget_response_at ?? now : previousOrder.data.budget_response_at,
     budgeted_at: budgetAmount > 0 ? now : null,
     final_amount: finalAmount,
     payment_method: emptyToNull(parsed.data.paymentMethod),
@@ -323,6 +323,33 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
     updated_by: user.id,
     updated_at: now
   };
+
+  if (formData.has("expectedVersion")) {
+    const result = await (supabase as any).rpc("workshop_save", {
+      p_order_id: parsed.data.id,
+      p_expected_version: Number(formData.get("expectedVersion")),
+      p_payload: {
+        status: parsed.data.status,
+        technician_name: parsed.data.technicianName,
+        technical_diagnosis: parsed.data.technicalDiagnosis,
+        repair_progress: parsed.data.repairProgress,
+        internal_observations: parsed.data.internalObservations,
+        work_performed: parsed.data.workPerformed,
+        used_parts: parsed.data.usedParts,
+        budget_amount: budgetAmount,
+        budget_detail: parsed.data.budgetDetail,
+        final_amount: finalAmount,
+        has_warranty: parsed.data.hasWarranty,
+        warranty_days: parsed.data.warrantyDays,
+        warranty_conditions: parsed.data.warrantyConditions,
+        quality_checked: formData.get("qualityChecked") === "on",
+        quality_notes: optionalFormString(formData, "qualityNotes")
+      }
+    });
+    if (result.error) redirectWithError(getFriendlyDatabaseError(result.error, "No se pudo guardar el seguimiento."), parsed.data.id);
+    revalidatePath("/reparaciones-access");
+    redirect(`/reparaciones-access?status=repair_access_technical_updated&order=${parsed.data.id}` as Route);
+  }
 
   const atomicResult = await (supabase as any).rpc("save_repair_access_technical", {
     p_order_id: parsed.data.id,
@@ -391,6 +418,24 @@ export async function updateRepairAccessWorkshopAction(formData: FormData) {
 
   const user = await requirePermission("repairs.update");
   const supabase = await createServerSupabaseClient();
+
+  if (formData.has("expectedVersion")) {
+    const result = await (supabase as any).rpc("workshop_save", {
+      p_order_id: parsed.data.id,
+      p_expected_version: Number(formData.get("expectedVersion")),
+      p_payload: {
+        status: parsed.data.status,
+        budget_amount: parsed.data.repairAmount,
+        budget_detail: parsed.data.budgetDetail,
+        repair_progress: parsed.data.repairProgress,
+        quality_checked: formData.get("qualityChecked") === "on",
+        quality_notes: optionalFormString(formData, "qualityNotes")
+      }
+    });
+    if (result.error) redirectWithError(getFriendlyDatabaseError(result.error, "No se pudo guardar la actualizacion del taller."), parsed.data.id);
+    revalidatePath("/reparaciones-access");
+    redirect("/reparaciones-access?status=repair_access_workshop_updated&view=ordenes" as Route);
+  }
 
   if (user.role === "tecnico") {
     const technicianResult = await (supabase as any).rpc("update_technician_repair_workshop", {

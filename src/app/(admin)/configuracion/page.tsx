@@ -1,6 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { EmptyState } from "@/components/ui/empty-state";
+import { FiscalInvoicePanel } from "@/features/fiscal";
 import { Input } from "@/components/ui/input";
 import {
   saveBusinessGoalsAction,
@@ -52,10 +52,15 @@ export default async function ConfiguracionPage({
             <p className="text-sm text-slate-500">Backup</p>
             <h2 className="mt-1 text-2xl font-semibold text-slate-950">Exportar datos del sistema</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Descarga un Excel con productos, ventas, gastos, reparaciones, facturacion y caja.
+              El Excel es una exportacion parcial para consulta. El JSON incluye los registros y
+              un manifiesto para comprobar cantidades e integridad. Ninguno reemplaza el respaldo
+              tecnico de PostgreSQL, usuarios y archivos privados.
             </p>
             <a className={cn(buttonVariants(), "mt-5")} href="/api/backup">
-              Descargar backup Excel
+              Exportar Excel
+            </a>
+            <a className={cn(buttonVariants({ variant: "secondary" }), "mt-3 sm:ml-3")} href="/api/backup?format=json">
+              Exportar registros JSON
             </a>
           </Card>
 
@@ -91,6 +96,7 @@ export default async function ConfiguracionPage({
               </div>
             </form>
           </Card>
+          <FiscalInvoicePanel />
 
           <Card>
             <p className="text-sm text-slate-500">Servicio tecnico</p>
@@ -134,10 +140,6 @@ export default async function ConfiguracionPage({
         </Card>
       )}
 
-      <EmptyState
-        description="A partir de aca podemos sumar usuarios, politicas RLS, categorias y parametros finos del local."
-        title="Panel de configuracion listo"
-      />
     </div>
   );
 }

@@ -95,7 +95,7 @@ const order: RepairAccessOrderRecord = {
 };
 
 describe("RepairAccessWorkshopCard", () => {
-  it("oculta las acciones de contacto en mobile y las conserva en desktop", () => {
+  it("oculta las acciones de contacto personal del tecnico en todas las resoluciones", () => {
     const html = renderToStaticMarkup(
       <RepairAccessWorkshopCard
         canManageIntake={false}
@@ -106,9 +106,14 @@ describe("RepairAccessWorkshopCard", () => {
     );
 
     expect(html).toContain('data-workshop-contact-actions="true"');
-    expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="[^"]*hidden[^"]*lg:grid/);
+    expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="hidden"/);
     expect(html).toContain("Portal del cliente");
     expect(html).not.toContain('name="repairAmount"');
+  });
+
+  it("conserva los contactos del negocio para mostrador en desktop", () => {
+    const html = renderToStaticMarkup(<RepairAccessWorkshopCard canManageIntake onEdit={() => undefined} onOpenDetail={() => undefined} order={order} />);
+    expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="[^"]*hidden[^"]*lg:grid/);
   });
 
   it("carga los controles de trabajo solo al abrir la ficha y conserva las advertencias", () => {

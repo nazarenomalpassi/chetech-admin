@@ -30,14 +30,19 @@ import {
 } from "@/features/repairs-access/warranty";
 import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { OrderCoordinationPanel, type WorkshopTechnician } from "./order-coordination-panel";
+import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
+import { RepairAttachments } from "./repair-attachments";
 
 export function RepairAccessOrderDetail({
   order,
+  technicians,
   onBack,
   onEditIntake,
   defaultWarrantyDays
 }: {
   order: RepairAccessOrderRecord;
+  technicians?: WorkshopTechnician[];
   onBack: () => void;
   onEditIntake: (order: RepairAccessOrderRecord) => void;
   defaultWarrantyDays: number;
@@ -171,7 +176,7 @@ export function RepairAccessOrderDetail({
 
   return (
     <div className="space-y-5">
-      <Card className="overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(15,118,110,0.14),transparent_34%),linear-gradient(135deg,#ffffff,#f8fbf9)]">
+      <Card className="overflow-hidden bg-white">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Seguimiento tecnico</p>
@@ -204,6 +209,9 @@ export function RepairAccessOrderDetail({
 
         <RepairAccessWhatsAppPanel order={liveOrder} />
       </Card>
+
+      <OrderCoordinationPanel order={order} canManage technicians={technicians} />
+      {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
       <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-5">
@@ -305,18 +313,20 @@ export function RepairAccessOrderDetail({
 
           <form
             action={updateRepairAccessTechnicalAction}
+            data-workshop-form
             className="mt-6 grid gap-4 lg:grid-cols-6"
             key={formRevision}
             onChange={captureDraft}
             onInput={captureInputDraft}
           >
             <input name="id" type="hidden" value={order.id} />
+            {order.workflow ? <input name="expectedVersion" type="hidden" value={order.workflow.version} /> : null}
 
             <Field className="lg:col-span-2" label="Estado actual">
               <Select
                 name="status"
                 onChange={(event) => handleStatusChange(event.target.value)}
-                options={repairAccessStatusOptions}
+                options={repairAccessStatusOptions.filter((option) => !order.workflow || TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status)}
                 value={status}
               />
             </Field>
@@ -352,8 +362,11 @@ export function RepairAccessOrderDetail({
             </Field>
 
             <Field className="lg:col-span-6" label="Respuesta del cliente / comentario de estado">
-              <Textarea defaultValue={restoredValue("budgetResponseNotes", order.budgetResponseNotes ?? "")} name="budgetResponseNotes" placeholder="Acepta, rechaza, consulta, se aviso por WhatsApp, etc." />
+              <Textarea defaultValue={restoredValue("budgetResponseNotes", order.budgetResponseNotes ?? "")} name="budgetResponseNotes" readOnly={Boolean(order.workflow)} placeholder="La respuesta del cliente se registra desde los botones de confirmacion." />
             </Field>
+
+            <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm lg:col-span-6"><input className="mt-1" type="checkbox" name="qualityChecked" defaultChecked={Boolean(order.workflow?.qualityCheckedAt)} />Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar listo para retirar.</label>
+            <Field className="lg:col-span-6" label="Resultado del control de calidad"><Textarea name="qualityNotes" defaultValue={order.workflow?.qualityNotes || ""} maxLength={2000} /></Field>
 
             <div className="rounded-3xl bg-slate-50 p-4 lg:col-span-6">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Ficha de cobro informativa y garantia</p>
@@ -375,11 +388,11 @@ export function RepairAccessOrderDetail({
                   />
                 </Field>
                 <Field className="lg:col-span-2" label="Medio de pago">
-                  <Select defaultValue={restoredValue("paymentMethod", order.paymentMethod || "")} name="paymentMethod" options={[{ value: "", label: "Sin seleccionar" }, ...repairAccessPaymentOptions.map((method) => ({ value: method.value, label: method.label }))]} />
+                  <Select disabled={Boolean(order.workflow)} defaultValue={restoredValue("paymentMethod", order.paymentMethod || "")} name="paymentMethod" options={[{ value: "", label: "Sin seleccionar" }, ...repairAccessPaymentOptions.map((method) => ({ value: method.value, label: method.label }))]} />
                 </Field>
                 <label className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
-                  <input defaultChecked={restoredFields.isPaid === "on" || (!("isPaid" in restoredFields) && order.isPaid)} name="isPaid" type="checkbox" />
-                  Registrar cobro informado en ficha
+                  <input disabled={Boolean(order.workflow)} defaultChecked={restoredFields.isPaid === "on" || (!("isPaid" in restoredFields) && order.isPaid)} name="isPaid" type="checkbox" />
+                  {order.workflow ? "Cobro registrado desde Pagos" : "Registrar cobro informado en ficha"}
                 </label>
                 <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
                   <input
@@ -410,6 +423,7 @@ export function RepairAccessOrderDetail({
                   <Input
                     aria-describedby="pickup-date-help"
                     name="pickedUpAt"
+                    readOnly={Boolean(order.workflow)}
                     onChange={(event) => setPickedUpAt(event.target.value)}
                     required={status === "retirado"}
                     type="date"

@@ -2,24 +2,8 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-
-function normalizeRepairNumber(value: string) {
-  let decoded = value;
-  try {
-    decoded = decodeURIComponent(value);
-  } catch {
-    decoded = value;
-  }
-
-  const text = decoded.trim().toUpperCase();
-  const digitsOnly = text.match(/^\d+$/);
-  if (digitsOnly) return `REP-${digitsOnly[0].padStart(6, "0")}`;
-
-  const repNumber = text.match(/^REP[\s-]*(\d+)$/);
-  if (repNumber?.[1]) return `REP-${repNumber[1].padStart(6, "0")}`;
-
-  return text;
-}
+import { getRepairFinancialRecordByNativeId, normalizeRepairCollectionNumber } from "@/features/repairs/queries";
+import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper";
 
 export async function GET(
   _request: Request,
@@ -32,7 +16,7 @@ export async function GET(
   }
 
   const { repairNumber } = await params;
-  const normalizedRepairNumber = normalizeRepairNumber(repairNumber);
+  const normalizedRepairNumber = normalizeRepairCollectionNumber(repairNumber);
   if (!normalizedRepairNumber) {
     return NextResponse.json({ error: "Ingresa un numero de orden valido." }, { status: 400 });
   }
@@ -48,6 +32,8 @@ export async function GET(
         status,
         intake_date,
         budget_amount,
+        approved_amount,
+        budget_detail,
         final_amount,
         payment_method,
         payment_notes,
@@ -91,8 +77,12 @@ export async function GET(
   const device = Array.isArray(data.repair_access_devices)
     ? data.repair_access_devices[0]
     : data.repair_access_devices;
+  let financialRecord;
+  try { financialRecord = await getRepairFinancialRecordByNativeId(data.id, supabase); }
+  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Revisa el registro financiero vinculado." }, { status: 409, headers: { "Cache-Control": "private, no-store" } }); }
 
   return NextResponse.json({
+    financialRecord,
     order: {
       id: data.id,
       repairNumber: data.repair_number,
@@ -105,8 +95,8 @@ export async function GET(
       customerEmail: customer?.email ?? "",
       customerAddress: customer?.address ?? "",
       device: [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - "),
-      issueDescription: data.issue_reported ?? "",
-      amount: Number(data.final_amount || data.budget_amount || 0),
+      issueDescription: data.budget_detail || data.issue_reported || "",
+      amount: mapPrimaryOrderOption(data).amount,
       paymentMethod: data.payment_method ?? "",
       paymentNotes: data.payment_notes ?? "",
       warrantyDays: Number(data.warranty_days ?? 0),
@@ -124,5 +114,5 @@ export async function GET(
         data.warranty_conditions ? `Garantia: ${data.warranty_conditions}` : ""
       ].filter(Boolean).join("\n")
     }
-  });
+  }, { headers: { "Cache-Control": "private, no-store" } });
 }

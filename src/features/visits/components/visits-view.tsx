@@ -11,6 +11,10 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { FormSubmitButton } from "@/components/ui/form-submit-button";
+import { OperationsPagination } from "./operations-pagination";
+import { VisitDraftForm } from "./visit-draft-form";
+import type { PaginationMeta } from "@/lib/pagination";
 import { deleteVisitAction, saveVisitAction, updateVisitStatusAction } from "@/features/visits/actions";
 import { getVisitTimeLabel, visitStatusLabels, type VisitRecord } from "@/features/visits/model";
 import { visitStatusValues } from "@/features/visits/schemas";
@@ -41,11 +45,14 @@ function getVisitStatusVariant(status: VisitRecord["status"]) {
   return "default" as const;
 }
 
-function buildReturnTo(filters: { search: string; status: string; date: string }) {
+function buildReturnTo(filters: { search: string; status: string; date: string; view: string; technicianId: string }, page = 1) {
   const params = new URLSearchParams();
   if (filters.search) params.set("search", filters.search);
   if (filters.status && filters.status !== "all") params.set("visitStatus", filters.status);
   if (filters.date) params.set("date", filters.date);
+  if (filters.view !== "all") params.set("view", filters.view);
+  if (filters.technicianId) params.set("technicianId", filters.technicianId);
+  if (page > 1) params.set("page", String(page));
   const query = params.toString();
   return query ? `/visitas?${query}` : "/visitas";
 }
@@ -53,18 +60,28 @@ function buildReturnTo(filters: { search: string; status: string; date: string }
 export function VisitsView({
   canDelete,
   canManage,
+  draftOwnerId,
+  savedDraftToken,
+  savedDraftVisitId,
   data,
   message
 }: {
   canDelete: boolean;
   canManage: boolean;
+  draftOwnerId?: string;
+  savedDraftToken?: string;
+  savedDraftVisitId?: string;
   data: {
     migrationReady: boolean;
     today: string;
+    technicians: Array<{ id: string; full_name: string }>;
+    pagination?: PaginationMeta;
     filters: {
       search: string;
       status: string;
       date: string;
+      view: string;
+      technicianId: string;
     };
     visits: VisitRecord[];
     summary: {
@@ -78,7 +95,7 @@ export function VisitsView({
   message: ActionResult | null;
 }) {
   const [editing, setEditing] = useState<VisitRecord | null>(null);
-  const returnTo = useMemo(() => buildReturnTo(data.filters), [data.filters]);
+  const returnTo = useMemo(() => buildReturnTo(data.filters, data.pagination?.page), [data.filters, data.pagination?.page]);
 
   return (
     <div className="space-y-4">
@@ -90,6 +107,7 @@ export function VisitsView({
             <p className="panel-subheading mt-3">
               Agenda salidas a domicilio del local para retiros, revisiones y reparaciones sin perder de vista lo que toca hoy.
             </p>
+            <p className="mt-2 text-xs text-slate-500">Indicadores de esta pagina. El historial completo se consulta con paginacion, fecha, semana y tecnico.</p>
           </div>
 
           <div className="grid min-w-0 gap-3 sm:grid-cols-3 min-[1600px]:min-w-[34rem]">
@@ -132,9 +150,21 @@ export function VisitsView({
         ) : null}
 
         {canManage ? (
-        <form action={saveVisitAction} className="mt-6 grid gap-4 xl:grid-cols-6">
+        <VisitDraftForm key={editing ? `${editing.id}:${editing.updatedAt}` : "new"} ownerId={draftOwnerId} visitId={editing?.id ?? "new"} sourceVersion={editing?.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={saveVisitAction} className="mt-6 grid gap-4 xl:grid-cols-6">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
+          <input name="expectedUpdatedAt" type="hidden" value={editing?.updatedAt ?? ""} />
           <input name="returnTo" type="hidden" value={returnTo} />
+
+          <div className="xl:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="visitTechnician">Tecnico asignado</label>
+            <Select id="visitTechnician" name="technicianId" key={`${editing?.id}-technician`} defaultValue={editing?.technicianId ?? ""}
+              options={[{ value: "", label: "Sin asignar" }, ...data.technicians.map((person) => ({ value: person.id, label: person.full_name }))]} />
+            <p className="mt-1 text-xs text-slate-500">No se permiten visitas activas superpuestas del mismo tecnico.</p>
+          </div>
+          <div className="xl:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="visitRep">REP vinculada (opcional)</label>
+            <Input id="visitRep" name="repairNumber" key={`${editing?.id}-rep`} defaultValue={editing?.repairNumber ?? ""} placeholder="REP-000266 o 266" />
+          </div>
 
           <div className="xl:col-span-2">
             <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerName">Nombre del cliente</label>
@@ -232,14 +262,13 @@ export function VisitsView({
                 Cancelar edicion
               </Button>
             ) : null}
-            <Button disabled={!data.migrationReady} type="submit">
-              {editing ? "Actualizar visita" : "Nueva visita"}
-            </Button>
+            <FormSubmitButton disabled={!data.migrationReady} idleLabel={editing ? "Actualizar visita" : "Nueva visita"} pendingLabel="Guardando..." />
           </div>
-        </form>
+        </VisitDraftForm>
         ) : editing ? (
-          <form action={updateVisitStatusAction} className="mt-6 grid gap-4 rounded-[24px] border border-graphite/10 bg-white/80 p-4 sm:grid-cols-2">
+          <VisitDraftForm key={`${editing.id}:${editing.updatedAt}`} ownerId={draftOwnerId} visitId={editing.id} sourceVersion={editing.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={updateVisitStatusAction} className="mt-6 grid gap-4 rounded-[24px] border border-graphite/10 bg-white/80 p-4 sm:grid-cols-2">
             <input name="id" type="hidden" value={editing.id} />
+            <input name="expectedUpdatedAt" type="hidden" value={editing.updatedAt ?? ""} />
             <input name="returnTo" type="hidden" value={returnTo} />
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="technicianVisitStatus">
@@ -265,7 +294,7 @@ export function VisitsView({
               <Button onClick={() => setEditing(null)} type="button" variant="secondary">Cancelar</Button>
               <Button type="submit">Guardar seguimiento</Button>
             </div>
-          </form>
+          </VisitDraftForm>
         ) : null}
       </Card>
 
@@ -278,16 +307,21 @@ export function VisitsView({
               Busca por cliente, celular o domicilio y enfoca rapido las visitas del dia.
             </p>
           </div>
-          <form className="grid min-w-0 gap-3 sm:grid-cols-2 min-[1600px]:grid-cols-[minmax(0,240px)_180px_180px_auto_auto]">
+          <form className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <Input aria-label="Buscar visitas por cliente, celular o domicilio" defaultValue={data.filters.search} name="search" placeholder="Cliente, celular o domicilio" />
             <Select aria-label="Filtrar visitas por estado" defaultValue={data.filters.status} name="visitStatus" options={visitStatusOptions} />
             <Input aria-label="Filtrar visitas por fecha" defaultValue={data.filters.date} name="date" type="date" />
+            <Select aria-label="Vista de agenda" name="view" defaultValue={data.filters.view} options={[{ value: "all", label: "Todas / fecha exacta" }, { value: "day", label: "Dia seleccionado" }, { value: "week", label: "Semana (lunes a domingo)" }]} />
+            <Select aria-label="Filtrar por tecnico" name="technicianId" defaultValue={data.filters.technicianId} options={[{ value: "", label: "Todos los tecnicos" }, { value: "unassigned", label: "Sin asignar" }, ...data.technicians.map((person) => ({ value: person.id, label: person.full_name }))]} />
             <button className={cn(buttonVariants({ variant: "default" }), "w-full")} type="submit">
               Filtrar
             </button>
             <div className="flex gap-2">
               <Link className={cn(buttonVariants({ variant: "secondary" }), "w-full")} href={`/visitas?date=${data.today}`}>
                 Hoy
+              </Link>
+              <Link className={cn(buttonVariants({ variant: "secondary" }), "w-full")} href={`/visitas?date=${data.today}&view=week`}>
+                Semana
               </Link>
               <Link className={cn(buttonVariants({ variant: "secondary" }), "w-full")} href="/visitas">
                 Limpiar
@@ -320,6 +354,8 @@ export function VisitsView({
                   <p><span className="font-medium text-slate-900">Fecha:</span> {formatDate(visit.visitDate)}</p>
                   <p><span className="font-medium text-slate-900">Horario:</span> {getVisitTimeLabel(visit.timeFrom, visit.timeTo)}</p>
                   <p><span className="font-medium text-slate-900">Motivo:</span> {visit.reason}</p>
+                  <p><span className="font-medium text-slate-900">Tecnico:</span> {visit.technicianName || "Sin asignar"}</p>
+                  {visit.repairNumber ? <p>REP: {visit.repairNumber}</p> : null}
                   <p><span className="font-medium text-slate-900">Obs.:</span> {visit.notes || "-"}</p>
                 </div>
                 <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -330,6 +366,7 @@ export function VisitsView({
                     <form action={updateVisitStatusAction}>
                       <input name="id" type="hidden" value={visit.id} />
                       <input name="status" type="hidden" value="realizada" />
+                      <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />
                       <input name="returnTo" type="hidden" value={returnTo} />
                       <Button className="w-full" disabled={!data.migrationReady} type="submit" variant="secondary">
                         Marcar realizada
@@ -340,6 +377,7 @@ export function VisitsView({
                     <form action={updateVisitStatusAction}>
                       <input name="id" type="hidden" value={visit.id} />
                       <input name="status" type="hidden" value="cancelada" />
+                      <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />
                       <input name="returnTo" type="hidden" value={returnTo} />
                       <Button className="w-full" disabled={!data.migrationReady} type="submit" variant="secondary">
                         Cancelar
@@ -351,7 +389,7 @@ export function VisitsView({
                       <input name="id" type="hidden" value={visit.id} />
                       <input name="returnTo" type="hidden" value={returnTo} />
                       <Button className="w-full" disabled={!data.migrationReady} type="submit" variant="danger">
-                        Eliminar
+                        Cancelar y conservar
                       </Button>
                     </form>
                   ) : null}
@@ -395,7 +433,11 @@ export function VisitsView({
                   </td>
                   <td className="px-4 py-3 text-slate-600">{formatDate(visit.visitDate)}</td>
                   <td className="px-4 py-3 text-slate-600">{getVisitTimeLabel(visit.timeFrom, visit.timeTo)}</td>
-                  <td className="px-4 py-3 text-slate-600">{visit.reason}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    <p>{visit.reason}</p>
+                    <p className="mt-1 text-xs">Tecnico: {visit.technicianName || "Sin asignar"}</p>
+                    {visit.repairNumber ? <p className="mt-1 text-xs">{visit.repairNumber}</p> : null}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant={getVisitStatusVariant(visit.status)}>{visitStatusLabels[visit.status]}</Badge>
                   </td>
@@ -408,6 +450,7 @@ export function VisitsView({
                         <form action={updateVisitStatusAction}>
                           <input name="id" type="hidden" value={visit.id} />
                           <input name="status" type="hidden" value="realizada" />
+                          <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />
                           <input name="returnTo" type="hidden" value={returnTo} />
                           <Button disabled={!data.migrationReady} size="sm" type="submit" variant="secondary">
                             Realizada
@@ -418,6 +461,7 @@ export function VisitsView({
                         <form action={updateVisitStatusAction}>
                           <input name="id" type="hidden" value={visit.id} />
                           <input name="status" type="hidden" value="cancelada" />
+                          <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />
                           <input name="returnTo" type="hidden" value={returnTo} />
                           <Button disabled={!data.migrationReady} size="sm" type="submit" variant="secondary">
                             Cancelar
@@ -429,7 +473,7 @@ export function VisitsView({
                           <input name="id" type="hidden" value={visit.id} />
                           <input name="returnTo" type="hidden" value={returnTo} />
                           <Button disabled={!data.migrationReady} size="sm" type="submit" variant="danger">
-                            Eliminar
+                            Cancelar y conservar
                           </Button>
                         </form>
                       ) : null}
@@ -446,6 +490,7 @@ export function VisitsView({
             </div>
           ) : null}
         </div>
+        {data.pagination ? <OperationsPagination pagination={data.pagination} baseHref={returnTo} /> : null}
       </Card>
     </div>
   );

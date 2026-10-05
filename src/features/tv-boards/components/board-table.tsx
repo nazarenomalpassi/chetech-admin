@@ -6,7 +6,7 @@ import { CircleCheck, Pencil, Power, Trash2, WalletCards } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deleteTvBoardAction, markTvBoardReleasedAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
-import type { TvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getTvBoardMargin, type TvBoardSaleStatus, type TvBoardReleaseEvidence } from "@/features/tv-boards/sales";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 type TvBoard = {
@@ -15,6 +15,8 @@ type TvBoard = {
   model: string;
   boardType: "fuente" | "main" | "tcom" | "placa_unica";
   price: number;
+  acquisitionCost: number | null;
+  releaseEvidence: TvBoardReleaseEvidence;
   isActive: boolean;
   isSold: boolean;
   soldAt: string | null;
@@ -80,8 +82,8 @@ export function BoardTable({
         <Badge className="border-slate-200 bg-slate-100 text-slate-700" variant="default">
           Vendida
         </Badge>
-        <Badge variant={board.saleStatus === "released" ? "success" : "warning"}>
-          {board.saleStatus === "released" ? "Liberada" : "En espera de liberacion"}
+        <Badge variant={board.releaseEvidence === "confirmed" ? "success" : "warning"}>
+          {board.releaseEvidence === "confirmed" ? "Liberacion confirmada" : board.releaseEvidence === "estimated_due" ? "Fecha prevista cumplida; sin confirmar" : "Liberacion sin confirmar"}
         </Badge>
       </div>
     );
@@ -136,9 +138,13 @@ export function BoardTable({
             </div>
 
             <div className="mt-3">{renderSaleBadge(board)}</div>
+            <div className="mt-3 text-sm text-slate-600">
+              <p>Costo: {board.acquisitionCost == null ? "Sin informar" : formatCurrency(board.acquisitionCost)}</p>
+              <p>Margen directo: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Costo / neto incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>
+            </div>
             {board.releaseDate ? (
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                {board.releasedAt ? `Liberada el ${formatDate(board.releasedAt)} (prevista: ${formatDate(board.releaseDate)}).` : `Liberacion prevista: ${formatDate(board.releaseDate)}.`} {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
+                {board.releasedAt ? `Confirmada el ${formatDate(board.releasedAt)} (prevista: ${formatDate(board.releaseDate)}).` : `Liberacion estimada: ${formatDate(board.releaseDate)}. Sin confirmacion efectiva.`}
               </p>
             ) : null}
             {board.saleNotes ? <p className="mt-2 text-xs leading-5 text-slate-500">{board.saleNotes}</p> : null}
@@ -160,10 +166,10 @@ export function BoardTable({
                     Venta cargada
                   </Button>
                 )}
-                {board.saleStatus === "pending_release" ? (
+                {board.isSold && board.releaseEvidence !== "confirmed" ? (
                   <Button className="w-full" disabled={isPending} onClick={() => handleRelease(board)} variant="secondary">
                     <CircleCheck className="h-4 w-4" />
-                    Ya liberada
+                    Confirmar liberacion
                   </Button>
                 ) : null}
                 {!board.isSold ? (
@@ -184,7 +190,7 @@ export function BoardTable({
                     {board.isActive ? "Dar de baja" : "Reactivar"}
                   </Button>
                 ) : null}
-                <Button className="w-full" disabled={isPending} onClick={() => handleDelete(board)} variant="danger">
+                <Button className="w-full" disabled={isPending || board.isSold} onClick={() => handleDelete(board)} variant="danger">
                   <Trash2 className="h-4 w-4" />
                   Eliminar
                 </Button>
@@ -206,6 +212,7 @@ export function BoardTable({
               <th className="px-4 py-4 font-medium">Precio publicado</th>
               <th className="px-4 py-4 font-medium">Venta ML</th>
               <th className="px-4 py-4 font-medium">Neto real</th>
+              <th className="px-4 py-4 font-medium">Costo / margen directo</th>
               <th className="px-4 py-4 font-medium">Liberacion</th>
               <th className="px-4 py-4 font-medium">Stock</th>
               <th className="px-4 py-4 font-medium">Alta</th>
@@ -228,12 +235,16 @@ export function BoardTable({
                   {board.netAmount === null ? <span className="text-slate-400">-</span> : formatCurrency(board.netAmount)}
                 </td>
                 <td className="px-4 py-4 text-slate-600">
+                  <p>Costo: {board.acquisitionCost == null ? "Sin informar" : formatCurrency(board.acquisitionCost)}</p>
+                  <p className="mt-1 text-xs">Margen: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>
+                </td>
+                <td className="px-4 py-4 text-slate-600">
                   {board.releaseDate ? (
                     <div>
-                      <p>{board.releasedAt ? `Liberada el ${formatDate(board.releasedAt)}` : formatDate(board.releaseDate)}</p>
+                      <p>{board.releasedAt ? `Confirmada el ${formatDate(board.releasedAt)}` : `Estimada: ${formatDate(board.releaseDate)}`}</p>
                       {board.releasedAt ? <p className="mt-1 text-xs text-slate-400">Prevista: {formatDate(board.releaseDate)}</p> : null}
                       <p className="mt-1 text-xs text-slate-400">
-                        {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
+                        {board.releaseEvidence === "confirmed" ? "Confirmacion registrada" : "Sin confirmacion efectiva"}
                       </p>
                       {board.saleNotes ? (
                         <p className="mt-2 max-w-[16rem] text-xs leading-5 text-slate-500">{board.saleNotes}</p>
@@ -267,10 +278,10 @@ export function BoardTable({
                           Venta cargada
                         </Button>
                       )}
-                      {board.saleStatus === "pending_release" ? (
+                      {board.isSold && board.releaseEvidence !== "confirmed" ? (
                         <Button disabled={isPending} onClick={() => handleRelease(board)} size="sm" variant="secondary">
                           <CircleCheck className="mr-2 h-4 w-4" />
-                          Ya liberada
+                          Confirmar liberacion
                         </Button>
                       ) : null}
                       {!board.isSold ? (
@@ -291,7 +302,7 @@ export function BoardTable({
                           {board.isActive ? "Dar de baja" : "Reactivar"}
                         </Button>
                       ) : null}
-                      <Button disabled={isPending} onClick={() => handleDelete(board)} size="sm" variant="danger">
+                      <Button disabled={isPending || board.isSold} onClick={() => handleDelete(board)} size="sm" variant="danger">
                         <Trash2 className="mr-2 h-4 w-4" />
                         Eliminar
                       </Button>

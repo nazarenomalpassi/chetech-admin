@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { CalendarDays, ClipboardList, PackageCheck, UserRoundCheck, Wrench } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -11,10 +12,11 @@ import { cn, formatDate } from "@/lib/utils";
 
 type TechnicianDashboardProps = {
   technicianName: string;
+  workshopInbox?: ReactNode;
   data: Awaited<ReturnType<typeof import("@/features/dashboard/technician-queries").getTechnicianDashboardData>>;
 };
 
-export function TechnicianDashboard({ technicianName, data }: TechnicianDashboardProps) {
+export function TechnicianDashboard({ technicianName, data, workshopInbox }: TechnicianDashboardProps) {
   const metrics = [
     { label: "Ordenes activas", value: data.summary.active, icon: Wrench, tone: "service" },
     { label: "Asignadas a mi", value: data.summary.assigned, icon: UserRoundCheck, tone: "income" },
@@ -43,6 +45,8 @@ export function TechnicianDashboard({ technicianName, data }: TechnicianDashboar
           </div>
         </div>
       </Card>
+
+      {workshopInbox}
 
       <section className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4" aria-label="Resumen tecnico">
         {metrics.map((metric) => <MetricCard {...metric} key={metric.label} />)}

@@ -220,7 +220,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             <p className="text-sm text-slate-500">Bloque profesional</p>
             <h2 className="text-2xl font-semibold text-slate-950">Reportes operativos</h2>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Revisa rendimiento del local, compara ventas por vendedor, reparaciones por tecnico y exporta
+              Revisa rendimiento del local, compara operaciones por quien las registro y exporta
               cada modulo con el mismo rango que estas mirando.
             </p>
           </div>
@@ -357,8 +357,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500">Reparaciones por tecnico</p>
-              <h3 className="text-xl font-semibold text-slate-950">Produccion del periodo</h3>
+              <p className="text-sm text-slate-500">Operaciones por quien las registro</p>
+              <h3 className="text-xl font-semibold text-slate-950">Registro financiero del periodo</h3>
+              <p className="mt-2 text-xs text-slate-500">Muestra importes declarados, no dinero cobrado. El responsable tecnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
             </div>
             <Badge>{technicianSummary.length} perfiles</Badge>
           </div>

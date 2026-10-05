@@ -40,7 +40,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/pedidos" as Route, label: "Pedidos", icon: PackageCheck, permission: "orders.manage" },
   { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard, permission: "installments.manage" },
   { href: "/caja", label: "Caja", icon: Landmark, permission: "cash.manage" },
-  { href: "/cambio-balance" as Route, label: "Cambio de balance", icon: ArrowRightLeft, permission: "balance.manage" },
+  { href: "/cambio-balance" as Route, label: "Transferencias entre cuentas", icon: ArrowRightLeft, permission: "balance.manage" },
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart, permission: "reports.manage" },
   { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign, permission: "repairs.manage" },
   { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench, permission: "repairs.view" },
@@ -51,4 +51,16 @@ export const sidebarItems: SidebarItem[] = [
 
 export function getSidebarItemsForRole(role: AppRole) {
   return sidebarItems.filter((item) => hasPermission(role, item.permission));
+}
+
+export function getSidebarGroupsForRole(role: AppRole) {
+  const items = getSidebarItemsForRole(role);
+  const groups = [
+    { label: "Inicio", paths: ["/dashboard"] },
+    { label: "Taller", paths: ["/reparaciones-access", "/visitas", "/terciarizaciones", "/pedidos"] },
+    { label: "Comercial", paths: ["/productos", "/ventas", "/placas-tv"] },
+    { label: "Finanzas", paths: ["/caja", "/cambio-balance", "/reparaciones", "/cuotas", "/gastos", "/sueldos", "/facturacion", "/reportes"] },
+    { label: "Administracion", paths: ["/configuracion"] }
+  ];
+  return groups.map((group) => ({ label: group.label, items: group.paths.flatMap((path) => items.filter((item) => item.href === path)) })).filter((group) => group.items.length);
 }

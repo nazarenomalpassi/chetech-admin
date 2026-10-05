@@ -10,7 +10,9 @@ import { Input } from "@/components/ui/input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { deleteExpenseAction, saveExpenseAction } from "@/features/expenses/actions";
+import { deleteExpenseAction, linkExpensePurchaseAction } from "@/features/expenses/actions";
+import { ExpenseLinkSelector } from "./expense-link-selector";
+import { ExpenseSaveForm } from "./expense-save-form";
 import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
@@ -27,21 +29,31 @@ type Expense = {
   impactsCash: boolean;
   isVoided: boolean;
   observations: string;
+  repairOrderId: string | null;
+  partRequestId: string | null;
+  linkLabel: string;
 };
 
 export function ExpensesList({
   canDelete,
+  ownerId,
   expenses,
   pagination,
-  message
+  message,
+  savedOperation,
+  savedScope
 }: {
   canDelete: boolean;
+  ownerId: string;
   expenses: Expense[];
   pagination: PaginationMeta;
   message: ActionResult | null;
+  savedOperation?: string;
+  savedScope?: string;
 }) {
   const today = getLocalDateInputValue();
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [linking, setLinking] = useState<Expense | null>(null);
   const [expenseDate, setExpenseDate] = useState(today);
   const totalExpenses = expenses.filter((item) => !item.isVoided).reduce((acc, item) => acc + item.amount, 0);
   const cashImpact = expenses.filter((item) => item.impactsCash && !item.isVoided).reduce((acc, item) => acc + item.amount, 0);
@@ -103,7 +115,7 @@ export function ExpensesList({
           </div>
         ) : null}
 
-        <form action={saveExpenseAction} className="mt-6 grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-6">
+        <ExpenseSaveForm ownerId={ownerId} scope={editing?.id ?? "new"} savedOperation={savedOperation} savedScope={savedScope} className="mt-6 grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-6">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <div>
             <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="expenseDate">
@@ -154,6 +166,9 @@ export function ExpensesList({
             </label>
             <Textarea defaultValue={editing?.observations ?? ""} key={`${editing?.id}-observations`} name="observations" placeholder="Contexto interno, comprobante o nota util" />
           </div>
+          <div className="xl:col-span-6">
+            {editing ? <p className="text-sm text-slate-600">Para cambiar solo el destino usa Vincular pago en el historial. Este formulario modifica los datos financieros del gasto.</p> : <ExpenseLinkSelector key="new-expense-link" prefix="new-expense" />}
+          </div>
           <div className="flex items-end gap-2">
             <FormSubmitButton
               className="w-full"
@@ -166,12 +181,25 @@ export function ExpensesList({
               </Button>
             ) : null}
           </div>
-        </form>
+        </ExpenseSaveForm>
       </Card>
+
+      {linking ? <section className="rounded-[30px] border border-graphite/10 bg-white p-5" aria-label="Enlace de gasto existente">
+        <h2 className="text-xl font-semibold text-slate-950">Vincular gasto existente</h2>
+        <p className="mt-2 break-words text-sm text-slate-700">{linking.description} · {formatCurrency(linking.amount)} · {formatDate(linking.expenseDate)}</p>
+        <p className="mt-2 text-sm text-slate-600">Solo cambia el vinculo, sin volver a registrar dinero ni modificar fecha, actor o identificadores de caja.</p>
+        <form action={linkExpensePurchaseAction} className="mt-4 space-y-4">
+          <input name="id" type="hidden" value={linking.id} />
+          <input name="expectedOrderId" type="hidden" value={linking.repairOrderId ?? ""} />
+          <input name="expectedPartId" type="hidden" value={linking.partRequestId ?? ""} />
+          <ExpenseLinkSelector key={linking.id} prefix="existing-expense" initial={{ orderId: linking.repairOrderId, partRequestId: linking.partRequestId, label: linking.linkLabel }} />
+          <div className="flex flex-wrap gap-2"><FormSubmitButton idleLabel="Guardar vinculo" pendingLabel="Vinculando..." /><Button type="button" variant="secondary" onClick={() => setLinking(null)}>Cancelar</Button></div>
+        </form>
+      </section> : null}
 
       <div className="table-shell">
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 text-sm text-slate-600">
-          Historial operativo: se muestran los ultimos 100 gastos para mantener la pantalla veloz.
+          Historial paginado: {pagination.pageSize} gastos por pagina. Vincula un pago ya registrado en lugar de cargarlo otra vez.
         </div>
         <div className="grid gap-3 p-3 lg:hidden">
           {expenses.map((expense) => (
@@ -184,12 +212,14 @@ export function ExpensesList({
                 <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(expense.amount)}</p>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">{expense.description}</p>
+              {expense.linkLabel ? <p className="mt-2 break-words text-sm font-semibold text-slate-800">{expense.linkLabel}</p> : null}
               <div className="mt-3 rounded-[18px] bg-brand-50 px-3 py-2.5 text-sm">
                 <span className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Cuenta</span>
                 <p className="mt-1 font-semibold text-slate-800">{formatCashMethod(expense.paymentMethod)}</p>
               </div>
               {expense.observations ? <p className="mt-3 text-xs leading-5 text-slate-500">{expense.observations}</p> : null}
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                <Button className="w-full" disabled={expense.isVoided} onClick={() => setLinking(expense)} type="button" variant="secondary">{expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}</Button>
                 <Button
                   className="w-full"
                   onClick={() => {
@@ -238,11 +268,12 @@ export function ExpensesList({
                 <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={expense.id}>
                   <td className="px-4 py-4 text-slate-600">{formatDate(expense.expenseDate)}</td>
                   <td className="px-4 py-4 font-medium text-slate-950">{expense.type}</td>
-                  <td className="px-4 py-4 text-slate-600">{expense.description}</td>
+                  <td className="px-4 py-4 text-slate-600">{expense.description}{expense.linkLabel ? <p className="mt-1 font-semibold text-slate-800">{expense.linkLabel}</p> : null}</td>
                   <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(expense.amount)}</td>
                   <td className="px-4 py-4 text-slate-600">{formatCashMethod(expense.paymentMethod)}</td>
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">
+                      <Button disabled={expense.isVoided} onClick={() => setLinking(expense)} size="sm" type="button" variant="secondary">{expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}</Button>
                       <Button
                         onClick={() => {
                           setEditing(expense);

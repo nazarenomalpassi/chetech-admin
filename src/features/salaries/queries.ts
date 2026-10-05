@@ -1,4 +1,5 @@
 import type { SalaryPlanningData } from "@/features/salaries/types";
+import { suggestAfterCommitments, type PurchaseCommitments } from "./commitments";
 import { normalizeCashMethodValue } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -44,6 +45,7 @@ function emptyData(monthKey: string): SalaryPlanningData {
     reserves: [],
     merchandise: { quantitySold: 0, revenue: 0, historicalCost: 0, currentReplacementCost: 0, grossMargin: 0 },
     suggestedSalaryAmount: 0,
+    purchaseCommitments: { ready: false, knownOutstanding: null, unknownCostCount: null, purchaseCount: null },
     liquidations: [],
     withdrawals: []
   };
@@ -52,9 +54,10 @@ function emptyData(monthKey: string): SalaryPlanningData {
 export async function getSalaryPlanningData(requestedMonth?: string): Promise<SalaryPlanningData> {
   const monthKey = normalizeSalaryMonth(requestedMonth);
   const supabase = await createServerSupabaseClient();
-  const [planningResult, profitShareResult] = await Promise.all([
+  const [planningResult, profitShareResult, commitmentsResult] = await Promise.all([
     (supabase as any).rpc("get_salary_planning_snapshot", { p_period_month: `${monthKey}-01` }),
-    (supabase as any).rpc("get_salary_profit_share_snapshot", { p_period_month: `${monthKey}-01` })
+    (supabase as any).rpc("get_salary_profit_share_snapshot", { p_period_month: `${monthKey}-01` }),
+    (supabase as any).rpc("get_purchase_commitments_snapshot")
   ]);
   const { data, error } = planningResult;
 
@@ -96,6 +99,13 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
   const totalAvailable = numberValue(payload.total_available);
   const currentReplacementCost = numberValue(merchandise.current_replacement_cost);
   const reserveTotal = reserves.reduce((total: number, reserve: { amount: number }) => total + reserve.amount, 0);
+  const commitmentPayload = commitmentsResult.data;
+  const commitmentValuesValid = commitmentPayload && ["knownOutstanding", "unknownCostCount", "purchaseCount"]
+    .every((key) => commitmentPayload[key] != null && Number.isFinite(Number(commitmentPayload[key])) && Number(commitmentPayload[key]) >= 0);
+  const purchaseCommitments: PurchaseCommitments = commitmentsResult.error || !commitmentValuesValid
+    ? { ready: false, knownOutstanding: null, unknownCostCount: null, purchaseCount: null }
+    : { ready: true, knownOutstanding: numberValue(commitmentPayload.knownOutstanding),
+        unknownCostCount: numberValue(commitmentPayload.unknownCostCount), purchaseCount: numberValue(commitmentPayload.purchaseCount) };
 
   return {
     migrationReady: true,
@@ -123,7 +133,8 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
       currentReplacementCost,
       grossMargin: numberValue(merchandise.gross_margin)
     },
-    suggestedSalaryAmount: Math.max(totalAvailable - reserveTotal - currentReplacementCost, 0),
+    suggestedSalaryAmount: suggestAfterCommitments(totalAvailable, reserveTotal, currentReplacementCost, purchaseCommitments),
+    purchaseCommitments,
     liquidations: (profitSharePayload.liquidations ?? []).map((liquidation: any) => ({
       id: String(liquidation.id),
       periodMonth: String(liquidation.period_month),

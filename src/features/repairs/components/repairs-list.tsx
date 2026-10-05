@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BadgeDollarSign, CalendarRange, Search, ShieldCheck } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
@@ -10,7 +10,8 @@ import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { deleteRepairAction, saveRepairAction } from "@/features/repairs/actions";
-import { canUsePaymentMethod } from "@/features/repairs/repair-form";
+import type { RepairCollectionTarget } from "@/features/repairs/queries";
+import { RepairPaymentsPanel } from "./repair-payments-panel";
 import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
 import type { PaymentSplit } from "@/lib/payment-splits";
@@ -33,12 +34,16 @@ type Repair = {
   observations: string | null;
   entryDate: string;
   createdAt: string;
-  payments: { method: string; amount: number }[];
+  paidTotal: number;
+  balance: number;
+  financialVersion: number;
+  payments: { id?: string; method: string; amount: number; paymentDate?: string; source?: string }[];
 };
 
 type AccessOrder = {
   id: string;
   repairNumber: string;
+  intakeDate: string;
   customerName: string;
   customerPhone: string;
   device: string;
@@ -70,31 +75,48 @@ const emptyRepairFormFields: RepairFormFields = {
   issueDescription: ""
 };
 
+function fieldsFromRepair(repair: Repair): RepairFormFields {
+  return { id: repair.id, repairAccessOrderId: repair.repairAccessOrderId ?? "", accessOrderNumber: repair.repairAccessOrderNumber || repair.orderNumber || "",
+    customerName: repair.customerName, customerPhone: repair.customerPhone ?? "", device: repair.device,
+    orderNumber: repair.orderNumber ?? repair.repairAccessOrderNumber ?? "", issueDescription: repair.issueDescription ?? "" };
+}
+function fieldsFromOrder(order: AccessOrder): RepairFormFields {
+  return { id: "", repairAccessOrderId: order.id, accessOrderNumber: order.repairNumber, customerName: order.customerName,
+    customerPhone: order.customerPhone, device: order.device, orderNumber: order.repairNumber, issueDescription: order.issueDescription };
+}
+
 export function RepairsList({
   canDelete,
   repairs,
   pagination,
-  message
+  message,
+  collectionTarget
 }: {
   canDelete: boolean;
   repairs: Repair[];
   pagination: PaginationMeta;
   message: ActionResult | null;
+  collectionTarget?: RepairCollectionTarget | null;
 }) {
   const today = getLocalDateInputValue();
-  const [editing, setEditing] = useState<Repair | null>(null);
+  const initialRepair = collectionTarget?.repair ?? null;
+  const initialOrder = collectionTarget?.order ?? null;
+  const [editing, setEditing] = useState<Repair | null>(initialRepair);
   const [search, setSearch] = useState("");
-  const [formValues, setFormValues] = useState<RepairFormFields>(emptyRepairFormFields);
+  const [formValues, setFormValues] = useState<RepairFormFields>(() => initialRepair ? fieldsFromRepair(initialRepair) : initialOrder ? fieldsFromOrder(initialOrder) : emptyRepairFormFields);
   const [lookupStatus, setLookupStatus] = useState<{ loading: boolean; message: string; success: boolean }>({
     loading: false,
-    message: "",
-    success: false
+    message: collectionTarget?.error || (initialRepair ? "Registro financiero existente seleccionado. Agrega la sena o saldo debajo; abrir esta pantalla no registra un cobro." : initialOrder ? "REP preparada sin pagos. Registra solo el dinero recibido; abrir esta pantalla no modifica caja." : ""),
+    success: !collectionTarget?.error && Boolean(initialOrder || initialRepair)
   });
-  const [entryDate, setEntryDate] = useState(today);
-  const [amount, setAmount] = useState("");
-  const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "efectivo", amount: 0 }]);
+  const [entryDate, setEntryDate] = useState(initialRepair?.entryDate || initialOrder?.intakeDate || today);
+  const [paymentDate, setPaymentDate] = useState(today);
+  const [requestId, setRequestId] = useState("");
+  const [amount, setAmount] = useState(initialRepair ? String(initialRepair.finalPrice || initialRepair.estimatedPrice || 0) : initialOrder ? String(initialOrder.amount) : "");
+  const [payments, setPayments] = useState<PaymentSplit[]>([]);
+  useEffect(() => { setRequestId(crypto.randomUUID()); }, [formValues, entryDate, paymentDate, amount, payments]);
   const totalRepairs = repairs.length;
-  const revenue = repairs.reduce((acc, repair) => acc + repair.finalPrice, 0);
+  const revenue = repairs.reduce((acc, repair) => acc + repair.paidTotal, 0);
   const filteredRepairs = repairs.filter((repair) => {
     const query = search.trim().toLowerCase();
     if (!query) return true;
@@ -105,40 +127,31 @@ export function RepairsList({
   });
 
   const amountValue = Number(amount || 0);
+  const currentLedger = editing ? repairs.find((repair) => repair.id === editing.id) ?? editing : null;
 
   function updateField(field: keyof RepairFormFields, value: string) {
     setFormValues((current) => ({ ...current, [field]: value }));
   }
 
   function startEdit(repair: Repair) {
+    setRequestId(crypto.randomUUID());
     setEditing(repair);
     setLookupStatus({ loading: false, message: "", success: false });
-    setFormValues({
-      id: repair.id,
-      repairAccessOrderId: repair.repairAccessOrderId ?? "",
-      accessOrderNumber: repair.repairAccessOrderNumber || repair.orderNumber || "",
-      customerName: repair.customerName,
-      customerPhone: repair.customerPhone ?? "",
-      device: repair.device,
-      orderNumber: repair.orderNumber ?? repair.repairAccessOrderNumber ?? "",
-      issueDescription: repair.issueDescription ?? ""
-    });
+    setFormValues(fieldsFromRepair(repair));
     setEntryDate(repair.entryDate);
     setAmount(String(repair.finalPrice || repair.estimatedPrice || 0));
-    setPayments(
-      repair.payments.length
-        ? repair.payments.map((payment) => ({ method: payment.method, amount: payment.amount }))
-        : [{ method: "efectivo", amount: repair.finalPrice || repair.estimatedPrice || 0 }]
-    );
+    setPayments([]);
   }
 
   function resetForm() {
+    setRequestId(crypto.randomUUID());
     setEditing(null);
     setLookupStatus({ loading: false, message: "", success: false });
     setFormValues(emptyRepairFormFields);
     setEntryDate(today);
+    setPaymentDate(today);
     setAmount("");
-    setPayments([{ method: "efectivo", amount: 0 }]);
+    setPayments([]);
   }
 
   async function loadAccessOrder() {
@@ -153,36 +166,31 @@ export function RepairsList({
 
     try {
       const response = await fetch(`/api/repair-access/orders/${encodeURIComponent(requestedNumber)}`, {
-        headers: { accept: "application/json" }
+        headers: { accept: "application/json" }, cache: "no-store"
       });
       const result = await response.json();
 
       if (!response.ok || !result.order) {
-        setLookupStatus({ loading: false, message: "No encontre una orden Access con ese numero.", success: false });
+        setLookupStatus({ loading: false, message: result.error || "No encontre una orden Access con ese numero.", success: false });
         return;
       }
 
       const order = result.order as AccessOrder;
-      const paymentMethod = canUsePaymentMethod(order.paymentMethod) ? order.paymentMethod : "efectivo";
+      if (result.financialRecord) {
+        if (result.financialRecord.repairAccessOrderId !== order.id) throw new Error("Vinculo financiero inconsistente");
+        startEdit(result.financialRecord as Repair);
+        setLookupStatus({ loading: false, message: `Registro financiero de ${order.repairNumber} seleccionado. Agrega la sena o saldo debajo; no se crea un registro duplicado.`, success: true });
+        return;
+      }
 
       setEditing(null);
-      setFormValues({
-        id: "",
-        repairAccessOrderId: order.id,
-        accessOrderNumber: order.repairNumber,
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        device: order.device,
-        orderNumber: order.repairNumber,
-        issueDescription: order.issueDescription
-      });
-      if (order.amount > 0) {
-        setAmount(String(order.amount));
-        setPayments([{ method: paymentMethod, amount: order.amount }]);
-      }
+      setFormValues(fieldsFromOrder(order));
+      setEntryDate(order.intakeDate || today);
+      setAmount(String(order.amount));
+      setPayments([]);
       setLookupStatus({
         loading: false,
-        message: `Orden ${order.repairNumber} cargada. Al guardar el cobro aca, impacta caja y la ficha Access pasa a retirado.`,
+        message: `Orden ${order.repairNumber} cargada. El cobro actualiza caja, no entrega el equipo ni inicia garantia. Si ya existe un registro financiero, agrega alli la sena o saldo.`,
         success: true
       });
     } catch {
@@ -240,6 +248,8 @@ export function RepairsList({
 
         <form action={saveRepairAction} className="mt-6 space-y-4">
           <input name="id" type="hidden" value={formValues.id} />
+          <input name="requestId" type="hidden" value={requestId} />
+          <input name="expectedVersion" type="hidden" value={editing?.financialVersion ?? ""} />
           <input name="repairAccessOrderId" type="hidden" value={formValues.repairAccessOrderId} />
           <input name="customerPhone" type="hidden" value={formValues.customerPhone} />
           <input name="issueDescription" type="hidden" value={formValues.issueDescription} />
@@ -339,11 +349,16 @@ export function RepairsList({
           </div>
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
-            <PaymentSplitFields onChange={setPayments} payments={payments} title="Cobro de la reparacion" totalAmount={amountValue} />
+            {editing ? <p className="rounded-3xl bg-brand-50 p-5 text-sm">Esta edicion actualiza datos y precio, no reemplaza pagos anteriores. Usa el registro de señas y saldo debajo para agregar o revertir un cobro.</p> : <div className="space-y-3">
+              <label className="block text-sm">Fecha de cobro<Input className="mt-2" name="paymentDate" onChange={(event) => setPaymentDate(event.target.value)} type="date" value={paymentDate} /></label>
+              <p className="text-sm text-slate-500">El precio puede quedar pendiente o cobrarse parcialmente. Registra solo el dinero recibido.</p>
+              <PaymentSplitFields onChange={setPayments} payments={payments} title="Seña o cobro inicial" totalAmount={amountValue} />
+            </div>}
             <div className="flex items-end gap-2">
               <FormSubmitButton
+                disabled={!requestId}
                 className="w-full"
-                idleLabel={editing ? "Actualizar pago" : "Guardar pago"}
+                idleLabel={editing ? "Actualizar datos" : "Guardar registro y cobro"}
                 pendingLabel={editing ? "Actualizando..." : "Guardando..."}
               />
               {editing || formValues.repairAccessOrderId || formValues.customerName ? (
@@ -355,6 +370,7 @@ export function RepairsList({
           </div>
         </form>
       </Card>
+      {currentLedger ? <RepairPaymentsPanel key={`${currentLedger.id}:${currentLedger.financialVersion}`} repair={currentLedger} canReverse={canDelete} /> : null}
 
       <div className="table-shell">
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
@@ -397,6 +413,7 @@ export function RepairsList({
                 </div>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">{repair.device}</p>
+              <p className="mt-2 text-sm">Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}</p>
               {repair.payments.length ? (
                 <p className="mt-2 text-xs leading-5 text-slate-500">
                   {repair.payments.map((payment) => `${formatCashMethod(payment.method)} ${formatCurrency(payment.amount)}`).join(" + ")}
@@ -453,6 +470,7 @@ export function RepairsList({
                   <td className="px-4 py-4 text-slate-600">{formatDate(repair.entryDate)}</td>
                   <td className="px-4 py-4 font-medium text-slate-950">
                     {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
+                    <p className="mt-1 text-xs font-normal text-slate-600">Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}</p>
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">

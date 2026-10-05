@@ -5,13 +5,13 @@ import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { getSidebarItemsForRole } from "@/lib/navigation";
+import { getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 export function Sidebar({ role }: { role: AppRole }) {
   const pathname = usePathname();
-  const sidebarItems = getSidebarItemsForRole(role);
+  const groups = getSidebarGroupsForRole(role);
 
   return (
     <aside className="relative flex h-full max-h-full w-full overflow-hidden rounded-[30px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(19,19,18,0.96),rgba(28,27,25,0.98))] p-3 text-white shadow-pop 2xl:p-4">
@@ -27,7 +27,7 @@ export function Sidebar({ role }: { role: AppRole }) {
             Navegación
           </p>
           <nav className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-            {sidebarItems.map((item) => {
+            {groups.map((group) => <section key={group.label} className="space-y-1.5 pb-3"><h2 className="px-3 pt-2 text-xs font-medium text-white/45">{group.label}</h2>{group.items.map((item) => {
               const Icon = item.icon;
               const active = pathname === item.href;
 
@@ -35,6 +35,7 @@ export function Sidebar({ role }: { role: AppRole }) {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "group flex items-center gap-2.5 rounded-[18px] px-3 py-2.5 text-sm font-medium transition duration-200 2xl:gap-3 2xl:px-4 2xl:py-3",
                     active
@@ -53,7 +54,7 @@ export function Sidebar({ role }: { role: AppRole }) {
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
-            })}
+            })}</section>)}
           </nav>
         </div>
 

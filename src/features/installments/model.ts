@@ -18,14 +18,14 @@ function roundAmount(value: number) {
 
 function addMonths(dateString: string, monthsToAdd: number) {
   const [year, month, day] = dateString.split("-").map(Number);
-  const date = new Date(year, month - 1, day, 12, 0, 0);
-  date.setMonth(date.getMonth() + monthsToAdd);
-
-  const nextYear = date.getFullYear();
-  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
-  const nextDay = String(date.getDate()).padStart(2, "0");
-
-  return `${nextYear}-${nextMonth}-${nextDay}`;
+  const original = new Date(Date.UTC(year, month - 1, day));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString) || !Number.isFinite(original.getTime()) || original.toISOString().slice(0, 10) !== dateString) {
+    throw new Error("Selecciona una fecha de vencimiento valida.");
+  }
+  const target = new Date(Date.UTC(year, month - 1 + monthsToAdd, 1));
+  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  target.setUTCDate(Math.min(day, lastDay));
+  return target.toISOString().slice(0, 10);
 }
 
 export function generateInstallments({
@@ -82,6 +82,6 @@ export function getInstallmentSaleStatus(
     return "cancelada";
   }
 
-  const hasOpenInstallment = installments.some((installment) => installment.status !== "pagada");
+  const hasOpenInstallment = installments.some((installment) => installment.status !== "pagada" && installment.status !== "cancelada");
   return hasOpenInstallment ? "activa" : "finalizada";
 }

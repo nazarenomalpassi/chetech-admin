@@ -23,9 +23,11 @@ import {
   WORKSHOP_INITIAL_VISIBLE_ORDERS
 } from "@/features/repairs-access/workshop-list-visibility";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import type { WorkshopTechnician } from "./order-coordination-panel";
 
 export function RepairAccessOrdersSection({
   orders,
+  technicians,
   search,
   statusFilter,
   warrantyFilter,
@@ -38,6 +40,7 @@ export function RepairAccessOrdersSection({
   canManageIntake
 }: {
   orders: RepairAccessOrderRecord[];
+  technicians?: WorkshopTechnician[];
   search: string;
   statusFilter: string;
   warrantyFilter: string;
@@ -139,6 +142,7 @@ export function RepairAccessOrdersSection({
           visibleOrders.map((order) => (
             <RepairAccessWorkshopCard
               canManageIntake={canManageIntake}
+              technicians={technicians}
               key={order.id}
               onEdit={onEdit}
               onOpenDetail={onOpenDetail}

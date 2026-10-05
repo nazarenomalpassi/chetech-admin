@@ -11,7 +11,7 @@ import { BoardSaleDialog } from "@/features/tv-boards/components/board-sale-dial
 import { BoardTable } from "@/features/tv-boards/components/board-table";
 import type { TvBoardFormValues } from "@/features/tv-boards/schemas";
 import { formatCurrency } from "@/lib/utils";
-import type { TvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getTvBoardMargin, type TvBoardSaleStatus, type TvBoardReleaseEvidence } from "@/features/tv-boards/sales";
 
 export function BoardsView({
   boards,
@@ -23,6 +23,8 @@ export function BoardsView({
     model: string;
     boardType: "fuente" | "main" | "tcom" | "placa_unica";
     price: number;
+    acquisitionCost: number | null;
+    releaseEvidence: TvBoardReleaseEvidence;
     isActive: boolean;
     isSold: boolean;
     soldAt: string | null;
@@ -49,11 +51,13 @@ export function BoardsView({
   const inactiveBoards = inactiveInventory.length;
   const realRevenue = soldBoards.reduce((acc, board) => acc + (board.netAmount ?? 0), 0);
   const pendingRelease = boards
-    .filter((board) => board.saleStatus === "pending_release")
+    .filter((board) => board.isSold && board.releaseEvidence !== "confirmed")
     .reduce((acc, board) => acc + (board.netAmount ?? 0), 0);
   const releasedMoney = boards
-    .filter((board) => board.saleStatus === "released")
+    .filter((board) => board.releaseEvidence === "confirmed")
     .reduce((acc, board) => acc + (board.netAmount ?? 0), 0);
+  const knownMargin = soldBoards.reduce((acc, board) => acc + (getTvBoardMargin(board.netAmount, board.acquisitionCost) ?? 0), 0);
+  const incompleteCosts = soldBoards.filter((board) => board.acquisitionCost == null || board.netAmount == null).length;
 
   const selectedBoard = useMemo<TvBoardFormValues | null>(() => {
     if (!selectedId) return null;
@@ -66,6 +70,7 @@ export function BoardsView({
       model: board.model,
       boardType: board.boardType,
       price: board.price,
+      acquisitionCost: board.acquisitionCost,
       isActive: board.isActive
     };
   }, [boards, selectedId]);
@@ -135,7 +140,7 @@ export function BoardsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Ganancia real generada
+                    Ingreso neto de ventas
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
                     {formatCurrency(realRevenue)}
@@ -150,7 +155,7 @@ export function BoardsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Dinero pendiente de liberacion
+                    Neto sin confirmacion de liberacion
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
                     {formatCurrency(pendingRelease)}
@@ -165,7 +170,7 @@ export function BoardsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Dinero ya liberado
+                    Liberacion confirmada
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
                     {formatCurrency(releasedMoney)}
@@ -174,6 +179,12 @@ export function BoardsView({
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl bg-brand-50 p-4 text-sm text-slate-600">
+          <p className="font-semibold text-slate-950">Margen directo con costos conocidos: {formatCurrency(knownMargin)}</p>
+          <p>{incompleteCosts ? `${incompleteCosts} venta(s) con costo o neto incompleto, excluidas del margen.` : "Costos completos para las ventas de esta vista."} No es utilidad neta del local.</p>
+          <p className="mt-2">La fecha prevista no acredita un deposito. La confirmacion manual registra evidencia; no crea movimientos ni recalcula saldos de caja.</p>
         </div>
 
         <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

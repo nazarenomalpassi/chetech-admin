@@ -19,27 +19,31 @@ export function RepairAccessCustomersSection({
   const normalizedSearch = search.trim().toLowerCase();
   const [remoteCustomers, setRemoteCustomers] = useState<RepairAccessCustomerSummary[] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState(false);
 
   useEffect(() => {
+    setSearchError(false);
+    setRemoteCustomers(null);
     if (normalizedSearch.length < 2) {
-      setRemoteCustomers(null);
       setIsSearching(false);
       return;
     }
 
     const controller = new AbortController();
+    setIsSearching(true);
     const timeoutId = window.setTimeout(async () => {
       setIsSearching(true);
       try {
         const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(search)}`, {
           signal: controller.signal
         });
-        const payload = response.ok ? await response.json() : { customers: [] };
+        if (!response.ok) throw new Error("Customer search failed");
+        const payload = await response.json();
+        if (controller.signal.aborted) return;
+        if (!Array.isArray(payload.customers)) throw new Error("Invalid customer response");
         setRemoteCustomers(payload.customers ?? []);
-      } catch (error) {
-        if (!(error instanceof DOMException && error.name === "AbortError")) {
-          setRemoteCustomers([]);
-        }
+      } catch {
+        if (!controller.signal.aborted) setSearchError(true);
       } finally {
         if (!controller.signal.aborted) setIsSearching(false);
       }
@@ -59,6 +63,7 @@ export function RepairAccessCustomersSection({
       .toLowerCase();
     return haystack.includes(normalizedSearch);
   });
+  const emptyMessage = searchError ? "Intenta la busqueda nuevamente." : isSearching ? "Buscando clientes..." : "No encontramos clientes con esa busqueda.";
 
   return (
     <Card className="space-y-5">
@@ -67,7 +72,7 @@ export function RepairAccessCustomersSection({
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Clientes</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Base importada y manual</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Busqueda rapida por nombre, telefono, DNI, email o domicilio. Por ahora se muestran los ultimos clientes cargados/importados.
+            Busqueda rapida por nombre, telefono, DNI, email o domicilio. Sin busqueda se muestran como maximo los ultimos 40 clientes cargados/importados. Con al menos 2 caracteres se consulta toda la base y se muestran hasta 12 coincidencias.
           </p>
         </div>
         <div className="w-full lg:max-w-sm">
@@ -76,6 +81,7 @@ export function RepairAccessCustomersSection({
         </div>
       </div>
 
+      {searchError ? <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">No se pudo completar la busqueda de clientes. Intenta de nuevo; no se confirmo si hay coincidencias.</p> : null}
       <div className="overflow-hidden rounded-3xl border border-slate-100">
         <div className="grid gap-3 p-3 lg:hidden">
           {filteredCustomers.length ? (
@@ -100,7 +106,7 @@ export function RepairAccessCustomersSection({
             ))
           ) : (
             <div className="px-4 py-8 text-center text-sm text-slate-500">
-              No encontramos clientes con esa busqueda.
+              {emptyMessage}
             </div>
           )}
         </div>
@@ -135,7 +141,7 @@ export function RepairAccessCustomersSection({
               ) : (
                 <tr>
                   <td className="px-4 py-8 text-center text-slate-500" colSpan={6}>
-                    No encontramos clientes con esa busqueda.
+                    {emptyMessage}
                   </td>
                 </tr>
               )}

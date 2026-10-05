@@ -17,6 +17,7 @@ export const tvBoardSchema = z.object({
     message: "Selecciona un tipo de placa valido"
   }),
   price: z.coerce.number().min(0, "El precio no puede ser negativo"),
+  acquisitionCost: z.preprocess((value) => value === "" || value == null ? null : value, z.coerce.number().finite().min(0, "El costo no puede ser negativo").max(9999999999.99).nullable()),
   isActive: z.boolean().default(true)
 });
 

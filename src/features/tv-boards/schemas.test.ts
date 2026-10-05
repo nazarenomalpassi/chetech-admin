@@ -3,6 +3,12 @@ import { describe, expect, it } from "vitest";
 import { tvBoardSaleSchema, tvBoardSchema } from "@/features/tv-boards/schemas";
 
 describe("tvBoardSchema", () => {
+  it("keeps unknown cost different from zero and rejects a negative cost", () => {
+    const board = { brand: "BGH", model: "BLE3216D", boardType: "main", price: 45000 };
+    expect(tvBoardSchema.parse({ ...board, acquisitionCost: "" })).toHaveProperty("acquisitionCost", null);
+    expect(tvBoardSchema.parse({ ...board, acquisitionCost: 0 })).toHaveProperty("acquisitionCost", 0);
+    expect(tvBoardSchema.safeParse({ ...board, acquisitionCost: -1 }).success).toBe(false);
+  });
   it("valida una placa correcta", () => {
     const parsed = tvBoardSchema.safeParse({
       brand: "BGH",

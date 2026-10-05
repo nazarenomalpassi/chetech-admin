@@ -8,6 +8,16 @@ import {
 } from "@/features/outsourcings/schemas";
 
 describe("repairOutsourcingSchema", () => {
+  const base = { repairAccessOrderId: "11111111-1111-4111-8111-111111111111", workshopName: "Taller", sentAt: "2026-10-05" };
+  it("rejects promised dates before dispatch and negative costs", () => {
+    expect(repairOutsourcingSchema.safeParse({ ...base, promisedAt: "2026-10-04" }).success).toBe(false);
+    expect(repairOutsourcingSchema.safeParse({ ...base, expectedCost: -1 }).success).toBe(false);
+    expect(repairOutsourcingSchema.safeParse({ ...base, sentAt: "2026-02-30" }).success).toBe(false);
+  });
+  it("retains unknown cost separately from zero", () => {
+    expect(repairOutsourcingSchema.parse({ ...base, expectedCost: "" })).toHaveProperty("expectedCost", null);
+    expect(repairOutsourcingSchema.parse({ ...base, expectedCost: "0" })).toHaveProperty("expectedCost", 0);
+  });
   it("accepts a valid outsourcing registration", () => {
     const result = repairOutsourcingSchema.safeParse({
       repairAccessOrderId: "11111111-1111-4111-8111-111111111111",

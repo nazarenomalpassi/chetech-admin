@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { getSidebarItemsForRole } from "@/lib/navigation";
+import { getSidebarItemsForRole, getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const sidebarItems = getSidebarItemsForRole(role);
+  const groups = getSidebarGroupsForRole(role);
   const currentSection = sidebarItems.find((item) => item.href === pathname)?.label ?? "Panel";
 
   return (
@@ -48,8 +49,8 @@ export function MobileNavigation({ role }: { role: AppRole }) {
 
         {open ? (
           <div className="mt-3 max-h-[calc(100svh-7.5rem)] overflow-y-auto overscroll-contain rounded-[22px] border border-white/8 bg-white/[0.04] p-2">
-            <nav className="grid gap-2 sm:grid-cols-2">
-              {sidebarItems.map((item) => {
+            <nav className="grid gap-3" aria-label="Navegacion del local">
+              {groups.map((group) => <section key={group.label}><h2 className="mb-2 px-3 text-xs font-medium text-white/50">{group.label}</h2><div className="grid gap-2 sm:grid-cols-2">{group.items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
 
@@ -62,6 +63,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
                         : "text-white/68 hover:bg-white/[0.07] hover:text-white"
                     )}
                     href={item.href}
+                    aria-current={active ? "page" : undefined}
                     key={item.href}
                     onClick={() => setOpen(false)}
                   >
@@ -71,7 +73,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
-              })}
+              })}</div></section>)}
             </nav>
 
             <form action="/auth/sign-out" className="mt-3 border-t border-white/8 pt-3" method="post">

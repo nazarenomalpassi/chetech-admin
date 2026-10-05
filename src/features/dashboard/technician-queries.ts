@@ -67,7 +67,7 @@ export async function getTechnicianDashboardData(userId: string) {
 
   return {
     summary: buildTechnicianRepairSummary(orders, userId),
-    recentOrders: orders.filter((order) => !["retirado", "sin_solucion", "presupuestado_rechazado"].includes(order.status)).slice(0, 6),
+    recentOrders: orders.filter((order) => order.status !== "retirado").slice(0, 6),
     visits
   };
 }

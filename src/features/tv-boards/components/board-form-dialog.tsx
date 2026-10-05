@@ -23,6 +23,7 @@ const defaultValues: TvBoardFormValues = {
   model: "",
   boardType: "fuente",
   price: 0,
+  acquisitionCost: null,
   isActive: true
 };
 
@@ -108,6 +109,12 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="price">Precio publicado</label>
               <Input step="0.01" type="number" {...form.register("price", { valueAsNumber: true })} />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.price?.message}</p>
+            </div>
+            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4 md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="acquisitionCost">Costo de compra / recuperacion</label>
+              <Input id="acquisitionCost" type="number" step="0.01" min="0" value={form.watch("acquisitionCost") ?? ""} onChange={(event) => form.setValue("acquisitionCost", event.target.value === "" ? null : Number(event.target.value), { shouldValidate: true })} />
+              <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.acquisitionCost?.message}</p>
+              <p className="mt-1 text-xs text-slate-500">Vacio significa desconocido; cero significa costo confirmado de cero. No registra un egreso.</p>
             </div>
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4 md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="isActive">Estado</label>

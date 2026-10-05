@@ -5,6 +5,8 @@ import { Pencil, Power, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PaginationNav } from "@/components/ui/pagination-nav";
+import type { PaginationMeta } from "@/lib/pagination";
 import { deleteProductAction, toggleProductStatusAction } from "@/features/products/actions";
 import { formatCurrency } from "@/lib/utils";
 
@@ -16,24 +18,42 @@ type Product = {
   cost: number;
   salePrice: number;
   stock: number;
+  reservedStock?: number | null;
+  availableStock?: number | null;
   minStock: number;
   isActive: boolean;
 };
+
+function ProductStockReadout({ product }: { product: Product }) {
+  const lowStock = (product.availableStock ?? product.stock) <= product.minStock;
+  return (
+    <div className="space-y-1 text-sm">
+      <p className="font-semibold text-slate-800">Fisico {product.stock}</p>
+      <p className="text-slate-600">Reservado {product.reservedStock ?? "sin confirmar"}</p>
+      <p className="font-semibold text-slate-950">Disponible {product.availableStock ?? "sin confirmar"}</p>
+      {product.availableStock == null ? null : lowStock ? <Badge variant="warning">Disponible bajo</Badge> : <Badge variant="success">OK</Badge>}
+    </div>
+  );
+}
 
 export function ProductTable({
   canManage,
   filterKey,
   products,
-  onEdit
+  onEdit,
+  pagination,
+  searchParams
 }: {
   canManage: boolean;
   filterKey?: string;
   products: Product[];
   onEdit: (id: string) => void;
+  pagination?: PaginationMeta;
+  searchParams?: Record<string, string | undefined>;
 }) {
   const [isPending, startTransition] = useTransition();
   const [visibleLimit, setVisibleLimit] = useState(25);
-  const visibleProducts = products.slice(0, visibleLimit);
+  const visibleProducts = pagination ? products : products.slice(0, visibleLimit);
   const resetKey = filterKey ?? products.map((product) => product.id).join(",");
 
   useEffect(() => {
@@ -73,8 +93,6 @@ export function ProductTable({
 
       <div className="grid gap-3 p-3 lg:hidden">
         {visibleProducts.map((product) => {
-          const lowStock = product.stock <= product.minStock;
-
           return (
             <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={product.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
@@ -94,10 +112,7 @@ export function ProductTable({
                 </div>
                 <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Stock</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    <span className="font-semibold text-slate-800">{product.stock}</span>
-                    {lowStock ? <Badge variant="warning">Bajo</Badge> : <Badge variant="success">OK</Badge>}
-                  </div>
+                  <div className="mt-1"><ProductStockReadout product={product} /></div>
                 </div>
                 {canManage ? <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Costo</p>
@@ -163,8 +178,6 @@ export function ProductTable({
           </thead>
           <tbody>
             {visibleProducts.map((product) => {
-              const lowStock = product.stock <= product.minStock;
-
               return (
                 <tr
                   className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white"
@@ -189,10 +202,7 @@ export function ProductTable({
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-medium text-slate-950">{product.stock}</span>
-                      {lowStock ? <Badge variant="warning">Stock bajo</Badge> : <Badge variant="success">OK</Badge>}
-                    </div>
+                    <ProductStockReadout product={product} />
                   </td>
                   <td className="px-4 py-4">
                     <Badge variant={product.isActive ? "success" : "default"}>
@@ -240,7 +250,8 @@ export function ProductTable({
         </table>
       </div>
 
-      {products.length ? (
+      {pagination ? <PaginationNav meta={pagination} pathname="/productos" searchParams={searchParams} /> : null}
+      {products.length && !pagination ? (
         <div className="flex flex-col gap-3 border-t border-graphite/8 bg-brand-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
           <p aria-live="polite" className="text-sm text-slate-600">Mostrando {visibleProducts.length} de {products.length} productos</p>
           {visibleProducts.length < products.length ? (
@@ -250,7 +261,7 @@ export function ProductTable({
       ) : null}
       {!products.length ? (
         <div className="empty-panel border-t border-graphite/8">
-          Todavia no hay productos para mostrar. Cuando cargues el primero, el catalogo aparece aca.
+          No hay productos que coincidan con estos filtros. Proba otra busqueda o limpia los filtros.
         </div>
       ) : null}
     </div>

@@ -77,8 +77,8 @@ export function BoardFilters() {
           { label: "Disponibles", value: "active" },
           { label: "Dadas de baja", value: "inactive" },
           { label: "Vendidas", value: "sold" },
-          { label: "En espera de liberacion", value: "pending_release" },
-          { label: "Dinero liberado", value: "released" }
+          { label: "Liberacion sin confirmar", value: "pending_release" },
+          { label: "Liberacion confirmada", value: "released" }
         ]}
       />
     </div>

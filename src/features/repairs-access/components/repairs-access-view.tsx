@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,6 +20,12 @@ import type {
 import type { ActionResult } from "@/lib/form-state";
 import { getFormDraftStorageKey } from "@/lib/form-draft";
 import { formatDate } from "@/lib/utils";
+import type { WorkshopTechnician } from "./order-coordination-panel";
+import type { WorkshopPageInfo } from "../page-queries";
+import type { WorkshopInbox as InboxData } from "../coordination-queries";
+import { WorkshopUpdates } from "./workshop-updates";
+import { WorkshopServerNavigation } from "./workshop-server-navigation";
+import { WorkshopInbox } from "./workshop-inbox";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
 
@@ -33,6 +40,9 @@ const sections: { key: RepairAccessSection; label: string; helper: string }[] = 
 
 export function RepairsAccessView({
   orders,
+  technicians,
+  pageInfo,
+  inbox,
   customers,
   latestImport,
   summary,
@@ -44,6 +54,9 @@ export function RepairsAccessView({
   defaultWarrantyDays
 }: {
   orders: RepairAccessOrderRecord[];
+  technicians?: WorkshopTechnician[];
+  pageInfo?: WorkshopPageInfo;
+  inbox?: InboxData | null;
   customers: RepairAccessCustomerSummary[];
   latestImport: RepairAccessImportSummary | null;
   summary: RepairAccessSummary;
@@ -70,12 +83,24 @@ export function RepairsAccessView({
   const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(initialSelectedOrder);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [orderSearch, setOrderSearch] = useState(!canManageIntake && initialSelectedOrder ? initialSelectedOrder.repairNumber : "");
-  const [statusFilter, setStatusFilter] = useState("todos");
-  const [warrantyFilter, setWarrantyFilter] = useState("todos");
+  const [orderSearch, setOrderSearch] = useState(pageInfo?.search ?? (!canManageIntake && initialSelectedOrder ? initialSelectedOrder.repairNumber : ""));
+  const [statusFilter, setStatusFilter] = useState(pageInfo?.status ?? "todos");
+  const [warrantyFilter, setWarrantyFilter] = useState(pageInfo?.warranty ?? "todos");
   const [intakeDirty, setIntakeDirty] = useState(false);
   const orderHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousSectionRef = useRef(activeSection);
+
+  useEffect(() => {
+    if (!pageInfo) return;
+    setOrderSearch(pageInfo.search);
+    setStatusFilter(pageInfo.status);
+    setWarrantyFilter(pageInfo.warranty);
+  }, [pageInfo]);
+
+  useEffect(() => {
+    if (initialOrderId && initialSelectedOrder && canManageIntake) { setSelectedOrder(initialSelectedOrder); setActiveSection("detalle"); }
+    else if (initialView === "ordenes") setActiveSection("ordenes");
+  }, [initialOrderId, initialView, canManageIntake, initialSelectedOrder]);
 
   useEffect(() => {
     const sectionChanged = previousSectionRef.current !== activeSection;
@@ -188,7 +213,10 @@ export function RepairsAccessView({
         </Card>
       ) : null}
 
+      {pageInfo ? <WorkshopUpdates disabled={intakeDirty} /> : null}
+      {activeSection === "panel" && inbox ? <WorkshopInbox inbox={inbox} /> : null}
       {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
+      {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} /> : null}
 
       {activeSection === "nueva" ? (
         <RepairAccessNewOrderWizard
@@ -214,6 +242,7 @@ export function RepairsAccessView({
           onStatusFilterChange={setStatusFilter}
           onWarrantyFilterChange={setWarrantyFilter}
           orders={orders}
+          technicians={technicians}
           search={orderSearch}
           statusFilter={statusFilter}
           warrantyFilter={warrantyFilter}
@@ -225,7 +254,8 @@ export function RepairsAccessView({
           onBack={() => setActiveSection("ordenes")}
           defaultWarrantyDays={defaultWarrantyDays}
           onEditIntake={startEdit}
-          order={selectedOrder}
+          order={orders.find((order) => order.id === selectedOrder.id) ?? selectedOrder}
+          technicians={technicians}
         />
       ) : null}
 
@@ -252,7 +282,7 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Consultas</p>
           <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Vistas rapidas del taller</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Base preparada para consultas tipo Access: cliente, telefono, serie, tecnico, sin avisar, sin retirar y garantias.
+            Abri una vista filtrada para revisar esperas, entregas y garantias del taller.
           </p>
         </div>
         <Button onClick={() => onNavigate("ordenes")} type="button" variant="secondary">Abrir ordenes</Button>
@@ -262,7 +292,7 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
           <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5" key={card.title}>
             <p className="text-sm font-medium text-slate-600">{card.title}</p>
             <p className="mt-2 text-3xl font-semibold text-slate-950">{card.value}</p>
-            <p className="mt-3 text-xs uppercase tracking-[0.2em] text-slate-400">{card.action}</p>
+            <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4" href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}>{card.action}</Link>
           </div>
         ))}
       </div>

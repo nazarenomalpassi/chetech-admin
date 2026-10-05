@@ -13,6 +13,7 @@ import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Select } from "@/components/ui/select";
 import { saveInvoiceAction, voidInvoiceAction } from "@/features/invoices/actions";
 import { formatInvoiceSource } from "@/features/invoices/labels";
+import { calculateInvoiceAmounts } from "@/features/invoices/document-model";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { PaginationMeta } from "@/lib/pagination";
@@ -24,20 +25,29 @@ type Invoice = {
   customerPhone: string;
   sourceType: string;
   total: number;
+  paidTotal: number;
+  balance: number;
+  documentVersion: number;
+  fiscalReference: string | null;
+  fiscalLockedAt: string | null;
   status: string;
   createdAt: string;
 };
 
 type InvoiceDetail = Invoice & {
   repairId: string | null;
+  repairAccessOrderId: string | null;
   saleId: string | null;
   subtotal: number;
   discount: number;
   notes: string;
-  items: { description: string; quantity: number; unitPrice: number; total: number }[];
+  fiscalProvider: string | null;
+  fiscalIssuedAt: string | null;
+  items: { description: string; quantity: number; unitPrice: number; total: number; productId?: string | null; repairId?: string | null }[];
 };
 
 type Options = {
+  primaryOrders: Array<{ id: string; repairNumber: string; label: string; customerName: string; customerPhone: string; amount: number; description: string; notes: string }>;
   repairs: Array<{
     id: string;
     label: string;
@@ -73,6 +83,8 @@ type DraftItem = {
 const emptyItem: DraftItem = { description: "", quantity: 1, unitPrice: 0 };
 
 export function InvoicesView({
+  requestId,
+  initialPrimaryOrderId,
   canVoid,
   invoices,
   options,
@@ -80,6 +92,8 @@ export function InvoicesView({
   pagination,
   message
 }: {
+  requestId: string;
+  initialPrimaryOrderId?: string;
   canVoid: boolean;
   invoices: Invoice[];
   options: Options;
@@ -87,24 +101,36 @@ export function InvoicesView({
   pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
-  const [sourceType, setSourceType] = useState(editingInvoice?.sourceType ?? "manual");
+  const initialPrimary = !editingInvoice ? options.primaryOrders.find((order) => order.id === initialPrimaryOrderId) : undefined;
+  const [sourceType, setSourceType] = useState(editingInvoice?.sourceType ?? (initialPrimary ? "repair_access" : "manual"));
   const [repairId, setRepairId] = useState(editingInvoice?.repairId ?? "");
+  const [repairAccessOrderId, setRepairAccessOrderId] = useState(editingInvoice?.repairAccessOrderId ?? initialPrimary?.id ?? "");
   const [saleId, setSaleId] = useState(editingInvoice?.saleId ?? "");
-  const [customerName, setCustomerName] = useState(editingInvoice?.customerName ?? "");
-  const [customerPhone, setCustomerPhone] = useState(editingInvoice?.customerPhone ?? "");
+  const [customerName, setCustomerName] = useState(editingInvoice?.customerName ?? initialPrimary?.customerName ?? "");
+  const [customerPhone, setCustomerPhone] = useState(editingInvoice?.customerPhone ?? initialPrimary?.customerPhone ?? "");
   const [discount, setDiscount] = useState(editingInvoice?.discount ?? 0);
   const [items, setItems] = useState<DraftItem[]>(
     editingInvoice?.items.length
       ? editingInvoice.items.map((item) => ({
           description: item.description,
           quantity: item.quantity,
-          unitPrice: item.unitPrice
+          unitPrice: item.unitPrice,
+          productId: item.productId ?? null,
+          repairId: item.repairId ?? null
         }))
-      : [{ ...emptyItem }]
+      : initialPrimary ? [{ description: initialPrimary.description, quantity: 1, unitPrice: initialPrimary.amount }] : [{ ...emptyItem }]
   );
 
-  const subtotal = items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const total = Math.max(subtotal - discount, 0);
+  const amounts = (() => {
+    try {
+      const base = calculateInvoiceAmounts(items);
+      try { return { ...calculateInvoiceAmounts(items, discount), error: null }; }
+      catch (error) { return { ...base, total: 0, error: error instanceof Error ? error.message : "Revisa el descuento." }; }
+    }
+    catch (error) { return { subtotal: 0, total: 0, lineTotals: items.map(() => 0), error: error instanceof Error ? error.message : "Revisa los importes del comprobante." }; }
+  })();
+  const { subtotal, total } = amounts;
+  const documentLocked = Boolean(editingInvoice?.fiscalReference || editingInvoice?.fiscalLockedAt || editingInvoice?.status === "anulado");
 
   const statusVariant = (status: string) => {
     if (status === "pagado") return "success";
@@ -131,6 +157,14 @@ export function InvoicesView({
         repairId: repair.id
       }
     ]);
+  }
+
+  function applyPrimaryOrder(id: string) {
+    setRepairAccessOrderId(id);
+    const order = options.primaryOrders.find((candidate) => candidate.id === id);
+    if (!order) return;
+    setCustomerName(order.customerName); setCustomerPhone(order.customerPhone);
+    setItems([{ description: order.description, quantity: 1, unitPrice: order.amount }]);
   }
 
   function applySale(id: string) {
@@ -226,7 +260,11 @@ export function InvoicesView({
 
         <form action={saveInvoiceAction} className="mt-6 space-y-5">
           <input name="id" type="hidden" value={editingInvoice?.id ?? ""} />
+          <input name="requestId" type="hidden" value={requestId} />
+          <input name="expectedVersion" type="hidden" value={editingInvoice?.documentVersion ?? ""} />
           <input name="itemsJson" type="hidden" value={JSON.stringify(items)} />
+          <p className="text-sm text-slate-600">Emitir o reimprimir no cobra ni mueve stock. Pagado y saldo se calculan desde los cobros efectivos vinculados.</p>
+          {documentLocked ? <p className="status-banner" role="status">Documento bloqueado por anulacion o circuito fiscal. Su contenido no puede modificarse.</p> : null}
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-4">
             <div>
@@ -234,21 +272,29 @@ export function InvoicesView({
                 Origen
               </label>
               <Select
+                id="sourceType"
                 name="sourceType"
-                onChange={(event) => setSourceType(event.target.value)}
+                onChange={(event) => { setSourceType(event.target.value); setRepairId(""); setRepairAccessOrderId(""); setSaleId(""); setItems([{ ...emptyItem }]); }}
                 options={[
                   { label: "Manual", value: "manual" },
-                  { label: "Reparacion", value: "repair" },
+                  { label: "REP (orden principal)", value: "repair_access" },
+                  { label: "Reparacion (registro historico)", value: "repair" },
                   { label: "Venta", value: "sale" }
                 ]}
                 value={sourceType}
               />
             </div>
             <div>
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repairAccessOrderId">REP principal</label>
+              <Select id="repairAccessOrderId" name="repairAccessOrderId" disabled={sourceType !== "repair_access"} value={repairAccessOrderId} onChange={(event) => applyPrimaryOrder(event.target.value)} options={[{ label: "Seleccionar REP", value: "" }, ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))]} />
+              <p className="mt-2 text-xs text-slate-500">Disponible antes del cobro. No requiere un registro financiero historico.</p>
+            </div>
+            <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repairId">
                 Reparación
               </label>
               <Select
+                id="repairId"
                 disabled={sourceType !== "repair"}
                 name="repairId"
                 onChange={(event) => applyRepair(event.target.value)}
@@ -264,6 +310,7 @@ export function InvoicesView({
                 Venta
               </label>
               <Select
+                id="saleId"
                 disabled={sourceType !== "sale"}
                 name="saleId"
                 onChange={(event) => applySale(event.target.value)}
@@ -278,27 +325,35 @@ export function InvoicesView({
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="discount">
                 Descuento
               </label>
-              <Input min={0} name="discount" onChange={(event) => setDiscount(Number(event.target.value))} step="0.01" type="number" value={discount} />
+              <Input id="discount" min={0} name="discount" onChange={(event) => setDiscount(Number(event.target.value))} step="0.01" type="number" value={discount} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerName">
                 Cliente
               </label>
-              <Input name="customerName" onChange={(event) => setCustomerName(event.target.value)} value={customerName} />
+              <Input id="customerName" name="customerName" onChange={(event) => setCustomerName(event.target.value)} value={customerName} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerPhone">
                 Teléfono
               </label>
-              <Input name="customerPhone" onChange={(event) => setCustomerPhone(event.target.value)} value={customerPhone} />
+              <Input id="customerPhone" name="customerPhone" onChange={(event) => setCustomerPhone(event.target.value)} value={customerPhone} />
             </div>
             <div className="xl:col-span-2">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="notes">
                 Observaciones
               </label>
-              <Input defaultValue={editingInvoice?.notes ?? ""} name="notes" placeholder="Opcional" />
+              <Input id="notes" defaultValue={editingInvoice?.notes ?? initialPrimary?.notes ?? ""} name="notes" placeholder="Opcional" />
             </div>
           </div>
+
+          <fieldset className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 md:grid-cols-3" disabled={documentLocked}>
+            <legend className="px-2 text-sm font-semibold">Referencia fiscal externa opcional</legend>
+            <div><label className="mb-2 block text-sm" htmlFor="fiscalProvider">Sistema emisor</label><Input id="fiscalProvider" name="fiscalProvider" maxLength={100} defaultValue={editingInvoice?.fiscalProvider ?? ""} placeholder="Proveedor o sistema externo" /></div>
+            <div><label className="mb-2 block text-sm" htmlFor="fiscalReference">Referencia del comprobante</label><Input id="fiscalReference" name="fiscalReference" maxLength={300} defaultValue={editingInvoice?.fiscalReference ?? ""} /></div>
+            <div><label className="mb-2 block text-sm" htmlFor="fiscalIssuedAt">Fecha externa</label><Input id="fiscalIssuedAt" name="fiscalIssuedAt" type="date" defaultValue={editingInvoice?.fiscalIssuedAt?.slice(0, 10) ?? ""} /></div>
+            <p className="text-sm text-slate-500 md:col-span-3">Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se bloquea la edicion del documento interno.</p>
+          </fieldset>
 
           <div className="rounded-[30px] border border-graphite/8 bg-white/82 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -335,7 +390,7 @@ export function InvoicesView({
                   <Input aria-label={`Cantidad del ítem ${index + 1}`} min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} />
                   <Input aria-label={`Precio unitario del ítem ${index + 1}`} min={0} onChange={(event) => updateItem(index, { unitPrice: Number(event.target.value) })} step="0.01" type="number" value={item.unitPrice} />
                   <div className="flex h-11 items-center rounded-[18px] border border-graphite/8 bg-brand-50 px-4 text-sm font-semibold text-slate-950">
-                    {formatCurrency(item.quantity * item.unitPrice)}
+                    {formatCurrency(amounts.lineTotals[index])}
                   </div>
                   <Button disabled={items.length <= 1} onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button" variant="ghost">
                     Quitar
@@ -360,7 +415,9 @@ export function InvoicesView({
             </div>
           </div>
 
+          {amounts.error ? <p role="alert" className="text-sm text-red-700">{amounts.error}</p> : null}
           <FormSubmitButton
+            disabled={documentLocked || Boolean(amounts.error)}
             idleLabel={editingInvoice ? "Actualizar comprobante" : "Crear comprobante"}
             pendingLabel="Guardando comprobante..."
           />
@@ -400,6 +457,7 @@ export function InvoicesView({
                   <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                     <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Total</p>
                     <p className="mt-1 font-semibold text-slate-950">{formatCurrency(invoice.total)}</p>
+                    <p className="mt-1 text-xs text-slate-600">Pagado {formatCurrency(invoice.paidTotal)} / Saldo {formatCurrency(invoice.balance)}</p>
                   </div>
                 </div>
               </div>
@@ -410,7 +468,7 @@ export function InvoicesView({
                 >
                   Ver / imprimir
                 </Link>
-                {invoice.status !== "anulado" ? (
+                {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                   <Link
                     className="inline-flex min-h-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
                     href={`/facturacion?edit=${invoice.id}`}
@@ -418,7 +476,7 @@ export function InvoicesView({
                     Editar
                   </Link>
                 ) : null}
-                {canVoid && invoice.status !== "anulado" ? (
+                {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                   <form
                     action={voidInvoiceAction}
                     onSubmit={(event) => {
@@ -428,6 +486,7 @@ export function InvoicesView({
                     }}
                   >
                     <input name="id" type="hidden" value={invoice.id} />
+                    <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
                     <FormSubmitButton className="w-full" idleLabel="Anular" pendingLabel="Anulando..." variant="danger" />
                   </form>
                 ) : null}
@@ -456,7 +515,7 @@ export function InvoicesView({
                   <td className="px-4 py-4 text-slate-600">{formatDate(invoice.createdAt)}</td>
                   <td className="px-4 py-4 text-slate-600">{invoice.customerName}</td>
                   <td className="px-4 py-4 text-slate-600">{formatInvoiceSource(invoice.sourceType)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(invoice.total)}</td>
+                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(invoice.total)}<p className="mt-1 text-xs font-normal text-slate-600">Pagado {formatCurrency(invoice.paidTotal)}<br />Saldo {formatCurrency(invoice.balance)}</p></td>
                   <td className="px-4 py-4">
                     <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
                   </td>
@@ -468,7 +527,7 @@ export function InvoicesView({
                       >
                         Ver / imprimir
                       </Link>
-                      {invoice.status !== "anulado" ? (
+                      {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                         <Link
                           className="inline-flex items-center rounded-full border border-graphite/10 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
                           href={`/facturacion?edit=${invoice.id}`}
@@ -476,7 +535,7 @@ export function InvoicesView({
                           Editar
                         </Link>
                       ) : null}
-                      {canVoid && invoice.status !== "anulado" ? (
+                      {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                         <form
                           action={voidInvoiceAction}
                           onSubmit={(event) => {
@@ -486,6 +545,7 @@ export function InvoicesView({
                           }}
                         >
                           <input name="id" type="hidden" value={invoice.id} />
+                          <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
                           <FormSubmitButton idleLabel="Anular" pendingLabel="Anulando..." size="sm" variant="danger" />
                         </form>
                       ) : null}

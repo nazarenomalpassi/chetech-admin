@@ -1,5 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getLocalDateInputValue } from "@/lib/utils";
+import { getVisitDateRange } from "@/features/visits/model";
+import { createPaginationMeta, parsePage } from "@/lib/pagination";
 
 type RawOutsourcing = {
   id: string;
@@ -10,6 +12,13 @@ type RawOutsourcing = {
   status: string;
   notes: string | null;
   created_at: string;
+  updated_at: string;
+  responsible_name: string | null;
+  promised_at: string | null;
+  expected_cost: number | null;
+  actual_cost: number | null;
+  quality_status: string;
+  quality_notes: string | null;
   repair_access_orders: {
     id: string;
     repair_number: string | null;
@@ -41,6 +50,14 @@ export type RepairOutsourcingRecord = {
   status: string;
   notes: string;
   createdAt: string;
+  updatedAt: string;
+  responsibleName: string;
+  promisedAt: string;
+  expectedCost: number | null;
+  actualCost: number | null;
+  qualityStatus: string;
+  qualityNotes: string;
+  overdue: boolean;
   order: {
     id: string;
     repairNumber: string;
@@ -63,6 +80,8 @@ export type RepairOutsourcingSummary = {
   retrieved: number;
   sentToday: number;
   workshops: number;
+  overdue: number;
+  pendingQuality: number;
 };
 
 function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
@@ -80,6 +99,14 @@ function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
     status: record.status,
     notes: record.notes ?? "",
     createdAt: record.created_at,
+    updatedAt: record.updated_at,
+    responsibleName: record.responsible_name ?? "",
+    promisedAt: record.promised_at ?? "",
+    expectedCost: record.expected_cost == null ? null : Number(record.expected_cost),
+    actualCost: record.actual_cost == null ? null : Number(record.actual_cost),
+    qualityStatus: record.quality_status ?? "pendiente",
+    qualityNotes: record.quality_notes ?? "",
+    overdue: record.status === "en_taller" && Boolean(record.promised_at && record.promised_at < getLocalDateInputValue()),
     order: {
       id: order?.id ?? record.repair_access_order_id,
       repairNumber: order?.repair_number ?? "Sin numero",
@@ -97,59 +124,24 @@ function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
   };
 }
 
-export async function getRepairOutsourcingDashboard() {
+export async function getRepairOutsourcingDashboard(filters: { page?: string; search?: string; status?: string; date?: string; view?: string } = {}) {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await (supabase as any)
-    .from("repair_outsourcings")
-    .select(
-      `
-        id,
-        repair_access_order_id,
-        workshop_name,
-        sent_at,
-        retrieved_at,
-        status,
-        notes,
-        created_at,
-        repair_access_orders (
-          id,
-          repair_number,
-          intake_date,
-          issue_reported,
-          status,
-          repair_access_customers (
-            full_name,
-            phone,
-            dni,
-            address
-          ),
-          repair_access_devices (
-            device_type,
-            brand,
-            model,
-            serial_number,
-            accessory_details
-          )
-        )
-      `
-    )
-    .neq("status", "cancelado")
-    .order("created_at", { ascending: false })
-    .limit(200);
-
-  if (error) throw new Error(error.message);
-
-  const records: RepairOutsourcingRecord[] = (data ?? []).map((record: RawOutsourcing) => mapOutsourcing(record));
   const today = getLocalDateInputValue();
+  const status = ["todos", "en_taller", "retirado", "cancelado", "vencidas"].includes(filters.status ?? "") ? filters.status! : "en_taller";
+  const view = ["day", "week"].includes(filters.view ?? "") ? filters.view! : "all";
+  const range = filters.date || view !== "all" ? getVisitDateRange(filters.date || today, view) : null;
+  const { data, error } = await (supabase as any)
+    .rpc("get_operations_outsourcings_page", { p_search: filters.search?.trim() ?? "", p_status: status,
+      p_from: range?.from ?? null, p_to: range?.to ?? null, p_page: Math.min(parsePage(filters.page), 2147483647) });
+
+  if (error) throw new Error(error.code === "PGRST202" || error.code === "42883" ? "Falta la migracion incremental de historial operativo." : error.message);
+
+  const records: RepairOutsourcingRecord[] = (data?.records ?? []).map((record: RawOutsourcing) => mapOutsourcing(record));
 
   return {
     records,
-    summary: {
-      total: records.length,
-      active: records.filter((record) => record.status === "en_taller").length,
-      retrieved: records.filter((record) => record.status === "retirado").length,
-      sentToday: records.filter((record) => record.sentAt === today).length,
-      workshops: new Set(records.map((record) => record.workshopName.trim().toLowerCase()).filter(Boolean)).size
-    } satisfies RepairOutsourcingSummary
+    pagination: createPaginationMeta(Number(data?.total ?? 0), Number(data?.page ?? 1)),
+    filters: { search: filters.search ?? "", status, date: filters.date ?? "", view },
+    summary: data.summary as RepairOutsourcingSummary
   };
 }

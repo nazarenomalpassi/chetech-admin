@@ -7,11 +7,9 @@ import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tvBoardSaleSchema, tvBoardSchema } from "@/features/tv-boards/schemas";
-import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
-import { getLocalDateInputValue } from "@/lib/utils";
 
 export async function upsertTvBoardAction(input: unknown) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = tvBoardSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -46,6 +44,7 @@ export async function upsertTvBoardAction(input: unknown) {
     model: parsed.data.model,
     board_type: parsed.data.boardType,
     listed_price: parsed.data.price,
+    acquisition_cost: parsed.data.acquisitionCost,
     is_active: soldLocked ? false : parsed.data.isActive
   };
 
@@ -64,6 +63,7 @@ export async function upsertTvBoardAction(input: unknown) {
     entityType: "tv_boards",
     entityId: data.id,
     action: parsed.data.id ? "update" : "insert",
+    userId: user.id,
     changes: payload
   });
 
@@ -76,7 +76,7 @@ export async function upsertTvBoardAction(input: unknown) {
 }
 
 export async function toggleTvBoardStatusAction(id: string, nextValue: boolean) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { data: board, error: boardError } = await (supabase as any)
     .from("tv_boards")
@@ -111,7 +111,8 @@ export async function toggleTvBoardStatusAction(id: string, nextValue: boolean) 
     entityType: "tv_boards",
     entityId: id,
     action: "update",
-    changes: { is_active: nextValue }
+    changes: { is_active: nextValue },
+    userId: user.id
   });
 
   revalidatePath("/placas-tv");
@@ -123,9 +124,9 @@ export async function toggleTvBoardStatusAction(id: string, nextValue: boolean) 
 }
 
 export async function deleteTvBoardAction(id: string) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).from("tv_boards").delete().eq("id", id);
+  const { data, error } = await (supabase as any).from("tv_boards").delete().eq("id", id).is("sold_at", null).select("id").maybeSingle();
 
   if (error) {
     return {
@@ -133,11 +134,13 @@ export async function deleteTvBoardAction(id: string) {
       message: error.message
     };
   }
+  if (!data) return { success: false, message: "Una placa vendida conserva su historial y no se puede eliminar." };
 
   await createAuditLog({
     entityType: "tv_boards",
     entityId: id,
-    action: "delete"
+    action: "delete",
+    userId: user.id
   });
 
   revalidatePath("/placas-tv");
@@ -149,7 +152,7 @@ export async function deleteTvBoardAction(id: string) {
 }
 
 export async function markTvBoardSoldAction(input: unknown) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = tvBoardSaleSchema.safeParse(input);
 
   if (!parsed.success) {
@@ -208,7 +211,8 @@ export async function markTvBoardSoldAction(input: unknown) {
     entityType: "tv_boards",
     entityId: parsed.data.id,
     action: "update",
-    changes: salePayload
+    changes: salePayload,
+    userId: user.id
   });
 
   revalidatePath("/placas-tv");
@@ -220,7 +224,7 @@ export async function markTvBoardSoldAction(input: unknown) {
 }
 
 export async function markTvBoardReleasedAction(input: unknown) {
-  await requireAdmin();
+  const user = await requireAdmin();
   const parsed = z.string().uuid().safeParse(input);
 
   if (!parsed.success) {
@@ -242,12 +246,7 @@ export async function markTvBoardReleasedAction(input: unknown) {
     return { success: false, message: "No encontramos la placa" };
   }
 
-  const today = getLocalDateInputValue();
-  if (getTvBoardSaleStatus({
-    soldAt: board.sold_at,
-    releaseDate: board.release_date,
-    releasedAt: board.released_at
-  }, today) !== "pending_release") {
+  if (!board.sold_at || board.released_at) {
     return { success: false, message: "Esta placa ya figura como liberada o no fue vendida" };
   }
 
@@ -258,7 +257,6 @@ export async function markTvBoardReleasedAction(input: unknown) {
     .eq("id", parsed.data)
     .is("released_at", null)
     .not("sold_at", "is", null)
-    .gt("release_date", today)
     .select("id")
     .maybeSingle();
 
@@ -274,7 +272,8 @@ export async function markTvBoardReleasedAction(input: unknown) {
     entityType: "tv_boards",
     entityId: parsed.data,
     action: "update",
-    changes: { released_at: releasedAt }
+    changes: { released_at: releasedAt },
+    userId: user.id
   });
 
   revalidatePath("/placas-tv");

@@ -47,7 +47,7 @@ export default async function LoginPage() {
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-soft">
             <MonitorSmartphone className="h-6 w-6 text-graphite" />
-            <h2 className="mt-4 text-lg font-semibold text-slate-900">Operación omnicanal</h2>
+            <h2 className="mt-4 text-lg font-semibold text-slate-900">Mostrador y taller conectados</h2>
             <p className="mt-2 text-sm text-slate-500">
               Inventario, ventas y reparaciones conectados sobre una misma base.
             </p>
@@ -68,7 +68,7 @@ export default async function LoginPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.32em] text-brand-700">Bienvenido</p>
             <h2 className="mt-3 text-3xl font-semibold text-slate-950">Ingresar al panel</h2>
             <p className="mt-2 text-sm text-slate-500">
-              Usá tu cuenta de Supabase Auth para entrar a Chetech.
+              Usá tu cuenta de CHETECH para entrar al mostrador o al taller.
             </p>
           </div>
           <LoginForm />

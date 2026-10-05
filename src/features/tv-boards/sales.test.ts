@@ -1,8 +1,21 @@
 import { describe, expect, it } from "vitest";
 
-import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getTvBoardSaleStatus, getTvBoardReleaseEvidence, getTvBoardMargin } from "@/features/tv-boards/sales";
 
 describe("getTvBoardSaleStatus", () => {
+  it("keeps accounting classification compatible but distinguishes unconfirmed estimates", () => {
+    const board = { soldAt: "2026-10-01", releaseDate: "2026-10-04", releasedAt: null };
+    expect(getTvBoardSaleStatus(board, "2026-10-05")).toBe("released");
+    expect(getTvBoardReleaseEvidence(board, "2026-10-05")).toBe("estimated_due");
+    expect(getTvBoardReleaseEvidence({ ...board, releaseDate: null }, "2026-10-05")).toBe("unconfirmed");
+    expect(getTvBoardReleaseEvidence({ ...board, releasedAt: "2026-10-05" }, "2026-10-05")).toBe("confirmed");
+  });
+  it("calculates direct margin only when cost and net revenue are known", () => {
+    expect(getTvBoardMargin(100, null)).toBeNull();
+    expect(getTvBoardMargin(null, 20)).toBeNull();
+    expect(getTvBoardMargin(100, 0)).toBe(100);
+    expect(getTvBoardMargin(100.1, 100.2)).toBe(-0.1);
+  });
   it("devuelve unsold cuando la placa todavia no se vendio", () => {
     expect(
       getTvBoardSaleStatus({

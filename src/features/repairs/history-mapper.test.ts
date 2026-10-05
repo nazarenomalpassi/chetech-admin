@@ -3,6 +3,17 @@ import { describe, expect, it } from "vitest";
 import { mapRepairsHistoryRows } from "@/features/repairs/history-mapper";
 
 describe("mapRepairsHistoryRows", () => {
+  it("exposes actual cumulative deposits and the remaining balance", () => {
+    const [repair] = mapRepairsHistoryRows([{ id: "r1", final_price: 100, financial_version: 2, repair_payments: [{ id: "p1", method: "nx", amount: 30, payment_date: "2026-10-01" }] }]);
+    expect(repair).toMatchObject({ paidTotal: 30, balance: 70, financialVersion: 2 });
+    expect(repair.payments[0]).toMatchObject({ id: "p1", paymentDate: "2026-10-01" });
+  });
+  it("includes native order payments but excludes mirrored and voided duplicates", () => {
+    const [repair] = mapRepairsHistoryRows([{ final_price: 100, repair_payments: [{ id: "legacy", method: "nx", amount: 20 }], repair_access_orders: { repair_number: "REP-1", repair_access_payments: [{ id: "native", method: "mp", amount: 30, payment_date: "2026-10-05", legacy_repair_payment_id: null, voided_at: null }, { id: "mirror", amount: 20, legacy_repair_payment_id: "legacy" }, { id: "void", amount: 10, voided_at: "2026-10-05" }] } }]);
+    expect(repair.paidTotal).toBe(50);
+    expect(repair.balance).toBe(50);
+    expect(repair.payments).toHaveLength(2);
+  });
   it("usa el ultimo pago relacionado y conserva todos los medios", () => {
     const [repair] = mapRepairsHistoryRows([
       {

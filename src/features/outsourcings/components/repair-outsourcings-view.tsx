@@ -1,16 +1,20 @@
 "use client";
 
 import type React from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { MapPin, PackageCheck, Search, Truck, Undo2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { OperationsPagination } from "@/features/visits/components/operations-pagination";
+import type { PaginationMeta } from "@/lib/pagination";
+import { OutsourcingOperations } from "@/features/outsourcings/components/outsourcing-operations";
 import {
   cancelRepairOutsourcingAction,
-  markRepairOutsourcingRetrievedAction,
   saveRepairOutsourcingAction
 } from "@/features/outsourcings/actions";
 import {
@@ -38,10 +42,14 @@ type LookupOrder = {
 export function RepairOutsourcingsView({
   records,
   summary,
+  filters,
+  pagination,
   message
 }: {
   records: RepairOutsourcingRecord[];
   summary: RepairOutsourcingSummary;
+  filters: { search: string; status: string; date: string; view: string };
+  pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
   const today = getLocalDateInputValue();
@@ -50,40 +58,16 @@ export function RepairOutsourcingsView({
   const [sentAt, setSentAt] = useState(today);
   const [workshopName, setWorkshopName] = useState("");
   const [notes, setNotes] = useState("");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("en_taller");
   const [lookupStatus, setLookupStatus] = useState<{ loading: boolean; message: string; success: boolean }>({
     loading: false,
     message: "",
     success: false
   });
 
-  const filteredRecords = useMemo(() => {
-    const query = search.trim().toLowerCase();
-
-    return records.filter((record) => {
-      const matchesStatus = statusFilter === "todos" || record.status === statusFilter;
-      if (!matchesStatus) return false;
-      if (!query) return true;
-
-      const haystack = [
-        record.order.repairNumber,
-        record.order.customerName,
-        record.order.customerPhone,
-        record.order.customerDni,
-        record.order.deviceLabel,
-        record.order.serialNumber,
-        record.order.issueReported,
-        record.workshopName,
-        record.notes,
-        getRepairOutsourcingStatusLabel(record.status)
-      ]
-        .join(" ")
-        .toLowerCase();
-
-      return haystack.includes(query);
-    });
-  }, [records, search, statusFilter]);
+  const filteredRecords = records;
+  const params = new URLSearchParams({ search: filters.search, outsourceStatus: filters.status, date: filters.date, view: filters.view });
+  if (pagination.page > 1) params.set("page", String(pagination.page));
+  const returnTo = `/terciarizaciones?${params.toString()}`;
 
   function resetForm() {
     setOrderNumber("");
@@ -140,6 +124,7 @@ export function RepairOutsourcingsView({
               Registra las ordenes de reparacion que se llevan a talleres externos y controla donde esta cada equipo.
               Esta seccion no impacta caja ni pagos.
             </p>
+            <p className="mt-2 text-xs text-slate-500">Indicadores de todo el resultado filtrado. Historial completo paginado, incluidas anuladas.</p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[34rem]">
@@ -147,6 +132,8 @@ export function RepairOutsourcingsView({
             <MetricCard icon={<PackageCheck className="h-4 w-4" />} label="Buscadas" value={summary.retrieved} />
             <MetricCard icon={<MapPin className="h-4 w-4" />} label="Talleres" value={summary.workshops} />
             <MetricCard icon={<Undo2 className="h-4 w-4" />} label="Llevadas hoy" value={summary.sentToday} />
+            <MetricCard icon={<Truck className="h-4 w-4" />} label="Promesas vencidas" value={summary.overdue} />
+            <MetricCard icon={<PackageCheck className="h-4 w-4" />} label="Retornos sin controlar" value={summary.pendingQuality} />
           </div>
         </div>
 
@@ -157,6 +144,7 @@ export function RepairOutsourcingsView({
         ) : null}
 
         <form action={saveRepairOutsourcingAction} className="mt-6 space-y-4">
+          <input name="returnTo" type="hidden" value={returnTo} />
           <input name="repairAccessOrderId" type="hidden" value={selectedOrder?.id ?? ""} />
 
           <div className="rounded-[30px] border border-brand-100 bg-brand-50/70 p-4">
@@ -202,6 +190,9 @@ export function RepairOutsourcingsView({
           ) : null}
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 lg:grid-cols-[minmax(0,1fr)_220px]">
+            <label className="grid gap-2 text-sm">Responsable del seguimiento<Input name="responsibleName" required maxLength={120} placeholder="Persona del local que consulta al tercero" /></label>
+            <label className="grid gap-2 text-sm">Fecha prometida<Input name="promisedAt" type="date" min={sentAt} /></label>
+            <label className="grid gap-2 text-sm">Costo previsto (opcional)<Input name="expectedCost" type="number" min="0" step="0.01" placeholder="Desconocido" /></label>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Lugar donde se llevo
@@ -248,7 +239,7 @@ export function RepairOutsourcingsView({
 
       <div className="table-shell">
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
-          <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
+          <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
             <div className="max-w-lg">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Buscar terciarizacion
@@ -258,29 +249,17 @@ export function RepairOutsourcingsView({
                 <Input
                   aria-label="Buscar terciarizaciones por orden, cliente, equipo o taller"
                   className="pl-10"
-                  onChange={(event) => setSearch(event.target.value)}
+                  name="search"
                   placeholder="REP, cliente, equipo, serie o taller..."
-                  value={search}
+                  defaultValue={filters.search}
                 />
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {[
-                { value: "en_taller", label: "En taller" },
-                { value: "retirado", label: "Buscadas" },
-                { value: "todos", label: "Todas" }
-              ].map((option) => (
-                <button
-                  className={`rounded-[18px] px-4 py-2 text-sm font-semibold transition ${statusFilter === option.value ? "bg-graphite text-white" : "bg-white text-slate-600 hover:bg-slate-100"}`}
-                  key={option.value}
-                  onClick={() => setStatusFilter(option.value)}
-                  type="button"
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
+            <Select aria-label="Estado de terciarizacion" name="outsourceStatus" defaultValue={filters.status} options={[{ value: "en_taller", label: "En taller" }, { value: "retirado", label: "Buscadas" }, { value: "vencidas", label: "Vencidas" }, { value: "cancelado", label: "Anuladas" }, { value: "todos", label: "Todas" }]} />
+            <Input aria-label="Fecha de envio" type="date" name="date" defaultValue={filters.date} />
+            <Select aria-label="Periodo de envios" name="view" defaultValue={filters.view} options={[{ value: "all", label: "Todo / fecha exacta" }, { value: "day", label: "Dia" }, { value: "week", label: "Semana (lunes a domingo)" }]} />
+            <div className="flex gap-2"><Button type="submit">Filtrar</Button><Link className="inline-flex min-h-11 items-center underline" href="/terciarizaciones">Limpiar</Link></div>
+          </form>
         </div>
 
         <div className="grid gap-3 p-3 lg:hidden">
@@ -310,15 +289,7 @@ export function RepairOutsourcingsView({
                   Llevado: {formatDate(record.sentAt)} - Buscado: {record.retrievedAt ? formatDate(record.retrievedAt) : "-"}
                 </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                {record.status === "en_taller" ? (
-                  <form action={markRepairOutsourcingRetrievedAction}>
-                    <input name="id" type="hidden" value={record.id} />
-                    <input name="retrievedAt" type="hidden" value={today} />
-                    <Button className="w-full" type="submit">
-                      Marcar buscado
-                    </Button>
-                  </form>
-                ) : null}
+                <OutsourcingOperations record={record} returnTo={returnTo} />
                 {record.status === "en_taller" ? (
                   <form
                     action={cancelRepairOutsourcingAction}
@@ -329,6 +300,7 @@ export function RepairOutsourcingsView({
                     }}
                   >
                     <input name="id" type="hidden" value={record.id} />
+                    <input name="returnTo" type="hidden" value={returnTo} />
                     <Button className="w-full" type="submit" variant="danger">
                       Anular
                     </Button>
@@ -383,15 +355,7 @@ export function RepairOutsourcingsView({
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap justify-end gap-2">
-                      {record.status === "en_taller" ? (
-                        <form action={markRepairOutsourcingRetrievedAction}>
-                          <input name="id" type="hidden" value={record.id} />
-                          <input name="retrievedAt" type="hidden" value={today} />
-                          <Button size="sm" type="submit">
-                            Marcar buscado
-                          </Button>
-                        </form>
-                      ) : null}
+                      <OutsourcingOperations record={record} returnTo={returnTo} />
                       {record.status === "en_taller" ? (
                         <form
                           action={cancelRepairOutsourcingAction}
@@ -402,6 +366,7 @@ export function RepairOutsourcingsView({
                           }}
                         >
                           <input name="id" type="hidden" value={record.id} />
+                          <input name="returnTo" type="hidden" value={returnTo} />
                           <Button size="sm" type="submit" variant="danger">
                             Anular
                           </Button>
@@ -419,6 +384,7 @@ export function RepairOutsourcingsView({
             </div>
           ) : null}
         </div>
+        <OperationsPagination pagination={pagination} baseHref={returnTo} />
       </div>
     </div>
   );

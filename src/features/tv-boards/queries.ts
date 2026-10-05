@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getTvBoardSaleStatus, getTvBoardReleaseEvidence, type TvBoardReleaseEvidence } from "@/features/tv-boards/sales";
 import { matchesSearchText } from "@/lib/search";
 import { getLocalDateInputValue } from "@/lib/utils";
 
@@ -9,6 +9,8 @@ type TvBoardRow = {
   model: string;
   boardType: "fuente" | "main" | "tcom" | "placa_unica";
   price: number;
+  acquisitionCost: number | null;
+  releaseEvidence: TvBoardReleaseEvidence;
   isActive: boolean;
   isSold: boolean;
   soldAt: string | null;
@@ -30,7 +32,7 @@ export async function getTvBoards(filters?: {
   let query = (supabase as any)
     .from("tv_boards")
     .select(
-      "id, brand, model, board_type, listed_price, is_active, sold_at, mercado_libre_net_amount, release_date, released_at, sale_notes, created_at, updated_at"
+      "id, brand, model, board_type, listed_price, acquisition_cost, is_active, sold_at, mercado_libre_net_amount, release_date, released_at, sale_notes, created_at, updated_at"
     )
     .order("brand")
     .order("model");
@@ -75,6 +77,8 @@ export async function getTvBoards(filters?: {
         model: board.model,
         boardType: board.board_type,
         price: Number(board.listed_price ?? 0),
+        acquisitionCost: board.acquisition_cost == null ? null : Number(board.acquisition_cost),
+        releaseEvidence: getTvBoardReleaseEvidence({ soldAt: board.sold_at, releaseDate: board.release_date, releasedAt: board.released_at }, today),
         isActive: board.is_active,
         isSold: Boolean(board.sold_at),
         soldAt: board.sold_at,
@@ -101,9 +105,9 @@ export async function getTvBoards(filters?: {
       case "sold":
         return board.isSold;
       case "pending_release":
-        return board.saleStatus === "pending_release";
+        return board.isSold && board.releaseEvidence !== "confirmed";
       case "released":
-        return board.saleStatus === "released";
+        return board.releaseEvidence === "confirmed";
       default:
         return true;
     }

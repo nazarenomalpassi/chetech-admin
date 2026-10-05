@@ -6,6 +6,8 @@ export const repairAccessStatusValues = [
   "presupuestado",
   "presupuestado_aceptado",
   "presupuestado_rechazado",
+  "en_reparacion",
+  "en_pruebas",
   "listo_para_retirar",
   "retirado",
   "sin_solucion"

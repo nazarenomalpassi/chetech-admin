@@ -45,7 +45,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
   const today = getLocalDateInputValue();
   let salesQuery = (supabase as any)
     .from("installment_sales")
-    .select("id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at, installments(id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at)")
+    .select("id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at, installments(id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at, financial_version)")
     .order("created_at", { ascending: false });
 
   if (filters.customer?.trim()) {
@@ -81,6 +81,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
         .sort((a: any, b: any) => Number(a.installment_number) - Number(b.installment_number))
         .map((installment: any) => ({
         id: installment.id,
+        financialVersion: Number(installment.financial_version),
         saleId: installment.installment_sale_id,
         installmentNumber: Number(installment.installment_number),
         dueDate: installment.due_date,
@@ -154,6 +155,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
       paidCount: number;
       installments: Array<{
         id: string;
+        financialVersion: number;
         saleId: string;
         installmentNumber: number;
         dueDate: string;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { PackagePlus, ShieldAlert, Store } from "lucide-react";
 
@@ -10,13 +10,18 @@ import { ProductFilters } from "@/features/products/components/product-filters";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
 import { ProductTable } from "@/features/products/components/product-table";
 import type { ProductFormValues } from "@/features/products/schemas";
+import type { PaginationMeta } from "@/lib/pagination";
 
 export function ProductsView({
   canManage,
   categories,
-  products
+  products,
+  pagination,
+  filterParams
 }: {
   canManage: boolean;
+  pagination: PaginationMeta;
+  filterParams: Record<string, string | undefined>;
   categories: { id: string; name: string; skuPrefix?: string | null }[];
   products: Array<{
     id: string;
@@ -27,6 +32,8 @@ export function ProductsView({
     cost: number;
     salePrice: number;
     stock: number;
+    reservedStock?: number | null;
+    availableStock?: number | null;
     minStock: number;
     isActive: boolean;
     notes: string | null;
@@ -35,30 +42,11 @@ export function ProductsView({
   const searchParams = useSearchParams();
   const filterKey = JSON.stringify([searchParams.get("search"), searchParams.get("category"), searchParams.get("status")]);
   const [open, setOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<ProductFormValues | null>(null);
 
-  const selectedProduct = useMemo<ProductFormValues | null>(() => {
-    if (!selectedId) return null;
-    const product = products.find((item) => item.id === selectedId);
-    if (!product) return null;
-
-    return {
-      id: product.id,
-      sku: product.sku,
-      name: product.name,
-      categoryId: product.categoryId,
-      cost: product.cost,
-      salePrice: product.salePrice,
-      stock: product.stock,
-      minStock: product.minStock,
-      isActive: product.isActive,
-      notes: product.notes ?? ""
-    };
-  }, [products, selectedId]);
-
-  const totalProducts = products.length;
+  const totalProducts = pagination.total;
   const activeProducts = products.filter((product) => product.isActive).length;
-  const lowStockProducts = products.filter((product) => product.stock <= product.minStock).length;
+  const lowStockProducts = products.filter((product) => (product.availableStock ?? product.stock) <= product.minStock).length;
 
   return (
     <div className="space-y-4">
@@ -81,7 +69,7 @@ export function ProductsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Catalogo total
+                    Resultados filtrados
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{totalProducts}</p>
                 </div>
@@ -94,7 +82,7 @@ export function ProductsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Activos
+                    Activos en pagina
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{activeProducts}</p>
                 </div>
@@ -107,7 +95,7 @@ export function ProductsView({
                 </span>
                 <div>
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Stock sensible
+                    Stock sensible en pagina
                   </p>
                   <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{lowStockProducts}</p>
                 </div>
@@ -124,7 +112,7 @@ export function ProductsView({
           {canManage ? (
             <Button
               onClick={() => {
-                setSelectedId(null);
+                setSelectedProduct(null);
                 setOpen(true);
               }}
             >
@@ -143,10 +131,15 @@ export function ProductsView({
         canManage={canManage}
         filterKey={filterKey}
         onEdit={(id) => {
-          setSelectedId(id);
+          const product = products.find(item => item.id === id);
+          if (!product) return;
+          // Keep the edit snapshot stable when server pagination revalidates behind the dialog.
+          setSelectedProduct({ id: product.id, sku: product.sku, name: product.name, categoryId: product.categoryId, cost: product.cost, salePrice: product.salePrice, stock: product.stock, minStock: product.minStock, isActive: product.isActive, notes: product.notes ?? "" });
           setOpen(true);
         }}
         products={products}
+        pagination={pagination}
+        searchParams={filterParams}
       />
 
       {canManage ? (
