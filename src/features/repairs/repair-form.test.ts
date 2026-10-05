@@ -14,6 +14,7 @@ const baseRepair = {
   estimatedPrice: 0,
   status: "entregado",
   observations: "Pago confirmado",
+  entryDate: "2026-06-03",
   createdAt: "2026-06-03T10:00:00.000Z"
 };
 

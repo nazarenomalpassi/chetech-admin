@@ -29,4 +29,14 @@ describe("getTvBoardSaleStatus", () => {
       }, "2026-05-11")
     ).toBe("released");
   });
+
+  it("devuelve released si se confirma manualmente antes de la fecha prevista", () => {
+    expect(
+      getTvBoardSaleStatus({
+        soldAt: "2026-05-10T14:20:00.000Z",
+        releaseDate: "2026-05-20",
+        releasedAt: "2026-05-11T14:20:00.000Z"
+      }, "2026-05-12")
+    ).toBe("released");
+  });
 });

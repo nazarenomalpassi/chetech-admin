@@ -6,8 +6,9 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { deleteCashMovement, replaceCashMovement } from "@/lib/accounting";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
 
 const expenseFormSchema = z.object({
   id: z.string().uuid().optional(),
@@ -40,8 +41,29 @@ export async function saveExpenseAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el gasto", String(formData.get("id") ?? ""));
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
+  const atomicResult = await (supabase as any).rpc("save_expense_atomic", {
+    p_expense_id: parsed.data.id ?? null,
+    p_expense_date: parsed.data.expenseDate,
+    p_type: parsed.data.type,
+    p_description: parsed.data.description,
+    p_amount: parsed.data.amount,
+    p_payment_method: parsed.data.paymentMethod,
+    p_observations: parsed.data.observations || null
+  });
+
+  if (!atomicResult.error) {
+    revalidatePath("/gastos");
+    revalidatePath("/dashboard");
+    revalidatePath("/caja");
+    redirect(`/gastos?status=${parsed.data.id ? "expense_updated" : "expense_created"}`);
+  }
+
+  if (!isMissingDatabaseFunctionError(atomicResult.error, "save_expense_atomic")) {
+    redirectWithError(atomicResult.error.message, parsed.data.id);
+  }
+
   const payload = {
     expense_date: parsed.data.expenseDate,
     type: parsed.data.type,
@@ -95,6 +117,21 @@ export async function deleteExpenseAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
+  const atomicResult = await (supabase as any).rpc("delete_expense_atomic", {
+    p_expense_id: id
+  });
+
+  if (!atomicResult.error) {
+    revalidatePath("/gastos");
+    revalidatePath("/dashboard");
+    revalidatePath("/caja");
+    redirect("/gastos?status=expense_deleted");
+  }
+
+  if (!isMissingDatabaseFunctionError(atomicResult.error, "delete_expense_atomic")) {
+    redirectWithError(atomicResult.error.message);
+  }
+
   await deleteCashMovement(supabase as any, "expenses", id);
   const { error } = await (supabase as any).from("expenses").delete().eq("id", id);
 

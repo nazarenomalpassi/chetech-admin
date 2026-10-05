@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { RepairAccessCustomerSummary } from "@/features/repairs-access/queries";
@@ -15,7 +17,42 @@ export function RepairAccessCustomersSection({
   onSearchChange: (value: string) => void;
 }) {
   const normalizedSearch = search.trim().toLowerCase();
-  const filteredCustomers = customers.filter((customer) => {
+  const [remoteCustomers, setRemoteCustomers] = useState<RepairAccessCustomerSummary[] | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    if (normalizedSearch.length < 2) {
+      setRemoteCustomers(null);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(search)}`, {
+          signal: controller.signal
+        });
+        const payload = response.ok ? await response.json() : { customers: [] };
+        setRemoteCustomers(payload.customers ?? []);
+      } catch (error) {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          setRemoteCustomers([]);
+        }
+      } finally {
+        if (!controller.signal.aborted) setIsSearching(false);
+      }
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
+  }, [normalizedSearch, search]);
+
+  const sourceCustomers = remoteCustomers ?? customers;
+  const filteredCustomers = sourceCustomers.filter((customer) => {
     if (!normalizedSearch) return true;
     const haystack = [customer.fullName, customer.phone, customer.alternatePhone, customer.dni, customer.email, customer.address]
       .join(" ")
@@ -35,6 +72,7 @@ export function RepairAccessCustomersSection({
         </div>
         <div className="w-full lg:max-w-sm">
           <Input onChange={(event) => onSearchChange(event.target.value)} placeholder="Buscar cliente o telefono..." value={search} />
+          {isSearching ? <p className="mt-2 text-xs text-slate-500">Buscando en toda la base...</p> : null}
         </div>
       </div>
 

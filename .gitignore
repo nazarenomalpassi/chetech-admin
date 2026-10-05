@@ -1,7 +1,8 @@
 .next
 node_modules
 .env
-.env.local
+.env.*
+!.env.example
 coverage
 dist
 *.log
@@ -11,3 +12,6 @@ dist
 .agents
 skills-lock.json
 supabase/.temp
+reports/repair-history-import/*.json
+reports/repair-order-number-reconciliation/*.json
+tmp/backups/

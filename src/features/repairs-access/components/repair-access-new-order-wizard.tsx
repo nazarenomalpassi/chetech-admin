@@ -1,10 +1,12 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,6 +15,8 @@ import {
   repairAccessPriorityOptions
 } from "@/features/repairs-access/components/repair-access-helpers";
 import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
+import { getLocalDateInputValue } from "@/lib/utils";
 
 const wizardSteps = [
   { key: "cliente", label: "Cliente", helper: "Buscar o crear" },
@@ -31,6 +35,37 @@ type CustomerForm = {
   notes: string;
 };
 
+type RepairIntakeDraft = {
+  activeStep: (typeof wizardSteps)[number]["key"];
+  fields: Record<string, string>;
+};
+
+const meaningfulIntakeFields = [
+  "customerName",
+  "customerPhone",
+  "customerAlternatePhone",
+  "customerDni",
+  "customerEmail",
+  "customerAddress",
+  "customerNotes",
+  "deviceType",
+  "deviceBrand",
+  "deviceModel",
+  "serialNumber",
+  "accessoryDetails",
+  "visualCondition",
+  "issueReported",
+  "notes"
+] as const;
+
+function readFormValues(form: HTMLFormElement) {
+  const values: Record<string, string> = {};
+  new FormData(form).forEach((value, key) => {
+    if (typeof value === "string") values[key] = value;
+  });
+  return values;
+}
+
 function getInitialCustomer(editing: RepairAccessOrderRecord | null): CustomerForm {
   return {
     id: editing?.customer.id ?? "",
@@ -48,12 +83,14 @@ export function RepairAccessNewOrderWizard({
   customers,
   editing,
   onCancel,
-  action
+  action,
+  onDirtyChange
 }: {
   customers: RepairAccessCustomerSummary[];
   editing: RepairAccessOrderRecord | null;
   onCancel: () => void;
   action: (formData: FormData) => void | Promise<void>;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
   const [activeStep, setActiveStep] = useState<(typeof wizardSteps)[number]["key"]>("cliente");
   const [customerForm, setCustomerForm] = useState<CustomerForm>(() => getInitialCustomer(editing));
@@ -62,12 +99,18 @@ export function RepairAccessNewOrderWizard({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [remoteSuggestions, setRemoteSuggestions] = useState<RepairAccessCustomerSummary[]>([]);
   const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
+  const [draftFields, setDraftFields] = useState<Record<string, string>>({});
+  const [restoredFields, setRestoredFields] = useState<Record<string, string>>({});
+  const [formRevision, setFormRevision] = useState(0);
 
   useEffect(() => {
     setCustomerForm(getInitialCustomer(editing));
     setCustomerLookup("");
     setActiveLookupField(null);
     setActiveStep("cliente");
+    setDraftFields({});
+    setRestoredFields({});
+    setFormRevision((current) => current + 1);
   }, [editing]);
 
   useEffect(() => {
@@ -109,6 +152,43 @@ export function RepairAccessNewOrderWizard({
       })
       .slice(0, 7);
   }, [customerLookup, customers, remoteSuggestions]);
+
+  const hasUnsavedChanges = meaningfulIntakeFields.some((field) => (draftFields[field] ?? "").trim().length > 0);
+  const restoreDraft = useCallback((draft: RepairIntakeDraft) => {
+    setRestoredFields(draft.fields);
+    setDraftFields(draft.fields);
+    setActiveStep(wizardSteps.some((step) => step.key === draft.activeStep) ? draft.activeStep : "cliente");
+    setCustomerForm({
+      id: draft.fields.customerId ?? "",
+      fullName: draft.fields.customerName ?? "",
+      phone: draft.fields.customerPhone ?? "",
+      alternatePhone: draft.fields.customerAlternatePhone ?? "",
+      dni: draft.fields.customerDni ?? "",
+      email: draft.fields.customerEmail ?? "",
+      address: draft.fields.customerAddress ?? "",
+      notes: draft.fields.customerNotes ?? ""
+    });
+    setFormRevision((current) => current + 1);
+  }, []);
+  const draft = usePersistentFormDraft<RepairIntakeDraft>({
+    draftKey: `repair-access:intake:${editing?.id ?? "new"}`,
+    isDirty: hasUnsavedChanges,
+    onRestore: restoreDraft,
+    value: { activeStep, fields: draftFields }
+  });
+
+  useEffect(() => {
+    onDirtyChange?.(hasUnsavedChanges);
+    return () => onDirtyChange?.(false);
+  }, [hasUnsavedChanges, onDirtyChange]);
+
+  function captureDraft(event: FormEvent<HTMLFormElement>) {
+    setDraftFields(readFormValues(event.currentTarget));
+  }
+
+  function restoredValue(name: string, fallback = "") {
+    return restoredFields[name] ?? fallback;
+  }
 
   function updateCustomerField(field: keyof CustomerForm, value: string) {
     setCustomerForm((current) => ({ ...current, [field]: value }));
@@ -166,7 +246,21 @@ export function RepairAccessNewOrderWizard({
         ))}
       </div>
 
-      <form action={action} className="space-y-6">
+      {draft.pendingDraft ? (
+        <DraftRecoveryBanner
+          onDiscard={draft.discardDraft}
+          onRestore={draft.restoreDraft}
+          updatedAt={draft.pendingDraft.updatedAt}
+        />
+      ) : null}
+
+      <form
+        action={action}
+        className="space-y-6"
+        key={formRevision}
+        onChange={captureDraft}
+        onInput={captureDraft}
+      >
         <input name="id" type="hidden" value={editing?.id ?? ""} />
         <input name="customerId" type="hidden" value={customerForm.id} />
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
@@ -236,22 +330,22 @@ export function RepairAccessNewOrderWizard({
 
         <section className={activeStep === "equipo" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
           <Field className="lg:col-span-2" label="Tipo de equipo">
-            <Input defaultValue={editing?.device.deviceType ?? ""} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
+            <Input defaultValue={restoredValue("deviceType", editing?.device.deviceType ?? "")} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
           </Field>
           <Field className="lg:col-span-2" label="Marca">
-            <Input defaultValue={editing?.device.brand ?? ""} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
+            <Input defaultValue={restoredValue("deviceBrand", editing?.device.brand ?? "")} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
           </Field>
           <Field className="lg:col-span-2" label="Modelo">
-            <Input defaultValue={editing?.device.model ?? ""} name="deviceModel" placeholder="Modelo visible" />
+            <Input defaultValue={restoredValue("deviceModel", editing?.device.model ?? "")} name="deviceModel" placeholder="Modelo visible" />
           </Field>
           <Field className="lg:col-span-2" label="Numero de serie">
-            <Input defaultValue={editing?.device.serialNumber ?? ""} name="serialNumber" placeholder="Opcional" />
+            <Input defaultValue={restoredValue("serialNumber", editing?.device.serialNumber ?? "")} name="serialNumber" placeholder="Opcional" />
           </Field>
           <Field className="lg:col-span-2" label="Accesorios entregados">
-            <Input defaultValue={editing?.device.accessoryDetails ?? ""} name="accessoryDetails" placeholder="Control, fuente, cable, bandeja..." />
+            <Input defaultValue={restoredValue("accessoryDetails", editing?.device.accessoryDetails ?? "")} name="accessoryDetails" placeholder="Control, fuente, cable, bandeja..." />
           </Field>
           <Field className="lg:col-span-2" label="Estado visual">
-            <Input defaultValue={editing?.device.visualCondition ?? ""} name="visualCondition" placeholder="Golpes, faltantes, rayas, humedad..." />
+            <Input defaultValue={restoredValue("visualCondition", editing?.device.visualCondition ?? "")} name="visualCondition" placeholder="Golpes, faltantes, rayas, humedad..." />
           </Field>
         </section>
 
@@ -263,19 +357,19 @@ export function RepairAccessNewOrderWizard({
             </div>
           ) : null}
           <Field className="lg:col-span-2" label="Fecha de ingreso">
-            <Input defaultValue={editing?.intakeDate ?? new Date().toISOString().slice(0, 10)} name="intakeDate" type="date" />
+            <Input defaultValue={restoredValue("intakeDate", editing?.intakeDate ?? getLocalDateInputValue())} name="intakeDate" type="date" />
           </Field>
           <Field className="lg:col-span-2" label="Prioridad">
-            <Select defaultValue={editing?.priority ?? "normal"} name="priority" options={repairAccessPriorityOptions.map((option) => ({ ...option }))} />
+            <Select defaultValue={restoredValue("priority", editing?.priority ?? "normal")} name="priority" options={repairAccessPriorityOptions.map((option) => ({ ...option }))} />
           </Field>
           <Field className="lg:col-span-2" label="Estado inicial">
-            <Select defaultValue={editing?.status ?? "pendiente_revision"} name="status" options={repairAccessIntakeStatusOptions} />
+            <Select defaultValue={restoredValue("status", editing?.status ?? "pendiente_revision")} name="status" options={repairAccessIntakeStatusOptions} />
           </Field>
           <Field className="lg:col-span-6" label="Falla declarada por el cliente">
-            <Textarea defaultValue={editing?.issueReported ?? ""} name="issueReported" placeholder="Ej: no enfria, no da imagen, pierde agua, no enciende..." />
+            <Textarea defaultValue={restoredValue("issueReported", editing?.issueReported ?? "")} name="issueReported" placeholder="Ej: no enfria, no da imagen, pierde agua, no enciende..." />
           </Field>
           <Field className="lg:col-span-6" label="Observaciones internas de recepcion">
-            <Textarea defaultValue={editing?.notes ?? ""} name="notes" placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones" />
+            <Textarea defaultValue={restoredValue("notes", editing?.notes ?? "")} name="notes" placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones" />
           </Field>
         </section>
 
@@ -289,9 +383,18 @@ export function RepairAccessNewOrderWizard({
               <Button className="w-full sm:w-auto" onClick={() => setActiveStep(activeStep === "cliente" ? "equipo" : "ingreso")} type="button" variant="secondary">Siguiente</Button>
             ) : null}
             {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar</Button> : null}
-            <Button className="w-full sm:w-auto" type="submit">{editing ? "Actualizar ingreso" : "Crear orden"}</Button>
+            <FormSubmitButton
+              className="w-full sm:w-auto"
+              idleLabel={editing ? "Actualizar ingreso" : "Crear orden"}
+              pendingLabel={editing ? "Actualizando..." : "Guardando orden..."}
+            />
           </div>
         </div>
+        {draft.lastSavedAt && hasUnsavedChanges ? (
+          <p aria-live="polite" className="text-right text-xs text-slate-500">
+            Borrador guardado en este dispositivo.
+          </p>
+        ) : null}
       </form>
     </Card>
   );

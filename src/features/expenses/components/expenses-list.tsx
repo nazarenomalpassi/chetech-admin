@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteExpenseAction, saveExpenseAction } from "@/features/expenses/actions";
@@ -14,6 +15,7 @@ import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import type { PaginationMeta } from "@/lib/pagination";
 
 type Expense = {
   id: string;
@@ -30,10 +32,12 @@ type Expense = {
 export function ExpensesList({
   canDelete,
   expenses,
+  pagination,
   message
 }: {
   canDelete: boolean;
   expenses: Expense[];
+  pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
   const today = getLocalDateInputValue();
@@ -94,7 +98,7 @@ export function ExpensesList({
         </div>
 
         {message ? (
-          <div className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"} role={message.success ? "status" : "alert"}>
             {message.message}
           </div>
         ) : null}
@@ -102,7 +106,7 @@ export function ExpensesList({
         <form action={saveExpenseAction} className="mt-6 grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-6">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="expenseDate">
               Fecha
             </label>
             <div className="relative">
@@ -111,14 +115,14 @@ export function ExpensesList({
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Categoria
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="type">
+              Categoría
             </label>
             <Input defaultValue={editing?.type ?? ""} key={`${editing?.id}-type`} name="type" placeholder="Mercaderia, alquiler..." />
           </div>
           <div className="xl:col-span-2">
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-              Descripcion
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="description">
+              Descripción
             </label>
             <Input
               defaultValue={editing?.description ?? ""}
@@ -128,13 +132,13 @@ export function ExpensesList({
             />
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="amount">
               Monto
             </label>
             <Input defaultValue={editing?.amount ?? ""} key={`${editing?.id}-amount`} min={0} name="amount" step="0.01" type="number" />
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="paymentMethod">
               Medio de egreso
             </label>
             <Select
@@ -145,7 +149,7 @@ export function ExpensesList({
             />
           </div>
           <div className="xl:col-span-5">
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="observations">
               Observaciones
             </label>
             <Textarea defaultValue={editing?.observations ?? ""} key={`${editing?.id}-observations`} name="observations" placeholder="Contexto interno, comprobante o nota util" />
@@ -277,6 +281,7 @@ export function ExpensesList({
             Cuando registres gastos del local, van a aparecer aca con fecha, categoria y cuenta usada.
           </div>
         ) : null}
+        <PaginationNav meta={pagination} pathname="/gastos" />
       </div>
     </div>
   );

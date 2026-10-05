@@ -20,10 +20,10 @@ function toArgentinaStart(date: string) {
   return new Date(Date.UTC(year, month - 1, day, ARGENTINA_UTC_OFFSET_HOURS, 0, 0));
 }
 
-export function getDashboardRange(from?: string, to?: string) {
-  const now = new Date();
+export function getDashboardRange(from?: string, to?: string, now = new Date()) {
   const today = toDateString(now);
-  let fromDate = from || today;
+  const monthStart = `${today.slice(0, 7)}-01`;
+  let fromDate = from || monthStart;
   let toDate = to || today;
 
   if (fromDate > toDate) {
@@ -34,11 +34,16 @@ export function getDashboardRange(from?: string, to?: string) {
   const end = toArgentinaStart(toDate);
   end.setUTCDate(end.getUTCDate() + 1);
 
+  const isToday = fromDate === today && toDate === today;
+
   return {
     from: fromDate,
     to: toDate,
+    today,
     startIso: start.toISOString(),
     endIso: end.toISOString(),
-    isCustomRange: Boolean(from || to) && !(fromDate === today && toDate === today)
+    isToday,
+    isMonthToDate: fromDate === monthStart && toDate === today,
+    isCustomRange: Boolean(from || to) && !isToday
   };
 }

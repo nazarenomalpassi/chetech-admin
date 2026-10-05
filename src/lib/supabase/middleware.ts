@@ -12,10 +12,38 @@ function hasSupabaseAuthCookie(request: NextRequest) {
     .some((cookie) => cookie.name.startsWith("sb-") && cookie.name.endsWith("-auth-token"));
 }
 
+export function redirectPreservingCookies(url: URL, sourceResponse: NextResponse) {
+  const redirectResponse = NextResponse.redirect(url);
+
+  sourceResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+
+  return redirectResponse;
+}
+
+export function getSessionRedirectPath({
+  hasSession,
+  isAuthRoute,
+  isProtectedRoute
+}: {
+  hasSession: boolean;
+  isAuthRoute: boolean;
+  isProtectedRoute: boolean;
+}) {
+  if (!hasSession && isProtectedRoute) return "/login";
+  if (hasSession && isAuthRoute) return "/dashboard";
+  return null;
+}
+
 export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthRoute = pathname.startsWith("/login");
-  const isPublicRoute = pathname === "/" || (!hasSupabaseEnv() && pathname.startsWith("/admin"));
+  const isAccessDeniedRoute = pathname.startsWith("/acceso-denegado");
+  const isPublicRoute =
+    pathname === "/" ||
+    isAccessDeniedRoute ||
+    (!hasSupabaseEnv() && pathname.startsWith("/admin"));
   const isProtectedRoute = !isAuthRoute && !isPublicRoute;
 
   if (!hasSupabaseEnv()) {
@@ -33,7 +61,7 @@ export async function updateSession(request: NextRequest) {
     });
   }
 
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: {
       headers: request.headers
     }
@@ -48,8 +76,12 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet: { name: string; value: string; options: CookieOptions }[]) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+          const previousCookies = response.cookies.getAll();
+          // Rebuild forwarded headers after refresh so RSCs receive the new token.
+          response = NextResponse.next({ request: { headers: request.headers } });
+          previousCookies.forEach((cookie) => response.cookies.set(cookie));
           cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
             response.cookies.set(name, value, options);
           });
         }
@@ -58,7 +90,6 @@ export async function updateSession(request: NextRequest) {
   );
 
   let hasSession = false;
-
   try {
     const { data, error } = await supabase.auth.getSession();
     hasSession = Boolean(data.session?.access_token);
@@ -70,16 +101,17 @@ export async function updateSession(request: NextRequest) {
     hasSession = isSupabaseAuthRateLimitError(error) && hasSupabaseAuthCookie(request);
   }
 
-  if (!hasSession && isProtectedRoute) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
+  const sessionRedirectPath = getSessionRedirectPath({
+    hasSession,
+    isAuthRoute,
+    isProtectedRoute
+  });
 
-  if (hasSession && isAuthRoute) {
+  if (sessionRedirectPath) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    url.pathname = sessionRedirectPath;
+    url.search = "";
+    return redirectPreservingCookies(url, response);
   }
 
   return response;

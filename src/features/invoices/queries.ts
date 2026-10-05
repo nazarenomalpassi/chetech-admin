@@ -1,4 +1,7 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { applyStableCreationOrder } from "@/lib/chronology";
+import { createPaginationMeta, DEFAULT_PAGE_SIZE, getPaginationRange } from "@/lib/pagination";
+import { mapInvoiceSaleItems } from "@/features/invoices/sale-item-mapper";
 
 function readRelated(record: any) {
   return Array.isArray(record) ? record[0] : record;
@@ -6,13 +9,6 @@ function readRelated(record: any) {
 
 function cleanText(value: unknown) {
   return String(value ?? "").trim();
-}
-
-function buildSaleItemDescription(item: any) {
-  const product = readRelated(item.products);
-  const name = cleanText(product?.name) || "Producto vendido";
-  const sku = cleanText(product?.sku);
-  return sku ? `${name} (${sku})` : name;
 }
 
 function buildRepairItemDescription(repair: any) {
@@ -45,31 +41,25 @@ async function getSaleItemsForInvoices(supabase: any, saleIds: string[]) {
   const grouped = new Map<string, any[]>();
   for (const item of data ?? []) {
     const current = grouped.get(item.sale_id) ?? [];
-    current.push({
-      id: item.id,
-      description: buildSaleItemDescription(item),
-      quantity: Number(item.quantity),
-      unitPrice: Number(item.unit_price),
-      total: Number(item.total),
-      productId: item.product_id
-    });
+    current.push(...mapInvoiceSaleItems([item]));
     grouped.set(item.sale_id, current);
   }
 
   return grouped;
 }
 
-export async function getInvoices() {
+export async function getInvoices(page = 1) {
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await (supabase as any)
+  const { from, to } = getPaginationRange(page);
+  const { data, error, count } = await (supabase as any)
     .from("invoices")
-    .select("id, invoice_number, customer_name, customer_phone, source_type, total, paid_total, balance, status, created_at")
+    .select("id, invoice_number, customer_name, customer_phone, source_type, total, paid_total, balance, status, created_at", { count: "exact" })
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range(from, to);
 
   if (error) throw new Error(error.message);
 
-  return (data ?? []).map((invoice: any) => ({
+  const items = (data ?? []).map((invoice: any) => ({
     id: invoice.id,
     invoiceNumber: invoice.invoice_number,
     customerName: invoice.customer_name,
@@ -79,6 +69,11 @@ export async function getInvoices() {
     status: invoice.status,
     createdAt: invoice.created_at
   }));
+
+  return {
+    items,
+    pagination: createPaginationMeta(count ?? items.length, page, DEFAULT_PAGE_SIZE)
+  };
 }
 
 export async function getInvoiceById(id: string) {
@@ -139,15 +134,17 @@ export async function getInvoiceById(id: string) {
 export async function getInvoiceFormOptions() {
   const supabase = await createServerSupabaseClient();
   const [repairsResult, salesResult, productsResult] = await Promise.all([
-    (supabase as any)
-      .from("repairs")
-      .select("id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, observations, status, repair_access_orders(repair_number)")
-      .order("created_at", { ascending: false })
+    applyStableCreationOrder(
+      (supabase as any)
+        .from("repairs")
+        .select("id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, observations, status, created_at, repair_access_orders(repair_number)")
+    )
       .limit(150),
-    (supabase as any)
-      .from("sales")
-      .select("id, sale_number, subtotal, notes, sold_at, cliente_id, clientes(nombre, telefono)")
-      .order("sold_at", { ascending: false })
+    applyStableCreationOrder(
+      (supabase as any)
+        .from("sales")
+        .select("id, sale_number, subtotal, notes, sold_at, created_at, cliente_id, clientes(nombre, telefono), sale_items(id, product_id, quantity, unit_price, total, products(name, sku))")
+    )
       .limit(150),
     (supabase as any)
       .from("products")
@@ -160,9 +157,6 @@ export async function getInvoiceFormOptions() {
   if (repairsResult.error) throw new Error(repairsResult.error.message);
   if (salesResult.error) throw new Error(salesResult.error.message);
   if (productsResult.error) throw new Error(productsResult.error.message);
-
-  const saleIds = (salesResult.data ?? []).map((sale: any) => sale.id);
-  const saleItemsBySale = await getSaleItemsForInvoices(supabase as any, saleIds);
 
   return {
     repairs: (repairsResult.data ?? []).map((repair: any) => ({
@@ -179,7 +173,7 @@ export async function getInvoiceFormOptions() {
     })),
     sales: (salesResult.data ?? []).map((sale: any) => {
       const customer = readRelated(sale.clientes);
-      const saleItems = saleItemsBySale.get(sale.id) ?? [];
+      const saleItems = mapInvoiceSaleItems(sale.sale_items ?? []);
 
       return {
         id: sale.id,

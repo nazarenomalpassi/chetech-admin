@@ -1,11 +1,11 @@
 "use client";
 
 import { useTransition } from "react";
-import { Pencil, Power, Trash2, WalletCards } from "lucide-react";
+import { CircleCheck, Pencil, Power, Trash2, WalletCards } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deleteTvBoardAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
+import { deleteTvBoardAction, markTvBoardReleasedAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
 import type { TvBoardSaleStatus } from "@/features/tv-boards/sales";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
@@ -20,6 +20,7 @@ type TvBoard = {
   soldAt: string | null;
   netAmount: number | null;
   releaseDate: string | null;
+  releasedAt: string | null;
   saleNotes: string | null;
   saleStatus: TvBoardSaleStatus;
   createdAt: string;
@@ -57,6 +58,15 @@ export function BoardTable({
       if (!result.success) {
         window.alert(result.message);
       }
+    });
+  }
+
+  function handleRelease(board: TvBoard) {
+    if (!window.confirm(`Confirmas que Mercado Pago ya libero ${formatCurrency(board.netAmount ?? 0)} por la placa ${board.brand} ${board.model}?`)) return;
+
+    startTransition(async () => {
+      const result = await markTvBoardReleasedAction(board.id);
+      if (!result.success) window.alert(result.message);
     });
   }
 
@@ -128,7 +138,7 @@ export function BoardTable({
             <div className="mt-3">{renderSaleBadge(board)}</div>
             {board.releaseDate ? (
               <p className="mt-3 text-xs leading-5 text-slate-500">
-                Liberacion {formatDate(board.releaseDate)}. {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
+                {board.releasedAt ? `Liberada el ${formatDate(board.releasedAt)} (prevista: ${formatDate(board.releaseDate)}).` : `Liberacion prevista: ${formatDate(board.releaseDate)}.`} {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
               </p>
             ) : null}
             {board.saleNotes ? <p className="mt-2 text-xs leading-5 text-slate-500">{board.saleNotes}</p> : null}
@@ -150,6 +160,12 @@ export function BoardTable({
                     Venta cargada
                   </Button>
                 )}
+                {board.saleStatus === "pending_release" ? (
+                  <Button className="w-full" disabled={isPending} onClick={() => handleRelease(board)} variant="secondary">
+                    <CircleCheck className="h-4 w-4" />
+                    Ya liberada
+                  </Button>
+                ) : null}
                 {!board.isSold ? (
                   <Button
                     className="w-full"
@@ -214,7 +230,8 @@ export function BoardTable({
                 <td className="px-4 py-4 text-slate-600">
                   {board.releaseDate ? (
                     <div>
-                      <p>{formatDate(board.releaseDate)}</p>
+                      <p>{board.releasedAt ? `Liberada el ${formatDate(board.releasedAt)}` : formatDate(board.releaseDate)}</p>
+                      {board.releasedAt ? <p className="mt-1 text-xs text-slate-400">Prevista: {formatDate(board.releaseDate)}</p> : null}
                       <p className="mt-1 text-xs text-slate-400">
                         {board.saleStatus === "released" ? "Dinero disponible" : "Retenido por Mercado Pago"}
                       </p>
@@ -250,6 +267,12 @@ export function BoardTable({
                           Venta cargada
                         </Button>
                       )}
+                      {board.saleStatus === "pending_release" ? (
+                        <Button disabled={isPending} onClick={() => handleRelease(board)} size="sm" variant="secondary">
+                          <CircleCheck className="mr-2 h-4 w-4" />
+                          Ya liberada
+                        </Button>
+                      ) : null}
                       {!board.isSold ? (
                         <Button
                           disabled={isPending}

@@ -7,6 +7,7 @@ import { PrintButton } from "@/features/invoices/components/print-button";
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import { getInvoiceById } from "@/features/invoices/queries";
 import { getStatusMessage } from "@/lib/form-state";
+import { requirePermission } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export default async function InvoiceDetailPage({
@@ -18,6 +19,7 @@ export default async function InvoiceDetailPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
+  await requirePermission("invoices.manage");
   const message = sp.error ? { success: false, message: sp.error } : getStatusMessage(sp.status);
   let invoice;
 

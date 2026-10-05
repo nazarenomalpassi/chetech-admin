@@ -30,6 +30,8 @@
   --text-faint: oklch(0.63 0.012 95);
   --graphite: oklch(0.24 0.008 95);
   --graphite-strong: oklch(0.18 0.006 95);
+  --brand-accent: oklch(0.58 0.025 175);
+  --brand-accent-soft: oklch(0.94 0.012 175);
   --success: oklch(0.63 0.11 150);
   --success-soft: oklch(0.95 0.02 150);
   --warning: oklch(0.8 0.08 85);
@@ -37,7 +39,7 @@
   --danger: oklch(0.64 0.18 20);
   --danger-soft: oklch(0.96 0.02 20);
   --shadow-soft: 0 22px 48px rgba(27, 27, 25, 0.08);
-  --shadow-card: 0 16px 36px rgba(27, 27, 25, 0.06);
+  --shadow-card: 0 8px 24px rgba(27, 27, 25, 0.055);
   --shadow-pop: 0 28px 48px rgba(27, 27, 25, 0.12);
 }
 
@@ -62,10 +64,10 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   background:
-    radial-gradient(circle at top right, rgba(16, 18, 23, 0.075), transparent 24%),
-    radial-gradient(circle at 10% 12%, rgba(16, 18, 23, 0.045), transparent 18%),
-    linear-gradient(90deg, rgba(29, 29, 27, 0.03) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(29, 29, 27, 0.03) 1px, transparent 1px),
+    radial-gradient(circle at top right, rgba(16, 18, 23, 0.05), transparent 24%),
+    radial-gradient(circle at 10% 12%, rgba(16, 18, 23, 0.025), transparent 18%),
+    linear-gradient(90deg, rgba(29, 29, 27, 0.018) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(29, 29, 27, 0.018) 1px, transparent 1px),
     linear-gradient(180deg, #fafaf8 0%, #f1f1ec 48%, #f7f7f4 100%);
   background-size: auto, auto, 24px 24px, 24px 24px, auto;
 }
@@ -130,6 +132,21 @@ textarea {
   font-size: 1rem;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .page-shell {
+    animation: none !important;
+  }
+}
+
 .admin-main {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -174,10 +191,10 @@ textarea {
 .metric-tile {
   position: relative;
   overflow: hidden;
-  border-radius: 28px;
+  border-radius: 20px;
   border: 1px solid rgba(29, 29, 27, 0.1);
   background: rgba(255, 255, 255, 0.9);
-  padding: 1.25rem;
+  padding: 1.1rem;
   box-shadow: var(--shadow-card);
 }
 
@@ -196,7 +213,7 @@ textarea {
 
 .table-shell {
   overflow: hidden;
-  border-radius: 30px;
+  border-radius: 24px;
   border: 1px solid rgba(29, 29, 27, 0.1);
   background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow-card);
@@ -210,7 +227,7 @@ textarea {
 
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(246, 246, 241, 0.92));
+  background: rgba(248, 248, 245, 0.96);
   padding: 1rem 1.25rem;
 }
 

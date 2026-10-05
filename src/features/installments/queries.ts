@@ -25,10 +25,6 @@ export function isInstallmentsUnavailableError(error: { code?: string; message?:
   );
 }
 
-function includesNormalized(value: string, query: string) {
-  return value.toLowerCase().includes(query.trim().toLowerCase());
-}
-
 function matchesInstallmentFilters(
   installment: {
     dueDate: string;
@@ -47,11 +43,19 @@ function matchesInstallmentFilters(
 export async function getInstallmentSalesData(filters: InstallmentFilters) {
   const supabase = await createServerSupabaseClient();
   const today = getLocalDateInputValue();
-  const salesResult = await (supabase as any)
+  let salesQuery = (supabase as any)
     .from("installment_sales")
-    .select("id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at")
-    .order("created_at", { ascending: false })
-    .limit(200);
+    .select("id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at, installments(id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at)")
+    .order("created_at", { ascending: false });
+
+  if (filters.customer?.trim()) {
+    salesQuery = salesQuery.ilike("customer_name", `%${filters.customer.trim()}%`);
+  }
+  if (filters.product?.trim()) {
+    salesQuery = salesQuery.ilike("product_name", `%${filters.product.trim()}%`);
+  }
+
+  const salesResult = await salesQuery.limit(200);
 
   if (salesResult.error) {
     if (isInstallmentsUnavailableError(salesResult.error)) {
@@ -71,43 +75,11 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
     throw new Error(salesResult.error.message);
   }
 
-  const saleIds = (salesResult.data ?? []).map((sale: any) => sale.id);
-  const installmentsResult = saleIds.length
-    ? await (supabase as any)
-        .from("installments")
-        .select("id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at")
-        .in("installment_sale_id", saleIds)
-        .order("installment_number", { ascending: true })
-    : { data: [], error: null };
-
-  if (installmentsResult.error) {
-    if (isInstallmentsUnavailableError(installmentsResult.error)) {
-      return {
-        migrationReady: false,
-        today,
-        summary: {
-          activeSales: 0,
-          pendingInstallments: 0,
-          overdueInstallments: 0,
-          paidInstallments: 0
-        },
-        sales: []
-      };
-    }
-
-    throw new Error(installmentsResult.error.message);
-  }
-
-  const installmentsBySale = new Map<string, any[]>();
-  for (const installment of installmentsResult.data ?? []) {
-    const current = installmentsBySale.get(installment.installment_sale_id) ?? [];
-    current.push(installment);
-    installmentsBySale.set(installment.installment_sale_id, current);
-  }
-
   const sales = (salesResult.data ?? [])
     .map((sale: any) => {
-      const installments = (installmentsBySale.get(sale.id) ?? []).map((installment: any) => ({
+      const installments = [...(sale.installments ?? [])]
+        .sort((a: any, b: any) => Number(a.installment_number) - Number(b.installment_number))
+        .map((installment: any) => ({
         id: installment.id,
         saleId: installment.installment_sale_id,
         installmentNumber: Number(installment.installment_number),
@@ -130,13 +102,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
         }))
       );
 
-      const matchesCustomer = !filters.customer || includesNormalized(sale.customer_name, filters.customer);
-      const matchesProduct = !filters.product || includesNormalized(sale.product_name, filters.product);
       const filteredInstallments = installments.filter((installment) => matchesInstallmentFilters(installment, filters));
-
-      if (!matchesCustomer || !matchesProduct) {
-        return null;
-      }
 
       if ((filters.status || filters.paymentMethod || filters.dueFrom || filters.dueTo) && !filteredInstallments.length) {
         return null;
@@ -220,7 +186,7 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
 export async function getDashboardInstallmentsData(supabase: any, today: string) {
   const installmentsResult = await (supabase as any)
     .from("installments")
-    .select("id, installment_sale_id, installment_number, due_date, amount, payment_method, status")
+    .select("id, installment_sale_id, installment_number, due_date, amount, payment_method, status, installment_sales(product_name, customer_name, installments_count)")
     .in("status", ["pendiente", "vencida"]);
 
   if (installmentsResult.error) {
@@ -238,45 +204,28 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
     throw new Error(installmentsResult.error.message);
   }
 
-  const installments = ((installmentsResult.data ?? []) as any[]).map((installment: any) => ({
-    id: installment.id,
-    saleId: installment.installment_sale_id,
-    installmentNumber: Number(installment.installment_number),
-    dueDate: installment.due_date,
-    amount: Number(installment.amount),
-    paymentMethod: installment.payment_method,
-    status: installment.status,
-    displayStatus: resolveInstallmentStatus(installment.status, installment.due_date, today)
-  }));
+  const installments = ((installmentsResult.data ?? []) as any[]).map((installment: any) => {
+    const sale = Array.isArray(installment.installment_sales)
+      ? installment.installment_sales[0]
+      : installment.installment_sales;
 
-  const saleIds = Array.from(new Set(installments.map((installment) => installment.saleId)));
-  const salesResult = saleIds.length
-    ? await (supabase as any)
-        .from("installment_sales")
-        .select("id, product_name, customer_name, installments_count")
-        .in("id", saleIds)
-    : { data: [], error: null };
+    return {
+      id: installment.id,
+      saleId: installment.installment_sale_id,
+      installmentNumber: Number(installment.installment_number),
+      dueDate: installment.due_date,
+      amount: Number(installment.amount),
+      paymentMethod: installment.payment_method,
+      status: installment.status,
+      displayStatus: resolveInstallmentStatus(installment.status, installment.due_date, today),
+      sale
+    };
+  });
 
-  if (salesResult.error) {
-    if (isInstallmentsUnavailableError(salesResult.error)) {
-      return {
-        dueTodayCount: 0,
-        overdueCount: 0,
-        dueTodayTotal: 0,
-        overdueTotal: 0,
-        dueToday: [],
-        overdue: []
-      };
-    }
-
-    throw new Error(salesResult.error.message);
-  }
-
-  const salesById = new Map<string, any>((salesResult.data ?? []).map((sale: any) => [sale.id, sale]));
   const dueToday = installments
     .filter((installment: (typeof installments)[number]) => installment.displayStatus === "pendiente" && installment.dueDate === today)
     .map((installment) => {
-      const sale = salesById.get(installment.saleId);
+      const sale = installment.sale;
 
       return {
         id: installment.id,
@@ -295,7 +244,7 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
     .filter((installment: (typeof installments)[number]) => installment.displayStatus === "vencida")
     .sort((a: (typeof installments)[number], b: (typeof installments)[number]) => a.dueDate.localeCompare(b.dueDate))
     .map((installment) => {
-      const sale = salesById.get(installment.saleId);
+      const sale = installment.sale;
 
       return {
         id: installment.id,

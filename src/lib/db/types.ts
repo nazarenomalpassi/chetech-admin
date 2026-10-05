@@ -7,18 +7,24 @@ export type Database = {
         Row: {
           id: string;
           full_name: string | null;
-          role: "admin" | "empleado";
+          email: string | null;
+          phone: string | null;
+          role: "admin" | "tecnico" | "customer" | "editor" | "support" | "staff";
           created_at: string;
         };
         Insert: {
           id: string;
           full_name?: string | null;
-          role?: "admin" | "empleado";
+          email?: string | null;
+          phone?: string | null;
+          role?: "admin" | "tecnico" | "customer" | "editor" | "support" | "staff";
           created_at?: string;
         };
         Update: {
           full_name?: string | null;
-          role?: "admin" | "empleado";
+          email?: string | null;
+          phone?: string | null;
+          role?: "admin" | "tecnico" | "customer" | "editor" | "support" | "staff";
         };
       };
       categories: {
@@ -139,6 +145,7 @@ export type Database = {
           sold_at: string;
           created_by: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -150,12 +157,15 @@ export type Database = {
           sold_at?: string;
           created_by?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           subtotal?: number;
           cost_total?: number;
           profit_total?: number;
           notes?: string | null;
+          sold_at?: string;
+          updated_at?: string;
         };
       };
       sale_items: {
@@ -217,6 +227,7 @@ export type Database = {
           is_voided: boolean;
           created_by: string | null;
           created_at: string;
+          updated_at: string;
         };
         Insert: {
           id?: string;
@@ -230,6 +241,7 @@ export type Database = {
           is_voided?: boolean;
           created_by?: string | null;
           created_at?: string;
+          updated_at?: string;
         };
         Update: {
           expense_date?: string;
@@ -240,6 +252,7 @@ export type Database = {
           impacts_cash?: boolean;
           observations?: string | null;
           is_voided?: boolean;
+          updated_at?: string;
         };
       };
       salary_withdrawals: {
@@ -251,6 +264,12 @@ export type Database = {
           notes: string | null;
           created_by: string | null;
           created_at: string;
+          member_id: string | null;
+          liquidation_id: string | null;
+          salary_period: string | null;
+          withdrawal_type: "salary" | "extraordinary";
+          target_amount_snapshot: number | null;
+          coverage_percentage: number | null;
         };
         Insert: {
           id?: string;
@@ -260,13 +279,55 @@ export type Database = {
           notes?: string | null;
           created_by?: string | null;
           created_at?: string;
+          member_id?: string | null;
+          liquidation_id?: string | null;
+          salary_period?: string | null;
+          withdrawal_type?: "salary" | "extraordinary";
+          target_amount_snapshot?: number | null;
+          coverage_percentage?: number | null;
         };
         Update: {
           withdrawal_date?: string;
           amount?: number;
           payment_method?: "efectivo" | "nx" | "mp";
           notes?: string | null;
+          member_id?: string | null;
+          liquidation_id?: string | null;
+          salary_period?: string | null;
+          withdrawal_type?: "salary" | "extraordinary";
+          target_amount_snapshot?: number | null;
+          coverage_percentage?: number | null;
         };
+      };
+      salary_members: {
+        Row: { id: string; name: string; target_amount: number; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
+        Insert: { id?: string; name: string; target_amount: number; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string };
+        Update: { name?: string; target_amount?: number; sort_order?: number; is_active?: boolean; updated_at?: string };
+      };
+      financial_reserves: {
+        Row: { id: string; code: string; name: string; amount: number; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
+        Insert: { id?: string; code: string; name: string; amount?: number; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string };
+        Update: { code?: string; name?: string; amount?: number; sort_order?: number; is_active?: boolean; updated_at?: string };
+      };
+      salary_liquidations: {
+        Row: { id: string; period_month: string; withdrawal_date: string; intended_total: number; allocated_total: number; salary_mass_snapshot: number; salary_amount: number; profit_share_amount: number; total_amount: number; coverage_percentage: number; excess_amount: number; notes: string | null; idempotency_key: string; created_by: string | null; created_at: string };
+        Insert: { id?: string; period_month: string; withdrawal_date: string; intended_total: number; allocated_total?: number; salary_mass_snapshot?: number; salary_amount?: number; profit_share_amount?: number; total_amount?: number; coverage_percentage?: number; excess_amount?: number; notes?: string | null; idempotency_key: string; created_by?: string | null; created_at?: string };
+        Update: { withdrawal_date?: string; allocated_total?: number; salary_mass_snapshot?: number; salary_amount?: number; profit_share_amount?: number; total_amount?: number; coverage_percentage?: number; excess_amount?: number; notes?: string | null };
+      };
+      salary_liquidation_members: {
+        Row: { id: string; liquidation_id: string; member_id: string; member_name_snapshot: string; target_amount_snapshot: number; salary_amount: number; profit_share_amount: number; total_amount: number; salary_coverage_percentage: number; created_at: string };
+        Insert: { id?: string; liquidation_id: string; member_id: string; member_name_snapshot: string; target_amount_snapshot: number; salary_amount?: number; profit_share_amount?: number; salary_coverage_percentage: number; created_at?: string };
+        Update: { member_name_snapshot?: string; target_amount_snapshot?: number; salary_amount?: number; profit_share_amount?: number; salary_coverage_percentage?: number };
+      };
+      salary_liquidation_funding: {
+        Row: { id: string; liquidation_id: string; payment_method: "efectivo" | "nx" | "mp"; amount: number; created_at: string };
+        Insert: { id?: string; liquidation_id: string; payment_method: "efectivo" | "nx" | "mp"; amount: number; created_at?: string };
+        Update: { payment_method?: "efectivo" | "nx" | "mp"; amount?: number };
+      };
+      replenishment_plan_items: {
+        Row: { id: string; period_month: string; product_id: string; quantity_to_order: number; status: "pending" | "added" | "ordered" | "received"; notes: string | null; updated_by: string | null; created_at: string; updated_at: string };
+        Insert: { id?: string; period_month: string; product_id: string; quantity_to_order?: number; status?: "pending" | "added" | "ordered" | "received"; notes?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
+        Update: { quantity_to_order?: number; status?: "pending" | "added" | "ordered" | "received"; notes?: string | null; updated_by?: string | null; updated_at?: string };
       };
       installment_sales: {
         Row: {
@@ -365,6 +426,7 @@ export type Database = {
             | "entregado"
             | "cancelado";
           created_by: string | null;
+          entry_date: string;
           created_at: string;
           updated_at: string;
         };
@@ -385,6 +447,7 @@ export type Database = {
           observations?: string | null;
           status?: Database["public"]["Tables"]["repairs"]["Row"]["status"];
           created_by?: string | null;
+          entry_date: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -403,6 +466,7 @@ export type Database = {
           internal_cost?: number | null;
           observations?: string | null;
           status?: Database["public"]["Tables"]["repairs"]["Row"]["status"];
+          entry_date?: string;
           updated_at?: string;
         };
       };
@@ -532,7 +596,11 @@ export type Database = {
       repair_access_orders: {
         Row: {
           id: string;
-          repair_number: string | null;
+          order_number: number;
+          repair_number: string;
+          numbering_source: "legacy_import" | "current_system" | "post_import";
+          numbering_reconciled_at: string | null;
+          numbering_reconciliation_id: string | null;
           customer_id: string;
           device_id: string;
           intake_date: string;
@@ -544,6 +612,15 @@ export type Database = {
           budget_response_at: string | null;
           technician_name: string | null;
           technician_id: string | null;
+          customer_user_id: string | null;
+          customer_public_id: string;
+          public_progress: string | null;
+          public_next_step: string | null;
+          budget_visible_to_customer: boolean;
+          public_budget_description: string | null;
+          budget_valid_until: string | null;
+          customer_action_required: boolean;
+          last_customer_visible_update_at: string | null;
           budget_amount: number | null;
           approved_amount: number | null;
           final_amount: number | null;
@@ -553,11 +630,19 @@ export type Database = {
           paid_at: string | null;
           delivered_at: string | null;
           picked_up_at: string | null;
+          has_warranty: boolean;
+          warranty_requires_review: boolean;
+          historical_warranty_expired: boolean | null;
           warranty_days: number;
           warranty_start: string | null;
           warranty_until: string | null;
           warranty_conditions: string | null;
           warranty_active: boolean;
+          legacy_order_number: string | null;
+          import_source: string | null;
+          import_file_name: string | null;
+          import_row_key: string | null;
+          imported_at: string | null;
           notes: string | null;
           priority: string | null;
           work_performed: string | null;
@@ -584,7 +669,11 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          repair_number?: string | null;
+          order_number?: number;
+          repair_number?: string;
+          numbering_source?: "legacy_import" | "current_system" | "post_import";
+          numbering_reconciled_at?: string | null;
+          numbering_reconciliation_id?: string | null;
           customer_id: string;
           device_id: string;
           intake_date?: string;
@@ -596,6 +685,15 @@ export type Database = {
           budget_response_at?: string | null;
           technician_name?: string | null;
           technician_id?: string | null;
+          customer_user_id?: string | null;
+          customer_public_id?: string;
+          public_progress?: string | null;
+          public_next_step?: string | null;
+          budget_visible_to_customer?: boolean;
+          public_budget_description?: string | null;
+          budget_valid_until?: string | null;
+          customer_action_required?: boolean;
+          last_customer_visible_update_at?: string | null;
           budget_amount?: number | null;
           approved_amount?: number | null;
           final_amount?: number | null;
@@ -605,11 +703,19 @@ export type Database = {
           paid_at?: string | null;
           delivered_at?: string | null;
           picked_up_at?: string | null;
+          has_warranty?: boolean;
+          warranty_requires_review?: boolean;
+          historical_warranty_expired?: boolean | null;
           warranty_days?: number;
           warranty_start?: string | null;
           warranty_until?: string | null;
           warranty_conditions?: string | null;
           warranty_active?: boolean;
+          legacy_order_number?: string | null;
+          import_source?: string | null;
+          import_file_name?: string | null;
+          import_row_key?: string | null;
+          imported_at?: string | null;
           notes?: string | null;
           priority?: string | null;
           work_performed?: string | null;
@@ -627,7 +733,11 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          repair_number?: string | null;
+          order_number?: number;
+          repair_number?: string;
+          numbering_source?: "legacy_import" | "current_system" | "post_import";
+          numbering_reconciled_at?: string | null;
+          numbering_reconciliation_id?: string | null;
           customer_id?: string;
           device_id?: string;
           intake_date?: string;
@@ -639,6 +749,15 @@ export type Database = {
           budget_response_at?: string | null;
           technician_name?: string | null;
           technician_id?: string | null;
+          customer_user_id?: string | null;
+          customer_public_id?: string;
+          public_progress?: string | null;
+          public_next_step?: string | null;
+          budget_visible_to_customer?: boolean;
+          public_budget_description?: string | null;
+          budget_valid_until?: string | null;
+          customer_action_required?: boolean;
+          last_customer_visible_update_at?: string | null;
           budget_amount?: number | null;
           approved_amount?: number | null;
           final_amount?: number | null;
@@ -648,11 +767,19 @@ export type Database = {
           paid_at?: string | null;
           delivered_at?: string | null;
           picked_up_at?: string | null;
+          has_warranty?: boolean;
+          warranty_requires_review?: boolean;
+          historical_warranty_expired?: boolean | null;
           warranty_days?: number;
           warranty_start?: string | null;
           warranty_until?: string | null;
           warranty_conditions?: string | null;
           warranty_active?: boolean;
+          legacy_order_number?: string | null;
+          import_source?: string | null;
+          import_file_name?: string | null;
+          import_row_key?: string | null;
+          imported_at?: string | null;
           notes?: string | null;
           priority?: string | null;
           work_performed?: string | null;
@@ -792,6 +919,8 @@ export type Database = {
           duplicate_count: number;
           error_count: number;
           summary: Json;
+          status: "running" | "completed" | "failed" | "rolled_back";
+          completed_at: string | null;
           created_by: string | null;
           created_at: string;
         };
@@ -805,6 +934,8 @@ export type Database = {
           duplicate_count?: number;
           error_count?: number;
           summary?: Json;
+          status?: "running" | "completed" | "failed" | "rolled_back";
+          completed_at?: string | null;
           created_by?: string | null;
           created_at?: string;
         };
@@ -815,6 +946,8 @@ export type Database = {
           duplicate_count?: number;
           error_count?: number;
           summary?: Json;
+          status?: "running" | "completed" | "failed" | "rolled_back";
+          completed_at?: string | null;
         };
       };
       repair_access_import_rows: {
@@ -825,7 +958,19 @@ export type Database = {
           raw_data: Json;
           normalized_phone: string | null;
           customer_id: string | null;
-          status: "imported" | "updated" | "duplicate_ignored" | "error";
+          stable_key: string | null;
+          order_id: string | null;
+          device_id: string | null;
+          customer_action: string | null;
+          review_reasons: string[];
+          status:
+            | "imported"
+            | "updated"
+            | "duplicate_ignored"
+            | "error"
+            | "imported_order"
+            | "ambiguous_created"
+            | "skipped_existing";
           message: string | null;
           created_at: string;
         };
@@ -836,13 +981,37 @@ export type Database = {
           raw_data?: Json;
           normalized_phone?: string | null;
           customer_id?: string | null;
-          status: "imported" | "updated" | "duplicate_ignored" | "error";
+          stable_key?: string | null;
+          order_id?: string | null;
+          device_id?: string | null;
+          customer_action?: string | null;
+          review_reasons?: string[];
+          status:
+            | "imported"
+            | "updated"
+            | "duplicate_ignored"
+            | "error"
+            | "imported_order"
+            | "ambiguous_created"
+            | "skipped_existing";
           message?: string | null;
           created_at?: string;
         };
         Update: {
           customer_id?: string | null;
-          status?: "imported" | "updated" | "duplicate_ignored" | "error";
+          stable_key?: string | null;
+          order_id?: string | null;
+          device_id?: string | null;
+          customer_action?: string | null;
+          review_reasons?: string[];
+          status?:
+            | "imported"
+            | "updated"
+            | "duplicate_ignored"
+            | "error"
+            | "imported_order"
+            | "ambiguous_created"
+            | "skipped_existing";
           message?: string | null;
         };
       };

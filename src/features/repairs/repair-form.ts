@@ -13,6 +13,7 @@ export type RepairListRecord = {
   paymentMethod: string;
   status: string;
   observations: string | null;
+  entryDate: string;
   createdAt: string;
 };
 

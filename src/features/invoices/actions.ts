@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { deleteCashMovement } from "@/lib/accounting";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { invoiceFormSchema } from "@/features/invoices/schemas";
 
@@ -49,7 +49,7 @@ export async function saveInvoiceAction(formData: FormData) {
     redirectWithError("/facturacion", parsed.error.issues[0]?.message ?? "No se pudo validar el comprobante", String(formData.get("id") ?? ""));
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const input = parsed.data;
   const sourceType = input.sourceType;

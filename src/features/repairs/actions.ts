@@ -8,10 +8,10 @@ import { buildAccessPaidPayload, buildAccessUnpaidPayload } from "@/features/rep
 import { createAuditLog } from "@/lib/audit";
 import { formatCashMethod } from "@/lib/cash";
 import { deleteCashMovement, replaceCashMovements } from "@/lib/accounting";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
+import { getRepairWriteDates } from "@/lib/chronology";
 import { getPaymentTotal, parsePaymentSplits } from "@/lib/payment-splits";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { toOperationalDateTime } from "@/lib/utils";
 import { getRepairValidationError } from "@/features/repairs/validation";
 
 const repairFormSchema = z.object({
@@ -200,7 +200,7 @@ export async function saveRepairAction(formData: FormData) {
     );
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const paymentTotal = getPaymentTotal(parsed.data.payments);
   const paymentErrorMessage = getRepairValidationError({
@@ -244,8 +244,7 @@ export async function saveRepairAction(formData: FormData) {
     final_price: parsed.data.amount,
     observations: null,
     created_by: user.id,
-    created_at: toOperationalDateTime(parsed.data.entryDate),
-    updated_at: new Date().toISOString()
+    ...getRepairWriteDates(parsed.data.entryDate)
   };
   const fallbackPayload = {
     customer_name: payload.customer_name,
@@ -255,8 +254,7 @@ export async function saveRepairAction(formData: FormData) {
     final_price: payload.final_price,
     observations: payload.observations,
     created_by: payload.created_by,
-    created_at: payload.created_at,
-    updated_at: payload.updated_at
+    entry_date: payload.entry_date
   };
 
   let savedWithAccessLink = Boolean(parsed.data.repairAccessOrderId);
@@ -296,7 +294,6 @@ export async function saveRepairAction(formData: FormData) {
       parsed.data.payments.map((payment) => ({
         repair_id: data.id,
         payment_date: parsed.data.entryDate.slice(0, 10),
-        created_at: toOperationalDateTime(parsed.data.entryDate),
         method: payment.method,
         amount: payment.amount,
         notes: parsed.data.orderNumber ? `Orden ${parsed.data.orderNumber}` : null

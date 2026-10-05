@@ -208,6 +208,7 @@ export function RepairOutsourcingsView({
               </label>
               <Input
                 name="workshopName"
+                aria-label="Lugar donde se llevo el equipo"
                 onChange={(event) => setWorkshopName(event.target.value)}
                 placeholder="Ej: Taller Roberto, Servicio Philips..."
                 value={workshopName}
@@ -217,7 +218,7 @@ export function RepairOutsourcingsView({
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Fecha
               </label>
-              <Input name="sentAt" onChange={(event) => setSentAt(event.target.value)} type="date" value={sentAt} />
+              <Input aria-label="Fecha de envio al taller" name="sentAt" onChange={(event) => setSentAt(event.target.value)} type="date" value={sentAt} />
             </div>
             <div className="lg:col-span-2">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
@@ -226,6 +227,7 @@ export function RepairOutsourcingsView({
               <textarea
                 className="min-h-24 w-full rounded-[22px] border border-graphite/10 bg-white/90 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
                 name="notes"
+                aria-label="Observaciones de la terciarizacion"
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Que se llevo, quien lo recibio, repuestos o indicaciones..."
                 value={notes}
@@ -254,6 +256,7 @@ export function RepairOutsourcingsView({
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
+                  aria-label="Buscar terciarizaciones por orden, cliente, equipo o taller"
                   className="pl-10"
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="REP, cliente, equipo, serie o taller..."

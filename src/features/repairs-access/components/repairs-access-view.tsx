@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -17,6 +17,7 @@ import type {
   RepairAccessSummary
 } from "@/features/repairs-access/queries";
 import type { ActionResult } from "@/lib/form-state";
+import { getFormDraftStorageKey } from "@/lib/form-draft";
 import { formatDate } from "@/lib/utils";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
@@ -27,7 +28,7 @@ const sections: { key: RepairAccessSection; label: string; helper: string }[] = 
   { key: "clientes", label: "Clientes", helper: "Buscar y consultar" },
   { key: "ordenes", label: "Ordenes", helper: "Estados y filtros" },
   { key: "consultas", label: "Consultas", helper: "Vistas del taller" },
-  { key: "importar", label: "Importar", helper: "Clientes Access" }
+  { key: "importar", label: "Importar", helper: "Historial Excel" }
 ];
 
 export function RepairsAccessView({
@@ -36,7 +37,11 @@ export function RepairsAccessView({
   latestImport,
   summary,
   message,
-  initialOrderId
+  initialOrderId,
+  actionStatus,
+  initialView,
+  canManageIntake,
+  defaultWarrantyDays
 }: {
   orders: RepairAccessOrderRecord[];
   customers: RepairAccessCustomerSummary[];
@@ -44,44 +49,106 @@ export function RepairsAccessView({
   summary: RepairAccessSummary;
   message: ActionResult | null;
   initialOrderId?: string;
+  actionStatus?: string;
+  initialView?: string;
+  canManageIntake: boolean;
+  defaultWarrantyDays: number;
 }) {
   const initialSelectedOrder = useMemo(
     () => orders.find((order) => order.id === initialOrderId) ?? null,
     [initialOrderId, orders]
   );
-  const [activeSection, setActiveSection] = useState<RepairAccessSection>(initialSelectedOrder ? "detalle" : "panel");
+  const requestedSection = sections.some((section) => section.key === initialView)
+    ? (initialView as RepairAccessSection)
+    : null;
+  const [activeSection, setActiveSection] = useState<RepairAccessSection>(() => {
+    if (!canManageIntake) return "ordenes";
+    if (initialSelectedOrder) return "detalle";
+    if (requestedSection) return requestedSection;
+    return message && !message.success ? "nueva" : "panel";
+  });
   const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(initialSelectedOrder);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [orderSearch, setOrderSearch] = useState("");
+  const [orderSearch, setOrderSearch] = useState(!canManageIntake && initialSelectedOrder ? initialSelectedOrder.repairNumber : "");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [warrantyFilter, setWarrantyFilter] = useState("todos");
+  const [intakeDirty, setIntakeDirty] = useState(false);
+  const orderHeadingRef = useRef<HTMLHeadingElement>(null);
+  const previousSectionRef = useRef(activeSection);
+
+  useEffect(() => {
+    const sectionChanged = previousSectionRef.current !== activeSection;
+    previousSectionRef.current = activeSection;
+    if (sectionChanged && activeSection === "ordenes") orderHeadingRef.current?.focus();
+  }, [activeSection]);
 
   function navigate(section: string) {
+    if (!canManageIntake && section !== "ordenes") return;
+    if (
+      activeSection === "nueva" &&
+      section !== "nueva" &&
+      intakeDirty &&
+      !window.confirm("Hay cambios sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés salir?")
+    ) {
+      return;
+    }
     setActiveSection(section as RepairAccessSection);
   }
 
   function startEdit(order: RepairAccessOrderRecord) {
+    if (!canManageIntake) return;
     setEditing(order);
     setActiveSection("nueva");
   }
 
   function openDetail(order: RepairAccessOrderRecord) {
+    if (!canManageIntake) return;
     setSelectedOrder(order);
     setEditing(null);
     setActiveSection("detalle");
   }
 
   function stopEdit() {
+    if (intakeDirty && !window.confirm("Hay cambios sin guardar. ¿Querés cancelar y conservar el borrador?")) {
+      return;
+    }
     setEditing(null);
   }
+
+  function openStatus(status: string) {
+    setOrderSearch("");
+    setStatusFilter(status);
+    setWarrantyFilter("todos");
+    navigate("ordenes");
+  }
+
+  useEffect(() => {
+    if (!actionStatus) return;
+
+    if (actionStatus === "repair_access_created") {
+      window.localStorage.removeItem(getFormDraftStorageKey("repair-access:intake:new"));
+    }
+    if (actionStatus === "repair_access_intake_updated" && initialOrderId) {
+      window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:intake:${initialOrderId}`));
+    }
+    if (actionStatus === "repair_access_technical_updated" && initialOrderId) {
+      window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:technical:${initialOrderId}`));
+    }
+  }, [actionStatus, initialOrderId]);
 
   useEffect(() => {
     if (!initialSelectedOrder) return;
 
     setSelectedOrder(initialSelectedOrder);
     setEditing(null);
-    setActiveSection("detalle");
-  }, [initialSelectedOrder]);
+    setActiveSection(canManageIntake ? "detalle" : "ordenes");
+    if (!canManageIntake) {
+      setOrderSearch(initialSelectedOrder.repairNumber);
+      setStatusFilter("todos");
+      setWarrantyFilter("todos");
+    }
+  }, [canManageIntake, initialSelectedOrder]);
 
   useEffect(() => {
     setSelectedOrder((current) => {
@@ -102,26 +169,35 @@ export function RepairsAccessView({
         </p>
       ) : null}
 
-      <Card className="p-3">
-        <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6">
-          {sections.map((section) => (
-            <button
-              className={`rounded-2xl px-4 py-3 text-left transition ${activeSection === section.key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}
-              key={section.key}
-              onClick={() => setActiveSection(section.key)}
-              type="button"
-            >
-              <span className="block text-sm font-semibold">{section.label}</span>
-              <span className={`mt-1 block text-xs ${activeSection === section.key ? "text-slate-300" : "text-slate-400"}`}>{section.helper}</span>
-            </button>
-          ))}
-        </div>
-      </Card>
+      {canManageIntake ? (
+        <Card className="p-3">
+          <nav aria-label="Secciones de reparaciones" className="grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-6">
+            {sections.map((section) => (
+              <button
+                aria-current={activeSection === section.key ? "page" : undefined}
+                className={`rounded-2xl px-4 py-3 text-left transition ${activeSection === section.key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                key={section.key}
+                onClick={() => navigate(section.key)}
+                type="button"
+              >
+                <span className="block text-sm font-semibold">{section.label}</span>
+                <span className={`mt-1 block text-xs ${activeSection === section.key ? "text-slate-300" : "text-slate-400"}`}>{section.helper}</span>
+              </button>
+            ))}
+          </nav>
+        </Card>
+      ) : null}
 
-      {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} orders={orders} summary={summary} /> : null}
+      {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
 
       {activeSection === "nueva" ? (
-        <RepairAccessNewOrderWizard action={saveRepairAccessOrderAction} customers={customers} editing={editing} onCancel={stopEdit} />
+        <RepairAccessNewOrderWizard
+          action={saveRepairAccessOrderAction}
+          customers={customers}
+          editing={editing}
+          onCancel={stopEdit}
+          onDirtyChange={setIntakeDirty}
+        />
       ) : null}
 
       {activeSection === "clientes" ? (
@@ -130,19 +206,24 @@ export function RepairsAccessView({
 
       {activeSection === "ordenes" ? (
         <RepairAccessOrdersSection
+          canManageIntake={canManageIntake}
+          headingRef={orderHeadingRef}
           onEdit={startEdit}
           onOpenDetail={openDetail}
           onSearchChange={setOrderSearch}
           onStatusFilterChange={setStatusFilter}
+          onWarrantyFilterChange={setWarrantyFilter}
           orders={orders}
           search={orderSearch}
           statusFilter={statusFilter}
+          warrantyFilter={warrantyFilter}
         />
       ) : null}
 
-      {activeSection === "detalle" && selectedOrder ? (
+      {canManageIntake && activeSection === "detalle" && selectedOrder ? (
         <RepairAccessOrderDetail
           onBack={() => setActiveSection("ordenes")}
+          defaultWarrantyDays={defaultWarrantyDays}
           onEditIntake={startEdit}
           order={selectedOrder}
         />
@@ -192,10 +273,11 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
 function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessImportSummary | null }) {
   return (
     <Card>
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Importar clientes</p>
-      <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Migracion desde Access</h2>
+      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Importacion historica</p>
+      <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Trazabilidad del Excel</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-        Esta pantalla queda reservada para importar clientes exportados desde Access. No importa reparaciones viejas ni impacta caja.
+        Resume el ultimo lote reproducible de clientes y ordenes historicas. La importacion conserva
+        cada fila original para auditoria, evita duplicados y no impacta caja.
       </p>
 
       {latestImport ? (

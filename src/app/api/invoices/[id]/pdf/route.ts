@@ -3,14 +3,14 @@ import PDFDocument from "pdfkit";
 
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import { getInvoiceById } from "@/features/invoices/queries";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 export async function GET(_: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await requireUser();
+    await requireAdmin();
   } catch {
     return NextResponse.json({ error: "Necesitas iniciar sesion para descargar el comprobante." }, { status: 401 });
   }

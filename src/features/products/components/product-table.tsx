@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Pencil, Power, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -22,14 +22,23 @@ type Product = {
 
 export function ProductTable({
   canManage,
+  filterKey,
   products,
   onEdit
 }: {
   canManage: boolean;
+  filterKey?: string;
   products: Product[];
   onEdit: (id: string) => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const [visibleLimit, setVisibleLimit] = useState(25);
+  const visibleProducts = products.slice(0, visibleLimit);
+  const resetKey = filterKey ?? products.map((product) => product.id).join(",");
+
+  useEffect(() => {
+    setVisibleLimit(25);
+  }, [resetKey]);
 
   function handleDelete(product: Product) {
     const confirmed = window.confirm(
@@ -63,7 +72,7 @@ export function ProductTable({
       </div>
 
       <div className="grid gap-3 p-3 lg:hidden">
-        {products.map((product) => {
+        {visibleProducts.map((product) => {
           const lowStock = product.stock <= product.minStock;
 
           return (
@@ -90,19 +99,21 @@ export function ProductTable({
                     {lowStock ? <Badge variant="warning">Bajo</Badge> : <Badge variant="success">OK</Badge>}
                   </div>
                 </div>
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
+                {canManage ? <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Costo</p>
                   <p className="mt-1 font-semibold text-slate-800">{formatCurrency(product.cost)}</p>
-                </div>
+                </div> : null}
                 <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Precio</p>
                   <p className="mt-1 font-semibold text-slate-950">{formatCurrency(product.salePrice)}</p>
                 </div>
               </div>
 
-              <p className="mt-3 text-xs text-slate-500">
-                Margen visible {formatCurrency(product.salePrice - product.cost)}
-              </p>
+              {canManage ? (
+                <p className="mt-3 text-xs text-slate-500">
+                  Margen visible {formatCurrency(product.salePrice - product.cost)}
+                </p>
+              ) : null}
 
               {canManage ? (
                 <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -143,7 +154,7 @@ export function ProductTable({
             <tr>
               <th className="px-4 py-4 font-medium sm:px-5">Producto</th>
               <th className="px-4 py-4 font-medium">Categoria</th>
-              <th className="px-4 py-4 font-medium">Costo</th>
+              {canManage ? <th className="px-4 py-4 font-medium">Costo</th> : null}
               <th className="px-4 py-4 font-medium">Precio</th>
               <th className="px-4 py-4 font-medium">Stock</th>
               <th className="px-4 py-4 font-medium">Estado</th>
@@ -151,7 +162,7 @@ export function ProductTable({
             </tr>
           </thead>
           <tbody>
-            {products.map((product) => {
+            {visibleProducts.map((product) => {
               const lowStock = product.stock <= product.minStock;
 
               return (
@@ -166,13 +177,15 @@ export function ProductTable({
                     </div>
                   </td>
                   <td className="px-4 py-4 text-slate-600">{product.category ?? "Sin categoria"}</td>
-                  <td className="px-4 py-4 text-slate-600">{formatCurrency(product.cost)}</td>
+                  {canManage ? <td className="px-4 py-4 text-slate-600">{formatCurrency(product.cost)}</td> : null}
                   <td className="px-4 py-4">
                     <div className="space-y-1">
                       <p className="font-medium text-slate-950">{formatCurrency(product.salePrice)}</p>
-                      <p className="text-xs text-slate-500">
-                        Margen visible {formatCurrency(product.salePrice - product.cost)}
-                      </p>
+                      {canManage ? (
+                        <p className="text-xs text-slate-500">
+                          Margen visible {formatCurrency(product.salePrice - product.cost)}
+                        </p>
+                      ) : null}
                     </div>
                   </td>
                   <td className="px-4 py-4">
@@ -227,6 +240,14 @@ export function ProductTable({
         </table>
       </div>
 
+      {products.length ? (
+        <div className="flex flex-col gap-3 border-t border-graphite/8 bg-brand-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <p aria-live="polite" className="text-sm text-slate-600">Mostrando {visibleProducts.length} de {products.length} productos</p>
+          {visibleProducts.length < products.length ? (
+            <Button onClick={() => setVisibleLimit((current) => Math.min(current + 25, products.length))} type="button" variant="secondary">Mostrar mas productos</Button>
+          ) : null}
+        </div>
+      ) : null}
       {!products.length ? (
         <div className="empty-panel border-t border-graphite/8">
           Todavia no hay productos para mostrar. Cuando cargues el primero, el catalogo aparece aca.

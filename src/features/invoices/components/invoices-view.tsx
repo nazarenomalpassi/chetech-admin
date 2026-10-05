@@ -9,11 +9,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Select } from "@/components/ui/select";
 import { saveInvoiceAction, voidInvoiceAction } from "@/features/invoices/actions";
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import type { PaginationMeta } from "@/lib/pagination";
 
 type Invoice = {
   id: string;
@@ -75,12 +77,14 @@ export function InvoicesView({
   invoices,
   options,
   editingInvoice,
+  pagination,
   message
 }: {
   canVoid: boolean;
   invoices: Invoice[];
   options: Options;
   editingInvoice: InvoiceDetail | null;
+  pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
   const [sourceType, setSourceType] = useState(editingInvoice?.sourceType ?? "manual");
@@ -215,7 +219,7 @@ export function InvoicesView({
         ) : null}
 
         {message ? (
-          <div className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"} role={message.success ? "status" : "alert"}>
             {message.message}
           </div>
         ) : null}
@@ -226,7 +230,7 @@ export function InvoicesView({
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-4">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sourceType">
                 Origen
               </label>
               <Select
@@ -241,22 +245,22 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Reparacion
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repairId">
+                Reparación
               </label>
               <Select
                 disabled={sourceType !== "repair"}
                 name="repairId"
                 onChange={(event) => applyRepair(event.target.value)}
                 options={[
-                  { label: "Seleccionar reparacion", value: "" },
+                  { label: "Seleccionar reparación", value: "" },
                   ...options.repairs.map((repair) => ({ label: repair.label, value: repair.id }))
                 ]}
                 value={repairId}
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="saleId">
                 Venta
               </label>
               <Select
@@ -271,25 +275,25 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="discount">
                 Descuento
               </label>
               <Input min={0} name="discount" onChange={(event) => setDiscount(Number(event.target.value))} step="0.01" type="number" value={discount} />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerName">
                 Cliente
               </label>
               <Input name="customerName" onChange={(event) => setCustomerName(event.target.value)} value={customerName} />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Telefono
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerPhone">
+                Teléfono
               </label>
               <Input name="customerPhone" onChange={(event) => setCustomerPhone(event.target.value)} value={customerPhone} />
             </div>
             <div className="xl:col-span-2">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="notes">
                 Observaciones
               </label>
               <Input defaultValue={editingInvoice?.notes ?? ""} name="notes" placeholder="Opcional" />
@@ -315,6 +319,7 @@ export function InvoicesView({
                   key={index}
                 >
                   <Select
+                    aria-label={`Producto opcional del ítem ${index + 1}`}
                     onChange={(event) => {
                       const product = options.products.find((candidate) => candidate.id === event.target.value);
                       updateItem(index, {
@@ -326,9 +331,9 @@ export function InvoicesView({
                     options={productOptions}
                     value={item.productId ?? ""}
                   />
-                  <Input onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Descripcion" value={item.description} />
-                  <Input min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} />
-                  <Input min={0} onChange={(event) => updateItem(index, { unitPrice: Number(event.target.value) })} step="0.01" type="number" value={item.unitPrice} />
+                  <Input aria-label={`Descripción del ítem ${index + 1}`} onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Descripción" value={item.description} />
+                  <Input aria-label={`Cantidad del ítem ${index + 1}`} min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} />
+                  <Input aria-label={`Precio unitario del ítem ${index + 1}`} min={0} onChange={(event) => updateItem(index, { unitPrice: Number(event.target.value) })} step="0.01" type="number" value={item.unitPrice} />
                   <div className="flex h-11 items-center rounded-[18px] border border-graphite/8 bg-brand-50 px-4 text-sm font-semibold text-slate-950">
                     {formatCurrency(item.quantity * item.unitPrice)}
                   </div>
@@ -496,6 +501,7 @@ export function InvoicesView({
             Todavia no emitiste comprobantes internos en este modulo.
           </div>
         ) : null}
+        <PaginationNav meta={pagination} pathname="/facturacion" />
       </div>
     </div>
   );

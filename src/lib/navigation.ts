@@ -10,7 +10,9 @@ import {
   HandCoins,
   Landmark,
   LineChart,
+  MapPinned,
   Monitor,
+  PackageCheck,
   ReceiptText,
   Settings,
   ShoppingCart,
@@ -18,26 +20,35 @@ import {
   Wrench
 } from "lucide-react";
 
+import { hasPermission, type AppPermission, type AppRole } from "@/lib/permissions";
+
 export type SidebarItem = {
   href: Route;
   label: string;
   icon: LucideIcon;
+  permission: AppPermission;
 };
 
 export const sidebarItems: SidebarItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/productos", label: "Productos", icon: Boxes },
-  { href: "/ventas", label: "Ventas", icon: ShoppingCart },
-  { href: "/gastos", label: "Gastos", icon: ReceiptText },
-  { href: "/placas-tv" as Route, label: "Placas de Televisores", icon: Monitor },
-  { href: "/sueldos" as Route, label: "Sueldo", icon: HandCoins },
-  { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard },
-  { href: "/caja", label: "Caja", icon: Landmark },
-  { href: "/cambio-balance" as Route, label: "Cambio de balance", icon: ArrowRightLeft },
-  { href: "/reportes" as Route, label: "Reportes", icon: LineChart },
-  { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign },
-  { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench },
-  { href: "/terciarizaciones" as Route, label: "Terciarizaciones", icon: Truck },
-  { href: "/facturacion", label: "Facturacion", icon: FileText },
-  { href: "/configuracion", label: "Configuracion", icon: Settings }
+  { href: "/dashboard", label: "Dashboard", icon: BarChart3, permission: "dashboard.view" },
+  { href: "/productos", label: "Productos", icon: Boxes, permission: "products.view" },
+  { href: "/ventas", label: "Ventas", icon: ShoppingCart, permission: "sales.manage" },
+  { href: "/gastos", label: "Gastos", icon: ReceiptText, permission: "expenses.manage" },
+  { href: "/visitas" as Route, label: "Visitas", icon: MapPinned, permission: "visits.view" },
+  { href: "/placas-tv" as Route, label: "Placas de Televisores", icon: Monitor, permission: "boards.manage" },
+  { href: "/sueldos" as Route, label: "Sueldo", icon: HandCoins, permission: "salaries.manage" },
+  { href: "/pedidos" as Route, label: "Pedidos", icon: PackageCheck, permission: "orders.manage" },
+  { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard, permission: "installments.manage" },
+  { href: "/caja", label: "Caja", icon: Landmark, permission: "cash.manage" },
+  { href: "/cambio-balance" as Route, label: "Cambio de balance", icon: ArrowRightLeft, permission: "balance.manage" },
+  { href: "/reportes" as Route, label: "Reportes", icon: LineChart, permission: "reports.manage" },
+  { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign, permission: "repairs.manage" },
+  { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench, permission: "repairs.view" },
+  { href: "/terciarizaciones" as Route, label: "Terciarizaciones", icon: Truck, permission: "outsourcings.manage" },
+  { href: "/facturacion", label: "Facturacion", icon: FileText, permission: "invoices.manage" },
+  { href: "/configuracion", label: "Configuracion", icon: Settings, permission: "settings.manage" }
 ];
+
+export function getSidebarItemsForRole(role: AppRole) {
+  return sidebarItems.filter((item) => hasPermission(role, item.permission));
+}

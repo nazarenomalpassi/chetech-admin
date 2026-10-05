@@ -1,19 +1,27 @@
 import { ExpensesList } from "@/features/expenses/components/expenses-list";
 import { getExpenses } from "@/features/expenses/queries";
-import { getCurrentProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
+import { parsePage } from "@/lib/pagination";
 
 export default async function GastosPage({
   searchParams
 }: {
-  searchParams: Promise<{ status?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; error?: string; page?: string }>;
 }) {
   const params = await searchParams;
-  const { profile } = await getCurrentProfile();
-  const expenses = await getExpenses();
+  const profile = await requirePermission("expenses.manage");
+  const expensesResult = await getExpenses(parsePage(params.page));
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
 
-  return <ExpensesList canDelete={profile.role === "admin"} expenses={expenses} message={message} />;
+  return (
+    <ExpensesList
+      canDelete={profile.role === "admin"}
+      expenses={expensesResult.items}
+      message={message}
+      pagination={expensesResult.pagination}
+    />
+  );
 }

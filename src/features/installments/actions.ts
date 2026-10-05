@@ -7,7 +7,7 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { deleteCashMovement, replaceCashMovement } from "@/lib/accounting";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { toOperationalDateTime } from "@/lib/utils";
 import { getInstallmentSaleStatus } from "@/features/installments/model";
@@ -166,7 +166,7 @@ export async function saveInstallmentSaleAction(formData: FormData) {
     redirectWithError("La suma de las cuotas debe coincidir con el monto total.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const salePayload = {
     product_name: parsed.data.productName,
@@ -233,7 +233,7 @@ export async function updateInstallmentAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la cuota.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { installment, sale } = await getInstallmentRecord(supabase as any, parsed.data.id);
   const payload = {
@@ -293,7 +293,7 @@ export async function markInstallmentPaidAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el cobro de la cuota.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { installment, sale } = await getInstallmentRecord(supabase as any, parsed.data.id);
 
@@ -344,7 +344,7 @@ export async function markInstallmentPaidAction(formData: FormData) {
 
 export async function cancelInstallmentAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { installment, sale } = await getInstallmentRecord(supabase as any, id);
 

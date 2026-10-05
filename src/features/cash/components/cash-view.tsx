@@ -134,7 +134,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-slate-700">Observaciones</label>
+                <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="observations">Observaciones</label>
                 <Input name="observations" placeholder="Ej: caja verificada, diferencia, retiro..." />
               </div>
 

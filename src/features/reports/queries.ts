@@ -1,7 +1,12 @@
 import { getDashboardRange } from "@/features/dashboard/range";
 import { calculateVariation, getMonthlyComparisonPeriods } from "@/features/reports/comparison";
+import {
+  normalizeReportsPerformanceSnapshot,
+  type ReportPeriodMetrics
+} from "@/features/reports/performance-snapshot";
 import { getBusinessGoals } from "@/lib/app-settings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
 
 type SummaryRow = {
   userId: string | null;
@@ -10,15 +15,7 @@ type SummaryRow = {
   count: number;
 };
 
-type PeriodMetrics = {
-  salesTotal: number;
-  salesProfit: number;
-  repairsTotal: number;
-  expensesTotal: number;
-  invoicesTotal: number;
-  salariesTotal: number;
-  netCash: number;
-};
+type PeriodMetrics = ReportPeriodMetrics;
 
 function buildProfileMap(profiles: any[]) {
   return new Map<string, string>(
@@ -49,8 +46,8 @@ async function getPeriodMetrics(
       (supabase as any)
         .from("repairs")
         .select("final_price, estimated_price")
-        .gte("created_at", period.startIso)
-        .lt("created_at", period.endIso),
+        .gte("entry_date", period.dateStart)
+        .lt("entry_date", period.dateEndExclusive),
       (supabase as any)
         .from("expenses")
         .select("amount, is_voided")
@@ -118,10 +115,101 @@ function buildGoalProgress(actual: number, target: number) {
   };
 }
 
+function buildReportsResponse({
+  range,
+  monthlyPeriods,
+  selectedRangeMetrics,
+  currentMonthMetrics,
+  previousMonthMetrics,
+  businessGoals,
+  rankings,
+  sellerSummary,
+  technicianSummary
+}: {
+  range: ReturnType<typeof getDashboardRange>;
+  monthlyPeriods: ReturnType<typeof getMonthlyComparisonPeriods>;
+  selectedRangeMetrics: PeriodMetrics;
+  currentMonthMetrics: PeriodMetrics;
+  previousMonthMetrics: PeriodMetrics;
+  businessGoals: Awaited<ReturnType<typeof getBusinessGoals>>;
+  rankings: {
+    products: Array<{ label: string; quantity: number; revenue: number; profit: number }>;
+    categories: Array<{ label: string; quantity: number; revenue: number; profit: number }>;
+  };
+  sellerSummary: SummaryRow[];
+  technicianSummary: SummaryRow[];
+}) {
+  const comparisonRows = [
+    { key: "salesTotal", label: "Ventas", current: currentMonthMetrics.salesTotal, previous: previousMonthMetrics.salesTotal },
+    { key: "salesProfit", label: "Ganancia de ventas", current: currentMonthMetrics.salesProfit, previous: previousMonthMetrics.salesProfit },
+    { key: "repairsTotal", label: "Reparaciones", current: currentMonthMetrics.repairsTotal, previous: previousMonthMetrics.repairsTotal },
+    { key: "expensesTotal", label: "Gastos", current: currentMonthMetrics.expensesTotal, previous: previousMonthMetrics.expensesTotal },
+    { key: "invoicesTotal", label: "Facturacion", current: currentMonthMetrics.invoicesTotal, previous: previousMonthMetrics.invoicesTotal },
+    { key: "netCash", label: "Resultado de caja", current: currentMonthMetrics.netCash, previous: previousMonthMetrics.netCash }
+  ].map((item) => ({
+    ...item,
+    variation: calculateVariation(item.current, item.previous)
+  }));
+
+  return {
+    range,
+    metrics: selectedRangeMetrics,
+    monthlyComparison: {
+      currentLabel: monthlyPeriods.current.label,
+      previousLabel: monthlyPeriods.previous.label,
+      rows: comparisonRows
+    },
+    monthlyGoals: {
+      label: monthlyPeriods.current.label,
+      goals: {
+        sales: buildGoalProgress(currentMonthMetrics.salesTotal, businessGoals.salesTarget),
+        profit: buildGoalProgress(currentMonthMetrics.salesProfit, businessGoals.profitTarget),
+        repairs: buildGoalProgress(currentMonthMetrics.repairsTotal, businessGoals.repairsTarget),
+        invoicing: buildGoalProgress(currentMonthMetrics.invoicesTotal, businessGoals.invoicingTarget)
+      }
+    },
+    rankings,
+    sellerSummary,
+    technicianSummary
+  };
+}
+
 export async function getReportsData(from?: string, to?: string) {
   const supabase = await createServerSupabaseClient();
   const range = getDashboardRange(from, to);
   const monthlyPeriods = getMonthlyComparisonPeriods(range.to);
+  const businessGoalsPromise = getBusinessGoals();
+  const snapshotResult = await (supabase as any).rpc("get_reports_performance_snapshot", {
+    p_selected_start: range.from,
+    p_selected_end: range.endIso.slice(0, 10),
+    p_current_start: monthlyPeriods.current.dateStart,
+    p_current_end: monthlyPeriods.current.dateEndExclusive,
+    p_previous_start: monthlyPeriods.previous.dateStart,
+    p_previous_end: monthlyPeriods.previous.dateEndExclusive
+  });
+
+  if (!snapshotResult.error) {
+    const [snapshot, businessGoals] = await Promise.all([
+      Promise.resolve(normalizeReportsPerformanceSnapshot(snapshotResult.data)),
+      businessGoalsPromise
+    ]);
+
+    return buildReportsResponse({
+      range,
+      monthlyPeriods,
+      selectedRangeMetrics: snapshot.metrics.selected,
+      currentMonthMetrics: snapshot.metrics.current,
+      previousMonthMetrics: snapshot.metrics.previous,
+      businessGoals,
+      rankings: snapshot.rankings,
+      sellerSummary: snapshot.sellerSummary,
+      technicianSummary: snapshot.technicianSummary
+    });
+  }
+
+  if (!isMissingDatabaseFunctionError(snapshotResult.error, "get_reports_performance_snapshot")) {
+    throw new Error(snapshotResult.error.message);
+  }
 
   const [
     salesResult,
@@ -138,9 +226,9 @@ export async function getReportsData(from?: string, to?: string) {
       .lt("sold_at", range.endIso),
     (supabase as any)
       .from("repairs")
-      .select("id, created_by, final_price, estimated_price, created_at")
-      .gte("created_at", range.startIso)
-      .lt("created_at", range.endIso),
+      .select("id, created_by, final_price, estimated_price, entry_date, created_at")
+      .gte("entry_date", range.from)
+      .lt("entry_date", range.endIso.slice(0, 10)),
     (supabase as any)
       .from("sale_items")
       .select("quantity, total, unit_cost, products(name, categories(name)), sales!inner(sold_at)")
@@ -148,7 +236,7 @@ export async function getReportsData(from?: string, to?: string) {
       .lt("sales.sold_at", range.endIso),
     getPeriodMetrics(supabase, monthlyPeriods.current),
     getPeriodMetrics(supabase, monthlyPeriods.previous),
-    getBusinessGoals()
+    businessGoalsPromise
   ]);
 
   if (salesResult.error) throw new Error(salesResult.error.message);
@@ -208,48 +296,6 @@ export async function getReportsData(from?: string, to?: string) {
     repairsByUser.set(userId, current);
   }
 
-  const comparisonRows = [
-    {
-      key: "salesTotal",
-      label: "Ventas",
-      current: currentMonthMetrics.salesTotal,
-      previous: previousMonthMetrics.salesTotal
-    },
-    {
-      key: "salesProfit",
-      label: "Ganancia de ventas",
-      current: currentMonthMetrics.salesProfit,
-      previous: previousMonthMetrics.salesProfit
-    },
-    {
-      key: "repairsTotal",
-      label: "Reparaciones",
-      current: currentMonthMetrics.repairsTotal,
-      previous: previousMonthMetrics.repairsTotal
-    },
-    {
-      key: "expensesTotal",
-      label: "Gastos",
-      current: currentMonthMetrics.expensesTotal,
-      previous: previousMonthMetrics.expensesTotal
-    },
-    {
-      key: "invoicesTotal",
-      label: "Facturacion",
-      current: currentMonthMetrics.invoicesTotal,
-      previous: previousMonthMetrics.invoicesTotal
-    },
-    {
-      key: "netCash",
-      label: "Resultado de caja",
-      current: currentMonthMetrics.netCash,
-      previous: previousMonthMetrics.netCash
-    }
-  ].map((item) => ({
-    ...item,
-    variation: calculateVariation(item.current, item.previous)
-  }));
-
   const productMap = new Map<string, { label: string; quantity: number; revenue: number; profit: number }>();
   const categoryMap = new Map<string, { label: string; quantity: number; revenue: number; profit: number }>();
 
@@ -285,25 +331,13 @@ export async function getReportsData(from?: string, to?: string) {
     categoryMap.set(categoryLabel, currentCategory);
   }
 
-  const currentMonthGoals = {
-    sales: buildGoalProgress(currentMonthMetrics.salesTotal, businessGoals.salesTarget),
-    profit: buildGoalProgress(currentMonthMetrics.salesProfit, businessGoals.profitTarget),
-    repairs: buildGoalProgress(currentMonthMetrics.repairsTotal, businessGoals.repairsTarget),
-    invoicing: buildGoalProgress(currentMonthMetrics.invoicesTotal, businessGoals.invoicingTarget)
-  };
-
-  return {
+  return buildReportsResponse({
     range,
-    metrics: selectedRangeMetrics,
-    monthlyComparison: {
-      currentLabel: monthlyPeriods.current.label,
-      previousLabel: monthlyPeriods.previous.label,
-      rows: comparisonRows
-    },
-    monthlyGoals: {
-      label: monthlyPeriods.current.label,
-      goals: currentMonthGoals
-    },
+    monthlyPeriods,
+    selectedRangeMetrics,
+    currentMonthMetrics,
+    previousMonthMetrics,
+    businessGoals,
     rankings: {
       products: Array.from(productMap.values())
         .sort((a, b) => b.revenue - a.revenue)
@@ -314,5 +348,5 @@ export async function getReportsData(from?: string, to?: string) {
     },
     sellerSummary: Array.from(salesByUser.values()).sort((a, b) => b.total - a.total),
     technicianSummary: Array.from(repairsByUser.values()).sort((a, b) => b.total - a.total)
-  };
+  });
 }

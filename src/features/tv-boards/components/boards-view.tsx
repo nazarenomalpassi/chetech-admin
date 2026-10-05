@@ -28,6 +28,7 @@ export function BoardsView({
     soldAt: string | null;
     netAmount: number | null;
     releaseDate: string | null;
+    releasedAt: string | null;
     saleNotes: string | null;
     saleStatus: TvBoardSaleStatus;
     createdAt: string;

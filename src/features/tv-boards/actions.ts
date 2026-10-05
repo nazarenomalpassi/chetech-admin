@@ -1,11 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tvBoardSaleSchema, tvBoardSchema } from "@/features/tv-boards/schemas";
+import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getLocalDateInputValue } from "@/lib/utils";
 
 export async function upsertTvBoardAction(input: unknown) {
   await requireAdmin();
@@ -214,4 +217,68 @@ export async function markTvBoardSoldAction(input: unknown) {
     success: true,
     message: `Venta cargada para ${currentBoard.brand} ${currentBoard.model}`
   };
+}
+
+export async function markTvBoardReleasedAction(input: unknown) {
+  await requireAdmin();
+  const parsed = z.string().uuid().safeParse(input);
+
+  if (!parsed.success) {
+    return { success: false, message: "La placa seleccionada no es valida" };
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data: board, error: boardError } = await (supabase as any)
+    .from("tv_boards")
+    .select("sold_at, release_date, released_at")
+    .eq("id", parsed.data)
+    .maybeSingle();
+
+  if (boardError) {
+    return { success: false, message: boardError.message };
+  }
+
+  if (!board) {
+    return { success: false, message: "No encontramos la placa" };
+  }
+
+  const today = getLocalDateInputValue();
+  if (getTvBoardSaleStatus({
+    soldAt: board.sold_at,
+    releaseDate: board.release_date,
+    releasedAt: board.released_at
+  }, today) !== "pending_release") {
+    return { success: false, message: "Esta placa ya figura como liberada o no fue vendida" };
+  }
+
+  const releasedAt = new Date().toISOString();
+  const { data: updated, error } = await (supabase as any)
+    .from("tv_boards")
+    .update({ released_at: releasedAt })
+    .eq("id", parsed.data)
+    .is("released_at", null)
+    .not("sold_at", "is", null)
+    .gt("release_date", today)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  if (!updated) {
+    return { success: false, message: "El estado de la placa cambio. Actualiza la pagina e intenta nuevamente" };
+  }
+
+  await createAuditLog({
+    entityType: "tv_boards",
+    entityId: parsed.data,
+    action: "update",
+    changes: { released_at: releasedAt }
+  });
+
+  revalidatePath("/placas-tv");
+  revalidatePath("/dashboard");
+
+  return { success: true, message: "Dinero marcado como liberado" };
 }

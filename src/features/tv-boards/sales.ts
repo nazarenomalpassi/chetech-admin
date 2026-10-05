@@ -3,10 +3,12 @@ export type TvBoardSaleStatus = "unsold" | "pending_release" | "released";
 export function getTvBoardSaleStatus(
   {
     soldAt,
-    releaseDate
+    releaseDate,
+    releasedAt
   }: {
     soldAt: string | null;
     releaseDate: string | null;
+    releasedAt?: string | null;
   },
   today: string
 ): TvBoardSaleStatus {
@@ -14,7 +16,7 @@ export function getTvBoardSaleStatus(
     return "unsold";
   }
 
-  if (!releaseDate || releaseDate <= today) {
+  if (releasedAt || !releaseDate || releaseDate <= today) {
     return "released";
   }
 

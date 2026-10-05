@@ -1,6 +1,6 @@
 import { InstallmentsView } from "@/features/installments/components/installments-view";
 import { getInstallmentSalesData } from "@/features/installments/queries";
-import { getCurrentProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
 
 export default async function CuotasPage({
@@ -18,7 +18,7 @@ export default async function CuotasPage({
   }>;
 }) {
   const params = await searchParams;
-  const { profile } = await getCurrentProfile();
+  const profile = await requirePermission("installments.manage");
   const data = await getInstallmentSalesData({
     customer: params.customer,
     product: params.product,

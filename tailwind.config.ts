@@ -27,7 +27,7 @@ const config: Config = {
           profitSoft: "#ebf8f2",
           expense: "#c14141",
           expenseSoft: "#fdf1f1",
-          caution: "#b17c18",
+          caution: "#88600f",
           cautionSoft: "#fcf6e7"
         }
       },

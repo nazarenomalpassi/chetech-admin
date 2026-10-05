@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarClock, WalletCards, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { markTvBoardSoldAction } from "@/features/tv-boards/actions";
@@ -50,8 +51,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(15,15,15,0.42)] px-3 py-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:p-4">
-      <div className="max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl overflow-y-auto rounded-[26px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,247,243,0.96))] p-4 shadow-[0_30px_90px_rgba(20,20,19,0.18)] sm:rounded-[32px] sm:p-6">
+    <DialogShell labelledBy="board-sale-dialog-title" onClose={onClose} panelClassName="max-w-3xl">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
@@ -59,9 +59,9 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
             </span>
             <div className="min-w-0">
               <p className="panel-kicker">Venta Mercado Libre</p>
-              <h3 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950">
+              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950" id="board-sale-dialog-title">
                 Marcar placa como vendida
-              </h3>
+              </h2>
               <p className="mt-2 text-sm text-slate-500">
                 Guarda el dinero neto real que vas a recibir y la fecha en la que Mercado Pago lo libera.
               </p>
@@ -71,7 +71,8 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
             </div>
           </div>
           <button
-            className="rounded-full p-2 text-slate-500 transition hover:bg-white"
+            aria-label="Cerrar registro de venta"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-slate-500 transition hover:bg-white"
             onClick={onClose}
             type="button"
           >
@@ -111,14 +112,14 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
                 Liberacion estimada
               </div>
               <p className="mt-3 text-sm text-slate-500">
-                Si la fecha todavia no llego, la placa queda en espera de liberacion. Cuando llegue, pasa a liberada.
+                Si la fecha todavía no llegó, la placa queda en espera de liberación. Cuando llegue, pasa a liberada.
               </p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="netAmount">
                 Plata final con retenciones de MercadoLibre
               </label>
               <Input
@@ -128,13 +129,13 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
                 {...form.register("netAmount", { valueAsNumber: true })}
               />
               <p className="mt-2 text-xs text-slate-500">
-                Ingresa solo el dinero real final que efectivamente vas a cobrar.
+                Ingresá solo el dinero real final que efectivamente vas a cobrar.
               </p>
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.netAmount?.message}</p>
             </div>
 
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Fecha de liberacion del dinero</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="releaseDate">Fecha de liberación del dinero</label>
               <Input type="date" {...form.register("releaseDate")} />
               <p className="mt-2 text-xs text-slate-500">
                 Esta fecha define si el dinero aparece pendiente o ya liberado en las KPI.
@@ -143,7 +144,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
             </div>
 
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4 md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Observaciones</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">Observaciones</label>
               <Textarea placeholder="Ej: envio demorado, venta express, devolucion, cliente habitual..." {...form.register("notes")} />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.notes?.message}</p>
             </div>
@@ -151,11 +152,13 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
 
           {message ? (
             <div
+              aria-live="polite"
               className={
                 message.toLowerCase().includes("no") || message.toLowerCase().includes("error")
                   ? "status-banner status-banner--error"
                   : "status-banner status-banner--success"
               }
+              role="status"
             >
               {message}
             </div>
@@ -170,7 +173,6 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </DialogShell>
   );
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function normalizeRepairNumber(value: string) {
@@ -26,7 +26,7 @@ export async function GET(
   { params }: { params: Promise<{ repairNumber: string }> }
 ) {
   try {
-    await requireUser();
+    await requireAdmin();
   } catch {
     return NextResponse.json({ error: "Necesitas iniciar sesion para consultar la orden." }, { status: 401 });
   }

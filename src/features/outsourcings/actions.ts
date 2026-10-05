@@ -10,7 +10,7 @@ import {
   repairOutsourcingSchema
 } from "@/features/outsourcings/schemas";
 import { createAuditLog } from "@/lib/audit";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function redirectWithError(message: string): never {
@@ -40,7 +40,7 @@ export async function saveRepairOutsourcingAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la terciarizacion.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const existingOrder = await (supabase as any)
     .from("repair_access_orders")
@@ -112,7 +112,7 @@ export async function markRepairOutsourcingRetrievedAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el retiro.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const previous = await (supabase as any)
     .from("repair_outsourcings")
@@ -166,7 +166,7 @@ export async function cancelRepairOutsourcingAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la anulacion.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const previous = await (supabase as any)
     .from("repair_outsourcings")

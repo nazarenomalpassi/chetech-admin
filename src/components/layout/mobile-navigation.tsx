@@ -6,36 +6,38 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
-import { sidebarItems } from "@/lib/navigation";
+import { getSidebarItemsForRole } from "@/lib/navigation";
+import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
-export function MobileNavigation() {
+export function MobileNavigation({ role }: { role: AppRole }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const sidebarItems = getSidebarItemsForRole(role);
+  const currentSection = sidebarItems.find((item) => item.href === pathname)?.label ?? "Panel";
 
   return (
     <div className="sticky top-0 z-40 -mx-1 px-1 pt-[env(safe-area-inset-top)] xl:hidden">
-      <div className="rounded-[28px] border border-graphite/10 bg-[linear-gradient(180deg,rgba(19,19,18,0.98),rgba(28,27,25,0.98))] p-3 text-white shadow-pop">
+      <div className="rounded-[22px] border border-white/10 bg-graphite p-2.5 text-white shadow-[0_12px_30px_rgba(20,20,19,0.18)] sm:p-3">
         <div className="flex items-center justify-between gap-3">
           <Link
             className="flex min-w-0 items-center gap-3"
             href="/dashboard"
             onClick={() => setOpen(false)}
-            prefetch={false}
           >
-            <span className="flex h-12 w-12 flex-none items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.06]">
+            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.06] sm:h-12 sm:w-12">
               <img alt="" className="h-7 w-7" src="/brand/chetech-isologo-white.svg" />
             </span>
             <span className="min-w-0">
               <span className="font-brand block truncate text-xl tracking-[-0.04em]">Chetech</span>
-              <span className="block text-xs text-white/48">Panel administrativo</span>
+              <span className="block truncate text-xs text-white/70" data-testid="mobile-current-section">{currentSection}</span>
             </span>
           </Link>
 
           <Button
             aria-expanded={open}
-            aria-label={open ? "Cerrar menu" : "Abrir menu"}
-            className="h-12 w-12 flex-none rounded-[18px] border-white/10 bg-white text-graphite hover:bg-brand-50"
+            aria-label={open ? "Cerrar menú" : "Abrir menú"}
+            className="h-11 w-11 flex-none rounded-[14px] border-white/10 bg-white text-graphite hover:bg-brand-50 sm:h-12 sm:w-12"
             onClick={() => setOpen((value) => !value)}
             type="button"
             variant="secondary"
@@ -62,7 +64,6 @@ export function MobileNavigation() {
                     href={item.href}
                     key={item.href}
                     onClick={() => setOpen(false)}
-                    prefetch={false}
                   >
                     <span className={cn("flex h-9 w-9 items-center justify-center rounded-2xl", active ? "bg-brand-100" : "bg-white/[0.06]")}>
                       <Icon className="h-4.5 w-4.5" />
@@ -81,7 +82,7 @@ export function MobileNavigation() {
                 )}
               >
                 <LogOut className="h-4 w-4" />
-                Cerrar sesion
+                Cerrar sesión
               </button>
             </form>
           </div>

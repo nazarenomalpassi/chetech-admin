@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { MetricCard } from "@/components/ui/metric-card";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 type GoalProgress = {
@@ -33,6 +34,8 @@ type ReportsViewProps = {
     range: {
       from: string;
       to: string;
+      today: string;
+      isToday: boolean;
       isCustomRange: boolean;
     };
     metrics: {
@@ -176,7 +179,7 @@ function GoalCard({
         </div>
         <Badge variant={reached ? "success" : "warning"}>{reached ? "Meta cumplida" : `${progress.progress.toFixed(0)}%`}</Badge>
       </div>
-      <div className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100">
+      <div aria-label={`Avance de ${title}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.max(0, progressWidth)} aria-valuetext={`${progress.progress.toFixed(0)}% del objetivo`} className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100" role="progressbar">
         <div
           className={cn("h-full rounded-full", reached ? "bg-emerald-500" : "bg-graphite")}
           style={{ width: `${progressWidth}%` }}
@@ -199,20 +202,20 @@ function GoalCard({
 export function ReportsView({ canExport, data }: ReportsViewProps) {
   const { metrics, range, monthlyComparison, monthlyGoals, rankings, sellerSummary, technicianSummary } = data;
   const metricCards = [
-    { label: "Ventas del periodo", value: metrics.salesTotal, icon: TrendingUp },
-    { label: "Ganancia de ventas", value: metrics.salesProfit, icon: TrendingUp },
-    { label: "Reparaciones facturadas", value: metrics.repairsTotal, icon: Wrench },
-    { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown },
-    { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet },
-    { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck }
-  ];
+    { label: "Ventas del periodo", value: metrics.salesTotal, icon: TrendingUp, tone: "income", description: "Importe registrado en ventas" },
+    { label: "Ganancia de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Ventas menos costo de productos" },
+    { label: "Reparaciones facturadas", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Servicio tecnico registrado" },
+    { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
+    { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
+    { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del periodo" }
+  ] as const;
 
   const exportQuery = `from=${range.from}&to=${range.to}`;
 
   return (
     <div className="space-y-6">
       <Card>
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="flex flex-col gap-4 min-[1600px]:flex-row min-[1600px]:items-end min-[1600px]:justify-between">
           <div>
             <p className="text-sm text-slate-500">Bloque profesional</p>
             <h2 className="text-2xl font-semibold text-slate-950">Reportes operativos</h2>
@@ -221,13 +224,13 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
               cada modulo con el mismo rango que estas mirando.
             </p>
           </div>
-          <form className="grid gap-3 sm:grid-cols-[180px_180px_auto_auto]">
+          <form className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto]">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Desde</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="from">Desde</label>
               <Input defaultValue={range.from} name="from" type="date" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Hasta</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="to">Hasta</label>
               <Input defaultValue={range.to} name="to" type="date" />
             </div>
             <div className="flex items-end">
@@ -236,37 +239,25 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
               </button>
             </div>
             <div className="flex items-end">
-              <Link className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")} href="/reportes">
+              <Link
+                className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}
+                href={`/reportes?from=${range.today}&to=${range.today}`}
+              >
                 Hoy
               </Link>
             </div>
           </form>
         </div>
         <div className="mt-4 rounded-2xl border border-graphite/10 bg-white/70 px-4 py-3 text-sm text-slate-600">
-          {range.isCustomRange
-            ? `Rango actual: ${formatDate(range.from)} al ${formatDate(range.to)}.`
-            : "Rango actual: hoy."}
+          {range.isToday
+            ? "Rango actual: hoy."
+            : `Rango actual: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {metricCards.map((metric) => {
-          const Icon = metric.icon;
-          return (
-            <Card key={metric.label}>
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="text-sm text-slate-500">{metric.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(metric.value)}</p>
-                </div>
-                <div className="rounded-2xl bg-brand-100 p-3 text-graphite">
-                  <Icon className="h-5 w-5" />
-                </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
+      <section aria-label="Metricas del reporte" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {metricCards.map((metric) => <MetricCard {...metric} format="currency" key={metric.label} />)}
+      </section>
 
       <Card>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">

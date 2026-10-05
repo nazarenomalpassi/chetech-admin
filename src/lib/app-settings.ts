@@ -14,12 +14,17 @@ export const DEFAULT_CASH_SETTINGS = {
 
 const CASH_SETTINGS_KEY = "cash_runtime";
 const BUSINESS_GOALS_KEY = "business_goals";
+const REPAIR_WARRANTY_SETTINGS_KEY = "repair_warranty";
 
 export const DEFAULT_BUSINESS_GOALS = {
   salesTarget: 2500000,
   profitTarget: 900000,
   repairsTarget: 1200000,
   invoicingTarget: 3000000
+};
+
+export const DEFAULT_REPAIR_WARRANTY_SETTINGS = {
+  defaultDays: 90
 };
 
 export const getCashSettings = cache(async () => {
@@ -55,6 +60,7 @@ export const getCashSettings = cache(async () => {
 
 export const getCashSettingsKey = () => CASH_SETTINGS_KEY;
 export const getBusinessGoalsKey = () => BUSINESS_GOALS_KEY;
+export const getRepairWarrantySettingsKey = () => REPAIR_WARRANTY_SETTINGS_KEY;
 
 export const getBusinessGoals = cache(async () => {
   const supabase = await createServerSupabaseClient();
@@ -79,5 +85,28 @@ export const getBusinessGoals = cache(async () => {
     profitTarget: Number(value.profitTarget ?? DEFAULT_BUSINESS_GOALS.profitTarget),
     repairsTarget: Number(value.repairsTarget ?? DEFAULT_BUSINESS_GOALS.repairsTarget),
     invoicingTarget: Number(value.invoicingTarget ?? DEFAULT_BUSINESS_GOALS.invoicingTarget)
+  };
+});
+
+export const getRepairWarrantySettings = cache(async () => {
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await (supabase as any)
+    .from("app_settings")
+    .select("value")
+    .eq("key", REPAIR_WARRANTY_SETTINGS_KEY)
+    .maybeSingle();
+
+  if (error || !data?.value) {
+    return DEFAULT_REPAIR_WARRANTY_SETTINGS;
+  }
+
+  const value = data.value as Partial<typeof DEFAULT_REPAIR_WARRANTY_SETTINGS>;
+  const defaultDays = Number(value.defaultDays);
+
+  return {
+    defaultDays:
+      Number.isInteger(defaultDays) && defaultDays > 0
+        ? defaultDays
+        : DEFAULT_REPAIR_WARRANTY_SETTINGS.defaultDays
   };
 });

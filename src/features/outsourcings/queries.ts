@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getLocalDateInputValue } from "@/lib/utils";
 
 type RawOutsourcing = {
   id: string;
@@ -139,7 +140,7 @@ export async function getRepairOutsourcingDashboard() {
   if (error) throw new Error(error.message);
 
   const records: RepairOutsourcingRecord[] = (data ?? []).map((record: RawOutsourcing) => mapOutsourcing(record));
-  const today = new Date().toISOString().slice(0, 10);
+  const today = getLocalDateInputValue();
 
   return {
     records,

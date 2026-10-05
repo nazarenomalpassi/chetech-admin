@@ -94,7 +94,8 @@ create table if not exists public.sales (
   notes text,
   sold_at timestamptz not null default now(),
   created_by uuid references public.profiles(id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.sale_items (
@@ -126,7 +127,8 @@ create table if not exists public.expenses (
   observations text,
   is_voided boolean not null default false,
   created_by uuid references public.profiles(id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.repairs (
@@ -156,6 +158,7 @@ create table if not exists public.repairs (
     )
   ),
   created_by uuid references public.profiles(id) on delete set null,
+  entry_date date not null default ((now() at time zone 'America/Argentina/Cordoba')::date),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -546,3 +549,87 @@ as $$
   from public.movimientos_caja
   where fecha::date = p_fecha;
 $$;
+
+-- Monthly salary planning and replenishment are expanded by the dated migration.
+create table if not exists public.salary_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  target_amount numeric(14,2) not null check (target_amount > 0),
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.financial_reserves (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  name text not null,
+  amount numeric(14,2) not null default 0 check (amount >= 0),
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.salary_liquidations (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  withdrawal_date date not null,
+  intended_total numeric(14,2) not null check (intended_total >= 0),
+  allocated_total numeric(14,2) not null default 0,
+  salary_mass_snapshot numeric(14,2) not null default 0,
+  salary_amount numeric(14,2) not null default 0,
+  profit_share_amount numeric(14,2) not null default 0,
+  total_amount numeric(14,2) not null default 0,
+  coverage_percentage numeric(8,4) not null default 0,
+  excess_amount numeric(14,2) not null default 0,
+  notes text,
+  idempotency_key uuid not null unique,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.salary_liquidation_members (
+  id uuid primary key default gen_random_uuid(),
+  liquidation_id uuid not null references public.salary_liquidations(id) on delete cascade,
+  member_id uuid not null references public.salary_members(id) on delete restrict,
+  member_name_snapshot text not null,
+  target_amount_snapshot numeric(14,2) not null check (target_amount_snapshot > 0),
+  salary_amount numeric(14,2) not null default 0 check (salary_amount >= 0),
+  profit_share_amount numeric(14,2) not null default 0 check (profit_share_amount >= 0),
+  total_amount numeric(14,2) generated always as (salary_amount + profit_share_amount) stored,
+  salary_coverage_percentage numeric(8,4) not null check (salary_coverage_percentage between 0 and 100),
+  created_at timestamptz not null default now(),
+  unique (liquidation_id, member_id)
+);
+
+create table if not exists public.salary_liquidation_funding (
+  id uuid primary key default gen_random_uuid(),
+  liquidation_id uuid not null references public.salary_liquidations(id) on delete cascade,
+  payment_method text not null check (payment_method in ('efectivo', 'nx', 'mp')),
+  amount numeric(14,2) not null check (amount > 0),
+  created_at timestamptz not null default now(),
+  unique (liquidation_id, payment_method)
+);
+
+create table if not exists public.replenishment_plan_items (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  product_id uuid not null references public.products(id) on delete cascade,
+  quantity_to_order integer not null default 0 check (quantity_to_order >= 0),
+  status text not null default 'pending' check (status in ('pending', 'added', 'ordered', 'received')),
+  notes text,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (period_month, product_id)
+);
+
+alter table public.salary_withdrawals
+  add column if not exists member_id uuid references public.salary_members(id) on delete restrict,
+  add column if not exists liquidation_id uuid references public.salary_liquidations(id) on delete restrict,
+  add column if not exists salary_period date,
+  add column if not exists withdrawal_type text not null default 'extraordinary',
+  add column if not exists target_amount_snapshot numeric(14,2),
+  add column if not exists coverage_percentage numeric(8,4);

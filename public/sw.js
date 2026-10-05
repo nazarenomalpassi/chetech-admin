@@ -1,4 +1,4 @@
-const CACHE_NAME = "chetech-static-v2";
+const CACHE_NAME = "chetech-static-v4";
 const STATIC_ASSETS = [
   "/manifest.json",
   "/favicon.ico",
@@ -24,7 +24,6 @@ self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS)).catch(() => undefined)
   );
-  self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
@@ -33,7 +32,12 @@ self.addEventListener("activate", (event) => {
       Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))
     )
   );
-  self.clients.claim();
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data?.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("fetch", (event) => {
@@ -45,8 +49,7 @@ self.addEventListener("fetch", (event) => {
 
   const isStaticAsset =
     url.pathname.startsWith("/icons/") ||
-    url.pathname.startsWith("/brand/") ||
-    url.pathname.startsWith("/_next/static/");
+    url.pathname.startsWith("/brand/");
 
   if (!isStaticAsset) return;
 

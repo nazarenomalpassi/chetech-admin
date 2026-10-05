@@ -3,9 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircuitBoard, Sparkles, X } from "lucide-react";
+import { CircuitBoard, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { upsertTvBoardAction } from "@/features/tv-boards/actions";
@@ -43,31 +44,25 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(15,15,15,0.42)] px-3 py-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:p-4">
-      <div className="max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-3xl overflow-y-auto rounded-[26px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,247,243,0.96))] p-4 shadow-[0_30px_90px_rgba(20,20,19,0.18)] sm:rounded-[32px] sm:p-6">
+    <DialogShell labelledBy="board-dialog-title" onClose={onClose} panelClassName="max-w-3xl">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
               <CircuitBoard className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="panel-kicker">Placas de televisores</p>
-                <span className="inline-flex items-center gap-1 rounded-full border border-graphite/8 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Registro limpio
-                </span>
-              </div>
-              <h3 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950">
+              <p className="panel-kicker">Placas de televisores</p>
+              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950" id="board-dialog-title">
                 {board?.id ? "Editar placa" : "Nueva placa"}
-              </h3>
+              </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Carga marca, modelo, tipo y precio publicado con una ficha mas clara para compra, desarme o reventa.
+                Cargá marca, modelo, tipo y precio publicado con una ficha clara para compra, desarme o reventa.
               </p>
             </div>
           </div>
           <button
-            className="rounded-full p-2 text-slate-500 transition hover:bg-white"
+            aria-label="Cerrar formulario de placa"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-slate-500 transition hover:bg-white"
             onClick={onClose}
             type="button"
           >
@@ -89,17 +84,17 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
         >
           <div className="grid gap-4 md:grid-cols-2">
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Marca</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="brand">Marca</label>
               <Input {...form.register("brand")} placeholder="Ej: Samsung" />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.brand?.message}</p>
             </div>
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Modelo</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="model">Modelo</label>
               <Input {...form.register("model")} placeholder="Ej: UN50AU7000" />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.model?.message}</p>
             </div>
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Tipo de placa</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="boardType">Tipo de placa</label>
               <Select
                 options={TV_BOARD_TYPES.map((type) => ({ label: type.label, value: type.value }))}
                 value={form.watch("boardType")}
@@ -110,12 +105,12 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.boardType?.message}</p>
             </div>
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Precio publicado</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="price">Precio publicado</label>
               <Input step="0.01" type="number" {...form.register("price", { valueAsNumber: true })} />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.price?.message}</p>
             </div>
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4 md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Estado</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="isActive">Estado</label>
               <Select
                 options={[
                   { label: "Activa", value: "true" },
@@ -131,7 +126,7 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
           </div>
 
           {message ? (
-            <div className={message.toLowerCase().includes("error") ? "status-banner status-banner--error" : "status-banner status-banner--success"}>
+            <div aria-live="polite" className={message.toLowerCase().includes("error") ? "status-banner status-banner--error" : "status-banner status-banner--success"} role="status">
               {message}
             </div>
           ) : null}
@@ -145,7 +140,6 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </DialogShell>
   );
 }

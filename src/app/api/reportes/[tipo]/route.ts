@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
 import { formatCashMethod } from "@/lib/cash";
+import { applyStableCreationOrder } from "@/lib/chronology";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type ReportType = "ventas" | "gastos" | "caja" | "reparaciones" | "facturacion" | "sueldos";
@@ -41,10 +42,11 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
   const supabase = await createServerSupabaseClient();
 
   if (reportType === "ventas") {
-    let query = (supabase as any)
-      .from("sales")
-      .select("sale_number, subtotal, cost_total, profit_total, sold_at, created_by")
-      .order("sold_at", { ascending: false });
+    let query = applyStableCreationOrder(
+      (supabase as any)
+        .from("sales")
+        .select("id, sale_number, subtotal, cost_total, profit_total, sold_at, created_at, updated_at, created_by")
+    );
     if (from) query = query.gte("sold_at", `${from}T00:00:00.000Z`);
     if (to) query = query.lte("sold_at", `${to}T23:59:59.999Z`);
     const { data, error } = await query;
@@ -67,12 +69,13 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
   }
 
   if (reportType === "reparaciones") {
-    let query = (supabase as any)
-      .from("repairs")
-      .select("customer_name, device, order_number, final_price, estimated_price, created_at, created_by")
-      .order("created_at", { ascending: false });
-    if (from) query = query.gte("created_at", `${from}T00:00:00.000Z`);
-    if (to) query = query.lte("created_at", `${to}T23:59:59.999Z`);
+    let query = applyStableCreationOrder(
+      (supabase as any)
+        .from("repairs")
+        .select("id, customer_name, device, order_number, final_price, estimated_price, entry_date, created_at, updated_at, created_by")
+    );
+    if (from) query = query.gte("entry_date", from);
+    if (to) query = query.lte("entry_date", to);
     const { data, error } = await query;
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -85,7 +88,7 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
           row.order_number,
           row.final_price,
           row.estimated_price,
-          row.created_at,
+          row.entry_date,
           row.created_by
         ])
       ),
@@ -94,10 +97,11 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
   }
 
   if (reportType === "gastos") {
-    let query = (supabase as any)
-      .from("expenses")
-      .select("expense_date, type, description, amount, payment_method, is_voided, observations")
-      .order("expense_date", { ascending: false });
+    let query = applyStableCreationOrder(
+      (supabase as any)
+        .from("expenses")
+        .select("id, expense_date, type, description, amount, payment_method, is_voided, observations, created_at, updated_at")
+    );
     if (from) query = query.gte("expense_date", from);
     if (to) query = query.lte("expense_date", to);
     const { data, error } = await query;

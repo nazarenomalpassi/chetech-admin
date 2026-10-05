@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 
 import { buildRepairAccessCustomerSearchFilters } from "@/features/repairs-access/customer-search";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   try {
-    await requireUser();
+    await requireAdmin();
   } catch {
     return NextResponse.json({ customers: [], error: "Necesitas iniciar sesion para buscar clientes." }, { status: 401 });
   }

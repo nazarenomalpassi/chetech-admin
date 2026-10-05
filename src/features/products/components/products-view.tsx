@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { PackagePlus, ShieldAlert, Store } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,7 @@ export function ProductsView({
   products
 }: {
   canManage: boolean;
-  categories: { id: string; name: string; skuPrefix?: string | null; productCount?: number }[];
+  categories: { id: string; name: string; skuPrefix?: string | null }[];
   products: Array<{
     id: string;
     sku: string;
@@ -31,6 +32,8 @@ export function ProductsView({
     notes: string | null;
   }>;
 }) {
+  const searchParams = useSearchParams();
+  const filterKey = JSON.stringify([searchParams.get("search"), searchParams.get("category"), searchParams.get("status")]);
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -115,7 +118,7 @@ export function ProductsView({
 
         <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div className="flex-1">
-            <ProductFilters canManage={canManage} categories={categories} />
+            <ProductFilters categories={categories} />
           </div>
 
           {canManage ? (
@@ -130,7 +133,7 @@ export function ProductsView({
             </Button>
           ) : (
             <div className="status-banner">
-              Modo empleado: podes consultar el catalogo pero no alterar stock ni productos.
+              Modo tecnico: podes consultar el catalogo y los precios, sin alterar stock ni productos.
             </div>
           )}
         </div>
@@ -138,6 +141,7 @@ export function ProductsView({
 
       <ProductTable
         canManage={canManage}
+        filterKey={filterKey}
         onEdit={(id) => {
           setSelectedId(id);
           setOpen(true);

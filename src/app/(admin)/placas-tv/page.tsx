@@ -1,6 +1,6 @@
 import { BoardsView } from "@/features/tv-boards/components/boards-view";
 import { getTvBoards } from "@/features/tv-boards/queries";
-import { getCurrentProfile } from "@/lib/auth";
+import { requirePermission } from "@/lib/auth";
 
 export default async function PlacasTvPage({
   searchParams
@@ -12,7 +12,7 @@ export default async function PlacasTvPage({
   }>;
 }) {
   const params = await searchParams;
-  const { profile } = await getCurrentProfile();
+  const profile = await requirePermission("boards.manage");
   const boards = await getTvBoards(params);
 
   return <BoardsView boards={boards} canManage={profile.role === "admin"} />;

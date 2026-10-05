@@ -3,9 +3,10 @@
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PackagePlus, Sparkles, X } from "lucide-react";
+import { PackagePlus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,7 +54,7 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
     if (!open || product?.id) return;
     if (!selectedCategoryId) {
       setSkuPreview(null);
-      setSkuPreviewError("Elegi una categoria para generar el SKU.");
+      setSkuPreviewError("Elegí una categoría para generar el SKU.");
       return;
     }
 
@@ -86,31 +87,25 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-[rgba(15,15,15,0.42)] px-3 py-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur-md sm:items-center sm:p-4">
-      <div className="max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-4xl overflow-y-auto rounded-[26px] border border-white/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(247,247,243,0.96))] p-4 shadow-[0_30px_90px_rgba(20,20,19,0.18)] sm:rounded-[32px] sm:p-6">
+    <DialogShell labelledBy="product-dialog-title" onClose={onClose} panelClassName="max-w-4xl">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-start gap-3 sm:gap-4">
             <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
               <PackagePlus className="h-5 w-5" />
             </span>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="panel-kicker">Gestion de productos</p>
-                <span className="inline-flex items-center gap-1 rounded-full border border-graphite/8 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Alta prolija
-                </span>
-              </div>
-              <h3 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950">
+              <p className="panel-kicker">Gestión de productos</p>
+              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950" id="product-dialog-title">
                 {product?.id ? "Editar producto" : "Nuevo producto"}
-              </h3>
+              </h2>
               <p className="mt-2 text-sm text-slate-500">
-                Mantene costo, precio, stock y SKU bajo una carga limpia y lista para uso intensivo.
+                Mantené costo, precio, stock y SKU bajo una carga clara y lista para uso intensivo.
               </p>
             </div>
           </div>
           <button
-            className="rounded-full p-2 text-slate-500 transition hover:bg-white"
+            aria-label="Cerrar formulario de producto"
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-slate-500 transition hover:bg-white"
             onClick={onClose}
             type="button"
           >
@@ -136,21 +131,22 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
                 SKU
               </label>
               <div className="mt-3 rounded-[18px] border border-graphite/8 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-800">
-                {product?.id ? product.sku : skuPreview ?? "Selecciona una categoria"}
+                {product?.id ? product.sku : skuPreview ?? "Seleccioná una categoría"}
               </div>
               <p className={`mt-2 text-xs ${skuPreviewError ? "text-finance-expense" : "text-slate-500"}`}>
                 {product?.id
-                  ? "El SKU ya creado se mantiene estable durante la edicion."
-                  : skuPreviewError ?? "La vista previa se confirma automaticamente al guardar."}
+                  ? "El SKU ya creado se mantiene estable durante la edición."
+                  : skuPreviewError ?? "La vista previa se confirma automáticamente al guardar."}
               </p>
             </div>
 
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="product-status">
                 Estado
               </label>
               <Select
                 className="mt-3"
+                id="product-status"
                 options={[
                   { label: "Activo", value: "true" },
                   { label: "Inactivo", value: "false" }
@@ -162,45 +158,45 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
             </div>
 
             <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Categoria
+              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="categoryId">
+                Categoría
               </label>
               <Select
                 className="mt-3"
                 {...form.register("categoryId")}
                 options={[
-                  { label: "Sin categoria", value: "" },
+                  { label: "Sin categoría", value: "" },
                   ...categories.map((category) => ({ label: category.name, value: category.id }))
                 ]}
               />
-              <p className="mt-2 text-xs text-slate-500">La categoria define el prefijo del SKU automatico.</p>
+              <p className="mt-2 text-xs text-slate-500">La categoría define el prefijo del SKU automático.</p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="md:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Nombre</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">Nombre</label>
               <Input {...form.register("name")} placeholder="Ej: Teclado Genius KB 117" />
               <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.name?.message}</p>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Costo</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="cost">Costo</label>
               <Input step="0.01" type="number" {...form.register("cost", { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Precio de venta</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="salePrice">Precio de venta</label>
               <Input step="0.01" type="number" {...form.register("salePrice", { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Stock inicial</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="stock">Stock inicial</label>
               <Input type="number" {...form.register("stock", { valueAsNumber: true })} />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700">Stock minimo</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="minStock">Stock mínimo</label>
               <Input type="number" {...form.register("minStock", { valueAsNumber: true })} />
             </div>
             <div className="md:col-span-2 xl:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Notas internas</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">Notas internas</label>
               <Textarea
                 {...form.register("notes")}
                 placeholder="Observaciones utiles para venta, compra o reposicion"
@@ -209,7 +205,7 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
           </div>
 
           {message ? (
-            <div className={message.toLowerCase().includes("error") ? "status-banner status-banner--error" : "status-banner status-banner--success"}>
+            <div aria-live="polite" className={message.toLowerCase().includes("error") ? "status-banner status-banner--error" : "status-banner status-banner--success"} role="status">
               {message}
             </div>
           ) : null}
@@ -223,7 +219,6 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
             </Button>
           </div>
         </form>
-      </div>
-    </div>
+    </DialogShell>
   );
 }

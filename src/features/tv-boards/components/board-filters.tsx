@@ -46,6 +46,7 @@ export function BoardFilters() {
       <div className="relative">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <Input
+          aria-label="Buscar placas"
           className="pl-10"
           onChange={(event) => setSearch(event.target.value)}
           placeholder="Buscar por marca, modelo o texto"
@@ -56,6 +57,7 @@ export function BoardFilters() {
       <div className="relative">
         <LayoutGrid className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
         <Select
+          aria-label="Filtrar placas por tipo"
           className="pl-10"
           defaultValue={searchParams.get("boardType") ?? "all"}
           onChange={(event) => updateParam("boardType", event.target.value)}
@@ -67,6 +69,7 @@ export function BoardFilters() {
       </div>
 
       <Select
+        aria-label="Filtrar placas por estado"
         defaultValue={searchParams.get("status") ?? "all"}
         onChange={(event) => updateParam("status", event.target.value)}
         options={[

@@ -1,9 +1,15 @@
 import { cache } from "react";
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 import { isSupabaseAuthRateLimitError } from "@/lib/supabase/auth-errors";
+import {
+  hasPermission,
+  normalizeAppRole,
+  type AppPermission
+} from "@/lib/permissions";
 
 async function getSessionUserFallback(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
   const {
@@ -57,33 +63,34 @@ export const getCurrentProfile = cache(async () => {
   }
 
   if (data) {
-    return { user, profile: data };
+    const role = normalizeAppRole(data.role);
+
+    if (!role) {
+      redirect("/acceso-denegado" as Route);
+    }
+
+    return {
+      user,
+      profile: {
+        ...data,
+        role
+      }
+    };
   }
 
-  const fallbackProfile = {
-    id: user.id,
-    full_name: user.email ?? "Usuario",
-    role: "empleado"
-  };
-
-  const { data: createdProfile } = await (supabase as any)
-    .from("profiles")
-    .insert(fallbackProfile)
-    .select("id, full_name, role")
-    .single();
-
-  return {
-    user,
-    profile: createdProfile ?? fallbackProfile
-  };
+  redirect("/acceso-denegado" as Route);
 });
 
-export async function requireAdmin() {
+export async function requirePermission(permission: AppPermission) {
   const { profile } = await getCurrentProfile();
 
-  if (profile.role !== "admin") {
-    redirect("/dashboard?error=Solo%20admin");
+  if (!hasPermission(profile.role, permission)) {
+    redirect("/dashboard?error=Sin%20permiso");
   }
 
   return profile;
+}
+
+export async function requireAdmin() {
+  return requirePermission("settings.manage");
 }

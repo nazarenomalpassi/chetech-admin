@@ -14,6 +14,7 @@ type TvBoardRow = {
   soldAt: string | null;
   netAmount: number | null;
   releaseDate: string | null;
+  releasedAt: string | null;
   saleNotes: string | null;
   saleStatus: "unsold" | "pending_release" | "released";
   createdAt: string;
@@ -29,7 +30,7 @@ export async function getTvBoards(filters?: {
   let query = (supabase as any)
     .from("tv_boards")
     .select(
-      "id, brand, model, board_type, listed_price, is_active, sold_at, mercado_libre_net_amount, release_date, sale_notes, created_at, updated_at"
+      "id, brand, model, board_type, listed_price, is_active, sold_at, mercado_libre_net_amount, release_date, released_at, sale_notes, created_at, updated_at"
     )
     .order("brand")
     .order("model");
@@ -62,7 +63,8 @@ export async function getTvBoards(filters?: {
       const saleStatus = getTvBoardSaleStatus(
         {
           soldAt: board.sold_at,
-          releaseDate: board.release_date
+          releaseDate: board.release_date,
+          releasedAt: board.released_at
         },
         today
       );
@@ -78,6 +80,7 @@ export async function getTvBoards(filters?: {
         soldAt: board.sold_at,
         netAmount: board.mercado_libre_net_amount === null ? null : Number(board.mercado_libre_net_amount),
         releaseDate: board.release_date,
+        releasedAt: board.released_at,
         saleNotes: board.sale_notes,
         saleStatus,
         createdAt: board.created_at,

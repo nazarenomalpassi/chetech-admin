@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 import { deleteRepairAction, saveRepairAction } from "@/features/repairs/actions";
 import { canUsePaymentMethod } from "@/features/repairs/repair-form";
 import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
 import type { PaymentSplit } from "@/lib/payment-splits";
+import type { PaginationMeta } from "@/lib/pagination";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 
 type Repair = {
@@ -29,6 +31,7 @@ type Repair = {
   paymentMethod: string;
   status: string;
   observations: string | null;
+  entryDate: string;
   createdAt: string;
   payments: { method: string; amount: number }[];
 };
@@ -70,10 +73,12 @@ const emptyRepairFormFields: RepairFormFields = {
 export function RepairsList({
   canDelete,
   repairs,
+  pagination,
   message
 }: {
   canDelete: boolean;
   repairs: Repair[];
+  pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
   const today = getLocalDateInputValue();
@@ -118,7 +123,7 @@ export function RepairsList({
       orderNumber: repair.orderNumber ?? repair.repairAccessOrderNumber ?? "",
       issueDescription: repair.issueDescription ?? ""
     });
-    setEntryDate(repair.createdAt.slice(0, 10));
+    setEntryDate(repair.entryDate);
     setAmount(String(repair.finalPrice || repair.estimatedPrice || 0));
     setPayments(
       repair.payments.length
@@ -228,7 +233,7 @@ export function RepairsList({
         </div>
 
         {message ? (
-          <div className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"} role={message.success ? "status" : "alert"}>
             {message.message}
           </div>
         ) : null}
@@ -264,7 +269,7 @@ export function RepairsList({
               </Button>
             </div>
             {lookupStatus.message ? (
-              <p className={`mt-3 rounded-[22px] px-4 py-3 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+              <p aria-live="polite" className={`mt-3 rounded-[22px] px-4 py-3 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`} role={lookupStatus.success ? "status" : "alert"}>
                 {lookupStatus.message}
               </p>
             ) : (
@@ -276,7 +281,7 @@ export function RepairsList({
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-5">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerName">
                 Cliente
               </label>
               <Input
@@ -287,7 +292,7 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="device">
                 Equipo
               </label>
               <Input
@@ -298,8 +303,8 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Numero de orden
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="orderNumber">
+                Número de orden
               </label>
               <Input
                 name="orderNumber"
@@ -309,7 +314,7 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="amount">
                 Monto
               </label>
               <Input
@@ -323,7 +328,7 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="entryDate">
                 Fecha de ingreso
               </label>
               <div className="relative">
@@ -355,12 +360,12 @@ export function RepairsList({
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-md">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repair-search">
                 Buscar pago
               </label>
               <div className="relative">
                 <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input onChange={(event) => setSearch(event.target.value)} placeholder="Numero de orden, cliente o equipo..." value={search} className="pl-10" />
+                <Input id="repair-search" onChange={(event) => setSearch(event.target.value)} placeholder="Número de orden, cliente o equipo..." value={search} className="pl-10" />
               </div>
             </div>
             <p className="text-sm text-slate-500">
@@ -388,7 +393,7 @@ export function RepairsList({
                 </div>
                 <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
                   <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Ingreso</p>
-                  <p className="mt-1 font-semibold text-slate-800">{formatDate(repair.createdAt)}</p>
+                  <p className="mt-1 font-semibold text-slate-800">{formatDate(repair.entryDate)}</p>
                 </div>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">{repair.device}</p>
@@ -445,7 +450,7 @@ export function RepairsList({
                   <td className="px-4 py-4 font-medium text-slate-950">
                     {repair.repairAccessOrderNumber || repair.orderNumber || "-"}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">{formatDate(repair.createdAt)}</td>
+                  <td className="px-4 py-4 text-slate-600">{formatDate(repair.entryDate)}</td>
                   <td className="px-4 py-4 font-medium text-slate-950">
                     {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
                   </td>
@@ -481,6 +486,7 @@ export function RepairsList({
             </div>
           ) : null}
         </div>
+        <PaginationNav meta={pagination} pathname="/reparaciones" />
       </div>
     </div>
   );

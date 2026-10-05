@@ -7,16 +7,17 @@ import {
   CreditCard,
   Package,
   ShoppingBag,
-  Sparkles,
   Target,
   Wallet,
   Wrench
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { MetricCard } from "@/components/ui/metric-card";
 import { getDashboardAccountLabel } from "@/features/dashboard/financial-summary";
+import { LowStockDisclosure } from "@/features/dashboard/components/low-stock-disclosure";
+import { getVisitTimeLabel } from "@/features/visits/model";
 import { Input } from "@/components/ui/input";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
@@ -60,20 +61,30 @@ type DashboardOverviewProps = {
       status: string;
     }>;
   };
+  visitsDashboard: {
+    todayCount: number;
+    pendingCount: number;
+    nextVisit: {
+      customerName: string;
+      customerPhone: string;
+      address: string;
+      visitDate: string;
+      timeFrom: string;
+      timeTo: string;
+      reason: string;
+      notes: string;
+      status: string;
+      createdAt: string;
+    } | null;
+  };
   range: {
     from: string;
     to: string;
+    today: string;
+    isToday: boolean;
     isCustomRange: boolean;
   };
 };
-
-const metricTone = {
-  sales: "text-slate-950",
-  expenses: "text-finance-expense",
-  repairs: "text-slate-950",
-  invoicing: "text-slate-950",
-  profit: "text-finance-profit"
-} as const;
 
 export function DashboardOverview({
   salesTodayTotal,
@@ -86,76 +97,76 @@ export function DashboardOverview({
   invoiceIncomeToday,
   realProfitToday,
   installmentsDashboard,
+  visitsDashboard,
   range
 }: DashboardOverviewProps) {
-  const periodLabel = range.isCustomRange ? "del periodo" : "del dia";
+  const periodLabel = range.isToday ? "del dia" : "del periodo";
   const metrics = [
     {
       key: "sales",
       label: `Ventas ${periodLabel}`,
       description: "Ingresos por operaciones de mostrador",
-      value: formatCurrency(salesTodayTotal),
+      value: salesTodayTotal,
+      tone: "income",
       icon: ShoppingBag
     },
     {
       key: "expenses",
       label: `Gastos ${periodLabel}`,
       description: "Egresos que consumen caja operativa",
-      value: formatCurrency(expensesTodayTotal),
+      value: expensesTodayTotal,
+      tone: "expense",
       icon: CreditCard
     },
     {
       key: "repairs",
       label: `Ingresos por reparaciones ${periodLabel}`,
       description: "Servicio tecnico cobrado y registrado",
-      value: formatCurrency(repairsTodayTotal),
+      value: repairsTodayTotal,
+      tone: "service",
       icon: Wrench
     },
     {
       key: "invoicing",
       label: `Facturacion ${periodLabel}`,
       description: "Comprobantes internos emitidos",
-      value: formatCurrency(invoiceIncomeToday),
+      value: invoiceIncomeToday,
+      tone: "neutral",
       icon: ArrowUpRight
     },
     {
       key: "profit",
-      label: `Ganancia real ${periodLabel}`,
-      description: "Lectura neta para decidir rapido",
-      value: formatCurrency(realProfitToday),
+      label: `Flujo neto de caja ${periodLabel}`,
+      description: "Ingresos menos gastos. No descuenta costo de productos ni retiros de sueldo.",
+      value: realProfitToday,
+      tone: "success",
       icon: Target
     }
   ] as const;
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+      <Card className="rounded-[24px] p-5 lg:p-6">
+        <div className="flex flex-col gap-5 min-[1440px]:flex-row min-[1440px]:items-end min-[1440px]:justify-between">
           <div className="max-w-2xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="panel-kicker">Operacion diaria</span>
-              <Badge variant="default">
-                <Sparkles className="mr-1 h-3.5 w-3.5" />
-                Vista premium
-              </Badge>
-            </div>
-            <h2 className="panel-heading mt-3">Dashboard ejecutivo del local</h2>
+            <span className="panel-kicker">Operación diaria</span>
+            <h1 className="panel-heading mt-3">Dashboard ejecutivo del local</h1>
             <p className="panel-subheading mt-3">
-              {range.isCustomRange
-                ? `Leyendo movimientos desde ${formatDate(range.from)} hasta ${formatDate(range.to)} para comparar el rendimiento real del negocio.`
-                : "Lectura en tiempo real del trabajo del dia, con foco en caja, ventas, reparaciones y reposicion critica."}
+              {range.isToday
+                ? "Lectura en tiempo real del trabajo del dia, con foco en caja, ventas, reparaciones y reposicion critica."
+                : `Leyendo movimientos desde ${formatDate(range.from)} hasta ${formatDate(range.to)} para comparar el rendimiento real del negocio.`}
             </p>
           </div>
 
-          <form className="grid gap-3 rounded-[28px] border border-graphite/8 bg-white/86 p-4 shadow-[0_12px_24px_rgba(20,20,19,0.04)] sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto] xl:min-w-[35rem]">
+          <form className="grid w-full gap-3 rounded-[18px] border border-graphite/10 bg-brand-50/70 p-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto] min-[1440px]:w-auto min-[1440px]:min-w-[34rem]">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="from">
                 Desde
               </label>
               <Input defaultValue={range.from} name="from" type="date" />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="to">
                 Hasta
               </label>
               <Input defaultValue={range.to} name="to" type="date" />
@@ -168,7 +179,7 @@ export function DashboardOverview({
             <div className="flex items-end">
               <Link
                 className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}
-                href="/dashboard"
+                href={`/dashboard?from=${range.today}&to=${range.today}`}
               >
                 <CalendarRange className="mr-2 h-4 w-4" />
                 Hoy
@@ -178,73 +189,12 @@ export function DashboardOverview({
         </div>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-5">
-        {metrics.map((metric) => {
-          const Icon = metric.icon;
-
-          return (
-            <div className="metric-tile" key={metric.key}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2">
-                  <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    {metric.label}
-                  </p>
-                  <p className={cn("text-[1.95rem] font-semibold tracking-[-0.05em]", metricTone[metric.key])}>
-                    {metric.value}
-                  </p>
-                  <p className="max-w-[24ch] text-sm leading-5 text-slate-500">{metric.description}</p>
-                </div>
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-                  <Icon className="h-5 w-5" />
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <section aria-label="Metricas del periodo" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-5">
+        {metrics.map((metric) => <MetricCard {...metric} format="currency" key={metric.key} />)}
+      </section>
 
       <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.95fr)]">
-        <Card className="rounded-[34px] p-5 lg:p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="panel-kicker">Inventario critico</p>
-              <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
-                Reposicion sugerida
-              </h3>
-              <p className="mt-2 text-sm text-slate-500">
-                Productos sensibles para la operacion diaria. Si esto se queda sin stock, se resiente la venta.
-              </p>
-            </div>
-            <Badge variant="warning">{lowStockProducts.length} alertas</Badge>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {lowStockProducts.length ? (
-              lowStockProducts.map((product) => (
-                <div
-                  className="rounded-[24px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_16px_28px_rgba(20,20,19,0.06)]"
-                  key={product.id}
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-slate-950">{product.name}</p>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Minimo recomendado: {product.min_stock} unidades
-                      </p>
-                    </div>
-                    <Badge variant={product.stock <= product.min_stock ? "danger" : "warning"}>
-                      {product.stock} disponibles
-                    </Badge>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="empty-panel">
-                No hay alertas de stock. El inventario de seguridad esta bajo control en este momento.
-              </div>
-            )}
-          </div>
-        </Card>
+        <LowStockDisclosure products={lowStockProducts} />
 
         <div className="space-y-4">
           <Card className="rounded-[34px] p-5 lg:p-6">
@@ -291,6 +241,41 @@ export function DashboardOverview({
                     {formatCurrency(pendingMercadoPagoReleaseAmount)}
                   </p>
                 </div>
+              </div>
+            </div>
+          </Card>
+
+          <Card className="rounded-[34px] p-5 lg:p-6">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="panel-kicker">Agenda del dia</p>
+                <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
+                  Visitas de hoy
+                </h3>
+              </div>
+              <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/visitas" as Route}>
+                Abrir visitas
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Visitas hoy</p>
+                <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{visitsDashboard.todayCount}</p>
+                <p className="mt-1 text-sm text-slate-500">Pendientes hoy: {visitsDashboard.pendingCount}</p>
+              </div>
+              <div className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
+                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Proxima visita</p>
+                {visitsDashboard.nextVisit ? (
+                  <>
+                    <p className="mt-2 text-base font-semibold text-slate-950">{visitsDashboard.nextVisit.customerName}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {getVisitTimeLabel(visitsDashboard.nextVisit.timeFrom, visitsDashboard.nextVisit.timeTo)} | {visitsDashboard.nextVisit.reason}
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-slate-500">No hay salidas agendadas por ahora.</p>
+                )}
               </div>
             </div>
           </Card>

@@ -6,8 +6,9 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { deleteCashMovement, deleteStockMovement, replaceCashMovements, replaceStockMovements } from "@/lib/accounting";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getPaymentTotal, parsePaymentSplits } from "@/lib/payment-splits";
+import { getFriendlyDatabaseError, isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { toOperationalDateTime } from "@/lib/utils";
 import { getSaleValidationError } from "@/features/sales/validation";
@@ -120,7 +121,39 @@ export async function saveSaleAction(formData: FormData) {
 
   const supabase = await createServerSupabaseClient();
   const input = parsed.data;
-  const user = input.id ? await requireAdmin() : await requireUser();
+  const user = await requireAdmin();
+  const subtotal = input.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
+  const paymentTotal = getPaymentTotal(input.payments);
+  const paymentErrorMessage = getSaleValidationError({
+    itemCount: input.items.length,
+    totalAmount: subtotal,
+    payments: input.payments
+  });
+  if (paymentErrorMessage) redirectWithError(paymentErrorMessage, input.id);
+
+  const atomicResult = await (supabase as any).rpc("save_sale_atomic", {
+    p_sale_id: input.id ?? null,
+    p_sold_at: toOperationalDateTime(input.saleDate),
+    p_items: input.items,
+    p_payments: input.payments,
+    p_notes: input.notes || null
+  });
+
+  if (!atomicResult.error && atomicResult.data?.id) {
+    revalidatePath("/ventas");
+    revalidatePath("/dashboard");
+    revalidatePath("/caja");
+    const status = atomicResult.data.action === "update" ? "sale_updated" : "sale_created";
+    redirect(`/ventas?status=${status}`);
+  }
+
+  if (!isMissingDatabaseFunctionError(atomicResult.error, "save_sale_atomic")) {
+    redirectWithError(
+      getFriendlyDatabaseError(atomicResult.error, "No se pudo guardar la venta. Intenta nuevamente."),
+      input.id
+    );
+  }
+
   const productIds = Array.from(new Set(input.items.map((item) => item.productId)));
 
   const { data: products, error: productsError } = await (supabase as any)
@@ -163,15 +196,6 @@ export async function saveSaleAction(formData: FormData) {
       redirectWithError(`Stock insuficiente para ${product.name}. Disponible: ${availableStock}.`, input.id);
     }
   }
-
-  const subtotal = input.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
-  const paymentTotal = getPaymentTotal(input.payments);
-  const paymentErrorMessage = getSaleValidationError({
-    itemCount: input.items.length,
-    totalAmount: subtotal,
-    payments: input.payments
-  });
-  if (paymentErrorMessage) redirectWithError(paymentErrorMessage, input.id);
 
   const costTotal = input.items.reduce((acc, item) => {
     const product = productsById.get(item.productId);
@@ -309,6 +333,18 @@ export async function deleteSaleAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
+
+  const atomicResult = await (supabase as any).rpc("delete_sale_atomic", { p_sale_id: id });
+  if (!atomicResult.error && atomicResult.data?.id) {
+    revalidatePath("/ventas");
+    revalidatePath("/dashboard");
+    revalidatePath("/caja");
+    redirect("/ventas?status=sale_deleted");
+  }
+
+  if (!isMissingDatabaseFunctionError(atomicResult.error, "delete_sale_atomic")) {
+    redirectWithError(getFriendlyDatabaseError(atomicResult.error, "No se pudo eliminar la venta."));
+  }
 
   const { data: items } = await (supabase as any)
     .from("sale_items")

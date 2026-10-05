@@ -3,6 +3,7 @@ import * as XLSX from "xlsx";
 
 import { requireAdmin } from "@/lib/auth";
 import { formatCashMethod } from "@/lib/cash";
+import { applyStableCreationOrder } from "@/lib/chronology";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET() {
@@ -11,10 +12,16 @@ export async function GET() {
 
   const [products, sales, saleItems, expenses, repairs, invoices, cashMovements] = await Promise.all([
     (supabase as any).from("products").select("sku, name, cost, sale_price, stock, min_stock, is_active, created_at"),
-    (supabase as any).from("sales").select("sale_number, subtotal, cost_total, profit_total, sold_at, notes"),
+    applyStableCreationOrder(
+      (supabase as any).from("sales").select("id, sale_number, subtotal, cost_total, profit_total, sold_at, notes, created_at, updated_at")
+    ),
     (supabase as any).from("sale_items").select("sale_id, product_id, quantity, unit_price, unit_cost, total"),
-    (supabase as any).from("expenses").select("expense_date, type, description, amount, payment_method, is_voided, observations"),
-    (supabase as any).from("repairs").select("customer_name, customer_phone, device, order_number, final_price, status, created_at"),
+    applyStableCreationOrder(
+      (supabase as any).from("expenses").select("id, expense_date, type, description, amount, payment_method, is_voided, observations, created_at, updated_at")
+    ),
+    applyStableCreationOrder(
+      (supabase as any).from("repairs").select("id, customer_name, customer_phone, device, order_number, final_price, status, entry_date, created_at, updated_at")
+    ),
     (supabase as any).from("invoices").select("invoice_number, customer_name, customer_phone, source_type, subtotal, discount, total, status, created_at"),
     (supabase as any).from("movimientos_caja").select("fecha, tipo, monto, medio_pago, descripcion")
   ]);

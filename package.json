@@ -10,7 +10,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "import:excel": "tsx scripts/import-chetech.ts",
-    "import:repair-clients": "tsx scripts/import-repair-access-customers.ts"
+    "import:repair-clients": "tsx scripts/import-repair-access-customers.ts",
+    "import:repair-history": "tsx scripts/import-repair-history.ts",
+    "reconcile:repair-numbers": "tsx scripts/reconcile-repair-order-numbers.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -21,7 +23,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.511.0",
-    "next": "^15.2.4",
+    "next": "15.5.25",
     "pdfkit": "^0.18.0",
     "pg": "^8.20.0",
     "react": "^19.0.0",
@@ -32,20 +34,22 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.39.4",
     "eslint-config-next": "^15.5.15",
-    "postcss": "^8.5.3",
+    "jsdom": "^26.1.0",
+    "postcss": "^8.5.28",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.3",
     "typescript": "^5.8.2",
-    "vitest": "^2.1.8",
+    "vitest": "^3.2.6",
     "xlsx": "^0.18.5"
   },
   "overrides": {
-    "postcss": "$postcss"
+    "postcss": "^8.5.28"
   }
 }

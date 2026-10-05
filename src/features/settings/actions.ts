@@ -6,16 +6,11 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
-import { getBusinessGoalsKey, getCashSettingsKey } from "@/lib/app-settings";
+import {
+  getBusinessGoalsKey,
+  getRepairWarrantySettingsKey
+} from "@/lib/app-settings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { toOperationalDateTime } from "@/lib/utils";
-
-const cashSettingsSchema = z.object({
-  openingEfectivo: z.coerce.number().min(0, "El saldo inicial de EFECTIVO debe ser valido"),
-  openingNx: z.coerce.number().min(0, "El saldo inicial de NX SANTI debe ser valido"),
-  openingMp: z.coerce.number().min(0, "El saldo inicial de NX LOCAL debe ser valido"),
-  movementCutoff: z.string().min(1, "Selecciona la fecha base de caja")
-});
 
 const businessGoalsSchema = z.object({
   salesTarget: z.coerce.number().min(0, "La meta de ventas debe ser valida"),
@@ -24,59 +19,16 @@ const businessGoalsSchema = z.object({
   invoicingTarget: z.coerce.number().min(0, "La meta de facturacion debe ser valida")
 });
 
+const repairWarrantySettingsSchema = z.object({
+  defaultDays: z.coerce
+    .number()
+    .int("La duracion debe expresarse en dias enteros")
+    .min(1, "La duracion predeterminada debe ser mayor a cero")
+    .max(3650, "La duracion predeterminada no puede superar los 10 anos")
+});
+
 function redirectWithError(message: string): never {
   redirect(`/configuracion?error=${encodeURIComponent(message)}`);
-}
-
-export async function saveCashSettingsAction(formData: FormData) {
-  const parsed = cashSettingsSchema.safeParse({
-    openingEfectivo: formData.get("openingEfectivo"),
-    openingNx: formData.get("openingNx"),
-    openingMp: formData.get("openingMp"),
-    movementCutoff: formData.get("movementCutoff")
-  });
-
-  if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudieron guardar los ajustes");
-  }
-
-  const user = await requireAdmin();
-  const supabase = await createServerSupabaseClient();
-  const payload = {
-    openingBalances: {
-      efectivo: parsed.data.openingEfectivo,
-      nx: parsed.data.openingNx,
-      mp: parsed.data.openingMp
-    },
-    movementCutoff: toOperationalDateTime(parsed.data.movementCutoff)
-  };
-
-  const { error } = await (supabase as any).from("app_settings").upsert(
-    {
-      key: getCashSettingsKey(),
-      value: payload,
-      updated_by: user.id,
-      updated_at: new Date().toISOString()
-    },
-    { onConflict: "key" }
-  );
-
-  if (error) {
-    redirectWithError(error.message);
-  }
-
-  await createAuditLog({
-    entityType: "app_settings",
-    entityId: getCashSettingsKey(),
-    action: "update",
-    userId: user.id,
-    changes: payload
-  });
-
-  revalidatePath("/configuracion");
-  revalidatePath("/dashboard");
-  revalidatePath("/caja");
-  redirect("/configuracion?status=settings_saved");
 }
 
 export async function saveBusinessGoalsAction(formData: FormData) {
@@ -125,4 +77,44 @@ export async function saveBusinessGoalsAction(formData: FormData) {
   revalidatePath("/configuracion");
   revalidatePath("/reportes");
   redirect("/configuracion?status=goals_saved");
+}
+
+export async function saveRepairWarrantySettingsAction(formData: FormData) {
+  const parsed = repairWarrantySettingsSchema.safeParse({
+    defaultDays: formData.get("defaultDays")
+  });
+
+  if (!parsed.success) {
+    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo guardar la garantia");
+  }
+
+  const user = await requireAdmin();
+  const supabase = await createServerSupabaseClient();
+  const payload = { defaultDays: parsed.data.defaultDays };
+
+  const { error } = await (supabase as any).from("app_settings").upsert(
+    {
+      key: getRepairWarrantySettingsKey(),
+      value: payload,
+      updated_by: user.id,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: "key" }
+  );
+
+  if (error) {
+    redirectWithError(error.message);
+  }
+
+  await createAuditLog({
+    entityType: "app_settings",
+    entityId: getRepairWarrantySettingsKey(),
+    action: "update",
+    userId: user.id,
+    changes: payload
+  });
+
+  revalidatePath("/configuracion");
+  revalidatePath("/reparaciones-access");
+  redirect("/configuracion?status=warranty_settings_saved");
 }

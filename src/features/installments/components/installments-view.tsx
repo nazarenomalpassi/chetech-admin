@@ -179,43 +179,43 @@ export function InstallmentsView({
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Producto vendido
               </label>
-              <Input name="productName" onChange={(event) => setProductName(event.target.value)} placeholder="Ej: TV Samsung 43 reacondicionado" value={productName} />
+              <Input aria-label="Producto vendido en cuotas" name="productName" onChange={(event) => setProductName(event.target.value)} placeholder="Ej: TV Samsung 43 reacondicionado" value={productName} />
             </div>
             <div className="xl:col-span-2">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Cliente
               </label>
-              <Input name="customerName" onChange={(event) => setCustomerName(event.target.value)} placeholder="Nombre del cliente" value={customerName} />
+              <Input aria-label="Cliente de la venta en cuotas" name="customerName" onChange={(event) => setCustomerName(event.target.value)} placeholder="Nombre del cliente" value={customerName} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Monto total
               </label>
-              <Input min={0} name="totalAmount" onChange={(event) => setTotalAmount(Number(event.target.value))} step="0.01" type="number" value={totalAmount > 0 ? totalAmount : ""} />
+              <Input aria-label="Monto total" min={0} name="totalAmount" onChange={(event) => setTotalAmount(Number(event.target.value))} step="0.01" type="number" value={totalAmount > 0 ? totalAmount : ""} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Cantidad de cuotas
               </label>
-              <Input min={1} name="installmentsCount" onChange={(event) => setInstallmentsCount(Number(event.target.value))} type="number" value={installmentsCount} />
+              <Input aria-label="Cantidad de cuotas" min={1} name="installmentsCount" onChange={(event) => setInstallmentsCount(Number(event.target.value))} type="number" value={installmentsCount} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Primera cuota
               </label>
-              <Input name="firstDueDate" onChange={(event) => setFirstDueDate(event.target.value)} type="date" value={firstDueDate} />
+              <Input aria-label="Fecha de primera cuota" name="firstDueDate" onChange={(event) => setFirstDueDate(event.target.value)} type="date" value={firstDueDate} />
             </div>
             <div>
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Medio inicial
               </label>
-              <Select name="defaultPaymentMethod" onChange={(event) => setDefaultPaymentMethod(event.target.value)} options={getCashMethodOptions()} value={defaultPaymentMethod} />
+              <Select aria-label="Medio inicial" name="defaultPaymentMethod" onChange={(event) => setDefaultPaymentMethod(event.target.value)} options={getCashMethodOptions()} value={defaultPaymentMethod} />
             </div>
             <div className="xl:col-span-4">
               <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
                 Observaciones
               </label>
-              <Textarea name="notes" onChange={(event) => setNotes(event.target.value)} placeholder="Dato opcional para la venta en cuotas" value={notes} />
+              <Textarea aria-label="Observaciones de la venta en cuotas" name="notes" onChange={(event) => setNotes(event.target.value)} placeholder="Dato opcional para la venta en cuotas" value={notes} />
             </div>
           </div>
 
@@ -239,10 +239,10 @@ export function InstallmentsView({
                   <div className="rounded-[18px] border border-graphite/8 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-900">
                     Cuota {installment.installmentNumber}/{installmentsCount}
                   </div>
-                  <Input onChange={(event) => updateInstallment(index, "dueDate", event.target.value)} type="date" value={installment.dueDate} />
-                  <Input min={0} onChange={(event) => updateInstallment(index, "amount", event.target.value)} step="0.01" type="number" value={installment.amount} />
-                  <Select onChange={(event) => updateInstallment(index, "paymentMethod", event.target.value)} options={getCashMethodOptions()} value={installment.paymentMethod} />
-                  <Input onChange={(event) => updateInstallment(index, "notes", event.target.value)} placeholder="Nota opcional por cuota" value={installment.notes} />
+                  <Input aria-label={`Vencimiento de cuota ${index + 1}`} onChange={(event) => updateInstallment(index, "dueDate", event.target.value)} type="date" value={installment.dueDate} />
+                  <Input aria-label={`Monto de cuota ${index + 1}`} min={0} onChange={(event) => updateInstallment(index, "amount", event.target.value)} step="0.01" type="number" value={installment.amount} />
+                  <Select aria-label={`Medio de pago de cuota ${index + 1}`} onChange={(event) => updateInstallment(index, "paymentMethod", event.target.value)} options={getCashMethodOptions()} value={installment.paymentMethod} />
+                  <Input aria-label={`Observaciones de cuota ${index + 1}`} onChange={(event) => updateInstallment(index, "notes", event.target.value)} placeholder="Nota opcional por cuota" value={installment.notes} />
                 </div>
               ))}
             </div>
@@ -261,9 +261,10 @@ export function InstallmentsView({
             <h2 className="text-xl font-semibold text-slate-950">Buscar cuotas y ventas</h2>
           </div>
           <form className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-            <Input defaultValue={filters.customer} name="customer" placeholder="Cliente" />
-            <Input defaultValue={filters.product} name="product" placeholder="Producto" />
+            <Input aria-label="Filtrar cuotas por cliente" defaultValue={filters.customer} name="customer" placeholder="Cliente" />
+            <Input aria-label="Filtrar cuotas por producto" defaultValue={filters.product} name="product" placeholder="Producto" />
             <Select
+              aria-label="Filtrar cuotas por estado"
               defaultValue={filters.status ?? ""}
               name="state"
               options={[
@@ -274,9 +275,10 @@ export function InstallmentsView({
                 { value: "cancelada", label: "Cancelada" }
               ]}
             />
-            <Input defaultValue={filters.dueFrom} name="dueFrom" type="date" />
-            <Input defaultValue={filters.dueTo} name="dueTo" type="date" />
+            <Input aria-label="Vencimiento desde" defaultValue={filters.dueFrom} name="dueFrom" type="date" />
+            <Input aria-label="Vencimiento hasta" defaultValue={filters.dueTo} name="dueTo" type="date" />
             <Select
+              aria-label="Filtrar cuotas por medio de pago"
               defaultValue={filters.paymentMethod ?? ""}
               name="paymentMethod"
               options={[
@@ -355,10 +357,10 @@ export function InstallmentsView({
                         <div className="rounded-[18px] border border-graphite/8 bg-white px-4 py-3 text-sm font-semibold text-slate-900">
                           Editar cuota
                         </div>
-                        <Input defaultValue={installment.dueDate} name="dueDate" type="date" />
-                        <Input defaultValue={installment.amount} min={0} name="amount" step="0.01" type="number" />
-                        <Select defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
-                        <Input defaultValue={installment.notes} name="notes" placeholder="Nota de cuota" />
+                        <Input aria-label={`Vencimiento de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-due`} defaultValue={installment.dueDate} name="dueDate" type="date" />
+                        <Input aria-label={`Monto de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-amount`} defaultValue={installment.amount} min={0} name="amount" step="0.01" type="number" />
+                        <Select aria-label={`Medio de pago de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-method`} defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
+                        <Input aria-label={`Observaciones de cuota ${installment.installmentNumber}`} id={`installment-${installment.id}-notes`} defaultValue={installment.notes} name="notes" placeholder="Nota de cuota" />
                         <Button className="w-full xl:w-auto" type="submit" variant="secondary">
                           Guardar cuota
                         </Button>
@@ -368,8 +370,8 @@ export function InstallmentsView({
                         {installment.status !== "pagada" ? (
                           <form action={markInstallmentPaidAction} className="grid gap-3 rounded-[22px] border border-graphite/8 bg-brand-50/85 p-4">
                             <input name="id" type="hidden" value={installment.id} />
-                            <Select defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
-                            <Input defaultValue={data.today} name="paidDate" type="date" />
+                            <Select aria-label="Cuenta de cobro de la cuota" id={`installment-${installment.id}-paid-method`} defaultValue={installment.paymentMethod} name="paymentMethod" options={getCashMethodOptions()} />
+                            <Input aria-label="Fecha de cobro de la cuota" id={`installment-${installment.id}-paid-date`} defaultValue={data.today} name="paidDate" type="date" />
                             <Button className="w-full" type="submit">Marcar pagada</Button>
                           </form>
                         ) : (

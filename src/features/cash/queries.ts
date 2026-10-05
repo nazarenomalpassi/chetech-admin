@@ -3,6 +3,12 @@ import { getCashSettings } from "@/lib/app-settings";
 import { calculateBalanceTransferDeltas } from "@/features/balance-transfers/model";
 import { getBalanceTransfers } from "@/features/balance-transfers/queries";
 import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
+import {
+  normalizeCashPerformanceSnapshot,
+  type CashSummarySnapshotRow
+} from "@/features/cash/performance-snapshot";
+import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
+import type { CashMethod } from "@/lib/cash";
 
 const ARGENTINA_UTC_OFFSET_HOURS = 3;
 
@@ -43,12 +49,18 @@ function isOutcome(type: string) {
   return type === "gasto" || type === "sueldo";
 }
 
-export async function getCashData() {
-  const supabase = await createServerSupabaseClient();
-  const cashSettings = await getCashSettings();
-  const today = getArgentinaDayRange(new Date());
-
-  const [allMovementsResult, todayMovementsResult, closuresResult, balanceTransfers] = await Promise.all([
+async function getLegacyCashData({
+  supabase,
+  cashSettings,
+  today,
+  balanceTransfers
+}: {
+  supabase: any;
+  cashSettings: Awaited<ReturnType<typeof getCashSettings>>;
+  today: ReturnType<typeof getArgentinaDayRange>;
+  balanceTransfers: Awaited<ReturnType<typeof getBalanceTransfers>>;
+}) {
+  const [allMovementsResult, todayMovementsResult, closuresResult] = await Promise.all([
     (supabase as any)
       .from("movimientos_caja")
       .select("id, tipo, monto, medio_pago, descripcion, referencia_tabla, referencia_id, fecha")
@@ -65,8 +77,7 @@ export async function getCashData() {
       .from("cierres_caja")
       .select("id, fecha, saldo_inicial, ingresos, egresos, saldo_final, observaciones, created_at")
       .order("fecha", { ascending: false })
-      .limit(20),
-    getBalanceTransfers(supabase as any)
+      .limit(20)
   ]);
 
   if (allMovementsResult.error) throw new Error(allMovementsResult.error.message);
@@ -143,5 +154,66 @@ export async function getCashData() {
       finalBalance: Number(closure.saldo_final),
       observations: closure.observaciones ?? ""
     }))
+  };
+}
+
+export async function getCashData() {
+  const supabase = await createServerSupabaseClient();
+  const today = getArgentinaDayRange(new Date());
+  const [snapshotResult, cashSettings, balanceTransfers] = await Promise.all([
+    (supabase as any).rpc("get_cash_page_snapshot", {
+      p_day_start: today.startIso,
+      p_day_end: today.endIso
+    }),
+    getCashSettings(),
+    getBalanceTransfers(supabase as any)
+  ]);
+
+  if (snapshotResult.error) {
+    if (!isMissingDatabaseFunctionError(snapshotResult.error, "get_cash_page_snapshot")) {
+      throw new Error(snapshotResult.error.message);
+    }
+
+    return getLegacyCashData({ supabase, cashSettings, today, balanceTransfers });
+  }
+
+  const snapshot = normalizeCashPerformanceSnapshot(snapshotResult.data);
+  const summaryByMethod = new Map<CashMethod, CashSummarySnapshotRow>();
+  for (const row of snapshot.cashSummary) {
+    const method = normalizeCashMethodValue(row.medio_pago);
+    if (method) summaryByMethod.set(method, row);
+  }
+  const transferDeltas = calculateBalanceTransferDeltas(
+    balanceTransfers.map((transfer) => ({
+      amount: transfer.amount,
+      fromPaymentMethod: transfer.fromPaymentMethod,
+      isVoided: transfer.isVoided,
+      toPaymentMethod: transfer.toPaymentMethod
+    }))
+  );
+  const balances = CASH_METHODS.map((method) => {
+    const summary = summaryByMethod.get(method);
+    const income = summary?.total_income ?? 0;
+    const outcome = summary?.total_outcome ?? 0;
+
+    return {
+      method,
+      openingBalance: cashSettings.openingBalances[method],
+      income,
+      outcome,
+      todayIncome: summary?.period_income ?? 0,
+      todayOutcome: summary?.period_outcome ?? 0,
+      balance: cashSettings.openingBalances[method] + income - outcome + transferDeltas[method]
+    };
+  });
+
+  return {
+    today: today.date,
+    balances,
+    todayIncome: balances.reduce((acc, item) => acc + item.todayIncome, 0),
+    todayOutcome: balances.reduce((acc, item) => acc + item.todayOutcome, 0),
+    totalBalance: balances.reduce((acc, item) => acc + item.balance, 0),
+    recentMovements: snapshot.recentMovements,
+    closures: snapshot.closures
   };
 }

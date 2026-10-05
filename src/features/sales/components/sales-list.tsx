@@ -1,18 +1,22 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { CalendarRange, CircleDollarSign, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
+import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteSaleAction, saveSaleAction } from "@/features/sales/actions";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod } from "@/lib/cash";
 import type { PaymentSplit } from "@/lib/payment-splits";
+import type { PaginationMeta } from "@/lib/pagination";
+import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 
 type ProductOption = {
@@ -50,16 +54,32 @@ type Sale = {
   items: SaleItem[];
 };
 
+type SaleDraft = {
+  editing: Sale | null;
+  saleDate: string;
+  productId: string;
+  productSearch: string;
+  quantity: number;
+  unitPrice: number;
+  cart: CartItem[];
+  payments: PaymentSplit[];
+  notes: string;
+};
+
 export function SalesList({
   canManageHistory,
   sales,
   products,
-  message
+  pagination,
+  message,
+  actionStatus
 }: {
   canManageHistory: boolean;
   sales: Sale[];
   products: ProductOption[];
+  pagination: PaginationMeta;
   message: ActionResult | null;
+  actionStatus?: string;
 }) {
   const today = getLocalDateInputValue();
   const [editing, setEditing] = useState<Sale | null>(null);
@@ -71,6 +91,7 @@ export function SalesList({
   const [unitPrice, setUnitPrice] = useState(products[0]?.salePrice ?? 0);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "efectivo", amount: 0 }]);
+  const [notes, setNotes] = useState("");
 
   const selectedProduct = products.find((product) => product.id === productId);
   const cartTotal = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
@@ -95,6 +116,35 @@ export function SalesList({
     }))
   );
   const paymentsJson = JSON.stringify(payments);
+  const hasUnsavedChanges = Boolean(editing || cart.length || notes.trim());
+  const restoreSaleDraft = useCallback((saved: SaleDraft) => {
+    setEditing(saved.editing);
+    setSaleDate(saved.saleDate);
+    setProductId(saved.productId);
+    setProductSearch(saved.productSearch);
+    setQuantity(saved.quantity);
+    setUnitPrice(saved.unitPrice);
+    setCart(saved.cart);
+    setPayments(saved.payments.length ? saved.payments : [{ method: "efectivo", amount: 0 }]);
+    setNotes(saved.notes);
+  }, []);
+  const draft = usePersistentFormDraft<SaleDraft>({
+    clearOnMount: actionStatus === "sale_created" || actionStatus === "sale_updated",
+    draftKey: "sales:active",
+    isDirty: hasUnsavedChanges,
+    onRestore: restoreSaleDraft,
+    value: {
+      editing,
+      saleDate,
+      productId,
+      productSearch,
+      quantity,
+      unitPrice,
+      cart,
+      payments,
+      notes
+    }
+  });
 
   function selectProduct(product: ProductOption) {
     setProductId(product.id);
@@ -164,6 +214,7 @@ export function SalesList({
         : [{ method: "efectivo", amount: sale.subtotal }]
     );
     setSaleDate(sale.soldAt.slice(0, 10));
+    setNotes(sale.notes);
   }
 
   function resetForm() {
@@ -175,6 +226,7 @@ export function SalesList({
     setUnitPrice(products[0]?.salePrice ?? 0);
     setPayments([{ method: "efectivo", amount: 0 }]);
     setSaleDate(today);
+    setNotes("");
   }
 
   function renderPaymentSummary(sale: Sale) {
@@ -240,8 +292,18 @@ export function SalesList({
         </div>
 
         {message ? (
-          <div className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"} role={message.success ? "status" : "alert"}>
             {message.message}
+          </div>
+        ) : null}
+
+        {draft.pendingDraft ? (
+          <div className="mt-5">
+            <DraftRecoveryBanner
+              onDiscard={draft.discardDraft}
+              onRestore={draft.restoreDraft}
+              updatedAt={draft.pendingDraft.updatedAt}
+            />
           </div>
         ) : null}
 
@@ -252,12 +314,16 @@ export function SalesList({
 
           <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-[minmax(0,2.3fr)_120px_150px_170px_140px]">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-product-search">
                 Producto
               </label>
               <div className="relative">
                 <Input
+                  aria-autocomplete="list"
+                  aria-expanded={isProductPickerOpen}
+                  aria-haspopup="listbox"
                   autoComplete="off"
+                  id="sale-product-search"
                   onBlur={() => window.setTimeout(() => setIsProductPickerOpen(false), 120)}
                   onChange={(event) => {
                     setProductSearch(event.target.value);
@@ -301,17 +367,18 @@ export function SalesList({
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-quantity">
                 Cantidad
               </label>
-              <Input min={1} onChange={(event) => setQuantity(Number(event.target.value))} type="number" value={quantity} />
+              <Input id="sale-quantity" min={1} onChange={(event) => setQuantity(Number(event.target.value))} type="number" value={quantity} />
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-unit-price">
                 Precio
               </label>
               <Input
+                id="sale-unit-price"
                 min={0}
                 onChange={(event) => setUnitPrice(Number(event.target.value))}
                 step="0.01"
@@ -321,7 +388,7 @@ export function SalesList({
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="saleDate">
                 Fecha
               </label>
               <div className="relative">
@@ -417,14 +484,14 @@ export function SalesList({
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
             <PaymentSplitFields onChange={setPayments} payments={payments} totalAmount={cartTotal} title="Cobro de la venta" />
             <div className="rounded-[30px] border border-graphite/8 bg-white/82 p-4">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="notes">
                 Observaciones
               </label>
               <Textarea
-                defaultValue={editing?.notes ?? ""}
-                key={editing?.id ?? "new-notes"}
                 name="notes"
+                onChange={(event) => setNotes(event.target.value)}
                 placeholder="Detalle opcional para referencia interna"
+                value={notes}
               />
               <div className="mt-4 flex items-end gap-2">
                 <FormSubmitButton
@@ -439,6 +506,11 @@ export function SalesList({
                   </Button>
                 ) : null}
               </div>
+              {draft.lastSavedAt && hasUnsavedChanges ? (
+                <p aria-live="polite" className="mt-3 text-xs text-slate-500">
+                  Borrador de venta guardado en este dispositivo.
+                </p>
+              ) : null}
             </div>
           </div>
         </form>
@@ -560,6 +632,7 @@ export function SalesList({
             Cuando registres una venta, la vas a ver aca con sus productos y medios de cobro.
           </div>
         ) : null}
+        <PaginationNav meta={pagination} pathname="/ventas" />
       </div>
     </div>
   );

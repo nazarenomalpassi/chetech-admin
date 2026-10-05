@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 
 import { balanceTransferSchema, voidBalanceTransferSchema } from "@/features/balance-transfers/schemas";
 import { createAuditLog } from "@/lib/audit";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function redirectWithError(message: string): never {
@@ -33,7 +33,7 @@ export async function saveBalanceTransferAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el cambio de balance.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const payload = {
     from_payment_method: parsed.data.fromPaymentMethod,
@@ -72,7 +72,7 @@ export async function voidBalanceTransferAction(formData: FormData) {
     redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la anulacion.");
   }
 
-  const user = await requireUser();
+  const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
   const { data, error } = await (supabase as any).rpc("void_balance_transfer", {
     p_reason: parsed.data.reason || null,

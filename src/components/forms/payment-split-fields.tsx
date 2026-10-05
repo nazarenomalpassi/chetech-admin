@@ -101,20 +101,22 @@ export function PaymentSplitFields({
             key={`${payment.method}-${index}`}
           >
             <div className="space-y-2">
-              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor={`payment-method-${index}`}>
                 Medio {index + 1}
               </label>
               <Select
+                id={`payment-method-${index}`}
                 onChange={(event) => updatePayment(index, "method", event.target.value)}
                 options={PAYMENT_METHODS.map((method) => ({ value: method.value, label: method.label }))}
                 value={payment.method}
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor={`payment-amount-${index}`}>
                 Monto
               </label>
               <Input
+                id={`payment-amount-${index}`}
                 min={0}
                 onChange={(event) => updatePayment(index, "amount", event.target.value)}
                 onFocus={(event) => event.currentTarget.select()}
@@ -148,6 +150,7 @@ export function PaymentSplitFields({
         <div className="rounded-[20px] border border-graphite/8 bg-white/85 p-4">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Diferencia</p>
           <p
+            aria-live="polite"
             className={`mt-3 text-xl font-semibold tracking-[-0.04em] ${
               Math.abs(difference) < 0.01 ? "text-finance-profit" : "text-finance-expense"
             }`}
