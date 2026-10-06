@@ -88,10 +88,11 @@ No forced individual accounts, no auth/password changes, no fiscal activation, n
 
 ## Verified Checkpoint (2026-10-06)
 
-- Full Vitest: 663 passed, 68 intentionally skipped; lint, typecheck and production build passed.
+- Full Vitest: 665 passed, 68 intentionally skipped; lint, typecheck and production build passed.
 - PostgreSQL: 27 existing rollback suites, new quick-workflow rollback suite and five real two-session concurrency scenarios passed using synthetic local fixtures only.
 - Browser: shared administrator entry, one-screen intake, return to newly created order, explicit consent/QC/readiness and failed-save draft retention verified locally. An internal 390px viewport verified mobile saving, full REP and no horizontal overflow; physical iPhone/PWA is not certified.
 - Independent SQL review closed legacy same-state readiness, NaN/missing quotes, metadata bounds, paid amount mismatches and sub-cent rounding. Existing private helper differs only by preserving an absent quote instead of implicit zero; no role/ACL changes.
 - Verified private operational export: 50 tables / 8297 rows, not a full PostgreSQL disaster-recovery backup. Migration workshop_quick_save applied to the intended production project as version 20261006203208.
 - Immediate pre/post read-only fingerprints: all 18 historical groups, financial summaries, account balances and stock unchanged; migration count 76 -> 77. No production test order or business-event write.
 - Release verification pending: push, reviewed PR merge, Vercel Ready/Current and live UI.
+- Post-deploy visual verification found an inherited viewport-based two-column header compressing the REP in narrow desktop cards. Header now keeps the order identity on its own full-width row for both account types; red/green regressions cover both, and local desktop measurement confirms a single-line REP with 416px usable width. Follow-up production verification is required.
