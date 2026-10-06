@@ -33,6 +33,7 @@ import { OrderCoordinationPanel, type WorkshopTechnician } from "./order-coordin
 import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { RepairAttachments } from "./repair-attachments";
 import { WorkshopForm } from "./workshop-form";
+import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 export function RepairAccessWorkshopCard({
@@ -122,6 +123,8 @@ export function RepairAccessWorkshopCard({
           <WorkshopCardForm order={order}>
             <input name="id" type="hidden" value={order.id} />
             {order.workflow ? <input name="expectedVersion" type="hidden" value={order.workflow.version} /> : null}
+
+            <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={canManageIntake} />
 
             <label>
               <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Estado de la orden</span>

@@ -23,6 +23,16 @@ describe("guardado breve del taller", () => {
     expect((await saveWorkshopForm(null, form())).message).toContain("otro dispositivo");
     expect(mocks.revalidate).not.toHaveBeenCalled();
   });
+  it("explica al tecnico la confirmacion pendiente sin fabricar un guardado", async () => {
+    const data = form(); data.set("status", "listo_para_retirar"); data.set("qualityChecked", "on");
+    mocks.rpc.mockResolvedValue({ error: { code: "23514", message: "Registra una autorizacion vigente del cliente antes de marcar listo para retirar." } });
+    const result = await saveWorkshopForm(null, data);
+    expect(result.success).toBe(false);
+    expect(result.message).toContain("Cliente confirmo");
+    expect(mocks.revalidate).not.toHaveBeenCalled();
+    expect(mocks.rpc).toHaveBeenCalledTimes(1);
+    expect(mocks.rpc.mock.calls[0][1].p_payload).not.toHaveProperty("approval_status");
+  });
   it("toma una orden con la version exacta y sin aceptar un responsable arbitrario", async () => {
     const data = form(); data.set("version", "3"); data.set("technicianId", "otra-persona");
     await claimRepairOrder(null, data);

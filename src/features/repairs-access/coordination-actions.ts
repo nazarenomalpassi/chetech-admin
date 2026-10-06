@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdmin, requirePermission } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getFriendlyDatabaseError } from "@/lib/supabase/rpc-errors";
 import type { ActionResult } from "@/lib/form-state";
 import { repairAccessWorkshopSchema } from "./schemas";
 
@@ -21,7 +22,13 @@ function values(form: FormData) {
 async function execute(rpc: string, args: Record<string, unknown>, success: string): Promise<ActionResult> {
   const supabase = await createServerSupabaseClient();
   const result = await (supabase as any).rpc(rpc, args);
-  if (result.error) return { success: false, message: result.error.code === "40001" ? "Este registro cambio en otro dispositivo. Actualiza y revisa tus datos antes de guardar." : result.error.message || "No se pudo guardar. Tus datos siguen disponibles para reintentar." };
+  if (result.error) {
+    const fallback = "No se pudo guardar. Tus datos siguen disponibles para reintentar.";
+    const message = result.error.code === "40001"
+      ? "Este registro cambio en otro dispositivo. Actualiza y revisa tus datos antes de guardar."
+      : rpc === "workshop_save" ? getFriendlyDatabaseError(result.error, fallback) : result.error.message || fallback;
+    return { success: false, message };
+  }
   revalidatePath("/reparaciones-access");
   revalidatePath("/pedidos");
   revalidatePath("/dashboard");

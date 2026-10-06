@@ -2,10 +2,13 @@
 import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RepairAccessWorkshopCard } from "@/features/repairs-access/components/repair-access-workshop-card";
+import { RepairAccessOrderDetail } from "@/features/repairs-access/components/repair-access-order-detail";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 Object.assign(globalThis, { React });
 afterEach(cleanup);
@@ -94,7 +97,55 @@ const order: RepairAccessOrderRecord = {
   }
 };
 
+const waitingOrder: RepairAccessOrderRecord = {
+  ...order, status: "presupuestado", budgetAmount: 208000, finalAmount: 208000,
+  workflow: { version: 1, budgetRevision: 0, approvalStatus: "legacy", approvedAmount: null, assignedTechnicianId: null,
+    assignedTechnicianName: null, location: null, nextActionDate: null, qualityCheckedAt: null, qualityNotes: null, parts: [], events: [] }
+};
+
 describe("RepairAccessWorkshopCard", () => {
+  it("explica en celular como habilitar listo para retirar sin inventar la confirmacion", () => {
+    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
+    const details = screen.getByText("Actualizar trabajo").closest("details")!;
+    details.open = true; fireEvent(details, new Event("toggle"));
+    const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
+    expect(notice.textContent).toContain("Confirmacion del cliente pendiente");
+    expect(notice.textContent).toContain("Pedile a mostrador");
+    expect(notice.textContent).toContain("control de calidad");
+    expect(screen.getByLabelText(/^Verifique la falla reparada/)).toBeTruthy();
+  });
+
+  it("muestra los pasos pendientes tambien en la ficha completa", () => {
+    const html = renderToStaticMarkup(<RepairAccessOrderDetail order={waitingOrder} onBack={() => undefined} onEditIntake={() => undefined} defaultWarrantyDays={30} />);
+    expect(html).toContain("Antes de marcar listo para retirar");
+    expect(html).toContain("Confirmacion del cliente pendiente");
+    expect(html).toContain('Cliente confirmo');
+  });
+
+  it("no presenta la utilizacion pendiente como un bloqueo de recepcion", () => {
+    const readyOrder = { ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" as const, approvedAmount: 208000,
+      parts: [{ id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 2, installedQuantity: 1, status: "received" as const,
+        priority: "normal", supplier: null, expectedDate: null, notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt }] } };
+    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={readyOrder} />);
+    const details = screen.getByText("Actualizar trabajo").closest("details")!;
+    details.open = true; fireEvent(details, new Event("toggle"));
+    const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
+    expect(notice.textContent).not.toContain("Repuestos pendientes");
+    expect(notice.textContent).not.toContain("Confirmacion del cliente pendiente");
+  });
+  it.each(["ordered", "cancelled"] as const)("refleja la guarda de recepcion para una solicitud %s", (status) => {
+    const nextOrder = { ...waitingOrder, workflow: { ...waitingOrder.workflow!,
+      parts: [{ id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 1, installedQuantity: 1, status,
+        priority: "normal", supplier: null, expectedDate: null, notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt }] } };
+    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={nextOrder} />);
+    const details = screen.getByText("Actualizar trabajo").closest("details")!;
+    details.open = true; fireEvent(details, new Event("toggle"));
+    const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
+    if (status === "ordered") {
+      expect(notice.textContent).toContain("Repuestos pendientes de recibir");
+      expect(notice.textContent).toContain("recepcion");
+    } else expect(notice.textContent).not.toContain("Repuestos pendientes");
+  });
   it("oculta las acciones de contacto personal del tecnico en todas las resoluciones", () => {
     const html = renderToStaticMarkup(
       <RepairAccessWorkshopCard

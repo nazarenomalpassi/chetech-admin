@@ -20,4 +20,16 @@ describe("Supabase RPC errors", () => {
       "No se pudo guardar."
     );
   });
+
+  it.each([
+    ["Registra una autorizacion vigente del cliente antes de marcar listo para retirar.", "Cliente confirmo"],
+    ["Completa el control de calidad antes de marcar listo para retirar.", "casilla de verificacion"],
+    ["Completa o cancela los repuestos pendientes antes de marcar listo para retirar.", "recepcion"]
+  ])("explains the blocked pickup transition: %s", (message, instruction) => {
+    expect(getFriendlyDatabaseError({ code: "23514", message }, "No se pudo guardar el seguimiento.")).toContain(instruction);
+  });
+
+  it("does not expose unexpected database constraint details", () => {
+    expect(getFriendlyDatabaseError({ code: "23514", message: 'new row violates check constraint "private_table_rule"' }, "No se pudo guardar.")).toBe("No se pudo guardar.");
+  });
 });
