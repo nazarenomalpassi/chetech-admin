@@ -57,7 +57,7 @@ export function RepairAccessWorkshopCard({
 
   return (
     <article className="min-w-0 overflow-hidden rounded-[28px] border border-graphite/12 bg-[#fbfaf6] shadow-panel">
-      <header className="grid min-w-0 gap-3 border-b border-graphite/10 px-4 pb-4 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:px-5">
+      <header className="grid min-w-0 gap-3 border-b border-graphite/10 px-4 pb-4 pt-5 sm:px-5">
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Numero de orden</p>
           {canManageIntake ? (
@@ -75,7 +75,7 @@ export function RepairAccessWorkshopCard({
             </p>
           )}
         </div>
-        <div className="flex max-w-full flex-wrap items-start gap-2 sm:justify-end">
+        <div className="flex min-w-0 max-w-full flex-wrap items-start gap-2">
           <RepairAccessStatusBadge status={order.status} />
           <RepairAccessWarrantyBadge warranty={order.warranty} />
         </div>

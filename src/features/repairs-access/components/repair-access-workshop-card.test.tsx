@@ -104,6 +104,12 @@ const waitingOrder: RepairAccessOrderRecord = {
 };
 
 describe("RepairAccessWorkshopCard", () => {
+  it.each([true, false])("reserva toda la fila para el REP sin que los badges lo compriman (admin=%s)", (canManageIntake) => {
+    const { container } = render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
+    const header = container.querySelector("article header")!;
+    expect(header.className).not.toContain("grid-cols-[minmax(0,1fr)_auto]");
+    expect(header.textContent).toContain(waitingOrder.repairNumber);
+  });
   it("ofrece el mismo editor rapido para la cuenta admin compartida", () => {
     render(<RepairAccessWorkshopCard canManageIntake onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
