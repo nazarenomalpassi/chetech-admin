@@ -1,7 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { canChooseWorkshopStatus, getWorkshopNextAction, getPartOutstandingQuantity, validatePartReceipt } from "./workflow";
+import { canChooseWorkshopStatus, getWorkshopNextAction, getPartOutstandingQuantity, validatePartReceipt, getQuickWorkshopState } from "./workflow";
 
 describe("coordinacion del taller", () => {
+  it("pide confirmacion para presupuestos nuevos o modificados, no para avances de alcance vigente", () => {
+    const order = { status: "presupuestado", budgetAmount: 100, budgetDetail: "Fuente", isPaid: false, workflow: { approvalStatus: "accepted", qualityCheckedAt: "2026-10-06" } };
+    expect(getQuickWorkshopState(order, { repairProgress: "Probando" }).needsConfirmation).toBe(false);
+    expect(getQuickWorkshopState(order, { repairAmount: "110" }).needsConfirmation).toBe(true);
+    expect(getQuickWorkshopState(order, { budgetDetail: "Otra fuente" }).needsConfirmation).toBe(true);
+    expect(getQuickWorkshopState({ ...order, workflow: { ...order.workflow, approvalStatus: "legacy" } }, {}).needsConfirmation).toBe(true);
+  });
+  it("no reutiliza un control de calidad de un alcance cambiado", () => {
+    const order = { status: "en_pruebas", budgetAmount: 100, budgetDetail: "Fuente", isPaid: false, workflow: { approvalStatus: "accepted", qualityCheckedAt: "2026-10-06" } };
+    expect(getQuickWorkshopState(order, {}).hasCurrentQuality).toBe(true);
+    expect(getQuickWorkshopState(order, { repairAmount: "110" }).hasCurrentQuality).toBe(false);
+  });
   it("muestra la tarea tecnica concreta de una orden autorizada", () => {
     expect(getWorkshopNextAction({ status: "en_pruebas", deliveredAt: null, approvalStatus: "accepted", pendingParts: 0 })).toBe("Completar control de calidad");
     expect(getWorkshopNextAction({ status: "en_reparacion", deliveredAt: null, approvalStatus: "accepted", pendingParts: 0 })).toBe("Registrar avance de reparacion");

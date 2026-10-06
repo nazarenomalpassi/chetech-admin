@@ -1,4 +1,22 @@
 import type { AppRole } from "@/lib/permissions";
+import type { ActionResult } from "@/lib/form-state";
+
+export type WorkshopSaveResult = ActionResult & { recordVersion?: number };
+
+export function getQuickWorkshopState(order: {
+  status: string; budgetAmount: number; budgetDetail: string | null; isPaid: boolean;
+  workflow?: { approvalStatus: string; qualityCheckedAt: string | null };
+}, fields: Record<string, string>) {
+  const quoteAmount = order.isPaid ? order.budgetAmount : Number(fields.repairAmount ?? order.budgetAmount);
+  const quoteChanged = quoteAmount !== order.budgetAmount || (fields.budgetDetail ?? order.budgetDetail ?? "") !== (order.budgetDetail ?? "");
+  return {
+    status: fields.status || order.status,
+    quoteAmount,
+    quoteChanged,
+    needsConfirmation: order.workflow?.approvalStatus !== "accepted" || quoteChanged,
+    hasCurrentQuality: Boolean(order.workflow?.qualityCheckedAt) && !quoteChanged
+  };
+}
 
 export type WorkshopPart = {
   id: string;

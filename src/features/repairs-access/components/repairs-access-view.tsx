@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import type { Route } from "next";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -29,13 +31,15 @@ import { WorkshopInbox } from "./workshop-inbox";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
 
-const sections: { key: RepairAccessSection; label: string; helper: string }[] = [
-  { key: "panel", label: "Panel", helper: "Resumen operativo" },
-  { key: "nueva", label: "Nueva orden", helper: "Ingreso por pasos" },
-  { key: "clientes", label: "Clientes", helper: "Buscar y consultar" },
-  { key: "ordenes", label: "Ordenes", helper: "Estados y filtros" },
-  { key: "consultas", label: "Consultas", helper: "Vistas del taller" },
-  { key: "importar", label: "Importar", helper: "Historial Excel" }
+const primarySections: { key: RepairAccessSection; label: string }[] = [
+  { key: "ordenes", label: "Ordenes" },
+  { key: "nueva", label: "Nueva orden" },
+  { key: "clientes", label: "Clientes" }
+];
+const secondarySections: { key: RepairAccessSection; label: string }[] = [
+  { key: "panel", label: "Resumen" },
+  { key: "consultas", label: "Consultas" },
+  { key: "importar", label: "Importar" }
 ];
 
 export function RepairsAccessView({
@@ -67,40 +71,56 @@ export function RepairsAccessView({
   canManageIntake: boolean;
   defaultWarrantyDays: number;
 }) {
-  const initialSelectedOrder = useMemo(
-    () => orders.find((order) => order.id === initialOrderId) ?? null,
-    [initialOrderId, orders]
-  );
-  const requestedSection = sections.some((section) => section.key === initialView)
+  const router = useRouter();
+  const initialSelectedOrder = orders.find((order) => order.id === initialOrderId) ?? null;
+  const requestedSection = [...primarySections, ...secondarySections].some((section) => section.key === initialView)
     ? (initialView as RepairAccessSection)
     : null;
-  const [activeSection, setActiveSection] = useState<RepairAccessSection>(() => {
-    if (!canManageIntake) return "ordenes";
-    if (initialSelectedOrder) return "detalle";
-    if (requestedSection) return requestedSection;
-    return message && !message.success ? "nueva" : "panel";
-  });
-  const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(null);
+  const intakeSaved = actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
+  let entrySection: RepairAccessSection = "ordenes";
+  if (canManageIntake) {
+    if (initialView === "detalle" && initialSelectedOrder) entrySection = "detalle";
+    else if (requestedSection && requestedSection !== "nueva") entrySection = requestedSection;
+    else if (!intakeSaved) entrySection = requestedSection ?? (message && !message.success && !initialOrderId ? "nueva" : "ordenes");
+  }
+  const [activeSection, setActiveSection] = useState<RepairAccessSection>(entrySection);
+  const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(() => entrySection === "nueva" ? initialSelectedOrder : null);
   const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(initialSelectedOrder);
   const [customerSearch, setCustomerSearch] = useState("");
-  const [orderSearch, setOrderSearch] = useState(pageInfo?.search ?? (!canManageIntake && initialSelectedOrder ? initialSelectedOrder.repairNumber : ""));
+  const deepLinkSearch = initialSelectedOrder?.repairNumber ?? "";
+  const [orderSearch, setOrderSearch] = useState(pageInfo?.search || deepLinkSearch);
   const [statusFilter, setStatusFilter] = useState(pageInfo?.status ?? "todos");
   const [warrantyFilter, setWarrantyFilter] = useState(pageInfo?.warranty ?? "todos");
   const [intakeDirty, setIntakeDirty] = useState(false);
   const orderHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousSectionRef = useRef(activeSection);
+  const moreOptionsRef = useRef<HTMLDetailsElement>(null);
+  const navigationKey = JSON.stringify([initialOrderId, initialView, actionStatus, canManageIntake]);
+  const previousNavigationRef = useRef(navigationKey);
+  const pendingNavigationRef = useRef<string | null>(null);
+  const pageSearch = pageInfo?.search;
+  const pageStatus = pageInfo?.status;
+  const pageWarranty = pageInfo?.warranty;
 
   useEffect(() => {
-    if (!pageInfo) return;
-    setOrderSearch(pageInfo.search);
-    setStatusFilter(pageInfo.status);
-    setWarrantyFilter(pageInfo.warranty);
-  }, [pageInfo]);
+    setOrderSearch(pageSearch || deepLinkSearch);
+    setStatusFilter(pageStatus ?? "todos");
+    setWarrantyFilter(pageWarranty ?? "todos");
+  }, [pageSearch, pageStatus, pageWarranty, deepLinkSearch]);
 
   useEffect(() => {
-    if (initialOrderId && initialSelectedOrder && canManageIntake) { setSelectedOrder(initialSelectedOrder); setActiveSection("detalle"); }
-    else if (initialView === "ordenes") setActiveSection("ordenes");
-  }, [initialOrderId, initialView, canManageIntake, initialSelectedOrder]);
+    // A data refresh is not a new navigation intent, even when the URL still has an order.
+    if (previousNavigationRef.current === navigationKey) return;
+    previousNavigationRef.current = navigationKey;
+    if (pendingNavigationRef.current === navigationKey) {
+      pendingNavigationRef.current = null;
+      return;
+    }
+    setActiveSection(entrySection);
+    setSelectedOrder(initialSelectedOrder);
+    setEditing(entrySection === "nueva" ? initialSelectedOrder : null);
+    setIntakeDirty(false);
+  }, [navigationKey, entrySection, initialSelectedOrder]);
 
   useEffect(() => {
     const sectionChanged = previousSectionRef.current !== activeSection;
@@ -108,23 +128,46 @@ export function RepairsAccessView({
     if (sectionChanged && activeSection === "ordenes") orderHeadingRef.current?.focus();
   }, [activeSection]);
 
+  function updateSectionUrl(section: RepairAccessSection, orderId?: string, filters?: { search: string; status: string; warranty: string }) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("view", section);
+    if (orderId) params.set("order", orderId); else params.delete("order");
+    params.delete("status");
+    params.delete("error");
+    const nextFilters = filters ?? { search: orderSearch, status: statusFilter, warranty: warrantyFilter };
+    if (nextFilters.search !== (pageSearch ?? "") || nextFilters.status !== (pageStatus ?? "todos") || nextFilters.warranty !== (pageWarranty ?? "todos")) params.delete("cursor");
+    if (nextFilters.search) params.set("q", nextFilters.search); else params.delete("q");
+    if (nextFilters.status !== "todos") params.set("state", nextFilters.status); else params.delete("state");
+    if (nextFilters.warranty !== "todos") params.set("warranty", nextFilters.warranty); else params.delete("warranty");
+    pendingNavigationRef.current = JSON.stringify([orderId, section, undefined, canManageIntake]);
+    router.push(`/reparaciones-access?${params}` as Route, { scroll: false });
+  }
+
   function navigate(section: string) {
+    if (![...primarySections, ...secondarySections].some((item) => item.key === section)) return;
     if (!canManageIntake && section !== "ordenes") return;
+    if (activeSection === "nueva" && section === "nueva" && !editing) return;
     if (
       activeSection === "nueva" &&
-      section !== "nueva" &&
+      (section !== "nueva" || editing) &&
       intakeDirty &&
       !window.confirm("Hay cambios sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés salir?")
     ) {
       return;
     }
+    setEditing(null);
+    setIntakeDirty(false);
     setActiveSection(section as RepairAccessSection);
+    if (moreOptionsRef.current) moreOptionsRef.current.open = false;
+    updateSectionUrl(section as RepairAccessSection);
   }
 
   function startEdit(order: RepairAccessOrderRecord) {
     if (!canManageIntake) return;
     setEditing(order);
+    setIntakeDirty(false);
     setActiveSection("nueva");
+    updateSectionUrl("nueva", order.id);
   }
 
   function openDetail(order: RepairAccessOrderRecord) {
@@ -132,6 +175,7 @@ export function RepairsAccessView({
     setSelectedOrder(order);
     setEditing(null);
     setActiveSection("detalle");
+    updateSectionUrl("detalle", order.id);
   }
 
   function stopEdit() {
@@ -139,13 +183,17 @@ export function RepairsAccessView({
       return;
     }
     setEditing(null);
+    setIntakeDirty(false);
+    setActiveSection("ordenes");
+    updateSectionUrl("ordenes");
   }
 
   function openStatus(status: string) {
     setOrderSearch("");
     setStatusFilter(status);
     setWarrantyFilter("todos");
-    navigate("ordenes");
+    setActiveSection("ordenes");
+    updateSectionUrl("ordenes", undefined, { search: "", status, warranty: "todos" });
   }
 
   useEffect(() => {
@@ -163,28 +211,15 @@ export function RepairsAccessView({
   }, [actionStatus, initialOrderId]);
 
   useEffect(() => {
-    if (!initialSelectedOrder) return;
-
-    setSelectedOrder(initialSelectedOrder);
-    setEditing(null);
-    setActiveSection(canManageIntake ? "detalle" : "ordenes");
-    if (!canManageIntake) {
-      setOrderSearch(initialSelectedOrder.repairNumber);
-      setStatusFilter("todos");
-      setWarrantyFilter("todos");
-    }
-  }, [canManageIntake, initialSelectedOrder]);
-
-  useEffect(() => {
     setSelectedOrder((current) => {
       if (!current) return current;
       return orders.find((order) => order.id === current.id) ?? current;
     });
     setEditing((current) => {
-      if (!current) return current;
+      if (!current || intakeDirty) return current;
       return orders.find((order) => order.id === current.id) ?? current;
     });
-  }, [orders]);
+  }, [orders, intakeDirty]);
 
   return (
     <div className="space-y-5">
@@ -195,20 +230,27 @@ export function RepairsAccessView({
       ) : null}
 
       {canManageIntake ? (
-        <Card className="p-3">
-          <nav aria-label="Secciones de reparaciones" className="grid grid-cols-2 gap-2 sm:grid-cols-3 2xl:grid-cols-6">
-            {sections.map((section) => (
+        <Card className="p-2 sm:p-2">
+          <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2">
+            {primarySections.map((section) => (
               <button
                 aria-current={activeSection === section.key ? "page" : undefined}
-                className={`rounded-2xl px-4 py-3 text-left transition ${activeSection === section.key ? "bg-slate-950 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                className={`min-h-11 rounded-2xl px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
                 key={section.key}
                 onClick={() => navigate(section.key)}
                 type="button"
               >
-                <span className="block text-sm font-semibold">{section.label}</span>
-                <span className={`mt-1 block text-xs ${activeSection === section.key ? "text-slate-300" : "text-slate-400"}`}>{section.helper}</span>
+                {section.label}
               </button>
             ))}
+            <details className="min-w-0 rounded-2xl sm:ml-auto" ref={moreOptionsRef}>
+              <summary className={`flex min-h-11 cursor-pointer items-center rounded-2xl px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
+              <div className="flex flex-wrap gap-2 pt-2">
+                {secondarySections.map((section) => (
+                  <Button aria-current={activeSection === section.key ? "page" : undefined} key={section.key} onClick={() => navigate(section.key)} type="button" variant="ghost">{section.label}</Button>
+                ))}
+              </div>
+            </details>
           </nav>
         </Card>
       ) : null}
@@ -238,6 +280,7 @@ export function RepairsAccessView({
           headingRef={orderHeadingRef}
           onEdit={startEdit}
           onOpenDetail={openDetail}
+          onNew={canManageIntake ? () => navigate("nueva") : undefined}
           onSearchChange={setOrderSearch}
           onStatusFilterChange={setStatusFilter}
           onWarrantyFilterChange={setWarrantyFilter}
@@ -251,7 +294,7 @@ export function RepairsAccessView({
 
       {canManageIntake && activeSection === "detalle" && selectedOrder ? (
         <RepairAccessOrderDetail
-          onBack={() => setActiveSection("ordenes")}
+          onBack={() => navigate("ordenes")}
           defaultWarrantyDays={defaultWarrantyDays}
           onEditIntake={startEdit}
           order={orders.find((order) => order.id === selectedOrder.id) ?? selectedOrder}
