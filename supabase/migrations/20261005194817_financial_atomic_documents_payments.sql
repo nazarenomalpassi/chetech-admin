@@ -511,8 +511,8 @@ declare v_user uuid := public.financial_assert_admin(); v_payment public.repair_
 begin
   if length(btrim(coalesce(p_reason,'')))<3 then raise exception 'Indica el motivo de la reversa.' using errcode='22023'; end if;
   perform 1 from public.repairs where id=p_repair_id for update;
-  perform public.financial_assert_unambiguous_repair(p_repair_id);
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   select * into v_payment from public.repair_payments where id=p_payment_id and repair_id=p_repair_id for update;
   if not found then
     if exists(select 1 from public.audit_logs where entity_type='repair_payments' and entity_id=p_payment_id::text and action='delete' and changes->>'repair_id'=p_repair_id::text) then return jsonb_build_object('id',p_payment_id); end if;
@@ -533,8 +533,8 @@ returns jsonb language plpgsql security invoker set search_path = '' as $$
 declare v_user uuid := public.financial_assert_admin(); v_repair public.repairs; v_payments jsonb;
 begin
   select * into v_repair from public.repairs where id=p_repair_id for update;
-  perform public.financial_assert_unambiguous_repair(p_repair_id);
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   if exists(select 1 from public.invoices where repair_id=p_repair_id or repair_access_order_id=v_repair.repair_access_order_id) then raise exception 'Conserva el registro vinculado a comprobantes. Revierte pagos individuales con motivo.' using errcode='22023'; end if;
   if exists(select 1 from public.repair_payments where repair_id=p_repair_id) then
     raise exception 'Corrige cada cobro erroneo con motivo antes de eliminar el registro. La caja historica no se elimina.' using errcode='22023';

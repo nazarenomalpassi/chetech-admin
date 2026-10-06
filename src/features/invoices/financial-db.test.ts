@@ -73,6 +73,14 @@ suite("financial RPCs on disposable PostgreSQL", () => {
       select 'ambiguous history preserved'; rollback;`)).toContain("ambiguous history preserved");
   });
 
+  it("keeps missing-repair checks before helper PERFORM resets FOUND", () => {
+    const missing = "00000000-0000-4000-8000-000000000999";
+    const before = asAdmin("select count(*) from public.audit_logs;");
+    expect(() => asAdmin(`select public.reverse_repair_payment_atomic('${missing}','${missing}','Error de carga');`)).toThrow(/No se encontro la reparacion/);
+    expect(() => asAdmin(`select public.delete_repair_financial_atomic('${missing}');`)).toThrow(/No se encontro la reparacion/);
+    expect(asAdmin("select count(*) from public.audit_logs;")).toBe(before);
+  });
+
   it("stores partial settlement, retries once and rolls back an invalid detail", () => {
     const repair = asAdmin(`insert into public.repairs(customer_name,device,issue_description,final_price) values ('Cliente','TV','Falla',100) returning id;`);
     asAdmin(`insert into public.repair_payments(repair_id,method,amount) values ('${repair}','nx',30);`);
