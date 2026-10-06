@@ -1,13 +1,19 @@
 import { ProductsView } from "@/features/products/components/products-view";
-import { getProductCategories, getProducts } from "@/features/products/queries";
+import { getProductCategories, getProductPage } from "@/features/products/queries";
+import type { ProductListParams } from "@/features/products/list-state";
+import { requirePermission } from "@/lib/auth";
 
 export default async function ProductosPage({
   searchParams
 }: {
-  searchParams: Promise<{ search?: string; category?: string; status?: "all" | "active" | "inactive" }>;
+  searchParams: Promise<ProductListParams>;
 }) {
   const params = await searchParams;
-  const [products, categories] = await Promise.all([getProducts(params), getProductCategories()]);
+  const profile = await requirePermission("products.view");
+  const [result, categories] = await Promise.all([
+    getProductPage({ ...params, includeCosts: profile.role === "admin" }),
+    getProductCategories()
+  ]);
 
-  return <ProductsView categories={categories} products={products} />;
+  return <ProductsView canManage={profile.role === "admin"} categories={categories} products={result.products} pagination={result.pagination} filterParams={params} />;
 }

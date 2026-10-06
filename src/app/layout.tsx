@@ -1,16 +1,41 @@
-import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import type { Metadata, Viewport } from "next";
 
 import "@/app/globals.css";
-
-const geist = Geist({
-  subsets: ["latin"],
-  variable: "--font-sans"
-});
+import { PwaRegister } from "@/components/pwa/pwa-register";
 
 export const metadata: Metadata = {
-  title: "Chetech Admin",
-  description: "Sistema administrativo para locales de tecnología"
+  title: {
+    default: "Sistema CheTech",
+    template: "%s | CheTech"
+  },
+  applicationName: "CheTech",
+  description: "Sistema de gestion para CheTech",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    title: "CheTech",
+    statusBarStyle: "black-translucent"
+  },
+  formatDetection: {
+    telephone: false
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.ico"]
+  }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#1d1d1b"
 };
 
 export default function RootLayout({
@@ -19,8 +44,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
-      <body className={geist.variable}>{children}</body>
+    <html lang="es-AR">
+      <body>
+        {children}
+        <PwaRegister />
+      </body>
     </html>
   );
 }

@@ -1,0 +1,165 @@
+CHETECH workshop business report and operational inbox
+Workspace: C:\Users\nazar\.codex\worktrees\chetech-taller-profesional\Chetarda-ai
+Date: 2026-10-05
+
+Changed route files:
+- src/app/(admin)/dashboard/page.tsx
+- src/app/(admin)/reportes/page.tsx
+
+Additional dashboard component changes explicitly authorized after 390px GUI review:
+- src/features/dashboard/components/technician-dashboard.tsx
+- src/features/dashboard/components/dashboard-overview.tsx
+  Both accept an optional workshopInbox ReactNode slot immediately after the
+  existing headline/actions card and before metrics. No original metric logic
+  changed. One native inbox disclosure is closed by default on every viewport,
+  retaining compact ready/parts counts and full existing WorkshopInbox links
+  when expanded. No duplicate mobile/desktop queue render or hydration JS.
+
+New feature files:
+- src/features/workshop-business/model.ts
+- src/features/workshop-business/queries.ts
+- src/features/workshop-business/components/workshop-business-report.tsx
+- src/features/workshop-business/components/operational-inbox-section.tsx
+- src/features/workshop-business/model.test.ts
+- src/features/workshop-business/queries.test.ts
+- src/features/workshop-business/components.test.tsx
+- src/features/workshop-business/pages.test.tsx
+- src/features/workshop-business/dashboard-layout.test.tsx
+- src/features/workshop-business/report-db.test.ts
+- src/features/workshop-business/test-fixture.ts
+- src/features/workshop-business/change-report.txt
+
+New CLI-generated migrations, for parent review/application in local staging:
+- 20261005210805_workshop_business_report_read.sql: admin-only SECURITY INVOKER
+  get_workshop_business_report(date,date), one uncapped JSON aggregate.
+- 20261005211929_workshop_read_actual_collections.sql: read-only CREATE OR REPLACE
+  private.workshop_read_page(text,text,text,text,timestamptz,uuid,integer), copied
+  original signature/filters/payload/pagination with actual collection summary.
+  Existing public wrapper and function ACL remain unchanged.
+- 20261005213229_workshop_read_quote_amounts.sql: incremental read-only pricing
+  correction, leaving both earlier report migrations unchanged. Replaces the same
+  report/page functions and preserves signatures, RLS modes and ACLs. Panel
+  projection uses coalesce(nullif(final_amount,0),budget_amount,0). Report charge
+  uses nonzero final amount, evidenced current accepted quote (including a true
+  zero quote), or unique historical final price. A default zero without pricing
+  evidence is unknown; an unaccepted quote remains projection, not known debt.
+
+Data contract:
+- Inclusive Argentina intake-date cohort, current snapshot, default month-to-date.
+  Not historical state at the end date. Collections and costs cover all recorded
+  history of those orders, not payment/expense dates within the intake period.
+- Assigned technician_id, never created_by. Current assignment is not historical
+  attribution of all labor or collections. Unassigned has its own group.
+- Acceptance uses the latest decision for the current immutable budget revision
+  and a consistent current approval flag. Old/legacy accepted states alone do
+  not count. Rate denominator is current accepted plus current rejected decisions.
+- Actual native non-voided/non-mirror payments plus canonical repair_payments
+  through repairs.repair_access_order_id. No invoice totals, invoice payment
+  mirrors, is_paid amount inference, or duplicate native legacy projections.
+- Charge basis: nonzero final_amount, current accepted immutable quote amount
+  (evidenced zero retained), or unique linked historical final_price. Zero final
+  defaults no longer hide a nonzero quote or imply an unpriced service is free.
+  Unknown charge makes complete
+  cohort debt NULL, with an explicitly partial known debt subtotal.
+- Consumed parts cost = installed_quantity * unit_cost. Unconsumed purchases
+  are not costs. Non-cancelled outsourcing uses actual_cost, not promised cost.
+- Unknown unit/actual costs, unstructured part history, imported history without
+  structured costs and unclassified REP expenses preserve full cost/margin NULL.
+  Known cost subtotals remain visible, and explicit zero costs stay zero.
+- Procurement thread 01a10dda-b0b6-7d20-8245-dbf95f51fe88 confirmed compatibility:
+  expenses.part_request_id is a supplier payment, not another consumption cost.
+  REP-only expenses lack an explicit outsourcing/cost classification; expose them
+  without adding them twice and conservatively mark costs incomplete.
+- Direct margin is charge basis minus recorded direct cost. Never net profit,
+  distributable income, cash balance or labor/overhead-complete profitability.
+- Warranty metrics count coverage/review flags, not warranty reentries/rework rate.
+- Median/P90 = current intake age of undelivered, non-retired orders. Exclude
+  future intake dates. No fabricated phase-wait measurement.
+- Category counts use the intake cohort, but links open supported REP scope
+  filters on complete current queues. UI explicitly says links do not preserve
+  cohort dates because the existing REP page does not support intake-date filters.
+- Dashboard reuses getWorkshopInbox and WorkshopInbox. Current operational
+  queue is independent of selected dashboard financial dates. Missing RPC is
+  visibly unavailable, not zero pending work. Technicians fetch no business RPC.
+
+Primary REP summary follow-up:
+- totalCollected is actual native + legacy payments once, including partials.
+- paidOrders now means orders with positive actual collections, not fully paid
+  flags; existing UI label is Cobro informado. collectedToday counts orders with
+  positive payments on the actual operational payment_date.
+- All financial summary fields remain zero for technicians. Quote projection
+  now skips final_amount's zero default before budget_amount; unrelated page
+  behavior remains unchanged. No ledger/balance writes.
+
+Verification on this task:
+- npm test -- src/features/workshop-business with explicit local
+  CHETECH_WORKSHOP_REPORT_TEST_DB: initial completed task run 31 passed, including
+  14 PostgreSQL tests and two added dashboard headline/disclosure layout tests.
+  Pricing follow-up final run: 35 passed (18 PG, 17 unit/UI tests total).
+- Regression first failed against base read-page function: paid flag produced
+  totalCollected 300 rather than actual 10519; passed after follow-up migration.
+- PG covers known totals, 30000 partial on unpaid REP (50000 debt), mirror/void
+  exclusion, invoice exclusion, zero versus unknown cost, purchased-but-unused
+  parts, expense ambiguity, current-version revocation, assigned vs creator,
+  intake-age P90, technician/anonymous/spoofed metadata denial, invoker RLS,
+  1201 records with no aggregate cap, unchanged page/function identity and cursor.
+- Pricing regressions first failed against the prior read RPCs with real-schema
+  final_amount default 0: accepted 100000 quote incorrectly gave debt 0 and
+  credit 30000; panel projection omitted 100000; pending/unpriced zero appeared
+  known. Tests now cover accepted 100000 / paid 30000 / debt 70000 with cost and
+  margin NULL, pending quote projection without invented debt, evidenced free
+  quote and explicit zero cost, unpriced intake unknown, and technician zeros.
+- Unit/UI covers date validation/Argentina boundaries, null preservation, auth
+  ordering, missing RPC versus permission failure, real REP links, missing inbox,
+  original views retained and technician never fetching financial report data.
+  Additional two layout tests verify greeting/main job links precede the closed
+  inbox and the inbox precedes original metrics for both admin and technician.
+- npx eslint src/features/workshop-business plus both route files and both
+  user-authorized dashboard slot components: exit 0.
+- npx tsc --noEmit --incremental false: one run exit 0 before the GUI follow-up.
+  Latest global run after that follow-up caught in-progress fiscal ticket-cache
+  tests referencing missing ticket-crypto/ticket-cache modules outside this
+  scope. No outside files were fixed. Scoped compiler diagnostics are checked
+  separately; final TypeScript compiler API check reported 0 scoped diagnostics
+  and 0 other workspace diagnostics after that concurrent work settled. Parent
+  still owns the final global build.
+- git diff --check on the changed route and dashboard component files: exit 0.
+- Tests emit only the repository's existing Vite CJS deprecation warning.
+- Pricing follow-up verification: npx eslint src/features/workshop-business
+  exit 0; fresh npx tsc --noEmit --incremental false exit 0. Earlier migration
+  hashes match. Own disposable PG container stopped; no next build or .next
+  changes. Parent must apply 20261005213229 to local staging to activate the fix.
+
+Untouched originals verified by SHA256:
+- 20261005200911_workshop_read_pages.sql:
+  2DE22D566188E02F2F049B8645CECBB7F6391FD65D68F986BAF4FD1C9707DE80
+- 20261005194657_operations_workflow_and_reconciliation.sql:
+  F04AFCEF7EE1C47FD459B49B67743B8BAF3597924B4E55DE73DE13AA5139D2DB
+- 20261005210805_workshop_business_report_read.sql (pricing follow-up untouched):
+  4ED2F433C1D9871FA5F4D0E137177371FF2827228A5BCBE40FF05883D432512C
+- 20261005211929_workshop_read_actual_collections.sql (pricing follow-up untouched):
+  1E0526096C3B34B4ED17B9098812501B76C10BDC4065F4A1A449B15EF59F6DDF
+
+Limits / handoff:
+- Parent owns browser verification and final global build. No next build, no
+  .next cleanup, no production SQL/deploy, no commits. Existing ReportsView,
+  finance writes/schema/algorithms and previous operations amendments were not
+  edited. DashboardOverview/TechnicianDashboard only received the later
+  user-authorized optional slot; their original content and algorithms remain.
+- Pricing follow-up does not edit private.workshop_save or workflow guards owned
+  by the staging agent. Only the new read migration, report DB tests, visible
+  pricing methodology and this handoff inventory change in that follow-up.
+- SQL tests use minimal synthetic source schemas and RLS on a fresh disposable
+  localhost-only PostgreSQL container, not production or parent's staging DB.
+  Test DB name is checked before schema writes; PG suite is opt-in by env var.
+- New migrations require existing workflow, native-payment void/link fields,
+  operations outsourcing cost fields and procurement expense-link metadata.
+  Parent should apply them to local staging for browser/integration verification.
+- All aggregate rows included; no real-data performance benchmark conducted.
+- No supported historical phase timing, complete overhead/labor cost model,
+  warranty-reentry relation, or intake-date REP drilldown was invented.
+- Existing historical ReportsView remains separate and explicitly labelled;
+  this task does not rewrite its rankings or prior-period reporting algorithms.
+
+Earlier operations changes/tests remain documented in
+src/features/visits/operations-change-report.txt; not rewritten by this task.

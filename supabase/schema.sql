@@ -15,6 +15,60 @@ create table if not exists public.categories (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.clientes (
+  id uuid primary key default gen_random_uuid(),
+  nombre text not null,
+  telefono text,
+  observaciones text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.salary_withdrawals (
+  id uuid primary key default gen_random_uuid(),
+  withdrawal_date date not null,
+  amount numeric(12,2) not null check (amount > 0),
+  payment_method text not null check (payment_method in ('efectivo', 'nx', 'mp')),
+  notes text,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.installment_sales (
+  id uuid primary key default gen_random_uuid(),
+  product_name text not null,
+  customer_name text not null,
+  total_amount numeric(12,2) not null check (total_amount > 0),
+  installments_count integer not null check (installments_count > 0),
+  notes text,
+  status text not null default 'activa' check (status in ('activa', 'finalizada', 'cancelada')),
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.installments (
+  id uuid primary key default gen_random_uuid(),
+  installment_sale_id uuid not null references public.installment_sales(id) on delete cascade,
+  installment_number integer not null check (installment_number > 0),
+  due_date date not null,
+  amount numeric(12,2) not null check (amount > 0),
+  payment_method text not null check (payment_method in ('efectivo', 'nx', 'mp')),
+  status text not null default 'pendiente' check (status in ('pendiente', 'pagada', 'vencida', 'cancelada')),
+  paid_at timestamptz,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (installment_sale_id, installment_number)
+);
+
+alter table public.movimientos_caja
+drop constraint if exists movimientos_caja_medio_pago_check;
+
+alter table public.movimientos_caja
+add constraint movimientos_caja_medio_pago_check
+check (medio_pago in ('efectivo', 'nx', 'mp', 'transferencia', 'otro'));
+
 create table if not exists public.products (
   id uuid primary key default gen_random_uuid(),
   sku text not null unique,
@@ -36,10 +90,12 @@ create table if not exists public.sales (
   subtotal numeric(12,2) not null default 0,
   cost_total numeric(12,2) not null default 0,
   profit_total numeric(12,2) not null default 0,
+  cliente_id uuid references public.clientes(id) on delete set null,
   notes text,
   sold_at timestamptz not null default now(),
   created_by uuid references public.profiles(id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.sale_items (
@@ -71,7 +127,8 @@ create table if not exists public.expenses (
   observations text,
   is_voided boolean not null default false,
   created_by uuid references public.profiles(id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
 );
 
 create table if not exists public.repairs (
@@ -79,6 +136,8 @@ create table if not exists public.repairs (
   customer_name text not null,
   customer_phone text,
   device text not null,
+  cliente_id uuid references public.clientes(id) on delete set null,
+  order_number text,
   brand text,
   model text,
   issue_description text not null,
@@ -99,6 +158,7 @@ create table if not exists public.repairs (
     )
   ),
   created_by uuid references public.profiles(id) on delete set null,
+  entry_date date not null default ((now() at time zone 'America/Argentina/Cordoba')::date),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -109,8 +169,46 @@ create table if not exists public.repair_payments (
   payment_date date not null default current_date,
   method text not null,
   amount numeric(12,2) not null check (amount > 0),
-  notes text
+  notes text,
+  created_at timestamptz not null default now()
 );
+
+create table if not exists public.balance_transfers (
+  id uuid primary key default gen_random_uuid(),
+  from_payment_method text not null check (from_payment_method in ('efectivo', 'nx_santi', 'nx_local')),
+  to_payment_method text not null check (to_payment_method in ('efectivo', 'nx_santi', 'nx_local')),
+  amount numeric(12,2) not null check (amount > 0),
+  description text,
+  transfer_date date not null default current_date,
+  is_voided boolean not null default false,
+  voided_at timestamptz,
+  voided_by uuid references public.profiles(id) on delete set null,
+  void_reason text,
+  reversal_transfer_id uuid references public.balance_transfers(id) on delete restrict,
+  reversal_of_transfer_id uuid references public.balance_transfers(id) on delete restrict,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint balance_transfers_distinct_methods_check
+    check (from_payment_method <> to_payment_method)
+);
+
+create index if not exists balance_transfers_transfer_date_idx
+  on public.balance_transfers (transfer_date desc, created_at desc);
+create index if not exists balance_transfers_from_payment_method_idx
+  on public.balance_transfers (from_payment_method);
+create index if not exists balance_transfers_to_payment_method_idx
+  on public.balance_transfers (to_payment_method);
+create index if not exists balance_transfers_created_by_idx
+  on public.balance_transfers (created_by);
+create index if not exists balance_transfers_voided_by_idx
+  on public.balance_transfers (voided_by);
+create index if not exists balance_transfers_reversal_transfer_idx
+  on public.balance_transfers (reversal_transfer_id);
+create index if not exists balance_transfers_reversal_of_transfer_idx
+  on public.balance_transfers (reversal_of_transfer_id);
+
+alter table public.balance_transfers enable row level security;
 
 create table if not exists public.stock_movements (
   id uuid primary key default gen_random_uuid(),
@@ -120,6 +218,43 @@ create table if not exists public.stock_movements (
   reference_id uuid,
   notes text,
   created_at timestamptz not null default now()
+);
+
+create table if not exists public.movimientos_caja (
+  id uuid primary key default gen_random_uuid(),
+  tipo text not null check (tipo in ('venta', 'reparacion', 'gasto', 'facturacion')),
+  monto numeric(12,2) not null check (monto >= 0),
+  medio_pago text not null check (medio_pago in ('efectivo', 'mp', 'nx')),
+  descripcion text,
+  referencia_tabla text,
+  referencia_id uuid,
+  fecha timestamptz not null default now(),
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.cierres_caja (
+  id uuid primary key default gen_random_uuid(),
+  fecha date not null unique,
+  saldo_inicial numeric(12,2) not null default 0,
+  ingresos numeric(12,2) not null default 0,
+  egresos numeric(12,2) not null default 0,
+  saldo_final numeric(12,2) not null default 0,
+  observaciones text,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.movimientos_stock (
+  id uuid primary key default gen_random_uuid(),
+  producto_id uuid not null references public.products(id) on delete cascade,
+  tipo text not null check (tipo in ('entrada', 'salida')),
+  cantidad integer not null check (cantidad > 0),
+  descripcion text,
+  referencia_tabla text,
+  referencia_id uuid,
+  fecha timestamptz not null default now(),
+  created_by uuid references public.profiles(id) on delete set null
 );
 
 create table if not exists public.audit_logs (
@@ -394,3 +529,107 @@ begin
   where id = p_invoice_id;
 end;
 $$;
+
+create or replace function public.resumen_caja_diario(p_fecha date default current_date)
+returns table (
+  ingresos numeric,
+  egresos numeric,
+  ganancia_real numeric
+)
+language sql
+stable
+as $$
+  select
+    coalesce(sum(case when tipo in ('venta', 'reparacion', 'facturacion') then monto else 0 end), 0)::numeric as ingresos,
+    coalesce(sum(case when tipo = 'gasto' then monto else 0 end), 0)::numeric as egresos,
+    (
+      coalesce(sum(case when tipo in ('venta', 'reparacion', 'facturacion') then monto else 0 end), 0) -
+      coalesce(sum(case when tipo = 'gasto' then monto else 0 end), 0)
+    )::numeric as ganancia_real
+  from public.movimientos_caja
+  where fecha::date = p_fecha;
+$$;
+
+-- Monthly salary planning and replenishment are expanded by the dated migration.
+create table if not exists public.salary_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null unique,
+  target_amount numeric(14,2) not null check (target_amount > 0),
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.financial_reserves (
+  id uuid primary key default gen_random_uuid(),
+  code text not null unique,
+  name text not null,
+  amount numeric(14,2) not null default 0 check (amount >= 0),
+  sort_order integer not null default 0,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.salary_liquidations (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  withdrawal_date date not null,
+  intended_total numeric(14,2) not null check (intended_total >= 0),
+  allocated_total numeric(14,2) not null default 0,
+  salary_mass_snapshot numeric(14,2) not null default 0,
+  salary_amount numeric(14,2) not null default 0,
+  profit_share_amount numeric(14,2) not null default 0,
+  total_amount numeric(14,2) not null default 0,
+  coverage_percentage numeric(8,4) not null default 0,
+  excess_amount numeric(14,2) not null default 0,
+  notes text,
+  idempotency_key uuid not null unique,
+  created_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.salary_liquidation_members (
+  id uuid primary key default gen_random_uuid(),
+  liquidation_id uuid not null references public.salary_liquidations(id) on delete cascade,
+  member_id uuid not null references public.salary_members(id) on delete restrict,
+  member_name_snapshot text not null,
+  target_amount_snapshot numeric(14,2) not null check (target_amount_snapshot > 0),
+  salary_amount numeric(14,2) not null default 0 check (salary_amount >= 0),
+  profit_share_amount numeric(14,2) not null default 0 check (profit_share_amount >= 0),
+  total_amount numeric(14,2) generated always as (salary_amount + profit_share_amount) stored,
+  salary_coverage_percentage numeric(8,4) not null check (salary_coverage_percentage between 0 and 100),
+  created_at timestamptz not null default now(),
+  unique (liquidation_id, member_id)
+);
+
+create table if not exists public.salary_liquidation_funding (
+  id uuid primary key default gen_random_uuid(),
+  liquidation_id uuid not null references public.salary_liquidations(id) on delete cascade,
+  payment_method text not null check (payment_method in ('efectivo', 'nx', 'mp')),
+  amount numeric(14,2) not null check (amount > 0),
+  created_at timestamptz not null default now(),
+  unique (liquidation_id, payment_method)
+);
+
+create table if not exists public.replenishment_plan_items (
+  id uuid primary key default gen_random_uuid(),
+  period_month date not null,
+  product_id uuid not null references public.products(id) on delete cascade,
+  quantity_to_order integer not null default 0 check (quantity_to_order >= 0),
+  status text not null default 'pending' check (status in ('pending', 'added', 'ordered', 'received')),
+  notes text,
+  updated_by uuid references public.profiles(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (period_month, product_id)
+);
+
+alter table public.salary_withdrawals
+  add column if not exists member_id uuid references public.salary_members(id) on delete restrict,
+  add column if not exists liquidation_id uuid references public.salary_liquidations(id) on delete restrict,
+  add column if not exists salary_period date,
+  add column if not exists withdrawal_type text not null default 'extraordinary',
+  add column if not exists target_amount_snapshot numeric(14,2),
+  add column if not exists coverage_percentage numeric(8,4);

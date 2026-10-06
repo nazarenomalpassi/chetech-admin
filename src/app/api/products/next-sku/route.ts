@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
+  await requireAdmin();
   const { searchParams } = new URL(request.url);
   const categoryId = searchParams.get("categoryId");
 

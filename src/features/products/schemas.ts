@@ -16,6 +16,16 @@ export const productSchema = z.object({
   notes: z.preprocess((value) => (value === "" ? null : value), z.string().nullable().optional())
 });
 
+export const categorySchema = z.object({
+  name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(60, "El nombre es demasiado largo"),
+  skuPrefix: z
+    .string()
+    .trim()
+    .min(2, "El prefijo debe tener al menos 2 letras")
+    .max(5, "El prefijo puede tener hasta 5 letras")
+    .regex(/^[A-Z]+$/, "Usa solo letras mayusculas sin espacios ni simbolos")
+});
+
 export const productFiltersSchema = z.object({
   search: z.string().optional(),
   category: z.string().optional(),
@@ -23,3 +33,4 @@ export const productFiltersSchema = z.object({
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
+export type CategoryFormValues = z.infer<typeof categorySchema>;
