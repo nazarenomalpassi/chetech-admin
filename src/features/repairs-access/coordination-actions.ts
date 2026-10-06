@@ -7,6 +7,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getFriendlyDatabaseError } from "@/lib/supabase/rpc-errors";
 import type { ActionResult } from "@/lib/form-state";
 import { repairAccessWorkshopSchema } from "./schemas";
+import type { WorkshopSaveResult } from "./workflow";
 
 const uuid = z.string().uuid("No se pudo identificar el registro.");
 const version = z.coerce.number().int().positive("Actualiza la orden antes de guardar.");
@@ -54,6 +55,56 @@ export async function saveWorkshopForm(_previous: ActionResult | null, form: For
       quality_notes: String(form.get("qualityNotes") ?? "").slice(0, 2000)
     }
   }, "Actualizacion guardada. Mostrador puede ver el avance.");
+}
+
+export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null, form: FormData): Promise<WorkshopSaveResult> {
+  const user = await requirePermission("repairs.update");
+  const parsed = repairAccessWorkshopSchema.safeParse({ ...values(form), repairAmount: form.get("repairAmount") || 0 });
+  const expectedVersion = version.safeParse(form.get("expectedVersion"));
+  const operationId = uuid.safeParse(form.get("operationId"));
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
+  if (!expectedVersion.success || !operationId.success) return { success: false, message: "No se pudo preparar el guardado. Recarga la ficha conservando el borrador." };
+  const confirmCustomer = form.get("confirmCustomer") === "on";
+  const hasAmount = form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
+  if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el presupuesto autorizado. Si es sin cargo, ingresa 0 y explica el motivo." };
+  if (confirmCustomer && user.role !== "admin") return { success: false, message: "La confirmacion del cliente se registra desde la cuenta de administracion." };
+  const channel = confirmCustomer ? z.enum(["presencial", "telefono", "whatsapp", "portal"]).safeParse(form.get("decisionChannel")) : null;
+  if (channel && !channel.success) return { success: false, message: "Selecciona como confirmo el cliente." };
+  const notes = optionalText().safeParse(String(form.get("decisionNotes") ?? ""));
+  if (!notes.success) return { success: false, message: "La nota de confirmacion es demasiado larga." };
+  const p = parsed.data;
+  const supabase = await createServerSupabaseClient();
+  const result = await (supabase as any).rpc("workshop_save_quick", {
+    p_order_id: p.id, p_expected_version: expectedVersion.data, p_operation_id: operationId.data,
+    p_payload: {
+      status: p.status,
+      ...(hasAmount ? { budget_amount: p.repairAmount } : {}),
+      ...(form.has("budgetDetail") ? { budget_detail: p.budgetDetail } : {}),
+      ...(form.has("repairProgress") ? { repair_progress: p.repairProgress } : {}),
+      quality_checked: form.get("qualityChecked") === "on",
+      ...(form.has("qualityNotes") ? { quality_notes: String(form.get("qualityNotes") ?? "").slice(0, 2000) } : {})
+    },
+    p_confirm_customer: confirmCustomer,
+    p_channel: channel?.success ? channel.data : "",
+    p_decision_notes: confirmCustomer ? notes.data : ""
+  });
+  if (result.error?.code === "23514" && user.role === "admin" && result.error.message?.includes("autorizacion vigente")) {
+    return { success: false, message: 'Falta la confirmacion para este presupuesto. Si el cliente ya autorizo, marca "El cliente confirmo este presupuesto" y guarda otra vez. Tus datos se conservan.' };
+  }
+  if (result.error?.code === "23514" && result.error.message?.includes("control de calidad")) {
+    return { success: false, message: 'Falta probar el equipo. Despues de verificarlo, marca "Equipo probado y funcionando" y guarda otra vez. Tus datos se conservan.' };
+  }
+  if (result.error) return { success: false, message: result.error.code === "40001"
+    ? "La orden cambio en otro dispositivo. Tus datos siguen en el borrador; revisa la ficha antes de reintentar."
+    : getFriendlyDatabaseError(result.error, "No se pudo confirmar el guardado. Tus datos siguen disponibles para reintentar.") };
+  const saved = z.object({ id: uuid, version: z.number().int().positive(), status: z.string(), replayed: z.boolean() }).safeParse(result.data);
+  if (!saved.success || saved.data.id !== p.id) return { success: false, message: "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar este mismo guardado." };
+  revalidatePath("/reparaciones-access"); revalidatePath("/pedidos"); revalidatePath("/dashboard");
+  return { success: true, recordVersion: saved.data.version, message: saved.data.replayed
+    ? "Este cambio ya estaba guardado. Ficha actualizada."
+    : saved.data.status === "listo_para_retirar" ? "Guardado. El equipo esta listo para retirar."
+    : saved.data.status === "presupuestado" && p.status !== "presupuestado" ? "Presupuesto actualizado. Requiere una nueva confirmacion del cliente."
+    : "Cambios guardados en esta orden." };
 }
 
 export async function confirmRepairCustomerDecision(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {

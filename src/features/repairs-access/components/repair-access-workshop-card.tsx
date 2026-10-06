@@ -34,6 +34,7 @@ import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { RepairAttachments } from "./repair-attachments";
 import { WorkshopForm } from "./workshop-form";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
+import { RepairQuickEditor } from "./repair-quick-editor";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 export function RepairAccessWorkshopCard({
@@ -120,9 +121,8 @@ export function RepairAccessWorkshopCard({
           </>}
         >
 
-          <WorkshopCardForm order={order}>
+          {order.workflow ? <RepairQuickEditor order={order} canManage={canManageIntake} /> : <WorkshopCardForm order={order}>
             <input name="id" type="hidden" value={order.id} />
-            {order.workflow ? <input name="expectedVersion" type="hidden" value={order.workflow.version} /> : null}
 
             <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={canManageIntake} />
 
@@ -173,17 +173,23 @@ export function RepairAccessWorkshopCard({
               />
             </label>
 
-            <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input className="mt-1" type="checkbox" name="qualityChecked" defaultChecked={Boolean(order.workflow?.qualityCheckedAt)} />Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar listo.</label>
-            <label><span className="mb-2 block text-xs font-medium text-slate-500">Resultado de las pruebas (opcional)</span><Textarea name="qualityNotes" defaultValue={order.workflow?.qualityNotes || ""} maxLength={2000} /></label>
+            <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input className="mt-1" type="checkbox" name="qualityChecked" />Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar listo.</label>
+            <label><span className="mb-2 block text-xs font-medium text-slate-500">Resultado de las pruebas (opcional)</span><Textarea name="qualityNotes" maxLength={2000} /></label>
             <FormSubmitButton
               className="min-h-12 w-full"
               idleLabel="Guardar actualizacion"
               pendingLabel="Guardando cambios..."
             />
-          </WorkshopCardForm>
+          </WorkshopCardForm>}
         </LazyDisclosure>
 
-        <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
+        {canManageIntake ? <div className="grid grid-cols-2 gap-2">
+          <a className={cn(buttonVariants({ variant: "secondary" }), "min-h-11 w-full")} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Cobrar</a>
+          <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>
+        </div> : null}
+        {order.workflow ? <LazyDisclosure className="rounded-2xl border border-slate-200 bg-white" summaryClassName="min-h-11 cursor-pointer p-3 text-sm font-medium text-slate-600" summary="Repuestos, entrega y documentos">
+          <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
+        </LazyDisclosure> : null}
         {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
         <LazyDisclosure className="group overflow-hidden rounded-[22px] border border-graphite/12 bg-white"

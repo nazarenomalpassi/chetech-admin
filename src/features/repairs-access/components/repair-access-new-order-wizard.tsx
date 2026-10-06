@@ -1,7 +1,7 @@
 "use client";
 
 import type { FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
@@ -18,12 +18,6 @@ import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/fea
 import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
 import { getLocalDateInputValue } from "@/lib/utils";
 
-const wizardSteps = [
-  { key: "cliente", label: "Cliente", helper: "Buscar o crear" },
-  { key: "equipo", label: "Equipo", helper: "Identificacion" },
-  { key: "ingreso", label: "Ingreso", helper: "Falla y orden" }
-] as const;
-
 type CustomerForm = {
   id: string;
   fullName: string;
@@ -36,7 +30,6 @@ type CustomerForm = {
 };
 
 type RepairIntakeDraft = {
-  activeStep: (typeof wizardSteps)[number]["key"];
   fields: Record<string, string>;
 };
 
@@ -92,7 +85,7 @@ export function RepairAccessNewOrderWizard({
   action: (formData: FormData) => void | Promise<void>;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const [activeStep, setActiveStep] = useState<(typeof wizardSteps)[number]["key"]>("cliente");
+  const formRef = useRef<HTMLFormElement>(null);
   const [customerForm, setCustomerForm] = useState<CustomerForm>(() => getInitialCustomer(editing));
   const [customerLookup, setCustomerLookup] = useState("");
   const [activeLookupField, setActiveLookupField] = useState<"name" | "phone" | null>(null);
@@ -107,7 +100,6 @@ export function RepairAccessNewOrderWizard({
     setCustomerForm(getInitialCustomer(editing));
     setCustomerLookup("");
     setActiveLookupField(null);
-    setActiveStep("cliente");
     setDraftFields({});
     setRestoredFields({});
     setFormRevision((current) => current + 1);
@@ -157,7 +149,6 @@ export function RepairAccessNewOrderWizard({
   const restoreDraft = useCallback((draft: RepairIntakeDraft) => {
     setRestoredFields(draft.fields);
     setDraftFields(draft.fields);
-    setActiveStep(wizardSteps.some((step) => step.key === draft.activeStep) ? draft.activeStep : "cliente");
     setCustomerForm({
       id: draft.fields.customerId ?? "",
       fullName: draft.fields.customerName ?? "",
@@ -174,7 +165,7 @@ export function RepairAccessNewOrderWizard({
     draftKey: `repair-access:intake:${editing?.id ?? "new"}`,
     isDirty: hasUnsavedChanges,
     onRestore: restoreDraft,
-    value: { activeStep, fields: draftFields }
+    value: { fields: draftFields }
   });
 
   useEffect(() => {
@@ -200,6 +191,17 @@ export function RepairAccessNewOrderWizard({
   }
 
   function selectCustomer(customer: RepairAccessCustomerSummary) {
+    setDraftFields({
+      ...(formRef.current ? readFormValues(formRef.current) : draftFields),
+      customerId: customer.id,
+      customerName: customer.fullName,
+      customerPhone: customer.phone,
+      customerAlternatePhone: customer.alternatePhone,
+      customerDni: customer.dni,
+      customerEmail: customer.email,
+      customerAddress: customer.address,
+      customerNotes: customer.notes
+    });
     setCustomerForm({
       id: customer.id,
       fullName: customer.fullName,
@@ -217,7 +219,7 @@ export function RepairAccessNewOrderWizard({
   }
 
   return (
-    <Card className="space-y-6">
+    <Card className="space-y-6 [&_button]:min-h-11">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Nueva orden</p>
@@ -225,25 +227,10 @@ export function RepairAccessNewOrderWizard({
             {editing ? `Editar ingreso ${editing.repairNumber}` : "Ingreso rapido de recepcion"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Esta pantalla es solo para recepcion: cliente, equipo, falla declarada y prioridad. Diagnostico, presupuesto y cobro se cargan despues en el detalle tecnico.
+            Carga cliente, equipo y falla en una sola pantalla. Los datos adicionales son opcionales; diagnostico, presupuesto y cobro se cargan despues.
           </p>
         </div>
         {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar edicion</Button> : null}
-      </div>
-
-      <div className="grid gap-2 lg:grid-cols-3">
-        {wizardSteps.map((step, index) => (
-          <button
-            className={`rounded-3xl border px-4 py-3 text-left transition ${activeStep === step.key ? "border-brand-300 bg-brand-50 text-brand-900" : "border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
-            key={step.key}
-            onClick={() => setActiveStep(step.key)}
-            type="button"
-          >
-            <span className="text-xs font-semibold uppercase tracking-[0.2em]">Paso {index + 1}</span>
-            <span className="mt-1 block text-sm font-semibold">{step.label}</span>
-            <span className="mt-1 block text-xs">{step.helper}</span>
-          </button>
-        ))}
       </div>
 
       {draft.pendingDraft ? (
@@ -260,13 +247,14 @@ export function RepairAccessNewOrderWizard({
         key={formRevision}
         onChange={captureDraft}
         onInput={captureDraft}
+        ref={formRef}
       >
         <input name="id" type="hidden" value={editing?.id ?? ""} />
         <input name="customerId" type="hidden" value={customerForm.id} />
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
-        <section className={activeStep === "cliente" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
-          <Field className="relative lg:col-span-3" label="Nombre completo">
+        <section aria-label="Cliente" className="grid gap-4 sm:grid-cols-2">
+          <Field className="relative" htmlFor="customerName" label="Nombre completo">
             <Input
               autoComplete="off"
               name="customerName"
@@ -287,7 +275,7 @@ export function RepairAccessNewOrderWizard({
             />
             <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "name"} suggestions={suggestions} />
           </Field>
-          <Field className="relative lg:col-span-3" label="Telefono / WhatsApp">
+          <Field className="relative" htmlFor="customerPhone" label="Telefono / WhatsApp">
             <Input
               autoComplete="off"
               name="customerPhone"
@@ -308,6 +296,30 @@ export function RepairAccessNewOrderWizard({
             />
             <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "phone"} suggestions={suggestions} />
           </Field>
+        </section>
+
+        <section aria-label="Equipo" className="grid gap-4 sm:grid-cols-3">
+          <Field label="Tipo de equipo">
+            <Input defaultValue={restoredValue("deviceType", editing?.device.deviceType ?? "")} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
+          </Field>
+          <Field label="Marca">
+            <Input defaultValue={restoredValue("deviceBrand", editing?.device.brand ?? "")} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
+          </Field>
+          <Field label="Modelo">
+            <Input defaultValue={restoredValue("deviceModel", editing?.device.model ?? "")} name="deviceModel" placeholder="Modelo visible" />
+          </Field>
+        </section>
+
+        <section aria-label="Ingreso" className="grid gap-4 lg:grid-cols-6">
+          <Field className="lg:col-span-2" label="Fecha de ingreso">
+            <Input defaultValue={restoredValue("intakeDate", editing?.intakeDate ?? getLocalDateInputValue())} name="intakeDate" type="date" />
+          </Field>
+          <Field className="lg:col-span-4" label="Falla declarada por el cliente">
+            <Textarea defaultValue={restoredValue("issueReported", editing?.issueReported ?? "")} name="issueReported" placeholder="Ej: no enfria, no da imagen, pierde agua, no enciende..." />
+          </Field>
+        </section>
+
+        <OptionalFields label="Mas datos del cliente">
           <Field className="lg:col-span-2" label="Telefono alternativo">
             <Input name="customerAlternatePhone" onChange={(event) => updateCustomerField("alternatePhone", event.target.value)} placeholder="Opcional" value={customerForm.alternatePhone} />
           </Field>
@@ -323,21 +335,12 @@ export function RepairAccessNewOrderWizard({
           <Field className="lg:col-span-3" label="Observaciones del cliente">
             <Textarea name="customerNotes" onChange={(event) => updateCustomerField("notes", event.target.value)} placeholder="Notas utiles de contacto" value={customerForm.notes} />
           </Field>
-          <div className="rounded-3xl bg-slate-50 p-4 text-sm text-slate-500 lg:col-span-6">
+          <p className="text-sm leading-6 text-slate-600 lg:col-span-6">
             Si elegis un cliente existente, solo se copian sus datos personales. El equipo, la falla y la reparacion siempre se cargan como una orden nueva.
-          </div>
-        </section>
+          </p>
+        </OptionalFields>
 
-        <section className={activeStep === "equipo" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
-          <Field className="lg:col-span-2" label="Tipo de equipo">
-            <Input defaultValue={restoredValue("deviceType", editing?.device.deviceType ?? "")} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
-          </Field>
-          <Field className="lg:col-span-2" label="Marca">
-            <Input defaultValue={restoredValue("deviceBrand", editing?.device.brand ?? "")} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
-          </Field>
-          <Field className="lg:col-span-2" label="Modelo">
-            <Input defaultValue={restoredValue("deviceModel", editing?.device.model ?? "")} name="deviceModel" placeholder="Modelo visible" />
-          </Field>
+        <OptionalFields label="Detalles del equipo">
           <Field className="lg:col-span-2" label="Numero de serie">
             <Input defaultValue={restoredValue("serialNumber", editing?.device.serialNumber ?? "")} name="serialNumber" placeholder="Opcional" />
           </Field>
@@ -347,41 +350,25 @@ export function RepairAccessNewOrderWizard({
           <Field className="lg:col-span-2" label="Estado visual">
             <Input defaultValue={restoredValue("visualCondition", editing?.device.visualCondition ?? "")} name="visualCondition" placeholder="Golpes, faltantes, rayas, humedad..." />
           </Field>
-        </section>
+        </OptionalFields>
 
-        <section className={activeStep === "ingreso" ? "grid gap-4 lg:grid-cols-6" : "hidden"}>
-          {editing?.repairNumber ? (
-            <div className="rounded-3xl bg-slate-950 p-5 text-white lg:col-span-6">
-              <p className="text-xs uppercase tracking-[0.24em] text-slate-300">Numero de orden</p>
-              <p className="mt-2 text-3xl font-semibold">{editing.repairNumber}</p>
-            </div>
-          ) : null}
-          <Field className="lg:col-span-2" label="Fecha de ingreso">
-            <Input defaultValue={restoredValue("intakeDate", editing?.intakeDate ?? getLocalDateInputValue())} name="intakeDate" type="date" />
-          </Field>
-          <Field className="lg:col-span-2" label="Prioridad">
+        <OptionalFields label="Opciones de ingreso">
+          <Field className="lg:col-span-3" label="Prioridad">
             <Select defaultValue={restoredValue("priority", editing?.priority ?? "normal")} name="priority" options={repairAccessPriorityOptions.map((option) => ({ ...option }))} />
           </Field>
-          <Field className="lg:col-span-2" label="Estado inicial">
+          <Field className="lg:col-span-3" label="Estado inicial">
             <Select defaultValue={restoredValue("status", editing?.status ?? "pendiente_revision")} name="status" options={repairAccessIntakeStatusOptions} />
-          </Field>
-          <Field className="lg:col-span-6" label="Falla declarada por el cliente">
-            <Textarea defaultValue={restoredValue("issueReported", editing?.issueReported ?? "")} name="issueReported" placeholder="Ej: no enfria, no da imagen, pierde agua, no enciende..." />
           </Field>
           <Field className="lg:col-span-6" label="Observaciones internas de recepcion">
             <Textarea defaultValue={restoredValue("notes", editing?.notes ?? "")} name="notes" placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones" />
           </Field>
-        </section>
+        </OptionalFields>
 
         <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
-            Al guardar, el sistema genera un numero REP correlativo para pegar en el equipo fisico.
+            {editing ? `Se conserva el numero de orden ${editing.repairNumber}.` : "Al guardar, el sistema genera un numero REP correlativo para pegar en el equipo fisico."}
           </p>
           <div className="grid gap-2 sm:flex sm:flex-wrap">
-            {activeStep !== "cliente" ? <Button className="w-full sm:w-auto" onClick={() => setActiveStep(activeStep === "ingreso" ? "equipo" : "cliente")} type="button" variant="secondary">Anterior</Button> : null}
-            {activeStep !== "ingreso" ? (
-              <Button className="w-full sm:w-auto" onClick={() => setActiveStep(activeStep === "cliente" ? "equipo" : "ingreso")} type="button" variant="secondary">Siguiente</Button>
-            ) : null}
             {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar</Button> : null}
             <FormSubmitButton
               className="w-full sm:w-auto"
@@ -433,12 +420,12 @@ function CustomerSuggestions({
     <div className="absolute left-0 right-0 top-[76px] z-20 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft">
       {suggestions.length ? suggestions.map((customer) => (
         <button
-          className="block w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50"
+          className="block min-h-11 w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/30"
           key={customer.id}
           onMouseDown={(event) => {
             event.preventDefault();
-            onSelect(customer);
           }}
+          onClick={() => onSelect(customer)}
           type="button"
         >
           <span className="block font-semibold text-slate-950">{customer.fullName}</span>
@@ -455,7 +442,28 @@ function CustomerSuggestions({
   );
 }
 
-function Field({ label, className, children }: { label: string; className?: string; children: ReactNode }) {
+function OptionalFields({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <details className="rounded-2xl border border-graphite/10 bg-white/70 px-4">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/30">
+        {label}
+      </summary>
+      {/* Keep fields mounted so closed sections still contribute to FormData and drafts. */}
+      <div className="grid gap-4 pb-4 pt-2 lg:grid-cols-6">{children}</div>
+    </details>
+  );
+}
+
+function Field({ label, className, children, htmlFor }: { label: string; className?: string; children: ReactNode; htmlFor?: string }) {
+  if (htmlFor) {
+    return (
+      <div className={className}>
+        <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor={htmlFor}>{label}</label>
+        {children}
+      </div>
+    );
+  }
+
   return (
     <label className={className}>
       <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>

@@ -34,6 +34,7 @@ import { OrderCoordinationPanel, type WorkshopTechnician } from "./order-coordin
 import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { RepairAttachments } from "./repair-attachments";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
+import { RepairQuickEditor } from "./repair-quick-editor";
 
 export function RepairAccessOrderDetail({
   order,
@@ -63,6 +64,7 @@ export function RepairAccessOrderDetail({
   const [draftFields, setDraftFields] = useState<Record<string, string>>({});
   const [restoredFields, setRestoredFields] = useState<Record<string, string>>({});
   const [formRevision, setFormRevision] = useState(0);
+  const [advanced, setAdvanced] = useState(false);
 
   useEffect(() => {
     const nextVisibleAmount = order.finalAmount || order.budgetAmount;
@@ -133,7 +135,7 @@ export function RepairAccessOrderDetail({
 
   function confirmSectionChange(action: () => void) {
     if (
-      hasUnsavedChanges &&
+      (hasUnsavedChanges || document.documentElement.hasAttribute("data-unsaved-changes")) &&
       !window.confirm("Hay cambios técnicos sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés continuar?")
     ) {
       return;
@@ -211,6 +213,19 @@ export function RepairAccessOrderDetail({
         <RepairAccessWhatsAppPanel order={liveOrder} />
       </Card>
 
+      {order.workflow ? <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold text-slate-950">Actualizar trabajo</h2>
+            <p className="mt-1 text-sm text-slate-500">Presupuesto, avance y estado en un solo guardado.</p>
+          </div>
+          <Button type="button" variant="secondary" className="min-h-11" aria-expanded={advanced}
+            onClick={() => confirmSectionChange(() => setAdvanced(!advanced))}>
+            {advanced ? "Volver al editor simple" : "Mas campos administrativos"}
+          </Button>
+        </div>
+        {!advanced ? <RepairQuickEditor order={order} canManage /> : <p className="mt-3 text-sm text-slate-500">El formulario administrativo esta debajo de los datos del equipo.</p>}
+      </Card> : null}
       <OrderCoordinationPanel order={order} canManage technicians={technicians} />
       {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
@@ -288,7 +303,7 @@ export function RepairAccessOrderDetail({
           </Card>
         </div>
 
-        <Card>
+        {!order.workflow || advanced ? <Card>
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Zona tecnica</p>
             <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Diagnostico, presupuesto y cierre</h2>
@@ -477,7 +492,7 @@ export function RepairAccessOrderDetail({
               </p>
             ) : null}
           </form>
-        </Card>
+        </Card> : null}
       </div>
 
       <RepairCustomerPortalForm key={`portal-${order.id}`} order={order} />

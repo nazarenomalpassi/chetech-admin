@@ -104,6 +104,14 @@ const waitingOrder: RepairAccessOrderRecord = {
 };
 
 describe("RepairAccessWorkshopCard", () => {
+  it("ofrece el mismo editor rapido para la cuenta admin compartida", () => {
+    render(<RepairAccessWorkshopCard canManageIntake onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
+    const details = screen.getByText("Actualizar trabajo").closest("details")!;
+    details.open = true; fireEvent(details, new Event("toggle"));
+    expect(screen.getByLabelText("El cliente confirmo este presupuesto")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeTruthy();
+    expect(screen.getByLabelText("Presupuesto").closest("form")?.querySelectorAll('input[name="id"]').length).toBe(1);
+  });
   it("explica en celular como habilitar listo para retirar sin inventar la confirmacion", () => {
     render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
@@ -112,13 +120,14 @@ describe("RepairAccessWorkshopCard", () => {
     expect(notice.textContent).toContain("Confirmacion del cliente pendiente");
     expect(notice.textContent).toContain("Pedile a mostrador");
     expect(notice.textContent).toContain("control de calidad");
-    expect(screen.getByLabelText(/^Verifique la falla reparada/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "listo_para_retirar" } });
+    expect(screen.getByLabelText("Equipo probado y funcionando")).toBeTruthy();
   });
 
   it("muestra los pasos pendientes tambien en la ficha completa", () => {
     const html = renderToStaticMarkup(<RepairAccessOrderDetail order={waitingOrder} onBack={() => undefined} onEditIntake={() => undefined} defaultWarrantyDays={30} />);
-    expect(html).toContain("Antes de marcar listo para retirar");
-    expect(html).toContain("Confirmacion del cliente pendiente");
+    expect(html).toContain("Presupuesto, avance y estado en un solo guardado");
+    expect(html).toContain("El cliente confirmo este presupuesto");
     expect(html).toContain('Cliente confirmo');
   });
 

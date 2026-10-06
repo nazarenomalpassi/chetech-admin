@@ -22,7 +22,7 @@ import {
   getVisibleWorkshopOrders,
   WORKSHOP_INITIAL_VISIBLE_ORDERS
 } from "@/features/repairs-access/workshop-list-visibility";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import type { WorkshopTechnician } from "./order-coordination-panel";
 
 export function RepairAccessOrdersSection({
@@ -36,6 +36,7 @@ export function RepairAccessOrdersSection({
   onWarrantyFilterChange,
   onEdit,
   onOpenDetail,
+  onNew,
   headingRef,
   canManageIntake
 }: {
@@ -49,10 +50,12 @@ export function RepairAccessOrdersSection({
   onWarrantyFilterChange: (value: string) => void;
   onEdit: (order: RepairAccessOrderRecord) => void;
   onOpenDetail: (order: RepairAccessOrderRecord) => void;
+  onNew?: () => void;
   headingRef?: Ref<HTMLHeadingElement>;
   canManageIntake: boolean;
 }) {
   const [visibleLimit, setVisibleLimit] = useState(WORKSHOP_INITIAL_VISIBLE_ORDERS);
+  const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   const normalizedSearch = search.trim().toLowerCase();
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "todos" || order.status === statusFilter;
@@ -91,17 +94,25 @@ export function RepairAccessOrdersSection({
     setVisibleLimit(WORKSHOP_INITIAL_VISIBLE_ORDERS);
   }, [normalizedSearch, statusFilter, warrantyFilter]);
 
+  function togglePresentation() {
+    if (document.documentElement.hasAttribute("data-unsaved-changes") && !window.confirm("Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Queres cambiar la vista?")) return;
+    setPresentation((current) => current === "cards" ? "table" : "cards");
+  }
+
   return (
     <Card className="space-y-4 sm:space-y-5">
       <div className="grid min-w-0 gap-4 min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] min-[1600px]:items-end">
         <div className="min-w-0">
           <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-brand-700 sm:text-xs sm:tracking-[0.28em]">Ordenes de service</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950 outline-none sm:text-3xl" ref={headingRef} tabIndex={-1}>Mesa de trabajo</h2>
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 outline-none sm:text-3xl" ref={headingRef} tabIndex={-1}>Mesa de trabajo</h2>
+            {canManageIntake && onNew ? <Button onClick={onNew} type="button">Nueva orden</Button> : null}
+          </div>
           <p className="mt-2 max-w-2xl text-[0.84rem] leading-6 text-slate-500 sm:text-sm">
             Encontra la orden por numero, equipo, cliente o falla y actualiza el trabajo sin salir del listado.
           </p>
         </div>
-        <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+        <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <Input
             aria-label="Buscar orden de service"
             onChange={(event) => onSearchChange(event.target.value)}
@@ -115,29 +126,38 @@ export function RepairAccessOrdersSection({
             options={[{ value: "todos", label: "Todos los estados" }, ...repairAccessStatusOptions]}
             value={statusFilter}
           />
-          <Select
-            aria-label="Filtrar ordenes por garantia"
-            name="warrantyFilter"
-            onChange={(event) => onWarrantyFilterChange(event.target.value)}
-            options={[
-              { value: "todos", label: "Todas las garantias" },
-              { value: "active", label: "Garantia vigente" },
-              { value: "expired", label: "Garantia vencida" },
-              { value: "pending_delivery", label: "Pendiente de retiro" },
-              { value: "needs_review", label: "Garantia incompleta" },
-              { value: "none", label: "Sin garantia" }
-            ]}
-            value={warrantyFilter}
-          />
+          <details className="min-w-0 sm:col-span-2" open={warrantyFilter !== "todos" ? true : undefined}>
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Filtros</summary>
+            <div className="pt-2 sm:max-w-sm">
+              <Select
+                aria-label="Filtrar ordenes por garantia"
+                name="warrantyFilter"
+                onChange={(event) => onWarrantyFilterChange(event.target.value)}
+                options={[
+                  { value: "todos", label: "Todas las garantias" },
+                  { value: "active", label: "Garantia vigente" },
+                  { value: "expired", label: "Garantia vencida" },
+                  { value: "pending_delivery", label: "Pendiente de retiro" },
+                  { value: "needs_review", label: "Garantia incompleta" },
+                  { value: "none", label: "Sin garantia" }
+                ]}
+                value={warrantyFilter}
+              />
+            </div>
+          </details>
         </div>
       </div>
 
-      <div
-        className={cn(
-          "grid gap-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))]",
-          canManageIntake ? "lg:hidden" : "md:grid-cols-2 2xl:grid-cols-3"
-        )}
-      >
+      {canManageIntake ? (
+        <div aria-label="Presentacion de ordenes" className="flex justify-end">
+          <Button aria-pressed={presentation === "table"} onClick={togglePresentation} type="button" variant="ghost">
+            {presentation === "cards" ? "Ver tabla" : "Ver tarjetas"}
+          </Button>
+        </div>
+      ) : null}
+
+      {!canManageIntake || presentation === "cards" ? (
+      <div className="grid items-start gap-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))] md:grid-cols-2 2xl:grid-cols-3">
         {visibleOrders.length ? (
           visibleOrders.map((order) => (
             <RepairAccessWorkshopCard
@@ -155,8 +175,8 @@ export function RepairAccessOrdersSection({
           </div>
         )}
       </div>
-
-      <div className={cn("overflow-hidden rounded-3xl border border-slate-100", canManageIntake ? "hidden lg:block" : "hidden")}>
+      ) : (
+      <div className="overflow-hidden rounded-3xl border border-slate-100">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
@@ -239,6 +259,7 @@ export function RepairAccessOrdersSection({
           </table>
         </div>
       </div>
+      )}
 
       {visibleOrders.length < filteredOrders.length ? (
         <div className="flex flex-col items-center gap-2 border-t border-graphite/8 pt-4 sm:flex-row sm:justify-between">
