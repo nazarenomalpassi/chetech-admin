@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const requirePermissionMock = vi.fn();
+const requireAdminMock = vi.fn();
 const createServerSupabaseClientMock = vi.fn();
 const createAuditLogMock = vi.fn();
 const revalidatePathMock = vi.fn();
@@ -17,7 +18,7 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/lib/auth", () => ({
-  requireAdmin: vi.fn(),
+  requireAdmin: requireAdminMock,
   requirePermission: requirePermissionMock
 }));
 
@@ -32,6 +33,25 @@ vi.mock("@/lib/audit", () => ({
 describe("updateRepairAccessWorkshopAction", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it("conserva el motivo del bloqueo en la ficha completa de mostrador", async () => {
+    const orderId = "11111111-1111-4111-8111-111111111111";
+    requireAdminMock.mockResolvedValue({ id: "22222222-2222-4222-8222-222222222222", role: "admin" });
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "23514", message: "Registra una autorizacion vigente del cliente antes de marcar listo para retirar." } });
+    createServerSupabaseClientMock.mockResolvedValue({
+      rpc,
+      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: orderId, status: "presupuestado", is_paid: false }, error: null }) }) }) })
+    });
+    const form = new FormData();
+    form.set("id", orderId); form.set("status", "listo_para_retirar"); form.set("budgetAmount", "208000"); form.set("finalAmount", "208000"); form.set("expectedVersion", "1");
+    const { updateRepairAccessTechnicalAction } = await import("@/features/repairs-access/actions");
+    await expect(updateRepairAccessTechnicalAction(form)).rejects.toThrow("REDIRECT:");
+    const target = new URL(redirectMock.mock.calls.at(-1)![0], "https://chetech.test");
+    expect(target.searchParams.get("error")).toContain("Cliente confirmo");
+    expect(target.searchParams.get("order")).toBe(orderId);
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it("delega la actualizacion tecnica al RPC restringido", async () => {

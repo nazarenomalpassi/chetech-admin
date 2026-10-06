@@ -33,6 +33,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { OrderCoordinationPanel, type WorkshopTechnician } from "./order-coordination-panel";
 import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { RepairAttachments } from "./repair-attachments";
+import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 
 export function RepairAccessOrderDetail({
   order,
@@ -321,6 +322,8 @@ export function RepairAccessOrderDetail({
           >
             <input name="id" type="hidden" value={order.id} />
             {order.workflow ? <input name="expectedVersion" type="hidden" value={order.workflow.version} /> : null}
+
+            <div className="lg:col-span-6"><ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage /></div>
 
             <Field className="lg:col-span-2" label="Estado actual">
               <Select
