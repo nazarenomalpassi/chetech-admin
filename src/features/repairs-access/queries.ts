@@ -111,6 +111,7 @@ export type RepairAccessOrderRecord = {
   technicalDiagnosis: string | null;
   repairProgress: string | null;
   budgetAmount: number;
+  hasBudgetAmount?: boolean;
   budgetDetail: string | null;
   budgetResponseNotes: string | null;
   budgetResponseAt: string | null;
@@ -259,6 +260,7 @@ export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
     technicalDiagnosis: order.technical_diagnosis,
     repairProgress: order.repair_progress,
     budgetAmount: Number(order.budget_amount ?? 0),
+    hasBudgetAmount: order.budget_amount !== null && order.budget_amount !== undefined,
     budgetDetail: order.budget_detail,
     budgetResponseNotes: order.budget_response_notes,
     budgetResponseAt: order.budget_response_at,

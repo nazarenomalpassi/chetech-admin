@@ -64,14 +64,15 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
   const operationId = uuid.safeParse(form.get("operationId"));
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   if (!expectedVersion.success || !operationId.success) return { success: false, message: "No se pudo preparar el guardado. Recarga la ficha conservando el borrador." };
-  const confirmCustomer = form.get("confirmCustomer") === "on";
+  const budgetResponse = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
+  const confirmCustomer = (user.role === "admin" && budgetResponse) || form.get("confirmCustomer") === "on";
   const hasAmount = form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
-  if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el presupuesto autorizado. Si es sin cargo, ingresa 0 y explica el motivo." };
+  if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el importe del presupuesto antes de registrar la respuesta. Si es sin cargo, ingresa 0." };
   if (confirmCustomer && user.role !== "admin") return { success: false, message: "La confirmacion del cliente se registra desde la cuenta de administracion." };
   const channel = confirmCustomer ? z.enum(["presencial", "telefono", "whatsapp", "portal"]).safeParse(form.get("decisionChannel")) : null;
-  if (channel && !channel.success) return { success: false, message: "Selecciona como confirmo el cliente." };
+  if (channel && !channel.success) return { success: false, message: "Selecciona como respondio el cliente." };
   const notes = optionalText().safeParse(String(form.get("decisionNotes") ?? ""));
-  if (!notes.success) return { success: false, message: "La nota de confirmacion es demasiado larga." };
+  if (!notes.success) return { success: false, message: "La nota de la respuesta del cliente es demasiado larga." };
   const p = parsed.data;
   const supabase = await createServerSupabaseClient();
   const result = await (supabase as any).rpc("workshop_save_quick", {
@@ -103,6 +104,8 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
   return { success: true, recordVersion: saved.data.version, message: saved.data.replayed
     ? "Este cambio ya estaba guardado. Ficha actualizada."
     : saved.data.status === "listo_para_retirar" ? "Guardado. El equipo esta listo para retirar."
+    : saved.data.status === "presupuestado_aceptado" ? "Guardado. Presupuesto aceptado por el cliente."
+    : saved.data.status === "presupuestado_rechazado" ? "Guardado. Presupuesto rechazado por el cliente."
     : saved.data.status === "presupuestado" && p.status !== "presupuestado" ? "Presupuesto actualizado. Requiere una nueva confirmacion del cliente."
     : "Cambios guardados en esta orden." };
 }

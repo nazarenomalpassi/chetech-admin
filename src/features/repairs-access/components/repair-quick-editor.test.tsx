@@ -18,6 +18,54 @@ const order = {
 } as unknown as RepairAccessOrderRecord;
 
 describe("editor unico de reparaciones", () => {
+  it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("ofrece y guarda %s directamente desde la ficha", async (status) => {
+    mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
+    render(<RepairQuickEditor order={order} canManage />);
+    const select = screen.getByLabelText("Estado de la orden") as HTMLSelectElement;
+    expect(Array.from(select.options).map((option) => option.value)).toContain(status);
+    fireEvent.change(select, { target: { value: status } });
+    expect(select.value).toBe(status);
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.getByLabelText("Como respondio el cliente")).toBeTruthy();
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
+    const data = mocks.save.mock.calls[0][1] as FormData;
+    expect(data.get("status")).toBe(status);
+    expect(data.get("decisionChannel")).toBe("presencial");
+  });
+  it("no ofrece decisiones del cliente como nuevos estados a la cuenta tecnica", () => {
+    render(<RepairQuickEditor order={order} canManage={false} />);
+    const values = Array.from((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).options).map((option) => option.value);
+    expect(values).not.toContain("presupuestado_aceptado");
+    expect(values).not.toContain("presupuestado_rechazado");
+  });
+  it("pide motivo al cambiar una aceptacion vigente por un rechazo", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "presupuestado_aceptado", workflow: { ...order.workflow!, approvalStatus: "accepted" } }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "presupuestado_rechazado" } });
+    expect((screen.getByLabelText("Motivo del rechazo") as HTMLTextAreaElement).required).toBe(true);
+  });
+  it("no vuelve a exigir importe ni motivo sin cargo al editar un presupuesto ya autorizado", async () => {
+    mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
+    render(<RepairQuickEditor order={{ ...order, status: "presupuestado_aceptado", budgetAmount: 0, workflow: { ...order.workflow!, approvalStatus: "accepted", approvedAmount: 0 } }} canManage />);
+    expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("0");
+    expect(screen.queryByLabelText("Motivo del trabajo sin cargo")).toBeNull();
+    expect(screen.queryByLabelText("Nota de confirmacion (opcional)")).toBeNull();
+    expect(screen.getByText("La aceptacion de este presupuesto ya esta registrada.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Avance / trabajo realizado"), { target: { value: "Nota sin cambiar autorizacion" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
+    expect((mocks.save.mock.calls[0][1] as FormData).get("repairAmount")).toBe("0");
+  });
+  it("conserva el cero explicito de un presupuesto rechazado, pero no lo fabrica en una orden nueva", () => {
+    const rejected = { ...order, status: "presupuestado_rechazado", budgetAmount: 0, hasBudgetAmount: true, workflow: { ...order.workflow!, budgetRevision: 1, approvalStatus: "rejected", approvedAmount: null } } as RepairAccessOrderRecord;
+    const view = render(<RepairQuickEditor order={rejected} canManage />);
+    expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("0");
+    expect(screen.queryByLabelText("Nota del rechazo (opcional)")).toBeNull();
+    expect(screen.getByText("El rechazo de este presupuesto ya esta registrado.")).toBeTruthy();
+    view.unmount();
+    render(<RepairQuickEditor order={{ ...order, status: "pendiente_revision", budgetAmount: 0 }} canManage />);
+    expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("");
+  });
   it("recupera el importe, la confirmacion explicita y las pruebas del mismo borrador", async () => {
     localStorage.setItem(getFormDraftStorageKey(`repair-access:workshop:${order.id}`), JSON.stringify(createFormDraftEnvelope({
       expectedVersion: "1", repairAmount: "150", budgetDetail: "Nueva fuente", status: "listo_para_retirar",

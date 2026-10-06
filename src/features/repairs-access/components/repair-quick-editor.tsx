@@ -14,7 +14,10 @@ import { WorkshopForm } from "./workshop-form";
 export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrderRecord; canManage: boolean }) {
   if (order.deliveredAt || order.status === "retirado") return <p className="p-4 text-sm text-slate-600">Esta orden ya fue entregada. Los ajustes se revisan en la ficha completa.</p>;
   const pendingParts = order.workflow?.parts.filter((part) => getPartOutstandingQuantity(part) > 0).length ?? 0;
-  const statusOptions = repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status);
+  const hasExplicitZero = (order.workflow?.approvalStatus === "accepted" && order.workflow.approvedAmount === 0)
+    || (order.workflow?.approvalStatus === "rejected" && order.hasBudgetAmount && order.workflow.budgetRevision > 0);
+  const statusOptions = repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status
+    || (canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(option.value)));
 
   return <WorkshopForm orderId={order.id} orderVersion={order.workflow?.version} action={saveQuickWorkshopForm}>
     {(fields, submitting) => {
@@ -22,6 +25,11 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
       const quoteKey = JSON.stringify([fields.repairAmount ?? String(order.budgetAmount), fields.budgetDetail ?? order.budgetDetail ?? ""]);
       const needsQuality = ["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality;
       const confirmSelected = fields.confirmCustomer === "on";
+      const decisionSelected = canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
+      const rejecting = state.status === "presupuestado_rechazado";
+      const responseNeedsRecording = decisionSelected && (state.quoteChanged || order.workflow?.approvalStatus !== (rejecting ? "rejected" : "accepted"));
+      const needsRejectionReason = rejecting && order.workflow?.approvalStatus === "accepted" && !state.quoteChanged;
+      const needsFreeReason = !rejecting && state.quoteAmount === 0 && state.needsConfirmation;
       return <>
         <input name="id" type="hidden" value={order.id} />
         <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
@@ -32,7 +40,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           </label>
           <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
             <span>Presupuesto</span>
-            <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid} placeholder="Sin presupuestar" />
+            <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid} placeholder="Sin presupuestar" />
           </label>
         </div>
         {order.isPaid ? <p className="text-xs leading-5 text-slate-500">Importe protegido porque hay un cobro informado. Las correcciones de dinero se hacen en Cobros.</p> : null}
@@ -45,19 +53,26 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           <Textarea id={`quick-${order.id}-progress`} name="repairProgress" defaultValue={order.repairProgress ?? ""} maxLength={2000} className="min-h-20" placeholder="Que hiciste y que falta" />
         </label>
         <p className="text-xs leading-5 text-slate-500">El presupuesto y el avance son visibles para el cliente con cuenta vinculada.</p>
-        {canManage && state.needsConfirmation ? <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+        {canManage && (decisionSelected || state.needsConfirmation) ? <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+          {decisionSelected ? <>
+            <p className="text-sm font-semibold text-slate-900">{responseNeedsRecording
+              ? rejecting ? "Al guardar se registra que el cliente rechazo este presupuesto." : "Al guardar se registra que el cliente acepto este presupuesto."
+              : rejecting ? "El rechazo de este presupuesto ya esta registrado." : "La aceptacion de este presupuesto ya esta registrada."}</p>
+            {!responseNeedsRecording ? <input name="decisionChannel" type="hidden" value="presencial" /> : null}
+          </> : <>
           <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-900">
             <input key={`confirmation-${quoteKey}`} name="confirmCustomer" type="checkbox" defaultChecked={fields.confirmCustomer === "on"} className="h-5 w-5 shrink-0 accent-graphite" />
             El cliente confirmo este presupuesto
           </label>
           <p className="mt-1 text-xs leading-5 text-slate-600">Marcala solo si autorizo este importe y detalle. Se registra junto con el trabajo al guardar.</p>
-          {confirmSelected ? <div className="mt-3 grid gap-3">
-            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>Como confirmo</span><Select id={`quick-${order.id}-channel`} name="decisionChannel" defaultValue={fields.decisionChannel || "presencial"} options={[
+          </>}
+          {responseNeedsRecording || (!decisionSelected && confirmSelected) ? <div className="mt-3 grid gap-3">
+            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{decisionSelected ? "Como respondio el cliente" : "Como confirmo"}</span><Select id={`quick-${order.id}-channel`} name="decisionChannel" defaultValue={fields.decisionChannel || "presencial"} options={[
               { value: "presencial", label: "En el local" }, { value: "telefono", label: "Por telefono" },
               { value: "whatsapp", label: "WhatsApp del negocio" }, { value: "portal", label: "Portal del cliente" }
             ]} /></label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{state.quoteAmount === 0 ? "Motivo del trabajo sin cargo" : "Nota de confirmacion (opcional)"}</span>
-              <Textarea id={`quick-${order.id}-decision-notes`} name="decisionNotes" defaultValue={fields.decisionNotes || ""} maxLength={2000} required={state.quoteAmount === 0} minLength={state.quoteAmount === 0 ? 3 : undefined} className="min-h-20" />
+            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{needsRejectionReason ? "Motivo del rechazo" : needsFreeReason ? "Motivo del trabajo sin cargo" : rejecting ? "Nota del rechazo (opcional)" : "Nota de confirmacion (opcional)"}</span>
+              <Textarea id={`quick-${order.id}-decision-notes`} name="decisionNotes" defaultValue={fields.decisionNotes || ""} maxLength={2000} required={needsRejectionReason || needsFreeReason} minLength={needsRejectionReason || needsFreeReason ? 3 : undefined} className="min-h-20" />
             </label>
           </div> : null}
         </div> : null}

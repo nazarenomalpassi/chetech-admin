@@ -7,7 +7,7 @@ do $$ begin
 end $$;
 create temporary table quick_fixture(key text primary key,id uuid not null default gen_random_uuid());
 insert into quick_fixture(key) values ('admin'),('other_admin'),('tech'),('customer'),('device'),
-  ('ready'),('no_consent'),('no_qc'),('parts'),('role'),('changed'),('ordinary'),('free'),('legacy_ready'),('missing_quote'),('invalid'),('persisted_nan'),('paid');
+  ('ready'),('no_consent'),('no_qc'),('parts'),('role'),('changed'),('ordinary'),('free'),('legacy_ready'),('missing_quote'),('invalid'),('persisted_nan'),('paid'),('quick_accepted'),('quick_rejected');
 grant select on quick_fixture to authenticated;
 create function pg_temp.qid(k text) returns uuid language sql stable as $$ select id from pg_temp.quick_fixture where key=k $$;
 create function pg_temp.qactor(k text) returns void language plpgsql as $$ begin
@@ -26,6 +26,7 @@ insert into public.repair_access_orders(id,customer_id,device_id,issue_reported,
 select id,pg_temp.qid('customer'),pg_temp.qid('device'),'QUICK-ROLLBACK '||key,100,'Synthetic scope',now(),'presupuestado'
 from quick_fixture where key not in ('admin','other_admin','tech','customer','device');
 update public.repair_access_orders set budget_amount=null where id=pg_temp.qid('missing_quote');
+update public.repair_access_orders set intake_date='2099-01-01' where id in (pg_temp.qid('quick_accepted'),pg_temp.qid('quick_rejected'));
 update public.repair_access_orders set is_paid=true,paid_at=now() where id=pg_temp.qid('paid');
 -- Existing ready records may predate the new authorization workflow.
 alter table public.repair_access_orders disable trigger user;
@@ -50,6 +51,63 @@ create function pg_temp.qmoney() returns jsonb language sql as $$ select jsonb_b
 create temporary table quick_money_before as select pg_temp.qmoney() as data;
 grant select on quick_money_before to authenticated;
 set local role authenticated;
+
+do $$ declare k text; o uuid; v integer; op uuid; r jsonb; snapshot jsonb; begin
+  foreach k in array array['quick_accepted','quick_rejected'] loop
+    o:=pg_temp.qid(k); op:=gen_random_uuid();
+    select workflow_version into v from public.repair_access_orders where id=o;
+    r:=public.workshop_save_quick(o,v,op,jsonb_build_object('status',case k when 'quick_accepted' then 'presupuestado_aceptado' else 'presupuestado_rechazado' end,
+      'budget_amount',150,'budget_detail','Updated scope','repair_progress','Client responded'),true,'telefono','Explicit client response');
+    perform pg_temp.qcheck((select status=case k when 'quick_accepted' then 'presupuestado_aceptado' else 'presupuestado_rechazado' end
+      and approval_status=case k when 'quick_accepted' then 'accepted' else 'rejected' end and budget_amount=150 and not is_paid and delivered_at is null
+      from public.repair_access_orders where id=o),'Quick decision did not preserve selected state or fabricated money/delivery');
+    perform pg_temp.qcheck((select count(*)=1 from public.repair_customer_decisions d join public.repair_budget_versions b on b.id=d.budget_version_id
+      where d.order_id=o and b.amount=150 and b.detail='Updated scope' and d.decision=case k when 'quick_accepted' then 'accepted' else 'rejected' end),'Quick decision not tied to exact saved quote');
+    snapshot:=pg_temp.qhistory(o);
+    r:=public.workshop_save_quick(o,v,op,jsonb_build_object('status',case k when 'quick_accepted' then 'presupuestado_aceptado' else 'presupuestado_rechazado' end,
+      'budget_amount',150,'budget_detail','Updated scope','repair_progress','Client responded'),true,'telefono','Explicit client response');
+    perform pg_temp.qcheck((r->>'replayed')::boolean and pg_temp.qhistory(o)=snapshot,'Quick decision retry duplicated history');
+  end loop;
+  o:=pg_temp.qid('quick_accepted'); select workflow_version into v from public.repair_access_orders where id=o;
+  perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_aceptado","repair_progress":"Another note"}',true,'presencial','');
+  perform pg_temp.qcheck((select count(*)=1 from public.repair_customer_decisions where order_id=o),'Ordinary accepted edit duplicated decision');
+  select workflow_version into v from public.repair_access_orders where id=o;
+  perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"en_reparacion"}',false,'','');
+  select workflow_version into v from public.repair_access_orders where id=o;
+  perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_aceptado"}',true,'telefono','');
+  perform pg_temp.qcheck((select status='presupuestado_aceptado' from public.repair_access_orders where id=o),'Could not return to accepted with existing consent');
+  perform pg_temp.qcheck((select count(*)=1 from public.repair_customer_decisions where order_id=o),'Returning to accepted duplicated valid consent');
+  select workflow_version into v from public.repair_access_orders where id=o; snapshot:=pg_temp.qhistory(o);
+  begin
+    perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_rechazado"}',true,'presencial','');
+    raise exception 'Accepted budget rejected without reason';
+  exception when check_violation then null; end;
+  perform pg_temp.qcheck(pg_temp.qhistory(o)=snapshot,'Missing rejection reason changed history');
+  perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_rechazado"}',true,'presencial','Cliente cambio de decision');
+  perform pg_temp.qcheck((select status='presupuestado_rechazado' and approval_status='rejected' and approved_amount is null from public.repair_access_orders where id=o),'Explicit rejection did not revoke prior acceptance');
+  perform pg_temp.qcheck((select count(*)=1 from public.repair_customer_decisions where order_id=o and decision='revoked'),'Prior consent was erased instead of revoked');
+  perform pg_temp.qcheck((select d.created_at>r.created_at from public.repair_customer_decisions d join public.repair_customer_decisions r on r.order_id=d.order_id
+    where d.order_id=o and d.decision='rejected' and r.decision='revoked'),'Atomic rejection does not sort after its revocation in reports');
+  perform pg_temp.qcheck((public.get_workshop_business_report('2099-01-01','2099-01-01')->'totals'->>'rejectedCurrent')::integer=2,'Business report did not count the final rejection');
+  select workflow_version into v from public.repair_access_orders where id=o;
+  perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_aceptado"}',true,'telefono','Cliente acepto nuevamente');
+  perform pg_temp.qcheck((select approval_status='accepted' and approved_amount=150 from public.repair_access_orders where id=o),'Rejected budget could not be accepted again');
+  perform pg_temp.qcheck((public.get_workshop_business_report('2099-01-01','2099-01-01')->'totals'->>'acceptedCurrent')::integer=1,'Business report did not count the new acceptance');
+  select workflow_version into v from public.repair_access_orders where id=o; snapshot:=pg_temp.qhistory(o);
+  begin
+    perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_rechazado"}',false,'','');
+    raise exception 'Status bypassed explicit decision';
+  exception when check_violation then null; end;
+  perform pg_temp.qcheck(pg_temp.qhistory(o)=snapshot,'Status-only rejection bypass changed history');
+  perform pg_temp.qactor('tech');
+  begin
+    perform public.workshop_save_quick(o,v,gen_random_uuid(),'{"status":"presupuestado_rechazado"}',true,'telefono','Forged response');
+    raise exception 'Technical account recorded a customer rejection';
+  exception when insufficient_privilege then null; end;
+  perform pg_temp.qactor('admin');
+  perform pg_temp.qcheck(pg_temp.qhistory(o)=snapshot,'Role bypass changed history');
+  raise notice 'PASS direct budget acceptance/rejection, exact retry, consent reversal and role boundaries';
+end $$;
 
 do $$ declare k text; o uuid; v integer; before_history jsonb; payload jsonb; begin
   foreach k in array array['legacy_ready','missing_quote','persisted_nan','invalid'] loop

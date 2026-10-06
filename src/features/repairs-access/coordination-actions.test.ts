@@ -7,6 +7,26 @@ import { saveWorkshopForm, saveQuickWorkshopForm, claimRepairOrder } from "./coo
 beforeEach(() => { vi.clearAllMocks(); mocks.permission.mockResolvedValue({ id: "tech", role: "tecnico" }); mocks.rpc.mockResolvedValue({ data: {}, error: null }); });
 function form() { const data = new FormData(); data.set("id", "10000000-0000-4000-8000-000000000001"); data.set("status", "en_revision"); data.set("expectedVersion", "3"); return data; }
 describe("guardado breve del taller", () => {
+  it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("registra %s en el mismo guardado atomico", async (status) => {
+    mocks.permission.mockResolvedValue({ id: "admin", role: "admin" });
+    mocks.rpc.mockResolvedValue({ data: { id: "10000000-0000-4000-8000-000000000001", version: 6, status, replayed: false }, error: null });
+    const data = form(); data.set("status", status); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    data.set("repairAmount", "100"); data.set("decisionChannel", "telefono"); data.set("decisionNotes", "Respuesta del cliente");
+    const result = await saveQuickWorkshopForm(null, data);
+    expect(result.success).toBe(true);
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_save_quick", expect.objectContaining({
+      p_confirm_customer: true, p_channel: "telefono", p_decision_notes: "Respuesta del cliente",
+      p_payload: expect.objectContaining({ status, budget_amount: 100 })
+    }));
+    expect(result.message).toContain(status.endsWith("aceptado") ? "aceptado" : "rechazado");
+  });
+  it("no registra rechazo de un presupuesto vacio como si fuera sin cargo", async () => {
+    mocks.permission.mockResolvedValue({ id: "admin", role: "admin" });
+    const data = form(); data.set("status", "presupuestado_rechazado"); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    data.set("repairAmount", ""); data.set("decisionChannel", "presencial");
+    expect((await saveQuickWorkshopForm(null, data)).success).toBe(false);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   it("indica el control del editor simple cuando falta la confirmacion", async () => {
     mocks.permission.mockResolvedValue({ id: "admin", role: "admin" });
     mocks.rpc.mockResolvedValue({ error: { code: "23514", message: "Registra una autorizacion vigente del cliente antes de marcar listo para retirar." } });
