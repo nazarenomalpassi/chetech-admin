@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createPaginationMeta } from "@/lib/pagination";
 const actions = vi.hoisted(() => ({ save: vi.fn(), remove: vi.fn(), add: vi.fn(), reverse: vi.fn() }));
@@ -29,14 +29,15 @@ describe("REP collection screen opening", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it("prepares a native quote with empty payments and writes nothing when the screen opens", () => {
+  it("shows an empty payment method immediately without assuming the quote was collected", () => {
     const { container } = render(<RepairsList {...props} collectionTarget={{ order: native, repair: null, error: null }} />);
     const form = new FormData(container.querySelector("form")!);
     expect(form.get("id")).toBe("");
     expect(form.get("repairAccessOrderId")).toBe(native.id);
     expect(form.get("amount")).toBe("80000");
     expect(form.get("entryDate")).toBe("2026-09-01");
-    expect(JSON.parse(String(form.get("paymentsJson")))).toEqual([]);
+    expect(JSON.parse(String(form.get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 0 }]);
+    expect(screen.getByRole("combobox", { name: "Medio 1" })).toBeTruthy();
     expectNoMoneyWritten();
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -47,6 +48,30 @@ describe("REP collection screen opening", () => {
     fireEvent.change(container.querySelector<HTMLInputElement>('input[name="accessOrderNumber"]')!, { target: { value: "REP-000123" } });
     fireEvent.click(screen.getByRole("button", { name: "Cargar orden" }));
     await waitFor(() => expect(new FormData(container.querySelector("form")!).get("id")).toBe(repair.id));
+    expectNoMoneyWritten();
+  });
+
+  it("loading a quote keeps a visible account and blank amount until the user enters received money", async () => {
+    vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ order: native }), { status: 200 }));
+    const { container } = render(<RepairsList {...props} />);
+    fireEvent.change(container.querySelector<HTMLInputElement>('input[name="accessOrderNumber"]')!, { target: { value: "123" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cargar orden" }));
+    await waitFor(() => expect(new FormData(container.querySelector("form")!).get("repairAccessOrderId")).toBe(native.id));
+    expect(JSON.parse(String(new FormData(container.querySelector("form")!).get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 0 }]);
+    fireEvent.change(screen.getByRole("combobox", { name: "Medio 1" }), { target: { value: "mp" } });
+    fireEvent.change(container.querySelector<HTMLInputElement>("#payment-amount-0")!, { target: { value: "30000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Agregar medio" }));
+    expect(JSON.parse(String(new FormData(container.querySelector("form")!).get("paymentsJson")))).toEqual([{ method: "mp", amount: 30000 }, { method: "efectivo", amount: 50000 }]);
+    expectNoMoneyWritten();
+  });
+
+  it("routes a paid row to individual payment removal instead of deleting the whole financial record", () => {
+    render(<RepairsList {...props} repairs={[repair]} />);
+    expect(screen.queryAllByRole("button", { name: "Eliminar" })).toHaveLength(0);
+    fireEvent.click(screen.getAllByRole("button", { name: "Eliminar pago" })[0]);
+    expect(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).getByRole("button", { name: "Eliminar pago", exact: true }));
+    expect(screen.getByRole("textbox", { name: "Motivo para eliminar el pago" })).toBeTruthy();
     expectNoMoneyWritten();
   });
 });

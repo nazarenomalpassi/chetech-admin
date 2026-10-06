@@ -27,14 +27,14 @@ const repairSchema = z.object({
   payments: z.array(paymentSchema).max(20)
 });
 
-function redirectWithError(message: string, id?: string): never {
+function redirectWithError(message: string, id?: FormDataEntryValue | null): never {
   const params = new URLSearchParams({ error: message });
-  if (id) params.set("edit", id);
+  if (typeof id === "string" && z.string().uuid().safeParse(id).success) params.set("edit", id);
   redirect(`/reparaciones?${params.toString()}`);
 }
 
 function refreshRepairs() {
-  for (const path of ["/reparaciones", "/reparaciones-access", "/dashboard", "/caja", "/facturacion"]) revalidatePath(path);
+  for (const path of ["/reparaciones", "/reparaciones-access", "/dashboard", "/caja", "/facturacion", "/reportes", "/sueldos"]) revalidatePath(path);
 }
 
 export async function saveRepairAction(formData: FormData) {
@@ -50,38 +50,42 @@ export async function saveRepairAction(formData: FormData) {
     entryDate: String(formData.get("entryDate") ?? "").slice(0, 10), ...timing,
     amount: formData.get("amount"), payments: parsePaymentSplits(formData.get("paymentsJson")).filter((payment) => Number(payment.amount) !== 0)
   });
-  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa la reparacion.");
+  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa la reparacion.", formData.get("id"));
   if (!parsed.data.id) {
     const message = getRepairValidationError(parsed.data);
     if (message) redirectWithError(message);
   }
   const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).rpc("save_repair_financial_atomic", { p_input: parsed.data });
+  const { data, error } = await (supabase as any).rpc("save_repair_financial_atomic", { p_input: parsed.data });
   if (error) redirectWithError(error.message, parsed.data.id);
   refreshRepairs();
-  redirect(`/reparaciones?status=${parsed.data.id ? "repair_updated" : "repair_created"}`);
+  const params = new URLSearchParams({ status: parsed.data.id ? "repair_updated" : "repair_created" });
+  const savedId = z.string().uuid().safeParse(data?.id);
+  if (savedId.success) params.set("edit", savedId.data);
+  else if (parsed.data.id) params.set("edit", parsed.data.id);
+  redirect(`/reparaciones?${params.toString()}`);
 }
 
 export async function addRepairPaymentAction(formData: FormData) {
   await requireAdmin();
-  const parsed = z.object({ repairId: z.string().uuid(), requestId: z.string().uuid(), paymentDate: dateSchema, paymentTimestamp: z.string().datetime({ offset: true }).optional(), payments: z.array(paymentSchema).min(1).max(20) }).safeParse({
+  const parsed = z.object({ repairId: z.string().uuid(), requestId: z.string().uuid(), paymentDate: dateSchema, paymentTimestamp: z.string().datetime({ offset: true }).optional(), payments: z.array(paymentSchema).min(1, "Ingresa el importe recibido y elegi su medio de pago.").max(20) }).safeParse({
     repairId: formData.get("repairId"), requestId: formData.get("requestId"), ...readRepairPaymentTiming(formData.get("paymentDate"), formData.get("paymentTimestamp")), payments: parsePaymentSplits(formData.get("paymentsJson")).filter((payment) => Number(payment.amount) !== 0)
   });
-  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa el cobro.");
+  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa el cobro.", formData.get("repairId"));
   const supabase = await createServerSupabaseClient();
   const { error } = await (supabase as any).rpc("add_repair_payment_atomic", { p_input: parsed.data });
   if (error) redirectWithError(error.message, parsed.data.repairId);
-  refreshRepairs(); redirect("/reparaciones?status=repair_updated");
+  refreshRepairs(); redirect(`/reparaciones?status=repair_payment_added&edit=${parsed.data.repairId}`);
 }
 
 export async function reverseRepairPaymentAction(formData: FormData) {
   await requireAdmin();
   const parsed = z.object({ repairId: z.string().uuid(), paymentId: z.string().uuid(), reason: z.string().trim().min(3, "Indica el motivo de la reversa.").max(1000) }).safeParse({ repairId: formData.get("repairId"), paymentId: formData.get("paymentId"), reason: formData.get("reason") });
-  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa la reversa.");
+  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa la reversa.", formData.get("repairId"));
   const supabase = await createServerSupabaseClient();
   const { error } = await (supabase as any).rpc("reverse_repair_payment_atomic", { p_repair_id: parsed.data.repairId, p_payment_id: parsed.data.paymentId, p_reason: parsed.data.reason });
   if (error) redirectWithError(error.message, parsed.data.repairId);
-  refreshRepairs(); redirect("/reparaciones?status=repair_updated");
+  refreshRepairs(); redirect(`/reparaciones?status=repair_payment_reversed&edit=${parsed.data.repairId}`);
 }
 
 export async function deleteRepairAction(formData: FormData) {

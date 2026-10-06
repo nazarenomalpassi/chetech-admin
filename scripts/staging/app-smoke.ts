@@ -37,7 +37,7 @@ async function main() {
     orderId = result.rows[0].id;
   } finally { await db.end(); }
   const admin = await session(IDENTITIES[0].email), technician = await session(IDENTITIES[1].email);
-  for (const path of ["/dashboard", "/productos", "/ventas", "/gastos", "/sueldos", "/visitas", "/terciarizaciones", "/reportes", "/facturacion", "/configuracion", "/reparaciones-access?view=ordenes"]) {
+  for (const path of ["/dashboard", "/productos", "/ventas", "/gastos", "/sueldos", "/visitas", "/terciarizaciones", "/reportes", "/facturacion", "/configuracion", "/reparaciones", "/reparaciones-access?view=ordenes"]) {
     const response = await read(path, admin);
     assert.equal(response.status, 200, `Admin ${path}`);
     const body = await response.text();
