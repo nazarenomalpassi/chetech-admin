@@ -45,6 +45,23 @@ begin
 end;
 $$;
 
+-- Preserve ambiguous imported records until the owner explicitly reconciles them.
+create or replace function public.financial_assert_unambiguous_repair(p_repair_id uuid,p_order_id uuid default null)
+returns void language plpgsql security invoker set search_path='' as $$
+declare v_order uuid:=p_order_id;
+begin
+  perform public.financial_assert_admin();
+  if v_order is null and p_repair_id is not null then
+    select repair_access_order_id into v_order from public.repairs where id=p_repair_id;
+  end if;
+  if v_order is null then return; end if;
+  perform 1 from public.repair_access_orders where id=v_order for update;
+  if (select count(*) from public.repairs where repair_access_order_id=v_order)>1 then
+    raise exception 'La orden tiene varios registros financieros. Conserva el historial y solicita una conciliacion antes de modificar cobros o comprobantes.' using errcode='22023';
+  end if;
+end;
+$$;
+
 -- The audit event is also the durable idempotency receipt, including after reversal.
 create or replace function public.financial_operation_replay(p_request_id uuid, p_input jsonb, p_operation text)
 returns jsonb language plpgsql security invoker set search_path = '' as $$
@@ -177,6 +194,7 @@ begin
     perform 1 from public.repair_access_orders where id=v_primary for update;
     if not found then raise exception 'No se encontro la REP principal vinculada.' using errcode='P0002'; end if;
   end if;
+  perform public.financial_assert_unambiguous_repair(v_repair,v_primary);
   if (nullif(btrim(p_input->>'fiscalProvider'),'') is null) <> (nullif(btrim(p_input->>'fiscalReference'),'') is null) then
     raise exception 'Indica proveedor y referencia fiscal externa juntos.' using errcode='22023';
   end if;
@@ -192,6 +210,7 @@ begin
     v_action := 'update';
     select * into v_previous from public.invoices where id=v_id for update;
     if not found then raise exception 'No se encontro el comprobante.' using errcode='P0002'; end if;
+    perform public.financial_assert_unambiguous_repair(v_previous.repair_id,v_previous.repair_access_order_id);
     if v_previous.status='anulado' or v_previous.fiscal_reference is not null or v_previous.fiscal_locked_at is not null then
       raise exception 'Comprobante anulado o bloqueado por emision fiscal; no se puede editar.' using errcode='22023';
     end if;
@@ -245,6 +264,7 @@ returns void language plpgsql security invoker set search_path = '' as $$
 declare v_access uuid; v_paid numeric; v_price numeric; v_paid_at timestamptz; v_method text; v_notes text;
 begin
   perform public.financial_assert_admin();
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   select repair_access_order_id into v_access from public.repairs where id=p_repair_id;
   if v_access is not null then
     select coalesce(case when final_amount>0 then final_amount end,case when approved_amount>0 then approved_amount end,case when budget_amount>0 then budget_amount end,0)
@@ -301,6 +321,7 @@ create or replace function public.ensure_repair_cash_baseline(p_repair_id uuid)
 returns jsonb language plpgsql security invoker set search_path = '' as $$
 declare v_user uuid := public.financial_assert_admin(); v_receipt public.audit_logs; v_changes jsonb;
 begin
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   perform 1 from public.repairs where id=p_repair_id for update;
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
   select * into v_receipt from public.audit_logs where entity_type='repair_cash_projection' and entity_id=p_repair_id::text and changes->>'kind'='baseline';
@@ -410,6 +431,7 @@ begin
     v_action := 'update';
     select * into v_previous from public.repairs where id=v_id for update;
     if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
+    perform public.financial_assert_unambiguous_repair(v_id);
     if (p_input->>'expectedVersion')::integer is distinct from v_previous.financial_version then raise exception 'La reparacion cambio. Recarga antes de guardar.' using errcode='40001'; end if;
     if v_previous.repair_access_order_id is distinct from v_access then raise exception 'No se puede reasignar una orden financiera. Revisa el vinculo original.' using errcode='22023'; end if;
     if v_access is not null then perform 1 from public.repair_access_orders where id=v_access for update; end if;
@@ -460,6 +482,7 @@ begin
   if v_replay is not null then return v_replay; end if;
   select * into v_repair from public.repairs where id=v_id for update;
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
+  perform public.financial_assert_unambiguous_repair(v_id);
   if v_repair.repair_access_order_id is not null then perform 1 from public.repair_access_orders where id=v_repair.repair_access_order_id for update; end if;
   if jsonb_typeof(p_input->'payments') is distinct from 'array' then raise exception 'Revisa los pagos.' using errcode='22023'; end if;
   if jsonb_array_length(p_input->'payments') not between 1 and 20 or nullif(p_input->>'paymentDate','') is null then raise exception 'Agrega un pago y su fecha.' using errcode='22023'; end if;
@@ -488,6 +511,7 @@ declare v_user uuid := public.financial_assert_admin(); v_payment public.repair_
 begin
   if length(btrim(coalesce(p_reason,'')))<3 then raise exception 'Indica el motivo de la reversa.' using errcode='22023'; end if;
   perform 1 from public.repairs where id=p_repair_id for update;
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
   select * into v_payment from public.repair_payments where id=p_payment_id and repair_id=p_repair_id for update;
   if not found then
@@ -509,6 +533,7 @@ returns jsonb language plpgsql security invoker set search_path = '' as $$
 declare v_user uuid := public.financial_assert_admin(); v_repair public.repairs; v_payments jsonb;
 begin
   select * into v_repair from public.repairs where id=p_repair_id for update;
+  perform public.financial_assert_unambiguous_repair(p_repair_id);
   if not found then raise exception 'No se encontro la reparacion.' using errcode='P0002'; end if;
   if exists(select 1 from public.invoices where repair_id=p_repair_id or repair_access_order_id=v_repair.repair_access_order_id) then raise exception 'Conserva el registro vinculado a comprobantes. Revierte pagos individuales con motivo.' using errcode='22023'; end if;
   if exists(select 1 from public.repair_payments where repair_id=p_repair_id) then
@@ -654,7 +679,7 @@ do $$
 declare f record;
 begin
   for f in select p.oid::regprocedure as signature from pg_catalog.pg_proc p join pg_catalog.pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='public' and p.proname in ('financial_assert_admin','financial_operation_replay','invoice_actual_payments','repair_actual_paid_total','get_invoice_settlements','get_invoice_document','save_invoice_atomic','void_invoice_atomic','sync_repair_financial_projection','rebuild_repair_cash_projection','repair_cash_method','repair_payment_posting_time','ensure_repair_cash_baseline','append_repair_cash_correction','save_repair_financial_atomic','add_repair_payment_atomic','reverse_repair_payment_atomic','delete_repair_financial_atomic','mutate_installment_atomic','pay_installment_atomic','cancel_installment_sale_atomic','save_installment_sale_atomic','guard_referenced_invoice_content','guard_referenced_invoice_items')
+    where n.nspname='public' and p.proname in ('financial_assert_admin','financial_assert_unambiguous_repair','financial_operation_replay','invoice_actual_payments','repair_actual_paid_total','get_invoice_settlements','get_invoice_document','save_invoice_atomic','void_invoice_atomic','sync_repair_financial_projection','rebuild_repair_cash_projection','repair_cash_method','repair_payment_posting_time','ensure_repair_cash_baseline','append_repair_cash_correction','save_repair_financial_atomic','add_repair_payment_atomic','reverse_repair_payment_atomic','delete_repair_financial_atomic','mutate_installment_atomic','pay_installment_atomic','cancel_installment_sale_atomic','save_installment_sale_atomic','guard_referenced_invoice_content','guard_referenced_invoice_items')
   loop
     execute format('revoke all on function %s from public, anon',f.signature);
     execute format('grant execute on function %s to authenticated, service_role',f.signature);

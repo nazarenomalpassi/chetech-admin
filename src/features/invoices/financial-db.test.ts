@@ -42,6 +42,37 @@ suite("financial RPCs on disposable PostgreSQL", () => {
     sql(readFileSync("supabase/migrations/20261005194817_financial_atomic_documents_payments.sql", "utf8"));
   }, 30000);
 
+  it("quarantines ambiguous legacy REP mutations on the server without changing their history", () => {
+    expect(asAdmin(`begin;
+      do $$ declare o uuid:=gen_random_uuid(); a uuid; b uuid; p uuid; before_state jsonb; after_state jsonb; command text;
+      begin
+        insert into public.repair_access_orders(id,status,final_amount,is_paid) values(o,'retirado',100,true);
+        insert into public.repairs(customer_name,device,issue_description,final_price,repair_access_order_id) values('Historico A','TV','Falla',100,o) returning id into a;
+        insert into public.repairs(customer_name,device,issue_description,final_price,repair_access_order_id) values('Historico B','TV','Falla',300,o) returning id into b;
+        insert into public.repair_payments(repair_id,method,amount) values(a,'nx',100) returning id into p;
+        insert into public.repair_payments(repair_id,method,amount) values(b,'mp',300);
+        select jsonb_build_object('repairs',(select jsonb_agg(to_jsonb(r) order by id) from public.repairs r),'payments',(select jsonb_agg(to_jsonb(r) order by id) from public.repair_payments r),'cash',(select jsonb_agg(to_jsonb(r) order by id) from public.movimientos_caja r),'audit',(select jsonb_agg(to_jsonb(r) order by id) from public.audit_logs r),'orders',(select jsonb_agg(to_jsonb(r) order by id) from public.repair_access_orders r)) into before_state;
+        foreach command in array array[
+          format('select public.add_repair_payment_atomic(%L::jsonb)',jsonb_build_object('requestId',gen_random_uuid(),'repairId',a,'paymentDate','2026-10-06','payments',jsonb_build_array(jsonb_build_object('method','nx','amount',1)))::text),
+          format('select public.save_repair_financial_atomic(%L::jsonb)',jsonb_build_object('requestId',gen_random_uuid(),'id',a,'expectedVersion',1,'repairAccessOrderId',o,'customerName','Historico A','device','TV','amount',100,'entryDate','2026-10-06')::text),
+          format('select public.reverse_repair_payment_atomic(%L::uuid,%L::uuid,%L)',a,p,'Error de carga'),
+          format('select public.delete_repair_financial_atomic(%L::uuid)',a),
+          format('select public.sync_repair_financial_projection(%L::uuid)',a),
+          format('select public.ensure_repair_cash_baseline(%L::uuid)',a),
+          format('select public.rebuild_repair_cash_projection(%L::uuid)',a),
+          format('select public.append_repair_cash_correction(%L::uuid,%L::uuid,%L)',a,p,'Error de carga')
+        ] loop
+          begin execute command; raise exception 'Ambiguous mutation was allowed';
+          exception when sqlstate '22023' then
+            if position('varios registros financieros' in sqlerrm)=0 then raise; end if;
+          end;
+        end loop;
+        select jsonb_build_object('repairs',(select jsonb_agg(to_jsonb(r) order by id) from public.repairs r),'payments',(select jsonb_agg(to_jsonb(r) order by id) from public.repair_payments r),'cash',(select jsonb_agg(to_jsonb(r) order by id) from public.movimientos_caja r),'audit',(select jsonb_agg(to_jsonb(r) order by id) from public.audit_logs r),'orders',(select jsonb_agg(to_jsonb(r) order by id) from public.repair_access_orders r)) into after_state;
+        if before_state is distinct from after_state then raise exception 'Historical data changed'; end if;
+      end $$;
+      select 'ambiguous history preserved'; rollback;`)).toContain("ambiguous history preserved");
+  });
+
   it("stores partial settlement, retries once and rolls back an invalid detail", () => {
     const repair = asAdmin(`insert into public.repairs(customer_name,device,issue_description,final_price) values ('Cliente','TV','Falla',100) returning id;`);
     asAdmin(`insert into public.repair_payments(repair_id,method,amount) values ('${repair}','nx',30);`);
