@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BadgeDollarSign, CalendarRange, Search, ShieldCheck } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
@@ -113,7 +113,15 @@ export function RepairsList({
   const [paymentDate, setPaymentDate] = useState(today);
   const [requestId, setRequestId] = useState("");
   const [amount, setAmount] = useState(initialRepair ? String(initialRepair.finalPrice || initialRepair.estimatedPrice || 0) : initialOrder ? String(initialOrder.amount) : "");
-  const [payments, setPayments] = useState<PaymentSplit[]>([]);
+  const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "efectivo", amount: 0 }]);
+  const ledgerRef = useRef<HTMLDivElement>(null);
+  const [focusLedger, setFocusLedger] = useState(false);
+  useEffect(() => {
+    if (!focusLedger || !editing) return;
+    ledgerRef.current?.scrollIntoView?.({ block: "start" });
+    ledgerRef.current?.focus({ preventScroll: true });
+    setFocusLedger(false);
+  }, [focusLedger, editing]);
   useEffect(() => { setRequestId(crypto.randomUUID()); }, [formValues, entryDate, paymentDate, amount, payments]);
   const totalRepairs = repairs.length;
   const revenue = repairs.reduce((acc, repair) => acc + repair.paidTotal, 0);
@@ -133,14 +141,15 @@ export function RepairsList({
     setFormValues((current) => ({ ...current, [field]: value }));
   }
 
-  function startEdit(repair: Repair) {
+  function startEdit(repair: Repair, showPayments = false) {
     setRequestId(crypto.randomUUID());
     setEditing(repair);
     setLookupStatus({ loading: false, message: "", success: false });
     setFormValues(fieldsFromRepair(repair));
     setEntryDate(repair.entryDate);
     setAmount(String(repair.finalPrice || repair.estimatedPrice || 0));
-    setPayments([]);
+    setPayments([{ method: "efectivo", amount: 0 }]);
+    setFocusLedger(showPayments);
   }
 
   function resetForm() {
@@ -151,7 +160,7 @@ export function RepairsList({
     setEntryDate(today);
     setPaymentDate(today);
     setAmount("");
-    setPayments([]);
+    setPayments([{ method: "efectivo", amount: 0 }]);
   }
 
   async function loadAccessOrder() {
@@ -187,7 +196,7 @@ export function RepairsList({
       setFormValues(fieldsFromOrder(order));
       setEntryDate(order.intakeDate || today);
       setAmount(String(order.amount));
-      setPayments([]);
+      setPayments([{ method: "efectivo", amount: 0 }]);
       setLookupStatus({
         loading: false,
         message: `Orden ${order.repairNumber} cargada. El cobro actualiza caja, no entrega el equipo ni inicia garantia. Si ya existe un registro financiero, agrega alli la sena o saldo.`,
@@ -352,7 +361,7 @@ export function RepairsList({
             {editing ? <p className="rounded-3xl bg-brand-50 p-5 text-sm">Esta edicion actualiza datos y precio, no reemplaza pagos anteriores. Usa el registro de señas y saldo debajo para agregar o revertir un cobro.</p> : <div className="space-y-3">
               <label className="block text-sm">Fecha de cobro<Input className="mt-2" name="paymentDate" onChange={(event) => setPaymentDate(event.target.value)} type="date" value={paymentDate} /></label>
               <p className="text-sm text-slate-500">El precio puede quedar pendiente o cobrarse parcialmente. Registra solo el dinero recibido.</p>
-              <PaymentSplitFields onChange={setPayments} payments={payments} title="Seña o cobro inicial" totalAmount={amountValue} />
+              <PaymentSplitFields onChange={setPayments} payments={payments} title="Seña o cobro inicial" totalAmount={amountValue} syncAmountWithTotal={false} />
             </div>}
             <div className="flex items-end gap-2">
               <FormSubmitButton
@@ -370,7 +379,9 @@ export function RepairsList({
           </div>
         </form>
       </Card>
-      {currentLedger ? <RepairPaymentsPanel key={`${currentLedger.id}:${currentLedger.financialVersion}`} repair={currentLedger} canReverse={canDelete} /> : null}
+      {currentLedger ? <div ref={ledgerRef} tabIndex={-1} className="scroll-mt-4 rounded-[28px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+        <RepairPaymentsPanel key={`${currentLedger.id}:${currentLedger.financialVersion}`} repair={currentLedger} canReverse={canDelete} />
+      </div> : null}
 
       <div className="table-shell">
         <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
@@ -421,10 +432,10 @@ export function RepairsList({
               ) : null}
 
               <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <Button className="w-full" onClick={() => startEdit(repair)} type="button" variant="secondary">
-                  Editar
+                <Button className="w-full" onClick={() => startEdit(repair, true)} type="button" variant="secondary">
+                  Gestionar cobros
                 </Button>
-                {canDelete ? (
+                {canDelete && repair.paidTotal > 0 ? <Button className="w-full" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : canDelete ? (
                   <form
                     action={deleteRepairAction}
                     onSubmit={(event) => {
@@ -474,10 +485,10 @@ export function RepairsList({
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex justify-end gap-2">
-                      <Button onClick={() => startEdit(repair)} size="sm" type="button" variant="secondary">
-                        Editar
+                      <Button onClick={() => startEdit(repair, true)} size="sm" type="button" variant="secondary">
+                        Gestionar cobros
                       </Button>
-                      {canDelete ? (
+                      {canDelete && repair.paidTotal > 0 ? <Button size="sm" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : canDelete ? (
                         <form
                           action={deleteRepairAction}
                           onSubmit={(event) => {

@@ -31,6 +31,8 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     repair_created: { success: true, message: "Reparacion guardada correctamente." },
     repair_updated: { success: true, message: "Reparacion actualizada correctamente." },
     repair_deleted: { success: true, message: "Reparacion eliminada correctamente." },
+    repair_payment_added: { success: true, message: "Cobro registrado. El saldo y la caja estan actualizados." },
+    repair_payment_reversed: { success: true, message: "Pago eliminado con motivo. Se corrigio caja y se conservo el historial original." },
     visit_created: { success: true, message: "Visita guardada correctamente." },
     visit_updated: { success: true, message: "Visita actualizada correctamente." },
     visit_deleted: { success: true, message: "Visita eliminada correctamente." },

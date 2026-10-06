@@ -7,11 +7,11 @@ import { parsePage } from "@/lib/pagination";
 export default async function ReparacionesPage({
   searchParams
 }: {
-  searchParams: Promise<{ status?: string; error?: string; page?: string; rep?: string }>;
+  searchParams: Promise<{ status?: string; error?: string; page?: string; rep?: string; edit?: string }>;
 }) {
   const params = await searchParams;
   const profile = await requirePermission("repairs.manage");
-  const repairsResult = await getRepairs(parsePage(params.page), params.rep);
+  const repairsResult = await getRepairs(parsePage(params.page), params.rep, params.edit);
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

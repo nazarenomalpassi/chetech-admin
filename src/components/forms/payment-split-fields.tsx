@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
-import type { PaymentSplit } from "@/lib/payment-splits";
+import { getPaymentTotal, roundPaymentAmount, type PaymentSplit } from "@/lib/payment-splits";
 import { formatCurrency } from "@/lib/utils";
 
 type PaymentSplitFieldsProps = {
   payments: PaymentSplit[];
   title?: string;
   totalAmount: number;
+  syncAmountWithTotal?: boolean;
   onChange: (payments: PaymentSplit[]) => void;
 };
 
@@ -26,6 +27,7 @@ export function PaymentSplitFields({
   payments,
   title = "Medios de pago",
   totalAmount,
+  syncAmountWithTotal = true,
   onChange
 }: PaymentSplitFieldsProps) {
   const previousTotalRef = useRef(totalAmount);
@@ -34,7 +36,7 @@ export function PaymentSplitFields({
     const previousTotal = previousTotalRef.current;
     previousTotalRef.current = totalAmount;
 
-    if (payments.length !== 1) return;
+    if (!syncAmountWithTotal || payments.length !== 1) return;
     if (Math.abs(previousTotal - totalAmount) < 0.01) return;
 
     const currentAmount = Number(payments[0]?.amount ?? 0);
@@ -43,10 +45,10 @@ export function PaymentSplitFields({
     if (!shouldSyncAmount) return;
 
     onChange([{ ...payments[0], amount: Math.max(totalAmount, 0) }]);
-  }, [onChange, payments, totalAmount]);
+  }, [onChange, payments, totalAmount, syncAmountWithTotal]);
 
-  const assignedTotal = payments.reduce((acc, payment) => acc + Number(payment.amount || 0), 0);
-  const difference = totalAmount > 0 ? totalAmount - assignedTotal : 0;
+  const assignedTotal = getPaymentTotal(payments);
+  const difference = totalAmount > 0 ? roundPaymentAmount(totalAmount - assignedTotal) : 0;
 
   function updatePayment(index: number, field: keyof PaymentSplit, value: string | number) {
     onChange(
@@ -62,13 +64,13 @@ export function PaymentSplitFields({
   }
 
   function addPaymentRow() {
-    const remaining = Math.max(totalAmount - assignedTotal, 0);
+    const remaining = Math.max(roundPaymentAmount(totalAmount - assignedTotal), 0);
     onChange([...payments, { ...EMPTY_PAYMENT, amount: remaining }]);
   }
 
   function removePaymentRow(index: number) {
     if (payments.length === 1) {
-      onChange([{ ...payments[0], amount: totalAmount }]);
+      onChange([{ ...payments[0], amount: syncAmountWithTotal ? totalAmount : 0 }]);
       return;
     }
 

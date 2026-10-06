@@ -3,6 +3,7 @@ import { applyStableCreationOrder } from "@/lib/chronology";
 import { createPaginationMeta, DEFAULT_PAGE_SIZE, getPaginationRange } from "@/lib/pagination";
 import { mapRepairsHistoryRows } from "@/features/repairs/history-mapper";
 import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper";
+import { z } from "zod";
 
 const financialRepairColumns = "id, repair_access_order_id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, financial_version, status, observations, entry_date, created_at, updated_at, repair_access_orders(repair_number, repair_access_payments(id, method, amount, payment_date, created_at, legacy_repair_payment_id, voided_at)), repair_payments(id, method, amount, payment_date, created_at)";
 export type RepairCollectionOrder = {
@@ -46,7 +47,16 @@ async function getRepairCollectionTarget(repairNumber: string, supabase: any): P
   } catch (error) { return { order: null, repair: null, error: error instanceof Error ? error.message : "Revisa el registro financiero vinculado." }; }
 }
 
-export async function getRepairs(page = 1, repairNumber?: string) {
+async function getRepairEditTarget(id: string, items: ReturnType<typeof mapRepairsHistoryRows>, supabase: any): Promise<RepairCollectionTarget> {
+  if (!z.string().uuid().safeParse(id).success) return { order: null, repair: null, error: "El enlace necesita un registro de pago valido." };
+  const visible = items.find((repair) => repair.id === id);
+  if (visible) return { order: null, repair: visible, error: null };
+  const result = await supabase.from("repairs").select(financialRepairColumns).eq("id", id).maybeSingle();
+  if (result.error || !result.data) return { order: null, repair: null, error: "No se pudo recuperar el registro de pago. Revisa el enlace antes de cobrar." };
+  return { order: null, repair: mapRepairsHistoryRows([result.data])[0], error: null };
+}
+
+export async function getRepairs(page = 1, repairNumber?: string, editId?: string) {
   const supabase = await createServerSupabaseClient();
   const { from, to } = getPaginationRange(page);
 
@@ -91,7 +101,7 @@ export async function getRepairs(page = 1, repairNumber?: string) {
 
   return {
     items,
-    collectionTarget: repairNumber === undefined ? null : await getRepairCollectionTarget(repairNumber, supabase),
+    collectionTarget: editId !== undefined ? await getRepairEditTarget(editId, items, supabase) : repairNumber === undefined ? null : await getRepairCollectionTarget(repairNumber, supabase),
     pagination: createPaginationMeta(count ?? items.length, page, DEFAULT_PAGE_SIZE)
   };
 }

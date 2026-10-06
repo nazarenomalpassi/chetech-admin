@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPaginationMeta, DEFAULT_PAGE_SIZE, getPaginationRange } from "@/lib/pagination";
-const mock = vi.hoisted(() => ({ from: vi.fn(), history: vi.fn(), native: vi.fn(), linked: vi.fn(), eq: vi.fn(), limit: vi.fn(), rpc: vi.fn() }));
+const mock = vi.hoisted(() => ({ from: vi.fn(), history: vi.fn(), native: vi.fn(), selected: vi.fn(), linked: vi.fn(), eq: vi.fn(), limit: vi.fn(), rpc: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mock.from, rpc: mock.rpc }) }));
 import { getRepairs } from "./queries";
 
@@ -12,9 +12,10 @@ describe("bounded REP collection navigation", () => {
     vi.resetAllMocks();
     mock.history.mockResolvedValue({ data: [row("history-record")], count: 151, error: null });
     mock.native.mockResolvedValue({ data: native, error: null });
+    mock.selected.mockResolvedValue({ data: row("00000000-0000-4000-8000-000000000555"), error: null });
     mock.linked.mockResolvedValue({ data: [{ ...row("outside-page"), repair_access_order_id: native.id, repair_access_orders: { repair_number: native.repair_number } }], error: null });
     mock.from.mockImplementation((table: string) => {
-      const query: any = { select: () => query, order: () => query, range: mock.history, maybeSingle: mock.native };
+      const query: any = { select: () => query, order: () => query, range: mock.history, maybeSingle: table === "repairs" ? mock.selected : mock.native };
       query.eq = (column: string, value: unknown) => { mock.eq(table, column, value); return query; };
       query.limit = (count: number) => { mock.limit(table, count); return mock.linked(); };
       return query;
@@ -50,6 +51,20 @@ describe("bounded REP collection navigation", () => {
     mock.eq.mockClear();
     const invalid = await getRepairs(1, "%bad*query");
     expect(invalid.collectionTarget?.error).toMatch(/numero|enlace/i);
+    expect(mock.eq).not.toHaveBeenCalled();
+  });
+
+  it("restores an exact financial record after a payment redirect even outside the history page", async () => {
+    const id = "00000000-0000-4000-8000-000000000555";
+    const data = await getRepairs(3, undefined, id);
+    expect(mock.eq).toHaveBeenCalledWith("repairs", "id", id);
+    expect(data.collectionTarget?.repair).toMatchObject({ id, paidTotal: 30000, balance: 50000 });
+    expect(mock.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid edit IDs without querying a record or silently preparing a duplicate", async () => {
+    const data = await getRepairs(1, undefined, "not-a-uuid");
+    expect(data.collectionTarget?.error).toMatch(/registro|enlace/i);
     expect(mock.eq).not.toHaveBeenCalled();
   });
 });
