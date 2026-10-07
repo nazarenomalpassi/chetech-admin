@@ -14,10 +14,78 @@ afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); });
 
 const order = {
   id: "10000000-0000-4000-8000-000000000001", status: "presupuestado", budgetAmount: 100, budgetDetail: "Fuente", repairProgress: "", isPaid: false,
+  customer: { fullName: "Cliente de prueba" },
   workflow: { version: 1, budgetRevision: 0, approvalStatus: "legacy", approvedAmount: null, qualityCheckedAt: null, qualityNotes: "", parts: [], events: [] }
 } as unknown as RepairAccessOrderRecord;
 
 describe("editor unico de reparaciones", () => {
+  it("registra el retiro desde el selector rapido con confirmacion explicita", async () => {
+    mocks.save.mockResolvedValue({ success: true, message: "Retiro registrado" });
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);
+    const select = screen.getByLabelText("Estado de la orden") as HTMLSelectElement;
+    expect(Array.from(select.options).find((option) => option.value === "retirado")?.textContent).toBe("Retirado por cliente");
+    fireEvent.change(select, { target: { value: "retirado" } });
+    expect(select.value).toBe("retirado");
+    expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).value).toBe("Cliente de prueba");
+    expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).checked).toBe(false);
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    fireEvent.click(screen.getByLabelText("Confirmo que el cliente retiro el equipo"));
+    fireEvent.submit(screen.getByRole("button", { name: "Registrar retiro" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
+    const data = mocks.save.mock.calls[0][1] as FormData;
+    expect(data.get("status")).toBe("retirado");
+    expect(data.get("recipient")).toBe("Cliente de prueba");
+    expect(data.get("confirmDelivery")).toBe("on");
+  });
+  it("no ofrece registrar retiros desde una cuenta tecnica", () => {
+    render(<RepairQuickEditor order={order} canManage={false} />);
+    expect(Array.from((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).options).map((option) => option.value)).not.toContain("retirado");
+  });
+  it("conserva persona, notas y confirmacion al salir y volver a la opcion de retiro", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    fireEvent.change(screen.getByLabelText("Persona que retira"), { target: { value: "Familiar autorizado" } });
+    fireEvent.change(screen.getByLabelText("Accesorios devueltos y observaciones"), { target: { value: "Se devuelve control y cable" } });
+    fireEvent.click(screen.getByLabelText("Confirmo que el cliente retiro el equipo"));
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "listo_para_retirar" } });
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).value).toBe("Familiar autorizado");
+    expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).value).toBe("Se devuelve control y cable");
+    expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).checked).toBe(true);
+  });
+  it("mantiene bloqueada la ficha despues de confirmar retiro hasta que llegue la actualizacion", async () => {
+    mocks.save.mockResolvedValue({ success: true, orderClosed: true, message: "Retiro registrado" });
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    fireEvent.click(screen.getByLabelText("Confirmo que el cliente retiro el equipo"));
+    fireEvent.submit(screen.getByRole("button", { name: "Registrar retiro" }).closest("form")!);
+    await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    expect(screen.getByLabelText("Estado de la orden").matches(":disabled")).toBe(true);
+    expect(screen.getByText("Guardado. Actualizando la ficha...")).toBeTruthy();
+    fireEvent.submit(screen.getByLabelText("Estado de la orden").closest("form")!);
+    expect(mocks.save).toHaveBeenCalledTimes(1);
+  });
+  it("solicita autorizacion y motivo al retirar con saldo pendiente", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar" }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    fireEvent.click(screen.getByLabelText(/Autorizo entrega con saldo pendiente/));
+    expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).required).toBe(true);
+  });
+  it("conserva los cambios tecnicos y pide guardarlos antes de registrar el retiro", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);
+    fireEvent.change(screen.getByLabelText("Avance / trabajo realizado"), { target: { value: "Prueba final completa" } });
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect((screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Guarda primero los cambios de presupuesto o trabajo/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "listo_para_retirar" } });
+    expect((screen.getByLabelText("Avance / trabajo realizado") as HTMLTextAreaElement).value).toBe("Prueba final completa");
+  });
+  it("explica que debe estar lista para entrega sin saltar el flujo actual", () => {
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect((screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByText(/Primero guarda la orden como/)).toBeTruthy();
+  });
   it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("ofrece y guarda %s directamente desde la ficha", async (status) => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
     render(<RepairQuickEditor order={order} canManage />);

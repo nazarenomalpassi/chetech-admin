@@ -59,6 +59,18 @@ export async function saveWorkshopForm(_previous: ActionResult | null, form: For
 
 export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null, form: FormData): Promise<WorkshopSaveResult> {
   const user = await requirePermission("repairs.update");
+  if (form.get("status") === "retirado") {
+    if (user.role !== "admin") return { success: false, message: "El retiro del equipo se registra desde la cuenta de administracion." };
+    if (form.get("confirmDelivery") !== "on") return { success: false, message: "Confirma que el cliente retiro el equipo antes de guardar." };
+    const delivery = z.object({ id: uuid, version, recipient: z.string().trim().min(2, "Indica quien retira."), notes: optionalText(), allowBalance: z.boolean() })
+      .safeParse({ id: form.get("id"), version: form.get("expectedVersion"), recipient: form.get("recipient"), notes: String(form.get("deliveryNotes") ?? ""), allowBalance: form.get("allowBalance") === "on" });
+    if (!delivery.success) return { success: false, message: delivery.error.issues[0].message };
+    const p = delivery.data;
+    if (p.allowBalance && p.notes.trim().length < 3) return { success: false, message: "Indica el motivo de entregar con saldo pendiente en las observaciones." };
+    // Use the existing custody action; a status-only update would skip delivery history.
+    const result = await execute("workshop_deliver", { p_order_id: p.id, p_expected_version: p.version, p_recipient: p.recipient, p_notes: p.notes, p_allow_balance: p.allowBalance }, "Retiro registrado. Se conservaron los cobros y el historial.");
+    return result.success ? { ...result, orderClosed: true } : result;
+  }
   const parsed = repairAccessWorkshopSchema.safeParse({ ...values(form), repairAmount: form.get("repairAmount") || 0 });
   const expectedVersion = version.safeParse(form.get("expectedVersion"));
   const operationId = uuid.safeParse(form.get("operationId"));

@@ -1,7 +1,7 @@
 import type { AppRole } from "@/lib/permissions";
 import type { ActionResult } from "@/lib/form-state";
 
-export type WorkshopSaveResult = ActionResult & { recordVersion?: number };
+export type WorkshopSaveResult = ActionResult & { recordVersion?: number; orderClosed?: boolean };
 
 export function getQuickWorkshopState(order: {
   status: string; budgetAmount: number; budgetDetail: string | null; isPaid: boolean;
