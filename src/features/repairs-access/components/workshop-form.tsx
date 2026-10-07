@@ -66,9 +66,10 @@ export function WorkshopForm({ orderId, orderVersion, children, action = saveWor
       next.confirmCustomer = ""; next.qualityChecked = "";
     }
     if (operation.current) { next.operationId = operation.current.id; next._requestFingerprint = operation.current.fingerprint; }
-    setFields(next); setDirty(true);
+    // Keep inactive conditional fields in the draft; only mounted controls are submitted.
+    setFields((previous) => ({ ...previous, ...next })); setDirty(true);
   }
-  const refreshing = Boolean(result?.success && result.recordVersion && (orderVersion ?? 0) < result.recordVersion);
+  const refreshing = Boolean(result?.success && (result.orderClosed || (result.recordVersion && (orderVersion ?? 0) < result.recordVersion)));
   return <form ref={formRef} data-workshop-form className="grid gap-4 border-t border-graphite/10 p-4" onChange={capture} onInput={capture} onSubmit={(event) => {
     event.preventDefault();
     if (pending || refreshing) return;
@@ -78,7 +79,7 @@ export function WorkshopForm({ orderId, orderVersion, children, action = saveWor
     if (!operation.current || operation.current.fingerprint !== fingerprint) operation.current = { id: crypto.randomUUID(), fingerprint };
     data.set("operationId", operation.current.id);
     const snapshot = Object.fromEntries(Array.from(data.entries()).filter((entry): entry is [string, string] => typeof entry[1] === "string" && !entry[0].startsWith("$")));
-    setFields({ ...snapshot, _requestFingerprint: fingerprint }); setDirty(true);
+    setFields((previous) => ({ ...previous, ...snapshot, _requestFingerprint: fingerprint })); setDirty(true);
     // Manual dispatch avoids React's uncontrolled-form reset on a failed save.
     startTransition(() => submit(data));
   }}>
