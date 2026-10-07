@@ -12,6 +12,31 @@ import {
 
 const dirtyDraftKeys = new Set<string>();
 
+function readDraftStorage(key: string): string | null {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeDraftStorage<T>(key: string, envelope: FormDraftEnvelope<T>): boolean {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(envelope));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function removeDraftStorage(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Draft storage is best effort and must not interrupt form actions or cleanup.
+  }
+}
+
 function syncGlobalDirtyState(key: string, dirty: boolean) {
   if (dirty) dirtyDraftKeys.add(key);
   else dirtyDraftKeys.delete(key);
@@ -51,13 +76,13 @@ export function usePersistentFormDraft<T>({
 
   useEffect(() => {
     if (clearOnMount) {
-      window.localStorage.removeItem(storageKey);
+      removeDraftStorage(storageKey);
       setPendingDraft(null);
       setReady(true);
       return;
     }
 
-    const raw = window.localStorage.getItem(storageKey);
+    const raw = readDraftStorage(storageKey);
     const draft = parseFormDraftEnvelope<T>(raw);
     if (draft && hasMeaningfulDraftValue(draft.data)) {
       setPendingDraft(draft);
@@ -66,7 +91,7 @@ export function usePersistentFormDraft<T>({
       return;
     }
 
-    if (raw) window.localStorage.removeItem(storageKey);
+    if (raw) removeDraftStorage(storageKey);
     setReady(true);
   }, [clearOnMount, storageKey]);
 
@@ -74,15 +99,16 @@ export function usePersistentFormDraft<T>({
     if (!ready || pendingDraft) return;
 
     if (!isDirty) {
-      window.localStorage.removeItem(storageKey);
+      removeDraftStorage(storageKey);
       setLastSavedAt(null);
       return;
     }
 
     const timeoutId = window.setTimeout(() => {
       const envelope = createFormDraftEnvelope(latestValueRef.current);
-      window.localStorage.setItem(storageKey, JSON.stringify(envelope));
-      setLastSavedAt(envelope.updatedAt);
+      if (writeDraftStorage(storageKey, envelope)) {
+        setLastSavedAt(envelope.updatedAt);
+      }
     }, debounceMs);
 
     return () => window.clearTimeout(timeoutId);
@@ -97,7 +123,7 @@ export function usePersistentFormDraft<T>({
     return () => {
       if (!isDirtyRef.current) return;
       const envelope = createFormDraftEnvelope(latestValueRef.current);
-      window.localStorage.setItem(storageKey, JSON.stringify(envelope));
+      writeDraftStorage(storageKey, envelope);
     };
   }, [storageKey]);
 
@@ -166,14 +192,14 @@ export function usePersistentFormDraft<T>({
   }, [onRestore, pendingDraft]);
 
   const discardDraft = useCallback(() => {
-    window.localStorage.removeItem(storageKey);
+    removeDraftStorage(storageKey);
     setPendingDraft(null);
     setLastSavedAt(null);
     setReady(true);
   }, [storageKey]);
 
   const clearDraft = useCallback(() => {
-    window.localStorage.removeItem(storageKey);
+    removeDraftStorage(storageKey);
     setPendingDraft(null);
     setLastSavedAt(null);
     setReady(true);

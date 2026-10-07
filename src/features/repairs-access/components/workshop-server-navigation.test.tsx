@@ -19,6 +19,46 @@ afterEach(() => { cleanup(); vi.useRealTimers(); });
 function pushedParams() { return new URL(router.push.mock.calls.at(-1)![0], window.location.origin).searchParams; }
 
 describe("server order navigation", () => {
+  it("cancels the old debounce and does not rewrite an accepted same-route link intent", () => {
+    const { rerender } = render(<WorkshopServerNavigation {...props} search="Belén" />);
+    const anchor = document.createElement("a");
+    anchor.href = "/reparaciones-access?view=ordenes&state=pendiente_revision";
+    anchor.addEventListener("click", (event) => event.preventDefault());
+    document.body.append(anchor);
+    fireEvent.click(anchor);
+    rerender(<WorkshopServerNavigation {...props} search="" status="pendiente_revision" warranty="todos" />);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(router.replace).not.toHaveBeenCalled();
+    anchor.remove();
+  });
+
+  it("waits for composition to finish before sending the final query", () => {
+    const { rerender } = render(<WorkshopServerNavigation {...props} search="Bel" isComposing />);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(router.replace).not.toHaveBeenCalled();
+    rerender(<WorkshopServerNavigation {...props} search="Belén " isComposing={false} />);
+    act(() => vi.advanceTimersByTime(350));
+    const params = new URL(router.replace.mock.calls.at(-1)![0], window.location.origin).searchParams;
+    expect(params.get("q")).toBe("Belén ");
+  });
+
+  it("does not send the same newer query again when an older response arrives", () => {
+    const { rerender } = render(<WorkshopServerNavigation {...props} search="Belén Pérez" />);
+    act(() => vi.advanceTimersByTime(350));
+    expect(router.replace).toHaveBeenCalledOnce();
+    rerender(<WorkshopServerNavigation {...props} search="Belén Pérez" pageInfo={{ ...pageInfo, search: "Bel" }} />);
+    act(() => vi.advanceTimersByTime(1000));
+    expect(router.replace).toHaveBeenCalledOnce();
+  });
+
+  it("does not overwrite a browser Back intent with a queued filter rewrite", () => {
+    render(<WorkshopServerNavigation {...props} search="Belén" />);
+    window.history.replaceState(null, "", "/reparaciones-access?view=ordenes&q=Carlos");
+    fireEvent(window, new PopStateEvent("popstate"));
+    act(() => vi.advanceTimersByTime(1000));
+    expect(router.replace).not.toHaveBeenCalled();
+  });
+
   it("does not rewrite initial filters", () => {
     render(<WorkshopServerNavigation {...props} />);
     act(() => vi.advanceTimersByTime(500));

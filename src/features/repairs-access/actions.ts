@@ -20,9 +20,10 @@ import { requireAdmin, requirePermission } from "@/lib/auth";
 import { getFriendlyDatabaseError, isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
-function redirectWithError(message: string, id?: string): never {
+function redirectWithError(message: string, id?: string, view?: "nueva"): never {
   const params = new URLSearchParams({ error: message });
   if (id) params.set("order", id);
+  if (view) params.set("view", view);
   redirect(`/reparaciones-access?${params.toString()}` as Route);
 }
 
@@ -88,6 +89,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     deviceType: formData.get("deviceType"),
     deviceBrand: formData.get("deviceBrand"),
     deviceModel: formData.get("deviceModel"),
+    deviceColor: optionalFormString(formData, "deviceColor"),
     serialNumber: formData.get("serialNumber"),
     accessoryDetails: formData.get("accessoryDetails"),
     visualCondition: formData.get("visualCondition"),
@@ -99,7 +101,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la orden.", String(formData.get("id") ?? ""));
+    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la orden.", String(formData.get("id") ?? ""), "nueva");
   }
 
   const user = await requireAdmin();
@@ -122,6 +124,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     device_type: parsed.data.deviceType,
     device_brand: emptyToNull(parsed.data.deviceBrand),
     device_model: emptyToNull(parsed.data.deviceModel),
+    ...(parsed.data.deviceColor === undefined ? {} : { device_color: parsed.data.deviceColor }),
     serial_number: emptyToNull(parsed.data.serialNumber),
     accessory_details: emptyToNull(parsed.data.accessoryDetails),
     visual_condition: emptyToNull(parsed.data.visualCondition),
@@ -144,7 +147,8 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
   if (!isMissingDatabaseFunctionError(atomicResult.error, "save_repair_access_intake")) {
     redirectWithError(
       getFriendlyDatabaseError(atomicResult.error, "No se pudo guardar la orden. Intenta nuevamente."),
-      parsed.data.id
+      parsed.data.id,
+      "nueva"
     );
   }
 
@@ -169,7 +173,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     : await (supabase as any).from("repair_access_customers").insert(customerPayload).select("id").single();
 
   if (customerOperation.error || !customerOperation.data) {
-    redirectWithError(customerOperation.error?.message ?? "No se pudo guardar el cliente.", parsed.data.id);
+    redirectWithError(customerOperation.error?.message ?? "No se pudo guardar el cliente.", parsed.data.id, "nueva");
   }
 
   const devicePayload = {
@@ -177,6 +181,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     device_type: parsed.data.deviceType,
     brand: emptyToNull(parsed.data.deviceBrand),
     model: emptyToNull(parsed.data.deviceModel),
+    ...(parsed.data.deviceColor === undefined ? {} : { color: parsed.data.deviceColor }),
     serial_number: emptyToNull(parsed.data.serialNumber),
     accessory_details: emptyToNull(parsed.data.accessoryDetails),
     visual_condition: emptyToNull(parsed.data.visualCondition),
@@ -190,7 +195,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     : await (supabase as any).from("repair_access_devices").insert(devicePayload).select("id").single();
 
   if (deviceOperation.error || !deviceOperation.data) {
-    redirectWithError(deviceOperation.error?.message ?? "No se pudo guardar el equipo.", parsed.data.id);
+    redirectWithError(deviceOperation.error?.message ?? "No se pudo guardar el equipo.", parsed.data.id, "nueva");
   }
 
   const previousOrder = parsed.data.id
@@ -202,7 +207,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     : null;
 
   if (previousOrder?.error) {
-    redirectWithError(previousOrder.error.message, parsed.data.id);
+    redirectWithError(previousOrder.error.message, parsed.data.id, "nueva");
   }
 
   const orderPayload = {
@@ -223,7 +228,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     : await (supabase as any).from("repair_access_orders").insert(orderPayload).select("id, status, repair_number").single();
 
   if (orderOperation.error || !orderOperation.data) {
-    redirectWithError(orderOperation.error?.message ?? "No se pudo guardar la orden.", parsed.data.id);
+    redirectWithError(orderOperation.error?.message ?? "No se pudo guardar la orden.", parsed.data.id, "nueva");
   }
 
   await insertStatusHistory({

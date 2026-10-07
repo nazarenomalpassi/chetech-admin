@@ -70,7 +70,7 @@ describe("REP collection screen opening", () => {
     expect(screen.queryAllByRole("button", { name: "Eliminar" })).toHaveLength(0);
     fireEvent.click(screen.getAllByRole("button", { name: "Eliminar pago" })[0]);
     expect(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).toBeTruthy();
-    fireEvent.click(within(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).getByRole("button", { name: "Eliminar pago", exact: true }));
+    fireEvent.click(within(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).getByRole("button", { name: "Eliminar pago" }));
     expect(screen.getByRole("textbox", { name: "Motivo para eliminar el pago" })).toBeTruthy();
     expectNoMoneyWritten();
   });

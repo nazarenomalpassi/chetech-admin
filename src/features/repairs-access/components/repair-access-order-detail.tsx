@@ -253,6 +253,7 @@ export function RepairAccessOrderDetail({
               ["Tipo", order.device.deviceType],
               ["Marca", order.device.brand],
               ["Modelo", order.device.model],
+              ["Color", order.device.color ?? ""],
               ["Serie", order.device.serialNumber],
               ["Accesorios", order.device.accessoryDetails],
               ["Estado visual", order.device.visualCondition]

@@ -18,7 +18,7 @@ export type RepairDocumentData = {
 };
 type Source = Pick<RepairAccessOrderRecord, "id" | "repairNumber" | "intakeDate" | "issueReported" | "deliveredAt" | "pickedUpAt" | "workPerformed" | "warrantyConditions"> & {
   customer: Pick<RepairAccessOrderRecord["customer"], "fullName" | "phone">;
-  device: Pick<RepairAccessOrderRecord["device"], "deviceType" | "brand" | "model" | "serialNumber" | "accessoryDetails" | "visualCondition">;
+  device: Pick<RepairAccessOrderRecord["device"], "deviceType" | "brand" | "model" | "color" | "serialNumber" | "accessoryDetails" | "visualCondition">;
 };
 
 export function buildRepairDocumentData(order: Source, kind: RepairDocumentKind, quote?: RepairBudgetSnapshot | null): RepairDocumentData {
@@ -32,7 +32,10 @@ export function buildRepairDocumentData(order: Source, kind: RepairDocumentKind,
     { label: "Cliente", value: `${order.customer.fullName}${order.customer.phone ? ` / ${order.customer.phone}` : ""}` },
     { label: "Equipo", value: [order.device.deviceType, order.device.brand, order.device.model, order.device.serialNumber ? `Serie ${order.device.serialNumber}` : ""].filter(Boolean).join(" / ") }
   ];
-  if (kind === "intake") sections.push({ label: "Falla declarada", value: order.issueReported }, { label: "Accesorios recibidos", value: order.device.accessoryDetails || "No informados" }, { label: "Condicion de ingreso", value: order.device.visualCondition || "No informada" });
+  if (kind === "intake") {
+    if (order.device.color) sections.push({ label: "Color", value: order.device.color });
+    sections.push({ label: "Falla declarada", value: order.issueReported }, { label: "Accesorios recibidos", value: order.device.accessoryDetails || "No informados" }, { label: "Condicion de ingreso", value: order.device.visualCondition || "No informada" });
+  }
   if (kind === "estimate") sections.push({ label: "Trabajo presupuestado", value: quote!.detail || "Detalle no informado en esta revision" });
   if (kind === "delivery") sections.push({ label: "Trabajo realizado", value: order.workPerformed || "Consultar detalle de la orden" }, { label: "Condiciones de garantia", value: order.warrantyConditions || "Segun condiciones informadas del trabajo" });
   return {

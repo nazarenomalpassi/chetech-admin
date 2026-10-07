@@ -6,30 +6,62 @@ import type { Route } from "next";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { WorkshopPageInfo } from "../page-queries";
+import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
 
-export function WorkshopServerNavigation({ pageInfo, search, status, warranty }: { pageInfo: WorkshopPageInfo; search: string; status: string; warranty: string }) {
+export function WorkshopServerNavigation({ pageInfo, search, status, warranty, isComposing = false }: { pageInfo: WorkshopPageInfo; search: string; status: string; warranty: string; isComposing?: boolean }) {
   const router = useRouter();
   const pendingFilterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastRequestedFiltersRef = useRef<string | null>(null);
+  const filterKey = JSON.stringify([search, status, warranty]);
   useEffect(() => {
+    function cancelRewrite(params: URLSearchParams) {
+      if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current);
+      pendingFilterRef.current = null;
+      lastRequestedFiltersRef.current = JSON.stringify([params.get("q") ?? "", params.get("state") ?? "todos", params.get("warranty") ?? "todos"]);
+    }
+    function cancelRewriteOnHistoryNavigation() {
+      cancelRewrite(new URLSearchParams(window.location.search));
+    }
+    function cancelRewriteOnLink(event: MouseEvent) {
+      const url = getWorkshopLinkIntent(event);
+      if (url) cancelRewrite(url.searchParams);
+    }
+    window.addEventListener("popstate", cancelRewriteOnHistoryNavigation);
+    document.addEventListener("click", cancelRewriteOnLink);
+    return () => {
+      window.removeEventListener("popstate", cancelRewriteOnHistoryNavigation);
+      document.removeEventListener("click", cancelRewriteOnLink);
+    };
+  }, []);
+  useEffect(() => {
+    if (isComposing || lastRequestedFiltersRef.current === filterKey) return;
     if (search === pageInfo.search && status === pageInfo.status && warranty === pageInfo.warranty) return;
     pendingFilterRef.current = setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       params.set("view", "ordenes");
       params.delete("cursor");
       params.delete("order");
+      params.delete("status");
+      params.delete("error");
       if (search) params.set("q", search); else params.delete("q");
       if (status !== "todos") params.set("state", status); else params.delete("state");
       if (warranty !== "todos") params.set("warranty", warranty); else params.delete("warranty");
+      pendingFilterRef.current = null;
+      lastRequestedFiltersRef.current = filterKey;
       router.replace(`/reparaciones-access?${params}` as Route, { scroll: false });
     }, 350);
     return () => { if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current); };
-  }, [search, status, warranty, pageInfo.search, pageInfo.status, pageInfo.warranty, router]);
+  }, [search, status, warranty, pageInfo.search, pageInfo.status, pageInfo.warranty, router, filterKey, isComposing]);
   function navigationParams() {
     // Explicit navigation must include pending filters and cancel their debounced rewrite.
     if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current);
+    pendingFilterRef.current = null;
+    lastRequestedFiltersRef.current = filterKey;
     const params = new URLSearchParams(window.location.search);
     params.set("view", "ordenes");
     params.delete("order");
+    params.delete("status");
+    params.delete("error");
     if (search) params.set("q", search); else params.delete("q");
     if (status !== "todos") params.set("state", status); else params.delete("state");
     if (warranty !== "todos") params.set("warranty", warranty); else params.delete("warranty");

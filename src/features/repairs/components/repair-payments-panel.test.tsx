@@ -24,7 +24,7 @@ describe("repair collection and erroneous payment removal", () => {
 
   it("requires a reason and explicit confirmation to remove only the selected payment", () => {
     render(<RepairPaymentsPanel repair={repair} canReverse />);
-    fireEvent.click(screen.getByRole("button", { name: "Eliminar pago", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar pago" }));
     expect(screen.getByRole("dialog", { name: "Eliminar pago incorrecto" })).toBeTruthy();
     const reason = screen.getByRole("textbox", { name: "Motivo para eliminar el pago" }) as HTMLInputElement;
     expect(reason.required).toBe(true);
