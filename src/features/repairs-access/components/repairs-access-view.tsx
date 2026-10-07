@@ -28,6 +28,7 @@ import type { WorkshopInbox as InboxData } from "../coordination-queries";
 import { WorkshopUpdates } from "./workshop-updates";
 import { WorkshopServerNavigation } from "./workshop-server-navigation";
 import { WorkshopInbox } from "./workshop-inbox";
+import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
 
@@ -91,6 +92,9 @@ export function RepairsAccessView({
   const [orderSearch, setOrderSearch] = useState(pageInfo?.search || deepLinkSearch);
   const [statusFilter, setStatusFilter] = useState(pageInfo?.status ?? "todos");
   const [warrantyFilter, setWarrantyFilter] = useState(pageInfo?.warranty ?? "todos");
+  const [isSearchComposing, setIsSearchComposing] = useState(false);
+  const localFiltersOwnedRef = useRef(false);
+  const previousActionStatusRef = useRef(actionStatus);
   const [intakeDirty, setIntakeDirty] = useState(false);
   const orderHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousSectionRef = useRef(activeSection);
@@ -103,10 +107,53 @@ export function RepairsAccessView({
   const pageWarranty = pageInfo?.warranty;
 
   useEffect(() => {
+    // A delayed server acknowledgement must not replace the current typing draft.
+    if (localFiltersOwnedRef.current) return;
     setOrderSearch(pageSearch || deepLinkSearch);
     setStatusFilter(pageStatus ?? "todos");
     setWarrantyFilter(pageWarranty ?? "todos");
   }, [pageSearch, pageStatus, pageWarranty, deepLinkSearch]);
+
+  useEffect(() => {
+    const previous = previousActionStatusRef.current;
+    previousActionStatusRef.current = actionStatus;
+    if (!intakeSaved || previous === actionStatus) return;
+    localFiltersOwnedRef.current = false;
+    setOrderSearch(pageSearch || deepLinkSearch);
+    setStatusFilter(pageStatus ?? "todos");
+    setWarrantyFilter(pageWarranty ?? "todos");
+  }, [actionStatus, intakeSaved, pageSearch, pageStatus, pageWarranty, deepLinkSearch]);
+
+  useEffect(() => {
+    function restoreFilters(params: URLSearchParams) {
+      localFiltersOwnedRef.current = true;
+      setOrderSearch(params.get("q") ?? "");
+      setStatusFilter(params.get("state") ?? "todos");
+      setWarrantyFilter(params.get("warranty") ?? "todos");
+      setIsSearchComposing(false);
+    }
+    function restoreUrlFilters() {
+      restoreFilters(new URLSearchParams(window.location.search));
+    }
+    function followExplicitLink(event: MouseEvent) {
+      const url = getWorkshopLinkIntent(event);
+      if (url) restoreFilters(url.searchParams);
+    }
+    window.addEventListener("popstate", restoreUrlFilters);
+    // Bubble only: a declined unsaved-changes guard stops the link in capture.
+    document.addEventListener("click", followExplicitLink);
+    return () => {
+      window.removeEventListener("popstate", restoreUrlFilters);
+      document.removeEventListener("click", followExplicitLink);
+    };
+  }, []);
+
+  function updateOrderFilter(field: "search" | "status" | "warranty", value: string) {
+    localFiltersOwnedRef.current = true;
+    if (field === "search") setOrderSearch(value);
+    else if (field === "status") setStatusFilter(value);
+    else setWarrantyFilter(value);
+  }
 
   useEffect(() => {
     // A data refresh is not a new navigation intent, even when the URL still has an order.
@@ -189,6 +236,7 @@ export function RepairsAccessView({
   }
 
   function openStatus(status: string) {
+    localFiltersOwnedRef.current = true;
     setOrderSearch("");
     setStatusFilter(status);
     setWarrantyFilter("todos");
@@ -198,15 +246,18 @@ export function RepairsAccessView({
 
   useEffect(() => {
     if (!actionStatus) return;
-
-    if (actionStatus === "repair_access_created") {
-      window.localStorage.removeItem(getFormDraftStorageKey("repair-access:intake:new"));
-    }
-    if (actionStatus === "repair_access_intake_updated" && initialOrderId) {
-      window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:intake:${initialOrderId}`));
-    }
-    if (actionStatus === "repair_access_technical_updated" && initialOrderId) {
-      window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:technical:${initialOrderId}`));
+    try {
+      if (actionStatus === "repair_access_created") {
+        window.localStorage.removeItem(getFormDraftStorageKey("repair-access:intake:new"));
+      }
+      if (actionStatus === "repair_access_intake_updated" && initialOrderId) {
+        window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:intake:${initialOrderId}`));
+      }
+      if (actionStatus === "repair_access_technical_updated" && initialOrderId) {
+        window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:technical:${initialOrderId}`));
+      }
+    } catch {
+      // Browser draft storage cannot invalidate an already completed server save.
     }
   }, [actionStatus, initialOrderId]);
 
@@ -258,7 +309,7 @@ export function RepairsAccessView({
       {pageInfo ? <WorkshopUpdates disabled={intakeDirty} /> : null}
       {activeSection === "panel" && inbox ? <WorkshopInbox inbox={inbox} /> : null}
       {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
-      {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} /> : null}
+      {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} isComposing={isSearchComposing} /> : null}
 
       {activeSection === "nueva" ? (
         <RepairAccessNewOrderWizard
@@ -281,9 +332,10 @@ export function RepairsAccessView({
           onEdit={startEdit}
           onOpenDetail={openDetail}
           onNew={canManageIntake ? () => navigate("nueva") : undefined}
-          onSearchChange={setOrderSearch}
-          onStatusFilterChange={setStatusFilter}
-          onWarrantyFilterChange={setWarrantyFilter}
+          onSearchChange={(value) => updateOrderFilter("search", value)}
+          onSearchCompositionChange={setIsSearchComposing}
+          onStatusFilterChange={(value) => updateOrderFilter("status", value)}
+          onWarrantyFilterChange={(value) => updateOrderFilter("warranty", value)}
           orders={orders}
           technicians={technicians}
           search={orderSearch}

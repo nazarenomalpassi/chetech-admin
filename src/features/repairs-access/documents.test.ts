@@ -21,6 +21,12 @@ const order = {
 const quote = { id: "00000000-0000-4000-8000-000000000358", orderId: id, revision: 3, amount: 80000, detail: "Cambio de fuente - revision vigente", createdAt: "2026-10-05T01:30:00Z" };
 
 describe("customer-facing repair documents", () => {
+  it("includes the recorded color and received accessories in the reception document", () => {
+    const data = buildRepairDocumentData({ ...order, device: { ...order.device, color: "Gris" } }, "intake");
+    expect(data.sections).toContainEqual({ label: "Color", value: "Gris" });
+    expect(data.sections).toContainEqual({ label: "Accesorios recibidos", value: "Control" });
+    expect(data.sections).toContainEqual({ label: "Condicion de ingreso", value: "Buen estado" });
+  });
   it("uses the current quote snapshot and its real date/revision, not mutable fields or intake date", () => {
     const data = buildRepairDocumentData(order, "estimate", quote);
     expect(data.title).toBe("Presupuesto de reparacion");

@@ -9,6 +9,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { applyStableCreationOrder } from "@/lib/chronology";
 import { readRecordPages } from "@/lib/read-record-pages";
 import type { WorkshopOrderContext } from "./workflow";
+import { getRepairDeviceColor } from "./device-color";
 
 type RawOrder = {
   id: string;
@@ -77,6 +78,7 @@ type RawOrder = {
     device_type: string;
     brand: string | null;
     model: string | null;
+    color?: string | null;
     serial_number: string | null;
     accessory_details: string | null;
     visual_condition: string | null;
@@ -172,6 +174,7 @@ export type RepairAccessOrderRecord = {
     deviceType: string;
     brand: string;
     model: string;
+    color?: string;
     serialNumber: string;
     accessoryDetails: string;
     visualCondition: string;
@@ -330,6 +333,7 @@ export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
       deviceType: order.repair_access_devices?.device_type ?? "Equipo",
       brand: order.repair_access_devices?.brand ?? "",
       model: order.repair_access_devices?.model ?? "",
+      color: getRepairDeviceColor(order.repair_access_devices),
       serialNumber: order.repair_access_devices?.serial_number ?? "",
       accessoryDetails: order.repair_access_devices?.accessory_details ?? "",
       visualCondition: order.repair_access_devices?.visual_condition ?? "",
@@ -397,7 +401,7 @@ export async function getRepairsAccessDashboard({
         id, full_name, phone, alternate_phone, phone_normalized, dni, email, address, notes
       ),
       repair_access_devices (
-        id, device_type, brand, model, serial_number, accessory_details, visual_condition, notes
+        id, device_type, brand, model, color, serial_number, accessory_details, visual_condition, notes
       ),
       storefront_customer:profiles!repair_access_orders_customer_user_id_fkey (
         id, full_name, email, phone

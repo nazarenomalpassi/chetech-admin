@@ -24,6 +24,7 @@ import {
 } from "@/features/repairs-access/workshop-list-visibility";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { WorkshopTechnician } from "./order-coordination-panel";
+import { normalizeRepairAccessLookup } from "../customer-search";
 
 export function RepairAccessOrdersSection({
   orders,
@@ -32,6 +33,7 @@ export function RepairAccessOrdersSection({
   statusFilter,
   warrantyFilter,
   onSearchChange,
+  onSearchCompositionChange,
   onStatusFilterChange,
   onWarrantyFilterChange,
   onEdit,
@@ -46,6 +48,7 @@ export function RepairAccessOrdersSection({
   statusFilter: string;
   warrantyFilter: string;
   onSearchChange: (value: string) => void;
+  onSearchCompositionChange?: (composing: boolean) => void;
   onStatusFilterChange: (value: string) => void;
   onWarrantyFilterChange: (value: string) => void;
   onEdit: (order: RepairAccessOrderRecord) => void;
@@ -56,7 +59,7 @@ export function RepairAccessOrdersSection({
 }) {
   const [visibleLimit, setVisibleLimit] = useState(WORKSHOP_INITIAL_VISIBLE_ORDERS);
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
-  const normalizedSearch = search.trim().toLowerCase();
+  const normalizedSearch = normalizeRepairAccessLookup(search);
   const filteredOrders = orders.filter((order) => {
     const matchesStatus = statusFilter === "todos" || order.status === statusFilter;
     if (!matchesStatus) return false;
@@ -68,7 +71,7 @@ export function RepairAccessOrdersSection({
     if (!matchesWarranty) return false;
     if (!normalizedSearch) return true;
 
-    const haystack = [
+    const haystack = normalizeRepairAccessLookup([
       order.repairNumber,
       order.legacyOrderNumber,
       order.customer.fullName,
@@ -80,11 +83,11 @@ export function RepairAccessOrdersSection({
       order.device.model,
       order.device.serialNumber,
       order.issueReported,
+      order.technicalDiagnosis,
+      order.budgetDetail,
       getRepairAccessStatusLabel(order.status),
       order.status
-    ]
-      .join(" ")
-      .toLowerCase();
+    ].join(" "));
 
     return haystack.includes(normalizedSearch);
   });
@@ -116,7 +119,10 @@ export function RepairAccessOrdersSection({
           <Input
             aria-label="Buscar orden de service"
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Numero de orden, equipo o falla..."
+            onCompositionStart={() => onSearchCompositionChange?.(true)}
+            onCompositionEnd={() => onSearchCompositionChange?.(false)}
+            maxLength={200}
+            placeholder="Numero de orden, cliente, equipo o falla..."
             value={search}
           />
           <Select

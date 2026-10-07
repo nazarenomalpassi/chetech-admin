@@ -46,6 +46,88 @@ const order = { id: "repair-1", repairNumber: "REP-000357" } as RepairAccessOrde
 const pageInfo: WorkshopPageInfo = { total: 1, pageSize: 30, cursor: "", nextCursor: null, search: "", status: "todos", warranty: "todos", scope: "all" };
 
 describe("workshop section navigation", () => {
+  it("keeps the successful save screen operational when local draft removal is blocked", () => {
+    vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new DOMException("Storage blocked", "SecurityError"); });
+    expect(() => render(<RepairsAccessView {...props} actionStatus="repair_access_created" />)).not.toThrow();
+    expect(screen.getByRole("heading", { name: "Mesa de trabajo" })).toBeTruthy();
+  });
+
+  it("honors an explicit query-card link after local typing instead of resurrecting the old search", () => {
+    const summary = { statusCounts: {} } as RepairAccessSummary;
+    const { rerender } = render(<RepairsAccessView {...props} summary={summary} pageInfo={pageInfo} />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Orden buscada" }), { target: { value: "Belén" } });
+    fireEvent.click(screen.getByRole("button", { name: "Consultas" }));
+    const card = screen.getByText("Pendientes de revision").parentElement!;
+    const link = within(card).getByRole("link");
+    link.addEventListener("click", (event) => event.preventDefault());
+    fireEvent.click(link);
+    rerender(<RepairsAccessView {...props} summary={summary} initialView="ordenes" pageInfo={{ ...pageInfo, status: "pendiente_revision" }} />);
+    expect((screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement).value).toBe("");
+    expect(screen.getByText("pendiente_revision")).toBeTruthy();
+  });
+
+  it("restores explicit same-route sidebar filters but ignores modified clicks and canceled navigation", () => {
+    render(<RepairsAccessView {...props} pageInfo={pageInfo} />);
+    const input = screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Belén" } });
+    const anchor = document.createElement("a");
+    anchor.href = "/reparaciones-access?view=ordenes&state=en_revision";
+    anchor.addEventListener("click", (event) => event.preventDefault());
+    document.body.append(anchor);
+    fireEvent.click(anchor, { ctrlKey: true });
+    expect(input.value).toBe("Belén");
+    const cancel = (event: Event) => { event.preventDefault(); event.stopPropagation(); };
+    document.addEventListener("click", cancel, { capture: true, once: true });
+    fireEvent.click(anchor);
+    expect(input.value).toBe("Belén");
+    fireEvent.click(anchor);
+    expect(input.value).toBe("");
+    expect(screen.getByText("en_revision")).toBeTruthy();
+    anchor.remove();
+  });
+
+  it("does not replace a newer accented draft with an older server search response", () => {
+    const { rerender } = render(<RepairsAccessView {...props} pageInfo={pageInfo} />);
+    const input = screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Bel" } });
+    fireEvent.change(input, { target: { value: "Belén " } });
+    rerender(<RepairsAccessView {...props} pageInfo={{ ...pageInfo, search: "Bel" }} />);
+    expect(input.value).toBe("Belén ");
+    fireEvent.change(input, { target: { value: "Belén Pérez" } });
+    rerender(<RepairsAccessView {...props} pageInfo={{ ...pageInfo, search: "Belén " }} />);
+    expect(input.value).toBe("Belén Pérez");
+  });
+
+  it("does not resurrect a cleared query when the previous request completes", () => {
+    const { rerender } = render(<RepairsAccessView {...props} pageInfo={pageInfo} />);
+    const input = screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "357" } });
+    fireEvent.change(input, { target: { value: "" } });
+    rerender(<RepairsAccessView {...props} pageInfo={{ ...pageInfo, search: "357" }} />);
+    expect(input.value).toBe("");
+  });
+
+  it("shows the newly saved REP instead of retaining the search used before opening reception", () => {
+    const { rerender } = render(<RepairsAccessView {...props} pageInfo={pageInfo} />);
+    fireEvent.change(screen.getByRole("textbox", { name: "Orden buscada" }), { target: { value: "Belén" } });
+    fireEvent.click(screen.getByRole("button", { name: "Nueva orden" }));
+    rerender(<RepairsAccessView {...props} pageInfo={pageInfo} initialOrderId={order.id} actionStatus="repair_access_created" orders={[order]} />);
+    expect((screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement).value).toBe(order.repairNumber);
+  });
+
+  it("honors Back/Forward filter intent without letting a late response overwrite it", () => {
+    const { rerender } = render(<RepairsAccessView {...props} pageInfo={pageInfo} />);
+    const input = screen.getByRole("textbox", { name: "Orden buscada" }) as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "Belén Pérez" } });
+    window.history.replaceState(null, "", "/reparaciones-access?view=ordenes&q=Carlos&state=en_revision&warranty=active");
+    fireEvent(window, new PopStateEvent("popstate"));
+    expect(input.value).toBe("Carlos");
+    expect(screen.getByText("en_revision")).toBeTruthy();
+    expect(screen.getByText("active")).toBeTruthy();
+    rerender(<RepairsAccessView {...props} pageInfo={{ ...pageInfo, search: "Bel" }} />);
+    expect(input.value).toBe("Carlos");
+  });
+
   it("defaults the shared administrator to orders without stealing initial focus", () => {
     render(<RepairsAccessView {...props} />);
     const heading = screen.getByRole("heading", { name: "Mesa de trabajo" });

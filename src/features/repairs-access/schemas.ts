@@ -27,6 +27,7 @@ export const repairAccessIntakeSchema = z.object({
   deviceType: z.string().min(2, "Ingresa el tipo de equipo."),
   deviceBrand: z.string().optional(),
   deviceModel: z.string().optional(),
+  deviceColor: z.string().trim().max(80, "El color no puede superar 80 caracteres.").optional(),
   serialNumber: z.string().optional(),
   accessoryDetails: z.string().optional(),
   visualCondition: z.string().optional(),

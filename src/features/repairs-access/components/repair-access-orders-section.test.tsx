@@ -27,6 +27,21 @@ const orders = [makeOrder()];
 const props = { orders, search: "", statusFilter: "todos", warrantyFilter: "todos", onSearchChange: vi.fn(), onStatusFilterChange: vi.fn(), onWarrantyFilterChange: vi.fn(), onEdit: vi.fn(), onOpenDetail: vi.fn(), canManageIntake: true };
 
 describe("order workspace list", () => {
+  it("matches names with accents and repeated spaces without changing the actual search input", () => {
+    const record = { ...makeOrder(), customer: { ...makeOrder().customer, fullName: "Belén Pérez" } };
+    render(<RepairAccessOrdersSection {...props} orders={[record]} search="belen   perez " />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    expect((screen.getByRole("textbox", { name: "Buscar orden de service" }) as HTMLInputElement).value).toBe("belen   perez ");
+  });
+
+  it("does not hide server matches on diagnosis or budget detail", () => {
+    const record = { ...makeOrder(), technicalDiagnosis: "Main defectuosa", budgetDetail: "Cambio de capacitores" };
+    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} search="main defectuosa" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    rerender(<RepairAccessOrdersSection {...props} orders={[record]} search="cambio de capacitores" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+  });
+
   it.each([true, false])("mounts one desktop/mobile card list and no table by default (admin=%s)", (canManageIntake) => {
     const { container } = render(<RepairAccessOrdersSection {...props} canManageIntake={canManageIntake} />);
     const card = screen.getByRole("article", { name: orders[0].repairNumber });

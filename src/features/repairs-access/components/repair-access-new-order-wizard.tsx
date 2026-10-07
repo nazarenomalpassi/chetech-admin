@@ -1,7 +1,7 @@
 "use client";
 
-import type { FormEvent, ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { FocusEvent, FocusEventHandler, FormEvent, KeyboardEvent, KeyboardEventHandler, ReactNode } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/features/repairs-access/components/repair-access-helpers";
 import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
+import { createFormDraftEnvelope, getFormDraftStorageKey } from "@/lib/form-draft";
 import { getLocalDateInputValue } from "@/lib/utils";
 
 type CustomerForm = {
@@ -46,6 +47,7 @@ const meaningfulIntakeFields = [
   "deviceModel",
   "serialNumber",
   "accessoryDetails",
+  "deviceColor",
   "visualCondition",
   "issueReported",
   "notes"
@@ -86,10 +88,13 @@ export function RepairAccessNewOrderWizard({
   onDirtyChange?: (dirty: boolean) => void;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
+  const editingIdRef = useRef(editing?.id ?? null);
+  const suggestionsId = useId();
   const [customerForm, setCustomerForm] = useState<CustomerForm>(() => getInitialCustomer(editing));
   const [customerLookup, setCustomerLookup] = useState("");
   const [activeLookupField, setActiveLookupField] = useState<"name" | "phone" | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [activeSuggestionCustomerId, setActiveSuggestionCustomerId] = useState<string | null>(null);
   const [remoteSuggestions, setRemoteSuggestions] = useState<RepairAccessCustomerSummary[]>([]);
   const [isSearchingCustomers, setIsSearchingCustomers] = useState(false);
   const [draftFields, setDraftFields] = useState<Record<string, string>>({});
@@ -97,9 +102,15 @@ export function RepairAccessNewOrderWizard({
   const [formRevision, setFormRevision] = useState(0);
 
   useEffect(() => {
+    const editingId = editing?.id ?? null;
+    if (editingIdRef.current === editingId) return;
+    editingIdRef.current = editingId;
     setCustomerForm(getInitialCustomer(editing));
     setCustomerLookup("");
     setActiveLookupField(null);
+    setShowSuggestions(false);
+    setActiveSuggestionCustomerId(null);
+    setRemoteSuggestions([]);
     setDraftFields({});
     setRestoredFields({});
     setFormRevision((current) => current + 1);
@@ -107,28 +118,36 @@ export function RepairAccessNewOrderWizard({
 
   useEffect(() => {
     const query = normalizeLookup(customerLookup);
+    setRemoteSuggestions([]);
+    setIsSearchingCustomers(false);
     if (query.length < 2 || !showSuggestions) {
-      setRemoteSuggestions([]);
       return;
     }
 
+    const controller = new AbortController();
     const timeoutId = window.setTimeout(async () => {
       setIsSearchingCustomers(true);
       try {
-        const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(customerLookup)}`);
+        const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(customerLookup)}`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
         if (response.ok) {
           const payload = await response.json();
+          if (controller.signal.aborted) return;
           setRemoteSuggestions(payload.customers ?? []);
         } else {
           setRemoteSuggestions([]);
         }
       } catch {
-        setRemoteSuggestions([]);
+        if (!controller.signal.aborted) setRemoteSuggestions([]);
+      } finally {
+        if (!controller.signal.aborted) setIsSearchingCustomers(false);
       }
-      setIsSearchingCustomers(false);
     }, 180);
 
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      controller.abort();
+      window.clearTimeout(timeoutId);
+    };
   }, [customerLookup, showSuggestions]);
 
   const suggestions = useMemo(() => {
@@ -144,6 +163,10 @@ export function RepairAccessNewOrderWizard({
       })
       .slice(0, 7);
   }, [customerLookup, customers, remoteSuggestions]);
+
+  const suggestionsVisible = showSuggestions && normalizeLookup(customerLookup).length >= 2;
+  const selectedSuggestionIndex = suggestions.findIndex((customer) => customer.id === activeSuggestionCustomerId);
+  const activeSuggestionId = selectedSuggestionIndex >= 0 ? `${suggestionsId}-${suggestions[selectedSuggestionIndex].id}` : undefined;
 
   const hasUnsavedChanges = meaningfulIntakeFields.some((field) => (draftFields[field] ?? "").trim().length > 0);
   const restoreDraft = useCallback((draft: RepairIntakeDraft) => {
@@ -177,6 +200,20 @@ export function RepairAccessNewOrderWizard({
     setDraftFields(readFormValues(event.currentTarget));
   }
 
+  function persistSubmittedDraft(event: FormEvent<HTMLFormElement>) {
+    const fields = readFormValues(event.currentTarget);
+    setDraftFields(fields);
+    // An action can reject before passive unmount cleanup or the draft debounce runs.
+    try {
+      window.localStorage.setItem(
+        getFormDraftStorageKey(`repair-access:intake:${editing?.id ?? "new"}`),
+        JSON.stringify(createFormDraftEnvelope<RepairIntakeDraft>({ fields }))
+      );
+    } catch {
+      // Unavailable draft storage must not interrupt the actual order save.
+    }
+  }
+
   function restoredValue(name: string, fallback = "") {
     return restoredFields[name] ?? fallback;
   }
@@ -187,6 +224,39 @@ export function RepairAccessNewOrderWizard({
       setCustomerLookup(value);
       setActiveLookupField(field === "fullName" ? "name" : "phone");
       setShowSuggestions(true);
+      setActiveSuggestionCustomerId(null);
+    }
+  }
+
+  function dismissSuggestions() {
+    setShowSuggestions(false);
+    setActiveLookupField(null);
+    setActiveSuggestionCustomerId(null);
+  }
+
+  function handleLookupBlur(event: FocusEvent<HTMLDivElement>) {
+    if (!event.currentTarget.contains(event.relatedTarget)) dismissSuggestions();
+  }
+
+  function handleLookupKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.nativeEvent.isComposing) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      event.currentTarget.querySelector<HTMLInputElement>("input")?.focus();
+      dismissSuggestions();
+      return;
+    }
+    if (!(event.target instanceof HTMLInputElement) || !suggestionsVisible || !suggestions.length) return;
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const nextIndex = event.key === "ArrowDown"
+        ? (selectedSuggestionIndex + 1) % suggestions.length
+        : (selectedSuggestionIndex <= 0 ? suggestions.length : selectedSuggestionIndex) - 1;
+      setActiveSuggestionCustomerId(suggestions[nextIndex].id);
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      if (activeSuggestionCustomerId && selectedSuggestionIndex < 0) return;
+      selectCustomer(suggestions[Math.max(selectedSuggestionIndex, 0)]);
     }
   }
 
@@ -215,7 +285,7 @@ export function RepairAccessNewOrderWizard({
     setCustomerLookup("");
     setActiveLookupField(null);
     setRemoteSuggestions([]);
-    setShowSuggestions(false);
+    dismissSuggestions();
   }
 
   return (
@@ -247,79 +317,86 @@ export function RepairAccessNewOrderWizard({
         key={formRevision}
         onChange={captureDraft}
         onInput={captureDraft}
+        onSubmit={persistSubmittedDraft}
         ref={formRef}
       >
         <input name="id" type="hidden" value={editing?.id ?? ""} />
         <input name="customerId" type="hidden" value={customerForm.id} />
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
-        <section aria-label="Cliente" className="grid gap-4 sm:grid-cols-2">
-          <Field className="relative" htmlFor="customerName" label="Nombre completo">
+        <section aria-label="Ficha de recepcion" className="grid gap-4 sm:grid-cols-6">
+          <Field className="relative min-w-0 sm:col-span-3" htmlFor="customerName" label="Nombre y apellido" onBlur={handleLookupBlur} onKeyDown={handleLookupKeyDown}>
             <Input
+              aria-activedescendant={suggestionsVisible && activeLookupField === "name" ? activeSuggestionId : undefined}
+              aria-autocomplete="list"
+              aria-controls={suggestionsVisible && activeLookupField === "name" ? `${suggestionsId}-name` : undefined}
+              aria-expanded={suggestionsVisible && activeLookupField === "name"}
               autoComplete="off"
               name="customerName"
               onChange={(event) => updateCustomerField("fullName", event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && suggestions[0]) {
-                  event.preventDefault();
-                  selectCustomer(suggestions[0]);
-                }
-              }}
               onFocus={() => {
                 setCustomerLookup(customerForm.fullName);
                 setActiveLookupField("name");
                 setShowSuggestions(true);
+                setActiveSuggestionCustomerId(null);
               }}
               placeholder="Ej: Malpassi Nazareno"
+              role="combobox"
               value={customerForm.fullName}
             />
-            <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "name"} suggestions={suggestions} />
+            <CustomerSuggestions activeIndex={selectedSuggestionIndex} id={`${suggestionsId}-name`} isSearching={isSearchingCustomers} onSelect={selectCustomer} optionIdPrefix={suggestionsId} show={suggestionsVisible && activeLookupField === "name"} suggestions={suggestions} />
           </Field>
-          <Field className="relative" htmlFor="customerPhone" label="Telefono / WhatsApp">
+          <Field className="relative min-w-0 sm:col-span-3" htmlFor="customerPhone" label="Telefono" onBlur={handleLookupBlur} onKeyDown={handleLookupKeyDown}>
             <Input
+              aria-activedescendant={suggestionsVisible && activeLookupField === "phone" ? activeSuggestionId : undefined}
+              aria-autocomplete="list"
+              aria-controls={suggestionsVisible && activeLookupField === "phone" ? `${suggestionsId}-phone` : undefined}
+              aria-expanded={suggestionsVisible && activeLookupField === "phone"}
               autoComplete="off"
               name="customerPhone"
               onChange={(event) => updateCustomerField("phone", event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" && suggestions[0]) {
-                  event.preventDefault();
-                  selectCustomer(suggestions[0]);
-                }
-              }}
               onFocus={() => {
                 setCustomerLookup(customerForm.phone);
                 setActiveLookupField("phone");
                 setShowSuggestions(true);
+                setActiveSuggestionCustomerId(null);
               }}
               placeholder="Ej: 3571 573744"
+              role="combobox"
               value={customerForm.phone}
             />
-            <CustomerSuggestions isSearching={isSearchingCustomers} onSelect={selectCustomer} show={showSuggestions && activeLookupField === "phone"} suggestions={suggestions} />
+            <CustomerSuggestions activeIndex={selectedSuggestionIndex} id={`${suggestionsId}-phone`} isSearching={isSearchingCustomers} onSelect={selectCustomer} optionIdPrefix={suggestionsId} show={suggestionsVisible && activeLookupField === "phone"} suggestions={suggestions} />
           </Field>
-        </section>
-
-        <section aria-label="Equipo" className="grid gap-4 sm:grid-cols-3">
-          <Field label="Tipo de equipo">
-            <Input defaultValue={restoredValue("deviceType", editing?.device.deviceType ?? "")} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
+          <Field className="min-w-0 sm:col-span-4" label="Direccion">
+            <Input name="customerAddress" onChange={(event) => updateCustomerField("address", event.target.value)} placeholder="Domicilio o referencia" value={customerForm.address} />
           </Field>
-          <Field label="Marca">
-            <Input defaultValue={restoredValue("deviceBrand", editing?.device.brand ?? "")} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
-          </Field>
-          <Field label="Modelo">
-            <Input defaultValue={restoredValue("deviceModel", editing?.device.model ?? "")} name="deviceModel" placeholder="Modelo visible" />
-          </Field>
-        </section>
-
-        <section aria-label="Ingreso" className="grid gap-4 lg:grid-cols-6">
-          <Field className="lg:col-span-2" label="Fecha de ingreso">
+          <Field className="min-w-0 sm:col-span-2" label="Fecha">
             <Input defaultValue={restoredValue("intakeDate", editing?.intakeDate ?? getLocalDateInputValue())} name="intakeDate" type="date" />
           </Field>
-          <Field className="lg:col-span-4" label="Falla declarada por el cliente">
+          <Field className="min-w-0 sm:col-span-2" label="Equipo">
+            <Input defaultValue={restoredValue("deviceType", editing?.device.deviceType ?? "")} name="deviceType" placeholder="TV, lavarropas, microondas, parlante..." />
+          </Field>
+          <Field className="min-w-0 sm:col-span-2" label="Marca">
+            <Input defaultValue={restoredValue("deviceBrand", editing?.device.brand ?? "")} name="deviceBrand" placeholder="Samsung, LG, Drean, Whirlpool..." />
+          </Field>
+          <Field className="min-w-0 sm:col-span-2" label="Modelo">
+            <Input defaultValue={restoredValue("deviceModel", editing?.device.model ?? "")} name="deviceModel" placeholder="Modelo visible" />
+          </Field>
+          <Field className="min-w-0 sm:col-span-2" label="Serie">
+            <Input defaultValue={restoredValue("serialNumber", editing?.device.serialNumber ?? "")} name="serialNumber" placeholder="Numero de serie" />
+          </Field>
+          <Field className="min-w-0 sm:col-span-2" label="Accesorios entregados">
+            <Input defaultValue={restoredValue("accessoryDetails", editing?.device.accessoryDetails ?? "")} name="accessoryDetails" placeholder="Control, fuente, cable, bandeja..." />
+          </Field>
+          <Field className="min-w-0 sm:col-span-2" label="Color">
+            <Input defaultValue={restoredValue("deviceColor", editing?.device.color ?? "")} maxLength={80} name="deviceColor" placeholder="Color del equipo" />
+          </Field>
+          <Field className="min-w-0 sm:col-span-6" label="Falla">
             <Textarea defaultValue={restoredValue("issueReported", editing?.issueReported ?? "")} name="issueReported" placeholder="Ej: no enfria, no da imagen, pierde agua, no enciende..." />
           </Field>
         </section>
 
-        <OptionalFields label="Mas datos del cliente">
+        <OptionalFields label="Otros datos (opcionales)">
           <Field className="lg:col-span-2" label="Telefono alternativo">
             <Input name="customerAlternatePhone" onChange={(event) => updateCustomerField("alternatePhone", event.target.value)} placeholder="Opcional" value={customerForm.alternatePhone} />
           </Field>
@@ -329,30 +406,12 @@ export function RepairAccessNewOrderWizard({
           <Field className="lg:col-span-2" label="Email">
             <Input name="customerEmail" onChange={(event) => updateCustomerField("email", event.target.value)} placeholder="Opcional" value={customerForm.email} />
           </Field>
-          <Field className="lg:col-span-3" label="Direccion">
-            <Input name="customerAddress" onChange={(event) => updateCustomerField("address", event.target.value)} placeholder="Domicilio o referencia" value={customerForm.address} />
-          </Field>
           <Field className="lg:col-span-3" label="Observaciones del cliente">
             <Textarea name="customerNotes" onChange={(event) => updateCustomerField("notes", event.target.value)} placeholder="Notas utiles de contacto" value={customerForm.notes} />
           </Field>
-          <p className="text-sm leading-6 text-slate-600 lg:col-span-6">
-            Si elegis un cliente existente, solo se copian sus datos personales. El equipo, la falla y la reparacion siempre se cargan como una orden nueva.
-          </p>
-        </OptionalFields>
-
-        <OptionalFields label="Detalles del equipo">
-          <Field className="lg:col-span-2" label="Numero de serie">
-            <Input defaultValue={restoredValue("serialNumber", editing?.device.serialNumber ?? "")} name="serialNumber" placeholder="Opcional" />
-          </Field>
-          <Field className="lg:col-span-2" label="Accesorios entregados">
-            <Input defaultValue={restoredValue("accessoryDetails", editing?.device.accessoryDetails ?? "")} name="accessoryDetails" placeholder="Control, fuente, cable, bandeja..." />
-          </Field>
-          <Field className="lg:col-span-2" label="Estado visual">
+          <Field className="lg:col-span-3" label="Estado visual">
             <Input defaultValue={restoredValue("visualCondition", editing?.device.visualCondition ?? "")} name="visualCondition" placeholder="Golpes, faltantes, rayas, humedad..." />
           </Field>
-        </OptionalFields>
-
-        <OptionalFields label="Opciones de ingreso">
           <Field className="lg:col-span-3" label="Prioridad">
             <Select defaultValue={restoredValue("priority", editing?.priority ?? "normal")} name="priority" options={repairAccessPriorityOptions.map((option) => ({ ...option }))} />
           </Field>
@@ -362,6 +421,9 @@ export function RepairAccessNewOrderWizard({
           <Field className="lg:col-span-6" label="Observaciones internas de recepcion">
             <Textarea defaultValue={restoredValue("notes", editing?.notes ?? "")} name="notes" placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones" />
           </Field>
+          <p className="text-sm leading-6 text-slate-600 lg:col-span-6">
+            Si elegis un cliente existente, solo se copian sus datos personales. El equipo, la falla y la reparacion siempre se cargan como una orden nueva.
+          </p>
         </OptionalFields>
 
         <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -399,16 +461,23 @@ function normalizeLookup(value: string) {
 
 function mergeCustomers(primary: RepairAccessCustomerSummary[], fallback: RepairAccessCustomerSummary[]) {
   const byId = new Map<string, RepairAccessCustomerSummary>();
-  [...primary, ...fallback].forEach((customer) => byId.set(customer.id, customer));
+  primary.forEach((customer) => byId.set(customer.id, customer));
+  fallback.forEach((customer) => { if (!byId.has(customer.id)) byId.set(customer.id, customer); });
   return Array.from(byId.values());
 }
 
 function CustomerSuggestions({
+  activeIndex,
+  id,
+  optionIdPrefix,
   show,
   suggestions,
   isSearching,
   onSelect
 }: {
+  activeIndex: number;
+  id: string;
+  optionIdPrefix: string;
   show: boolean;
   suggestions: RepairAccessCustomerSummary[];
   isSearching: boolean;
@@ -417,15 +486,21 @@ function CustomerSuggestions({
   if (!show) return null;
 
   return (
-    <div className="absolute left-0 right-0 top-[76px] z-20 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft">
-      {suggestions.length ? suggestions.map((customer) => (
+    <div aria-label="Clientes sugeridos" className="absolute left-0 right-0 top-[76px] z-20 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft" id={id} role="listbox">
+      {suggestions.length ? suggestions.map((customer, index) => (
         <button
-          className="block min-h-11 w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/30"
+          aria-selected={index === activeIndex}
+          className="block min-h-11 w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 aria-selected:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/30"
+          id={`${optionIdPrefix}-${customer.id}`}
           key={customer.id}
+          onPointerDown={(event) => {
+            event.preventDefault();
+          }}
           onMouseDown={(event) => {
             event.preventDefault();
           }}
           onClick={() => onSelect(customer)}
+          role="option"
           type="button"
         >
           <span className="block font-semibold text-slate-950">{customer.fullName}</span>
@@ -434,7 +509,7 @@ function CustomerSuggestions({
           </span>
         </button>
       )) : (
-        <div className="px-4 py-3 text-sm text-slate-500">
+        <div className="px-4 py-3 text-sm text-slate-500" role="status">
           {isSearching ? "Buscando cliente..." : "Sin coincidencias. Podes cargarlo como cliente nuevo."}
         </div>
       )}
@@ -454,10 +529,10 @@ function OptionalFields({ label, children }: { label: string; children: ReactNod
   );
 }
 
-function Field({ label, className, children, htmlFor }: { label: string; className?: string; children: ReactNode; htmlFor?: string }) {
+function Field({ label, className, children, htmlFor, onBlur, onKeyDown }: { label: string; className?: string; children: ReactNode; htmlFor?: string; onBlur?: FocusEventHandler<HTMLDivElement>; onKeyDown?: KeyboardEventHandler<HTMLDivElement> }) {
   if (htmlFor) {
     return (
-      <div className={className}>
+      <div className={className} onBlur={onBlur} onKeyDown={onKeyDown}>
         <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor={htmlFor}>{label}</label>
         {children}
       </div>
