@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, PackagePlus, UserRound, Truck, ClipboardCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -29,23 +29,18 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
   const zeroQuote = order.budgetAmount === 0 && order.finalAmount === 0 && (order.budgetDetail ?? "").trim().length >= 3;
   const delivered = Boolean(order.deliveredAt || order.status === "retirado");
 
-  return <section className={`min-w-0 rounded-2xl border border-slate-200 bg-white ${compact ? "p-3" : "p-5"}`} aria-label="Coordinacion de la orden">
+  return <section className={`min-w-0 bg-white ${compact ? "border-t border-slate-200 p-3" : "rounded-xl border border-slate-200 p-4"}`} aria-label="Coordinacion de la orden">
     <div className="flex flex-wrap items-start justify-between gap-3">
       <div className="min-w-0">
         <p className="text-xs font-medium text-slate-500">Proximo paso</p>
         <p className="mt-1 text-sm font-semibold text-slate-950">{nextAction}</p>
         <p className="mt-1 text-xs text-slate-500">{context.assignedTechnicianName || "Sin tecnico asignado"}{context.location ? ` · ${context.location}` : ""}{context.nextActionDate ? ` · Revisar ${formatDate(context.nextActionDate)}` : ""}</p>
       </div>
-      <span className={`rounded-full px-3 py-1 text-xs font-medium ${accepted ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
+      <span className={`max-w-full rounded-lg px-2 py-1 text-sm font-medium ${accepted ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
         {accepted ? `Autorizada: ${formatCurrency(context.approvedAmount ?? order.budgetAmount)}` : context.approvalStatus === "rejected" ? "Cliente rechazo" : context.approvalStatus === "revoked" ? "Requiere nueva autorizacion" : order.status === "presupuestado_aceptado" && context.approvalStatus === "legacy" ? "Aceptacion historica" : "Sin confirmacion vigente"}
       </span>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
-      {canManage ? <a className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-3 text-sm font-medium" href={`/api/repair-access/documents/${order.id}?kind=intake`} target="_blank" rel="noreferrer">Comprobante de ingreso</a> : null}
-      {canManage && order.budgetAmount > 0 ? <a className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-3 text-sm font-medium" href={`/api/repair-access/documents/${order.id}?kind=estimate`} target="_blank" rel="noreferrer">Presupuesto PDF</a> : null}
-      {canManage && delivered ? <a className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-3 text-sm font-medium" href={`/api/repair-access/documents/${order.id}?kind=delivery`} target="_blank" rel="noreferrer">Constancia de entrega</a> : null}
-      {canManage ? <a className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-3 text-sm font-medium" href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a> : null}
-      {canManage ? <a className="inline-flex min-h-11 items-center rounded-xl border border-slate-200 px-3 text-sm font-medium" href={`/facturacion?order=${order.id}`}>Facturar esta reparacion</a> : null}
       {canManage && !delivered && !accepted && (order.budgetAmount > 0 || zeroQuote) ? <Button className="min-h-11" type="button" onClick={() => setModal("accepted")}><CheckCircle2 className="h-4 w-4" aria-hidden="true" />{zeroQuote ? "Autorizar trabajo sin cargo" : "Cliente confirmo"}</Button> : null}
       {canManage && !delivered && !accepted ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("rejected")}>Cliente rechazo</Button> : null}
       {canManage && accepted && !delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("revoked")}>Corregir aceptacion</Button> : null}
@@ -54,8 +49,18 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       {canManage && !delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("assignment")}><UserRound className="h-4 w-4" aria-hidden="true" />Asignar y organizar</Button> : null}
       {canManage && !delivered && ["listo_para_retirar", "sin_solucion", "presupuestado_rechazado"].includes(order.status) ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("delivery")}><Truck className="h-4 w-4" aria-hidden="true" />Registrar entrega</Button> : null}
     </div>
-    {context.parts.length > 0 ? <div className="mt-4 divide-y divide-slate-100 rounded-xl border border-slate-100">
-      {context.parts.map((part) => <div key={part.id} className="flex flex-wrap items-center justify-between gap-2 p-3 text-xs">
+    {canManage ? <details className="mt-3 border-t border-slate-200 pt-2">
+      <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Documentos y cobros</summary>
+      <div className="flex flex-wrap gap-2 pt-2">
+        <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=intake`} target="_blank" rel="noreferrer">Comprobante de ingreso</a>
+        {order.budgetAmount > 0 ? <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=estimate`} target="_blank" rel="noreferrer">Presupuesto PDF</a> : null}
+        {delivered ? <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=delivery`} target="_blank" rel="noreferrer">Constancia de entrega</a> : null}
+        <a className={buttonVariants({ variant: "secondary" })} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a>
+        <a className={buttonVariants({ variant: "secondary" })} href={`/facturacion?order=${order.id}`}>Facturar esta reparacion</a>
+      </div>
+    </details> : null}
+    {context.parts.length > 0 ? <div className="mt-4 divide-y divide-slate-200 border-t border-slate-200">
+      {context.parts.map((part) => <div key={part.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm">
         <div><p className="font-semibold text-slate-800">{part.description}</p><p className="mt-1 text-slate-500">{part.receivedQuantity}/{part.quantity} recibidos · {PART_STATUS_LABELS[part.status]}{part.expectedDate ? ` · Llegada ${formatDate(part.expectedDate)}` : ""}</p></div>
         {!delivered && part.status !== "cancelled" && part.status !== "installed" && (canManage || part.receivedQuantity > part.installedQuantity) ? <Button size="sm" type="button" variant="secondary" onClick={() => setPartToManage(part)}>{canManage ? "Gestionar" : "Registrar uso"}</Button> : null}
       </div>)}
@@ -64,10 +69,10 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
     {modal ? <CoordinationDialog key={modal} title={modal === "claim" ? "Tomar responsabilidad de la orden" : modal === "part" ? "Solicitar repuesto" : modal === "assignment" ? "Responsable y proxima accion" : modal === "delivery" ? "Entrega del equipo" : modal === "accepted" ? "El cliente confirmo la reparacion" : modal === "rejected" ? "Registrar rechazo del cliente" : "Revocar aceptacion"} action={modal === "claim" ? claimRepairOrder : modal === "part" ? requestRepairPart : modal === "assignment" ? assignRepairResponsibility : modal === "delivery" ? deliverRepairOrder : confirmRepairCustomerDecision} onClose={() => setModal(null)}>
       <input name="id" value={order.id} type="hidden" /><input name="version" value={context.version} type="hidden" />
       <p className="rounded-xl bg-slate-50 p-3 text-sm">{order.repairNumber} · {order.customer.fullName}</p>
-      {modal === "claim" ? <p className="text-sm leading-6 text-slate-600">La orden se asignara a tu cuenta y quedara registrada tu responsabilidad. Si otro tecnico la tomo mientras tanto, tendras que revisar la actualizacion. Reasignar una orden ya tomada corresponde a mostrador.</p> : null}
+      {modal === "claim" ? <p className="text-sm leading-6 text-slate-600">La orden quedara a tu cargo. Mostrador puede reasignarla si ya tiene responsable.</p> : null}
       {["accepted", "rejected", "revoked"].includes(modal) ? <>
         <input name="decision" value={modal} type="hidden" />
-        <div className="rounded-xl border border-slate-200 p-4"><p className="text-xs text-slate-500">Presupuesto {context.budgetRevision ? `version ${context.budgetRevision}` : "actual"}</p><p className="mt-1 text-2xl font-semibold">{formatCurrency(order.budgetAmount)}</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{order.budgetDetail || "Sin detalle cargado"}</p></div>
+        <div className="border-y border-slate-200 py-3"><p className="text-sm text-slate-500">Presupuesto {context.budgetRevision ? `version ${context.budgetRevision}` : "actual"}</p><p className="mt-1 text-xl font-semibold">{formatCurrency(order.budgetAmount)}</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{order.budgetDetail || "Sin detalle cargado"}</p></div>
         <DialogField label="Como confirmo el cliente"><Select name="channel" options={[{ value: "presencial", label: "En el local" }, { value: "telefono", label: "Por telefono" }, { value: "whatsapp", label: "WhatsApp del negocio" }, { value: "portal", label: "Portal del cliente" }]} /></DialogField>
         <DialogField label={modal === "revoked" ? "Motivo de la correccion" : modal === "accepted" && zeroQuote ? "Motivo del trabajo sin cargo" : "Nota de la respuesta (opcional)"}><Textarea name="notes" required={modal === "revoked" || (modal === "accepted" && zeroQuote)} minLength={modal === "revoked" || (modal === "accepted" && zeroQuote) ? 3 : undefined} maxLength={2000} /></DialogField>
         <p className="text-xs text-slate-500">Se registra el usuario, la fecha y el presupuesto exacto. Esta accion no registra un cobro.</p>
@@ -96,17 +101,35 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
 
 export function DialogField({ label, children }: { label: string; children: ReactNode }) { return <label className="grid gap-2 text-sm"><span className="font-medium text-slate-700">{label}</span>{children}</label>; }
 
+function editableDialogSnapshot(form: HTMLFormElement | null) {
+  if (!form) return "";
+  return JSON.stringify(Array.from(form.elements).flatMap((control) => {
+    if (!(control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement)
+      || !control.name || control.disabled || (control instanceof HTMLInputElement && control.type === "hidden")) return [];
+    return [[control.name, control instanceof HTMLInputElement && control.type === "checkbox" ? control.checked : control.value]];
+  }).sort(([a], [b]) => String(a).localeCompare(String(b))));
+}
+
 export function CoordinationDialog({ title, action, children, onClose }: { title: string; action: (previous: ActionResult | null, form: FormData) => Promise<ActionResult>; children: ReactNode; onClose: () => void }) {
   const router = useRouter();
   const [result, submit, pending] = useActionState(action, null);
   const [operationId, setOperationId] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialSnapshot = useRef("");
+  useEffect(() => { initialSnapshot.current = editableDialogSnapshot(formRef.current); }, []);
   useEffect(() => { setOperationId(crypto.randomUUID()); }, []);
   useEffect(() => {
     if (result?.success) { window.dispatchEvent(new Event("chetech:workshop-saved")); router.refresh(); }
   }, [result, router]);
-  return <DialogShell labelledBy="coordination-title" onClose={() => { if (!pending) onClose(); }} panelClassName="max-w-xl">
-    <div className="flex items-center justify-between gap-3"><h2 id="coordination-title" className="text-xl font-semibold">{title}</h2><Button aria-label="Cerrar" type="button" variant="ghost" disabled={pending} onClick={onClose}>Cerrar</Button></div>
-    <form action={submit} data-workshop-form className="mt-5 grid gap-4">
+  function close() {
+    if (pending) return;
+    if (!result?.success && initialSnapshot.current !== editableDialogSnapshot(formRef.current)
+      && !window.confirm("Hay cambios sin guardar. Queres descartarlos y cerrar?")) return;
+    onClose();
+  }
+  return <DialogShell labelledBy="coordination-title" onClose={close} panelClassName="max-w-xl">
+    <div className="flex items-center justify-between gap-3"><h2 id="coordination-title" className="text-xl font-semibold">{title}</h2><Button aria-label="Cerrar" type="button" variant="ghost" disabled={pending} onClick={close}>Cerrar</Button></div>
+    <form ref={formRef} action={submit} data-workshop-form className="mt-4 grid gap-4">
       <input name="operationId" type="hidden" value={operationId} />
       {children}
       {result ? <p role={result.success ? "status" : "alert"} className={`rounded-xl p-3 text-sm ${result.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>{result.message}</p> : null}

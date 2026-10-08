@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { CalendarRange, CircleDollarSign, ShoppingBag, Sparkles, Trash2 } from "lucide-react";
+import { CalendarRange, Trash2 } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Textarea } from "@/components/ui/textarea";
 import { deleteSaleAction, saveSaleAction } from "@/features/sales/actions";
@@ -87,6 +89,7 @@ export function SalesList({
   const [productId, setProductId] = useState(products[0]?.id ?? "");
   const [productSearch, setProductSearch] = useState(products[0]?.label ?? "");
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
+  const [activeProductIndex, setActiveProductIndex] = useState(-1);
   const [quantity, setQuantity] = useState(1);
   const [unitPrice, setUnitPrice] = useState(products[0]?.salePrice ?? 0);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -151,6 +154,7 @@ export function SalesList({
     setProductSearch(product.label);
     setUnitPrice(product.salePrice);
     setIsProductPickerOpen(false);
+    setActiveProductIndex(-1);
   }
 
   function clearProductEntry() {
@@ -239,56 +243,10 @@ export function SalesList({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="panel-kicker">Ventas reales</p>
-              {editing ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-graphite/8 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Editando venta
-                </span>
-              ) : null}
-            </div>
-            <h1 className="panel-heading mt-3">Nueva venta rapida</h1>
-            <p className="panel-subheading mt-3">
-              Carga productos, arma el carrito y reparte cobros en una experiencia mas clara para mostrador.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[23rem]">
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <ShoppingBag className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Facturacion listada
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
-                    {formatCurrency(totalRevenue)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
-                  <CircleDollarSign className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Ganancia listada
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
-                    {formatCurrency(totalProfit)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <Card>
+        <div>
+          <h1 className="panel-heading">{editing ? `Editar venta ${editing.saleNumber}` : "Nueva venta"}</h1>
+          <p className="mt-1 text-sm text-slate-600">Agrega productos y completa el cobro antes de guardar.</p>
         </div>
 
         {message ? (
@@ -307,133 +265,150 @@ export function SalesList({
           </div>
         ) : null}
 
-        <form action={saveSaleAction} className="mt-6 space-y-5">
+        <form action={saveSaleAction} className="mt-4 space-y-4">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <input name="itemsJson" type="hidden" value={itemsJson} />
           <input name="paymentsJson" type="hidden" value={paymentsJson} />
 
-          <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-[minmax(0,2.3fr)_120px_150px_170px_140px]">
-            <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-product-search">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_100px_140px_160px_auto]">
+            <div className="min-w-0 sm:col-span-2 xl:col-span-1">
+              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="sale-product-search">
                 Producto
               </label>
               <div className="relative">
                 <Input
                   aria-autocomplete="list"
+                  aria-controls={isProductPickerOpen ? "sale-product-options" : undefined}
+                  aria-activedescendant={isProductPickerOpen && activeProductIndex >= 0 && filteredProducts[activeProductIndex] ? `sale-product-option-${filteredProducts[activeProductIndex].id}` : undefined}
                   aria-expanded={isProductPickerOpen}
                   aria-haspopup="listbox"
                   autoComplete="off"
                   id="sale-product-search"
+                  role="combobox"
                   onBlur={() => window.setTimeout(() => setIsProductPickerOpen(false), 120)}
                   onChange={(event) => {
                     setProductSearch(event.target.value);
                     setProductId("");
                     setUnitPrice(0);
                     setIsProductPickerOpen(true);
+                    setActiveProductIndex(-1);
                   }}
-                  onFocus={() => setIsProductPickerOpen(true)}
-                  placeholder="Escribi nombre o SKU para encontrar rapido"
+                  onFocus={() => { setIsProductPickerOpen(true); setActiveProductIndex(-1); }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Escape") {
+                      event.preventDefault();
+                      setIsProductPickerOpen(false);
+                      setActiveProductIndex(-1);
+                    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                      event.preventDefault();
+                      setIsProductPickerOpen(true);
+                      setActiveProductIndex((current) => event.key === "ArrowDown" ? Math.min(current + 1, filteredProducts.length - 1) : Math.max(current - 1, 0));
+                    } else if (event.key === "Enter" && isProductPickerOpen) {
+                      event.preventDefault();
+                      const option = filteredProducts[activeProductIndex];
+                      if (option) selectProduct(option);
+                    }
+                  }}
+                  placeholder="Nombre o SKU"
                   value={productSearch}
                 />
                 {isProductPickerOpen ? (
-                  <div className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-[22px] border border-graphite/8 bg-white p-2 shadow-[0_20px_40px_rgba(20,20,19,0.12)]">
+                  <div id="sale-product-options" role="listbox" aria-label="Productos disponibles" className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
                     {filteredProducts.length ? (
-                      filteredProducts.map((product) => (
+                      filteredProducts.map((product, index) => (
                         <button
-                          className="flex w-full items-center justify-between gap-3 rounded-[18px] px-3 py-3 text-left text-sm transition hover:bg-brand-100"
+                          className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 ${activeProductIndex === index ? "bg-slate-100" : ""}`}
+                          id={`sale-product-option-${product.id}`}
+                          role="option"
+                          aria-selected={activeProductIndex === index}
+                          tabIndex={-1}
                           key={product.id}
                           onMouseDown={(event) => {
                             event.preventDefault();
-                            selectProduct(product);
                           }}
+                          onClick={() => selectProduct(product)}
                           type="button"
                         >
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-slate-950">{product.label}</p>
-                            <p className="mt-1 text-xs text-slate-500">Precio sugerido {formatCurrency(product.salePrice)}</p>
+                            <p className="break-words font-medium text-slate-950">{product.label}</p>
+                            <p className="mt-1 text-sm text-slate-500">Precio sugerido {formatCurrency(product.salePrice)}</p>
                           </div>
-                          <span className="shrink-0 rounded-full border border-graphite/8 bg-white px-2 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                            Stock {product.stock}
+                          <span className="shrink-0 text-sm text-slate-500">
+                            Disponible {product.stock}
                           </span>
                         </button>
                       ))
                     ) : (
-                      <p className="px-3 py-3 text-sm text-slate-500">No encontre productos con ese texto.</p>
+                      <p className="px-3 py-3 text-sm text-slate-500">Sin resultados. Proba otro nombre o SKU.</p>
                     )}
                   </div>
                 ) : null}
               </div>
-              <p className="mt-2 text-xs text-slate-500">Stock disponible: {selectedProduct?.stock ?? 0}</p>
+              <p className="mt-2 text-sm text-slate-500">Stock disponible: {selectedProduct?.stock ?? 0}</p>
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-quantity">
+              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="sale-quantity">
                 Cantidad
               </label>
               <Input id="sale-quantity" min={1} onChange={(event) => setQuantity(Number(event.target.value))} type="number" value={quantity} />
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sale-unit-price">
-                Precio
+              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="sale-unit-price">
+                Precio unitario
               </label>
-              <Input
+              <MoneyInput
                 id="sale-unit-price"
-                min={0}
-                onChange={(event) => setUnitPrice(Number(event.target.value))}
-                step="0.01"
-                type="number"
+                onValueChange={setUnitPrice}
                 value={unitPrice}
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="saleDate">
+              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="saleDate">
                 Fecha
               </label>
               <div className="relative">
                 <CalendarRange className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                <Input className="pl-10" name="saleDate" onChange={(event) => setSaleDate(event.target.value)} type="date" value={saleDate} />
+                <Input className="pl-10" id="saleDate" name="saleDate" onChange={(event) => setSaleDate(event.target.value)} type="date" value={saleDate} />
               </div>
             </div>
 
             <div className="flex items-end">
               <Button className="w-full" disabled={!selectedProduct || quantity <= 0} onClick={addToCart} type="button">
-                Agregar
+                Agregar al carrito
               </Button>
             </div>
           </div>
 
           <div className="table-shell">
-            <div className="flex items-center justify-between border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
-              <div>
-                <p className="panel-kicker">Carrito</p>
-                <p className="mt-2 text-sm text-slate-500">Agrega uno o varios productos antes de cerrar la venta.</p>
-              </div>
-              <p className="text-2xl font-semibold tracking-[-0.05em] text-slate-950">{formatCurrency(cartTotal)}</p>
+            <div className="flex items-center justify-between border-b border-graphite/8 bg-slate-50 px-4 py-3">
+              <h2 className="text-base font-semibold text-slate-950">Carrito</h2>
+              <p className="text-lg font-semibold tabular-nums text-slate-950"><span className="mr-2 text-sm font-normal text-slate-500">Total</span>{formatCurrency(cartTotal)}</p>
             </div>
             {cart.length ? (
-              <div className="grid gap-3 p-3 lg:hidden">
+              <div className="divide-y divide-slate-200 xl:hidden">
                 {cart.map((item) => (
-                  <article className="rounded-[22px] border border-graphite/8 bg-white/86 p-4" key={item.productId}>
+                  <article className="bg-white p-4" key={item.productId}>
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="font-semibold text-slate-950">{item.label}</p>
-                        <p className="mt-1 text-xs text-slate-500">Stock visible {item.stock}</p>
+                        <p className="mt-1 text-sm text-slate-500">Stock visible {item.stock}</p>
                       </div>
                       <p className="shrink-0 font-semibold text-slate-950">{formatCurrency(item.quantity * item.unitPrice)}</p>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-                      <div className="rounded-[18px] bg-brand-50 px-3 py-2">
-                        <span className="text-xs text-slate-500">Cantidad</span>
+                      <div>
+                        <span className="text-sm text-slate-500">Cantidad</span>
                         <p className="font-semibold text-slate-800">{item.quantity}</p>
                       </div>
-                      <div className="rounded-[18px] bg-brand-50 px-3 py-2">
-                        <span className="text-xs text-slate-500">Precio</span>
+                      <div>
+                        <span className="text-sm text-slate-500">Precio</span>
                         <p className="font-semibold text-slate-800">{formatCurrency(item.unitPrice)}</p>
                       </div>
                     </div>
-                    <Button className="mt-3 w-full" onClick={() => removeFromCart(item.productId)} type="button" variant="danger">
+                    <Button className="mt-3" onClick={() => removeFromCart(item.productId)} type="button" variant="ghost">
                       <Trash2 className="h-4 w-4" />
                       Quitar
                     </Button>
@@ -442,31 +417,31 @@ export function SalesList({
               </div>
             ) : null}
             {cart.length ? (
-              <div className="hidden overflow-x-auto lg:block">
+              <div className="hidden overflow-x-auto xl:block">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-white/80 text-left text-slate-500">
+                  <thead className="bg-white text-left text-slate-500">
                     <tr>
-                      <th className="px-4 py-4 font-medium">Producto</th>
-                      <th className="px-4 py-4 font-medium">Cantidad</th>
-                      <th className="px-4 py-4 font-medium">Precio</th>
-                      <th className="px-4 py-4 font-medium">Total</th>
-                      <th className="px-4 py-4 font-medium text-right">Accion</th>
+                      <th className="px-4 py-3 font-medium">Producto</th>
+                      <th className="px-4 py-3 font-medium">Cantidad</th>
+                      <th className="px-4 py-3 font-medium">Precio</th>
+                      <th className="px-4 py-3 font-medium">Total</th>
+                      <th className="px-4 py-3 font-medium text-right">Accion</th>
                     </tr>
                   </thead>
                   <tbody>
                     {cart.map((item) => (
-                      <tr className="border-t border-graphite/8 bg-white/72" key={item.productId}>
-                        <td className="px-4 py-4">
+                      <tr className="border-t border-graphite/8 bg-white" key={item.productId}>
+                        <td className="px-4 py-3">
                           <div>
                             <p className="font-medium text-slate-950">{item.label}</p>
-                            <p className="mt-1 text-xs text-slate-500">Stock visible {item.stock}</p>
+                            <p className="mt-1 text-sm text-slate-500">Stock visible {item.stock}</p>
                           </div>
                         </td>
-                        <td className="px-4 py-4 text-slate-600">{item.quantity}</td>
-                        <td className="px-4 py-4 text-slate-600">{formatCurrency(item.unitPrice)}</td>
-                        <td className="px-4 py-4 font-semibold text-slate-950">{formatCurrency(item.quantity * item.unitPrice)}</td>
-                        <td className="px-4 py-4 text-right">
-                          <Button onClick={() => removeFromCart(item.productId)} size="sm" type="button" variant="danger">
+                        <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
+                        <td className="px-4 py-3 text-slate-600">{formatCurrency(item.unitPrice)}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-950">{formatCurrency(item.quantity * item.unitPrice)}</td>
+                        <td className="px-4 py-3 text-right">
+                          <Button onClick={() => removeFromCart(item.productId)} size="sm" type="button" variant="ghost">
                             <Trash2 className="mr-2 h-4 w-4" />
                             Quitar
                           </Button>
@@ -483,17 +458,18 @@ export function SalesList({
 
           <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px]">
             <PaymentSplitFields onChange={setPayments} payments={payments} totalAmount={cartTotal} title="Cobro de la venta" />
-            <div className="rounded-[30px] border border-graphite/8 bg-white/82 p-4">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="notes">
-                Observaciones
+            <div className="min-w-0">
+              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="notes">
+                Observaciones (opcional)
               </label>
               <Textarea
+                id="notes"
                 name="notes"
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Detalle opcional para referencia interna"
                 value={notes}
               />
-              <div className="mt-4 flex items-end gap-2">
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end">
                 <FormSubmitButton
                   className="w-full"
                   disabled={!cart.length}
@@ -507,7 +483,7 @@ export function SalesList({
                 ) : null}
               </div>
               {draft.lastSavedAt && hasUnsavedChanges ? (
-                <p aria-live="polite" className="mt-3 text-xs text-slate-500">
+                <p aria-live="polite" className="mt-3 text-sm text-slate-500">
                   Borrador de venta guardado en este dispositivo.
                 </p>
               ) : null}
@@ -517,31 +493,33 @@ export function SalesList({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 text-sm text-slate-600">
-          Mostrando las ultimas 100 ventas para sostener velocidad aunque crezca el historial.
+        <div className="space-y-2 border-b border-graphite/8 px-4 py-3">
+          <h2 className="text-base font-semibold text-slate-950">Historial de ventas</h2>
+          <p className="text-sm text-slate-600">En esta pagina: ventas {formatCurrency(totalRevenue)}, margen de productos {formatCurrency(totalProfit)}. No es utilidad neta del local.</p>
         </div>
-        <div className="grid gap-3 p-3 lg:hidden">
+        <div className="divide-y divide-slate-200 xl:hidden">
           {sales.map((sale) => (
-            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={sale.id}>
+            <article className="bg-white p-4" key={sale.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-950">{sale.saleNumber}</p>
-                  <p className="mt-1 text-xs text-slate-500">{formatDate(sale.soldAt)}</p>
+                  <p className="mt-1 text-sm text-slate-500">{formatDate(sale.soldAt)}</p>
                 </div>
-                <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(sale.subtotal)}</p>
+                <p className="shrink-0 text-lg font-semibold text-slate-950">{formatCurrency(sale.subtotal)}</p>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">
                 {sale.items.length
                   ? sale.items.map((item) => `${item.productName ?? "Producto"} x${item.quantity}`).join(", ")
                   : "Sin producto vinculado"}
               </p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">{renderPaymentSummary(sale)}</p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <p className="mt-2 text-sm leading-5 text-slate-500">{renderPaymentSummary(sale)}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 {canManageHistory ? (
                   <>
-                    <Button className="w-full" onClick={() => startEdit(sale)} type="button" variant="secondary">
+                    <Button onClick={() => startEdit(sale)} type="button" variant="secondary">
                       Editar
                     </Button>
+                    <ActionMenu label="Mas acciones">
                     <form
                       action={deleteSaleAction}
                       onSubmit={(event) => {
@@ -559,46 +537,48 @@ export function SalesList({
                         Eliminar
                       </Button>
                     </form>
+                    </ActionMenu>
                   </>
                 ) : (
-                  <p className="rounded-[18px] bg-brand-50 px-3 py-2 text-sm text-slate-500">Historial protegido</p>
+                  <p className="text-sm text-slate-500">Historial protegido</p>
                 )}
               </div>
             </article>
           ))}
         </div>
 
-        <div className="hidden overflow-x-auto lg:block">
+        <div className="hidden overflow-x-auto xl:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/80 text-left text-slate-500">
+            <thead className="bg-white text-left text-slate-500">
               <tr>
-                <th className="px-4 py-4 font-medium">Venta</th>
-                <th className="px-4 py-4 font-medium">Productos</th>
-                <th className="px-4 py-4 font-medium">Fecha</th>
-                <th className="px-4 py-4 font-medium">Total</th>
-                <th className="px-4 py-4 font-medium">Cobro</th>
-                <th className="px-4 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">Venta</th>
+                <th className="px-4 py-3 font-medium">Productos</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Cobro</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={sale.id}>
-                  <td className="px-4 py-4 font-medium text-slate-950">{sale.saleNumber}</td>
-                  <td className="px-4 py-4 text-slate-600">
+                <tr className="border-t border-graphite/8 bg-white hover:bg-slate-50" key={sale.id}>
+                  <td className="px-4 py-3 font-medium text-slate-950">{sale.saleNumber}</td>
+                  <td className="px-4 py-3 text-slate-600">
                     {sale.items.length
                       ? sale.items.map((item) => `${item.productName ?? "Producto"} x${item.quantity}`).join(", ")
                       : "Sin producto vinculado"}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">{formatDate(sale.soldAt)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(sale.subtotal)}</td>
-                  <td className="px-4 py-4 text-slate-600">{renderPaymentSummary(sale)}</td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3 text-slate-600">{formatDate(sale.soldAt)}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">{formatCurrency(sale.subtotal)}</td>
+                  <td className="px-4 py-3 text-slate-600">{renderPaymentSummary(sale)}</td>
+                  <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       {canManageHistory ? (
                         <>
                           <Button onClick={() => startEdit(sale)} size="sm" type="button" variant="secondary">
                             Editar
                           </Button>
+                          <ActionMenu label="Mas acciones">
                           <form
                             action={deleteSaleAction}
                             onSubmit={(event) => {
@@ -616,9 +596,10 @@ export function SalesList({
                               Eliminar
                             </Button>
                           </form>
+                          </ActionMenu>
                         </>
                       ) : (
-                        <p className="text-xs text-slate-500">Historial protegido</p>
+                        <p className="text-sm text-slate-500">Historial protegido</p>
                       )}
                     </div>
                   </td>

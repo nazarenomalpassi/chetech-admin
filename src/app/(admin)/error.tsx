@@ -17,7 +17,7 @@ export default function AdminError({
   const digest = error.digest ? `Codigo: ${error.digest}` : null;
 
   return (
-    <Card className="mx-auto max-w-2xl rounded-[34px] p-6 lg:p-8">
+    <Card className="mx-auto max-w-2xl p-5 lg:p-6" role="alert">
       <div className="flex flex-col gap-5 sm:flex-row sm:items-start">
         <span className="inline-flex h-14 w-14 flex-none items-center justify-center rounded-[22px] border border-rose-200 bg-rose-50 text-rose-700">
           <AlertTriangle className="h-6 w-6" />
@@ -28,10 +28,9 @@ export default function AdminError({
             No se pudieron cargar los datos.
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            La seccion no se rompio: hubo un problema al consultar o renderizar la informacion. Podes intentar de nuevo
-            o volver al dashboard para seguir trabajando.
+            Intentá cargar esta sección nuevamente. Si el problema continúa, conservá el código del error para consultarlo.
           </p>
-          {digest ? <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">{digest}</p> : null}
+          {digest ? <p className="mt-3 text-xs text-slate-600">{digest}</p> : null}
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
             <Button onClick={reset} type="button">
               <RotateCcw className="mr-2 h-4 w-4" />

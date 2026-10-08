@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { PackagePlus, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -46,9 +46,10 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
     form.reset(product ?? defaultValues);
     setSkuPreview(product?.sku ?? null);
     setMessage(null);
-  }, [form, product]);
+  }, [form, product, open]);
 
   const selectedCategoryId = form.watch("categoryId");
+  const hasChanges = form.formState.isDirty;
 
   useEffect(() => {
     if (!open || product?.id) return;
@@ -86,27 +87,23 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
     return null;
   }
 
+  function requestClose() {
+    if (hasChanges && !window.confirm("Descartar los cambios del producto?")) return;
+    onClose();
+  }
+
   return (
-    <DialogShell labelledBy="product-dialog-title" onClose={onClose} panelClassName="max-w-4xl">
+    <DialogShell labelledBy="product-dialog-title" onClose={requestClose} panelClassName="max-w-4xl">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
-              <PackagePlus className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="panel-kicker">Gestión de productos</p>
-              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950" id="product-dialog-title">
+          <div className="min-w-0">
+              <h2 className="text-xl font-semibold text-slate-950" id="product-dialog-title">
                 {product?.id ? "Editar producto" : "Nuevo producto"}
               </h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Mantené costo, precio, stock y SKU bajo una carga clara y lista para uso intensivo.
-              </p>
-            </div>
           </div>
           <button
             aria-label="Cerrar formulario de producto"
-            className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-slate-500 transition hover:bg-white"
-            onClick={onClose}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            onClick={requestClose}
             type="button"
           >
             <X className="h-5 w-5" />
@@ -114,7 +111,7 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
         </div>
 
         <form
-          className="mt-6 space-y-5"
+          className="mt-4 space-y-4"
           onSubmit={form.handleSubmit((values) =>
             startTransition(async () => {
               const result = await upsertProductAction(values);
@@ -125,75 +122,81 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
             })
           )}
         >
-          <div className="grid gap-4 lg:grid-cols-[1.1fr_1fr_0.8fr]">
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="block text-sm font-medium text-slate-500">
                 SKU
               </label>
-              <div className="mt-3 rounded-[18px] border border-graphite/8 bg-brand-50 px-4 py-3 text-sm font-semibold text-slate-800">
+              <div className="mt-2 flex min-h-11 items-center break-words rounded-xl bg-slate-50 px-3 py-2 text-sm font-medium text-slate-800">
                 {product?.id ? product.sku : skuPreview ?? "Seleccioná una categoría"}
               </div>
-              <p className={`mt-2 text-xs ${skuPreviewError ? "text-finance-expense" : "text-slate-500"}`}>
+              <p className={`mt-2 text-sm ${skuPreviewError ? "text-finance-expense" : "text-slate-500"}`}>
                 {product?.id
-                  ? "El SKU ya creado se mantiene estable durante la edición."
-                  : skuPreviewError ?? "La vista previa se confirma automáticamente al guardar."}
+                  ? "El SKU no cambia al editar."
+                  : skuPreviewError ?? "SKU definitivo al guardar."}
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="product-status">
+            <div>
+              <label className="block text-sm font-medium text-slate-500" htmlFor="product-status">
                 Estado
               </label>
               <Select
-                className="mt-3"
+                className="mt-2"
                 id="product-status"
                 options={[
                   { label: "Activo", value: "true" },
                   { label: "Inactivo", value: "false" }
                 ]}
                 value={String(form.watch("isActive"))}
-                onChange={(event) => form.setValue("isActive", event.target.value === "true")}
+                onChange={(event) => form.setValue("isActive", event.target.value === "true", { shouldDirty: true })}
               />
-              <p className="mt-2 text-xs text-slate-500">Usalo para ocultar productos sin borrar historial.</p>
+              <p className="mt-2 text-sm text-slate-500">Inactivo conserva el historial.</p>
             </div>
 
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="categoryId">
+            <div>
+              <label className="block text-sm font-medium text-slate-500" htmlFor="categoryId">
                 Categoría
               </label>
               <Select
-                className="mt-3"
+                className="mt-2"
+                id="categoryId"
+                aria-invalid={Boolean(form.formState.errors.categoryId)}
                 {...form.register("categoryId")}
                 options={[
                   { label: "Sin categoría", value: "" },
                   ...categories.map((category) => ({ label: category.name, value: category.id }))
                 ]}
               />
-              <p className="mt-2 text-xs text-slate-500">La categoría define el prefijo del SKU automático.</p>
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.categoryId?.message}</p>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="name">Nombre</label>
-              <Input {...form.register("name")} placeholder="Ej: Teclado Genius KB 117" />
-              <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.name?.message}</p>
+              <Input aria-invalid={Boolean(form.formState.errors.name)} {...form.register("name")} placeholder="Ej: Teclado Genius KB 117" />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.name?.message}</p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="cost">Costo</label>
               <Input step="0.01" type="number" {...form.register("cost", { valueAsNumber: true })} />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.cost?.message}</p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="salePrice">Precio de venta</label>
               <Input step="0.01" type="number" {...form.register("salePrice", { valueAsNumber: true })} />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.salePrice?.message}</p>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="stock">Stock inicial</label>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="stock">{product?.id ? "Stock fisico" : "Stock inicial"}</label>
               <Input type="number" {...form.register("stock", { valueAsNumber: true })} />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.stock?.message}</p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="minStock">Stock mínimo</label>
               <Input type="number" {...form.register("minStock", { valueAsNumber: true })} />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.minStock?.message}</p>
             </div>
             <div className="md:col-span-2 xl:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">Notas internas</label>
@@ -205,13 +208,13 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
           </div>
 
           {message ? (
-            <div aria-live="polite" className={message.toLowerCase().includes("error") ? "status-banner status-banner--error" : "status-banner status-banner--success"} role="status">
+            <div className="status-banner status-banner--error" role="alert">
               {message}
             </div>
           ) : null}
 
           <div className="flex flex-col-reverse gap-3 border-t border-graphite/8 pt-5 sm:flex-row sm:justify-end">
-            <Button onClick={onClose} type="button" variant="secondary">
+            <Button onClick={requestClose} type="button" variant="secondary">
               Cancelar
             </Button>
             <Button disabled={isPending} type="submit">

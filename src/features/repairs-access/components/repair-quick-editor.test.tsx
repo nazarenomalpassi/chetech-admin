@@ -84,7 +84,7 @@ describe("editor unico de reparaciones", () => {
     render(<RepairQuickEditor order={order} canManage />);
     fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
     expect((screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/Primero guarda la orden como/)).toBeTruthy();
+    expect(screen.getByText(/Primero guarda como/)).toBeTruthy();
   });
   it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("ofrece y guarda %s directamente desde la ficha", async (status) => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });

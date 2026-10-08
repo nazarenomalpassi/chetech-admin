@@ -275,18 +275,17 @@ export function RepairsAccessView({
   return (
     <div className="space-y-5">
       {message ? (
-        <p className={`rounded-3xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+        <p className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
           {message.message}
         </p>
       ) : null}
 
       {canManageIntake ? (
-        <Card className="p-2 sm:p-2">
-          <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2">
+          <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">
             {primarySections.map((section) => (
               <button
                 aria-current={activeSection === section.key ? "page" : undefined}
-                className={`min-h-11 rounded-2xl px-3 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
                 key={section.key}
                 onClick={() => navigate(section.key)}
                 type="button"
@@ -294,8 +293,8 @@ export function RepairsAccessView({
                 {section.label}
               </button>
             ))}
-            <details className="min-w-0 rounded-2xl sm:ml-auto" ref={moreOptionsRef}>
-              <summary className={`flex min-h-11 cursor-pointer items-center rounded-2xl px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
+            <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
+              <summary className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
               <div className="flex flex-wrap gap-2 pt-2">
                 {secondarySections.map((section) => (
                   <Button aria-current={activeSection === section.key ? "page" : undefined} key={section.key} onClick={() => navigate(section.key)} type="button" variant="ghost">{section.label}</Button>
@@ -303,7 +302,6 @@ export function RepairsAccessView({
               </div>
             </details>
           </nav>
-        </Card>
       ) : null}
 
       {pageInfo ? <WorkshopUpdates disabled={intakeDirty} /> : null}
@@ -374,8 +372,7 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
     <Card>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Consultas</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Vistas rapidas del taller</h2>
+          <h2 className="text-xl font-semibold text-slate-950">Consultas del taller</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
             Abri una vista filtrada para revisar esperas, entregas y garantias del taller.
           </p>
@@ -384,9 +381,9 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {queryCards.map((card) => (
-          <div className="rounded-3xl border border-slate-100 bg-slate-50 p-5" key={card.title}>
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-5" key={card.title}>
             <p className="text-sm font-medium text-slate-600">{card.title}</p>
-            <p className="mt-2 text-3xl font-semibold text-slate-950">{card.value}</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-950">{card.value}</p>
             <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4" href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}>{card.action}</Link>
           </div>
         ))}
@@ -398,11 +395,9 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
 function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessImportSummary | null }) {
   return (
     <Card>
-      <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Importacion historica</p>
-      <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Trazabilidad del Excel</h2>
+      <h2 className="text-xl font-semibold text-slate-950">Trazabilidad del Excel</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-        Resume el ultimo lote reproducible de clientes y ordenes historicas. La importacion conserva
-        cada fila original para auditoria, evita duplicados y no impacta caja.
+        Ultimo lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y no modifica caja.
       </p>
 
       {latestImport ? (
@@ -414,7 +409,7 @@ function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessI
           <ImportMetric label="Errores" value={String(latestImport.errorCount)} />
         </div>
       ) : (
-        <p className="mt-6 rounded-3xl bg-slate-50 p-5 text-sm text-slate-500">Todavia no hay importaciones registradas.</p>
+        <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">Todavia no hay importaciones registradas.</p>
       )}
 
       {latestImport ? <p className="mt-4 text-sm text-slate-500">Ultima importacion: {formatDate(latestImport.createdAt)}</p> : null}
@@ -424,9 +419,9 @@ function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessI
 
 function ImportMetric({ label, value }: { label: string; value: string }) {
   return (
-    <div className="min-w-0 rounded-3xl border border-slate-100 bg-slate-50 p-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
-      <p className="mt-2 break-words text-lg font-semibold text-slate-950">{value}</p>
+    <div className="min-w-0">
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="mt-1 break-words text-base font-semibold text-slate-950">{value}</p>
     </div>
   );
 }

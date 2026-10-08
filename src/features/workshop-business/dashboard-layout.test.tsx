@@ -36,7 +36,7 @@ describe("dashboard headline and inbox placement", () => {
     const heading = screen.getByRole("heading", { level: 1 });
     const details = screen.getByText("Bandeja del taller").closest("details")!;
     expect(heading.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(details.compareDocumentPosition(screen.getByRole("region", { name: "Metricas del periodo" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(details.compareDocumentPosition(screen.getByRole("region", { name: "Metricas del 5 oct 2026 al 5 oct 2026" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(details.open).toBe(false);
   });
 });

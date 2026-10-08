@@ -47,7 +47,7 @@ export function ReconciliationPanel({ today, balances }: { today: string; balanc
     if (history.message) setMessage(history.message);
   }
 
-  return <div className="mt-5 space-y-4">
+  return <div className="mt-4 space-y-4">
     <p className="text-sm text-slate-600">Compara el efectivo contado y los saldos verificados en cada cuenta. Una diferencia exige motivo y no ajusta el balance del sistema.</p>
     <form className="space-y-4" onSubmit={(event) => {
       event.preventDefault();
@@ -72,8 +72,8 @@ export function ReconciliationPanel({ today, balances }: { today: string; balanc
       {balances.map((account) => {
         const physical = counts[account.method];
         const difference = physical != null && physical !== "" ? (Math.round(Number(physical) * 100) - Math.round(account.balance * 100)) / 100 : null;
-        return <fieldset key={account.method} className="rounded-2xl border border-graphite/10 p-4">
-          <legend className="px-2 text-sm font-semibold">{formatCashMethod(account.method)}</legend>
+        return <fieldset key={account.method} className="border-t border-slate-200 py-4">
+          <legend className="pr-2 text-sm font-semibold">{formatCashMethod(account.method)}</legend>
           <p className="text-sm">Esperado: <strong>{formatCurrency(account.balance)}</strong></p>
           <label className="mt-3 grid gap-2 text-sm">{account.method === "efectivo" ? "Efectivo fisico contado" : "Saldo verificado en la cuenta"}
             <Input name={`physical-${account.method}`} required min="0" step="0.01" type="number" value={physical ?? ""} disabled={cannotCount} onChange={(event) => setCounts((current) => ({ ...current, [account.method]: event.target.value }))} />
@@ -90,7 +90,7 @@ export function ReconciliationPanel({ today, balances }: { today: string; balanc
     {message ? <p role="status" aria-live="polite" className="rounded-2xl bg-brand-50 p-3 text-sm">{message}</p> : null}
     <div className="space-y-3">
       <h3 className="font-semibold">Arqueos auditados</h3>
-      {records.map((record) => <article key={record.id} className="rounded-2xl border border-graphite/10 p-4 text-sm">
+      {records.map((record) => <article key={record.id} className="border-t border-slate-200 py-4 text-sm">
         <p className="font-semibold">{formatDate(record.business_date)}: cierre inmutable</p>
         <p className="mt-1 break-all text-xs text-slate-500">Registrado: {new Date(record.created_at).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} | Usuario: {record.created_by}</p>
         {record.accounts.map((account) => <div key={account.method} className="mt-3">
@@ -99,7 +99,7 @@ export function ReconciliationPanel({ today, balances }: { today: string; balanc
           {account.reason ? <p className="text-slate-500">{account.reason}</p> : null}
         </div>)}
         {record.observations ? <p className="mt-2 text-slate-600">{record.observations}</p> : null}
-        {record.amendments?.map((amendment, index) => <div key={amendment.id} className="mt-3 rounded-xl bg-brand-50 p-3">
+        {record.amendments?.map((amendment, index) => <div key={amendment.id} className="mt-3 border-l-2 border-slate-200 pl-3">
           <p className="font-semibold">Revision {index + 1}: {amendment.kind === "reopened" ? "Reapertura" : "Cierre corregido"}</p>
           <p>Motivo: {amendment.reason}</p><p className="break-all text-xs text-slate-500">Usuario: {amendment.created_by} | {new Date(amendment.created_at).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</p>
           {amendment.kind === "closed" ? amendment.accounts.map((account) => <p key={account.method}>{formatCashMethod(account.method)}: verificado {formatCurrency(account.physical)}, diferencia {formatCurrency(account.difference)}. {account.reason}</p>) : null}

@@ -14,16 +14,25 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("/brand/SourceSans3VF-Upright.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+}
+
 :root {
   color-scheme: light;
   --font-brand: "Montech", "Input Sans", sans-serif;
-  --font-sans: "Input Sans", sans-serif;
-  --canvas: oklch(0.972 0.004 95);
+  --font-sans: "Source Sans 3", "Input Sans", sans-serif;
+  --canvas: #f5f6f5;
   --canvas-strong: oklch(0.948 0.005 95);
   --surface: oklch(0.99 0.002 95);
   --surface-muted: oklch(0.975 0.004 95);
   --surface-subtle: oklch(0.958 0.006 95);
-  --line: oklch(0.89 0.01 95);
+  --line: #dfe3e0;
+  --control-line: #8d9690;
   --line-strong: oklch(0.78 0.01 95);
   --text: oklch(0.225 0.008 95);
   --text-soft: oklch(0.51 0.011 95);
@@ -38,9 +47,11 @@
   --warning-soft: oklch(0.96 0.02 85);
   --danger: oklch(0.64 0.18 20);
   --danger-soft: oklch(0.96 0.02 20);
-  --shadow-soft: 0 22px 48px rgba(27, 27, 25, 0.08);
-  --shadow-card: 0 8px 24px rgba(27, 27, 25, 0.055);
-  --shadow-pop: 0 28px 48px rgba(27, 27, 25, 0.12);
+  --shadow-soft: 0 2px 8px rgba(27, 27, 25, 0.04);
+  --shadow-card: 0 1px 2px rgba(27, 27, 25, 0.025);
+  --shadow-pop: 0 12px 36px rgba(27, 27, 25, 0.12);
+  --radius-control: 0.5rem;
+  --radius-panel: 0.875rem;
 }
 
 *,
@@ -63,13 +74,7 @@ body {
   font-family: var(--font-sans);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  background:
-    radial-gradient(circle at top right, rgba(16, 18, 23, 0.05), transparent 24%),
-    radial-gradient(circle at 10% 12%, rgba(16, 18, 23, 0.025), transparent 18%),
-    linear-gradient(90deg, rgba(29, 29, 27, 0.018) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(29, 29, 27, 0.018) 1px, transparent 1px),
-    linear-gradient(180deg, #fafaf8 0%, #f1f1ec 48%, #f7f7f4 100%);
-  background-size: auto, auto, 24px 24px, 24px 24px, auto;
+  background: var(--canvas);
 }
 
 img,
@@ -77,17 +82,6 @@ svg,
 video,
 canvas {
   max-width: 100%;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.6;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 18%),
-    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.55), transparent 22%);
 }
 
 .font-brand {
@@ -149,17 +143,7 @@ textarea {
 
 .admin-main {
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-@keyframes surface-in {
-  from {
-    opacity: 0;
-    transform: translateY(10px) scale(0.995);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  scroll-margin-top: 5rem;
 }
 
 @keyframes shimmer {
@@ -172,38 +156,28 @@ textarea {
 }
 
 .page-shell {
-  @apply space-y-5 lg:space-y-6;
-  animation: surface-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  @apply space-y-4 lg:space-y-5;
 }
 
 .panel-kicker {
-  @apply text-[0.68rem] font-semibold uppercase tracking-[0.34em] text-slate-500;
+  @apply text-xs font-medium text-slate-600;
 }
 
 .panel-heading {
-  @apply mt-2 text-[2rem] font-semibold tracking-[-0.04em] text-slate-950;
+  @apply mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-950;
 }
 
 .panel-subheading {
-  @apply mt-2 max-w-[72ch] text-sm leading-6 text-slate-500;
+  @apply mt-1 max-w-[72ch] text-sm leading-6 text-slate-600;
 }
 
 .metric-tile {
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
-  border: 1px solid rgba(29, 29, 27, 0.1);
-  background: rgba(255, 255, 255, 0.9);
-  padding: 1.1rem;
-  box-shadow: var(--shadow-card);
-}
-
-.metric-tile::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.68), transparent 38%);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: #fff;
+  padding: 1rem;
 }
 
 .metric-tile > * {
@@ -213,10 +187,9 @@ textarea {
 
 .table-shell {
   overflow: hidden;
-  border-radius: 24px;
-  border: 1px solid rgba(29, 29, 27, 0.1);
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: var(--shadow-card);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--line);
+  background: #fff;
 }
 
   .table-shell .overflow-x-auto {
@@ -227,26 +200,78 @@ textarea {
 
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
-  background: rgba(248, 248, 245, 0.96);
-  padding: 1rem 1.25rem;
+  background: #fafbf9;
+  padding: 0.875rem 1rem;
 }
 
 .empty-panel {
-  border-radius: 28px;
+  border-radius: var(--radius-panel);
   border: 1px dashed rgba(29, 29, 27, 0.15);
   background: rgba(255, 255, 255, 0.7);
-  padding: 2rem 1.25rem;
+  padding: 1.5rem 1rem;
   font-size: 0.875rem;
   line-height: 1.5rem;
   color: rgb(100 116 139);
 }
 
 .status-banner {
-  border-radius: 22px;
+  border-radius: var(--radius-control);
   border-width: 1px;
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+}
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-180%);
+  border-radius: var(--radius-control);
+  background: #fff;
+  padding: 0.75rem 1rem;
+  color: var(--graphite);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+  outline: 2px solid var(--graphite);
+}
+
+.table-shell th {
+  background: #fafbf9;
+  color: #475569;
+  font-size: 0.8125rem;
+}
+
+.table-shell tbody tr:hover {
+  background: #fafbf9;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--graphite);
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible,
+summary:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--graphite);
+  outline-offset: 3px;
+}
+
+[data-navigation-theme="dark"] a:focus-visible {
+  outline-color: white;
+}
+
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea {
+    font-size: 1rem;
+  }
+  button, summary {
+    min-height: 2.75rem;
+  }
 }
 
 .status-banner--success {
@@ -289,35 +314,22 @@ textarea {
 }
 
 @media (max-width: 640px) {
-  body {
-    background-size: auto, auto, 18px 18px, 18px 18px, auto;
-  }
-
   .page-shell {
     @apply space-y-3;
   }
 
-  .panel-kicker {
-    letter-spacing: 0.22em;
-  }
-
   .panel-heading {
     font-size: 1.5rem;
-    line-height: 1.08;
+    line-height: 1.2;
   }
 
   .panel-subheading {
-    font-size: 0.84rem;
+    font-size: 0.875rem;
     line-height: 1.55;
   }
 
   .metric-tile {
-    border-radius: 22px;
-    padding: 1rem;
-  }
-
-  .table-shell {
-    border-radius: 24px;
+    padding: 0.875rem;
   }
 
   .table-toolbar {
@@ -342,13 +354,9 @@ textarea {
   }
 
   .empty-panel {
-    border-radius: 22px;
     padding: 1.25rem 1rem;
   }
 
-  textarea {
-    min-height: 7rem;
-  }
 }
 
 @media (display-mode: standalone) {

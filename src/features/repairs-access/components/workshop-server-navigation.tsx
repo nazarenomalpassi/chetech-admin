@@ -77,16 +77,16 @@ export function WorkshopServerNavigation({ pageInfo, search, status, warranty, i
     router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
   }
   function first() { const p = navigationParams(); p.delete("cursor"); router.push(`/reparaciones-access?${p}` as Route, { scroll: false }); }
-  return <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3">
-    <div className="min-w-48"><Select aria-label="Vista de trabajo" value={pageInfo.scope} onChange={(e) => setScope(e.target.value)} options={[
+  return <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
+    <label className="grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 sm:w-auto sm:min-w-48"><span>Vista de trabajo</span><Select aria-label="Vista de trabajo" value={pageInfo.scope} onChange={(e) => setScope(e.target.value)} options={[
       { value: "all", label: "Todas las ordenes" }, { value: "mine", label: "Mis ordenes" },
       { value: "unassigned", label: "Sin responsable" }, { value: "approved", label: "Autorizadas" },
       { value: "parts", label: "Faltan repuestos" }, { value: "waiting_customer", label: "Esperando cliente" },
       { value: "ready", label: "Listas para retirar" }, { value: "return", label: "Pendientes de devolver" },
       { value: "overdue", label: "Revision vencida" }
-    ]} /></div>
-    <p className="text-xs text-slate-500">{pageInfo.total} ordenes coincidentes · hasta {pageInfo.pageSize} por pagina</p>
-    <div className="flex gap-2">
+    ]} /></label>
+    <p className="py-3 text-sm text-slate-500">{pageInfo.total} ordenes · {pageInfo.pageSize} por pagina</p>
+    <div className="flex flex-wrap gap-2">
       {pageInfo.cursor ? <Button variant="secondary" type="button" onClick={first}>Primera pagina</Button> : null}
       <Button variant="secondary" type="button" disabled={!pageInfo.nextCursor} onClick={next}>Siguiente</Button>
     </div>

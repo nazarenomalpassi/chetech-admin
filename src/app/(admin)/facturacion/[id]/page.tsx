@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
 import { PrintButton } from "@/features/invoices/components/print-button";
 import { FiscalInvoicePanel } from "@/features/fiscal";
 import { formatInvoiceSource } from "@/features/invoices/labels";
@@ -39,7 +40,7 @@ export default async function InvoiceDetailPage({
         </Link>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Link
-            className="inline-flex h-11 w-full items-center justify-center rounded-full border border-graphite/10 bg-white px-4 text-sm font-medium text-slate-950 shadow-sm transition hover:bg-slate-50 sm:h-10 sm:w-auto"
+            className={buttonVariants({ variant: "secondary" })}
             href={`/api/invoices/${invoice.id}/pdf`}
           >
             Descargar PDF
@@ -60,13 +61,15 @@ export default async function InvoiceDetailPage({
             <img
               alt="Chetech"
               className="h-auto w-44"
+              width={176}
+              height={52}
               src="/brand/chetech-horizontal-black.svg"
             />
             <h1 className="mt-6 text-3xl font-semibold text-slate-950">Comprobante interno</h1>
             <p className="mt-2 text-sm text-slate-500">No valido como factura fiscal.</p>
           </div>
-          <div className="rounded-3xl border border-graphite/10 bg-brand-100 px-5 py-4 text-left md:text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-fog">Documento interno</p>
+          <div className="rounded-xl border border-line bg-brand-50 px-4 py-3 text-left md:text-right">
+            <p className="text-sm text-slate-600">Documento interno</p>
             <p className="text-2xl font-semibold text-slate-950">{invoice.invoiceNumber}</p>
             <p className="mt-1 text-sm text-slate-500">{formatDate(invoice.createdAt)}</p>
             <Badge className="mt-3" variant={invoice.status === "pagado" ? "success" : invoice.status === "parcial" ? "warning" : invoice.status === "anulado" ? "danger" : "default"}>
@@ -75,7 +78,7 @@ export default async function InvoiceDetailPage({
           </div>
         </div>
 
-        {invoice.fiscalReference ? <div className="invoice-section mt-6 rounded-3xl border border-graphite/10 p-5">
+        {invoice.fiscalReference ? <div className="invoice-section mt-6 rounded-xl border border-line p-4">
           <h2 className="font-semibold">Referencia fiscal externa</h2>
           <p className="mt-2 break-words text-sm">{invoice.fiscalProvider}: {invoice.fiscalReference}</p>
           {invoice.fiscalIssuedAt ? <p className="mt-1 text-sm">Emitida: {formatDate(invoice.fiscalIssuedAt)}</p> : null}
@@ -97,14 +100,14 @@ export default async function InvoiceDetailPage({
 
         <div className="invoice-section mt-8 grid gap-3 md:hidden print:hidden">
           {invoice.items.map((item: any) => (
-            <article className="rounded-3xl border border-slate-100 bg-white px-4 py-4" key={item.id}>
+            <article className="rounded-xl border border-line bg-white p-4" key={item.id}>
               <p className="font-semibold text-slate-950">{item.description}</p>
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm text-slate-600">
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div>
                   <span className="text-xs text-slate-400">Cantidad</span>
                   <p className="font-semibold text-slate-800">{item.quantity}</p>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div>
                   <span className="text-xs text-slate-400">Precio</span>
                   <p className="font-semibold text-slate-800">{formatCurrency(item.unitPrice)}</p>
                 </div>
@@ -129,8 +132,8 @@ export default async function InvoiceDetailPage({
                 <tr className="border-t border-slate-100" key={item.id}>
                   <td className="px-4 py-3 text-slate-700">{item.description}</td>
                   <td className="px-4 py-3 text-slate-700">{item.quantity}</td>
-                  <td className="px-4 py-3 text-slate-700">{formatCurrency(item.unitPrice)}</td>
-                  <td className="px-4 py-3 text-slate-700">{formatCurrency(item.total)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{formatCurrency(item.unitPrice)}</td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-700">{formatCurrency(item.total)}</td>
                 </tr>
               ))}
             </tbody>
@@ -138,7 +141,7 @@ export default async function InvoiceDetailPage({
         </div>
 
         <div className="invoice-section mt-8 grid gap-4 md:grid-cols-[1fr_320px]">
-          <div className="rounded-3xl border border-graphite/10 bg-white p-5">
+          <div className="rounded-xl border border-line bg-white p-4">
             <h2 className="font-semibold text-slate-950">Operacion registrada</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Emitir o reimprimir este documento no registra dinero ni mueve stock. Los cobros provienen de la operacion vinculada. No es una factura fiscal.
@@ -147,7 +150,7 @@ export default async function InvoiceDetailPage({
             {invoice.payments.length ? invoice.payments.map((payment: any) => <p className="mt-2 text-sm" key={`${payment.source}:${payment.id}`}>{formatDate(payment.paymentDate)} / {formatCashMethod(payment.method)} / {formatCurrency(payment.amount)}</p>) : <p className="mt-2 text-sm text-slate-600">Sin cobros efectivos.</p>}
             {invoice.status === "anulado" ? <p className="mt-3 text-sm">Anular el documento no revierte los pagos de la operacion.</p> : null}
           </div>
-          <div className="invoice-totals rounded-3xl bg-slate-50 p-5">
+          <div className="invoice-totals rounded-xl bg-slate-50 p-4 tabular-nums">
             <div className="flex justify-between py-2">
               <span>Subtotal</span>
               <strong>{formatCurrency(invoice.subtotal)}</strong>

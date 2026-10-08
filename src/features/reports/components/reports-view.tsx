@@ -171,7 +171,7 @@ function GoalCard({
   const reached = progress.actual >= progress.target;
 
   return (
-    <div className="rounded-3xl border border-slate-100 bg-white/70 p-5">
+    <div className="min-w-0 border-t border-slate-200 py-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <p className="text-sm text-slate-500">{title}</p>
@@ -179,7 +179,7 @@ function GoalCard({
         </div>
         <Badge variant={reached ? "success" : "warning"}>{reached ? "Meta cumplida" : `${progress.progress.toFixed(0)}%`}</Badge>
       </div>
-      <div aria-label={`Avance de ${title}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.max(0, progressWidth)} aria-valuetext={`${progress.progress.toFixed(0)}% del objetivo`} className="mt-4 h-3 overflow-hidden rounded-full bg-slate-100" role="progressbar">
+      <div aria-label={`Avance de ${title}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.max(0, progressWidth)} aria-valuetext={`${progress.progress.toFixed(0)}% del objetivo`} className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar">
         <div
           className={cn("h-full rounded-full", reached ? "bg-emerald-500" : "bg-graphite")}
           style={{ width: `${progressWidth}%` }}
@@ -203,8 +203,8 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
   const { metrics, range, monthlyComparison, monthlyGoals, rankings, sellerSummary, technicianSummary } = data;
   const metricCards = [
     { label: "Ventas del periodo", value: metrics.salesTotal, icon: TrendingUp, tone: "income", description: "Importe registrado en ventas" },
-    { label: "Ganancia de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Ventas menos costo de productos" },
-    { label: "Reparaciones facturadas", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Servicio tecnico registrado" },
+    { label: "Ganancia bruta de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Ventas menos costo de productos" },
+    { label: "Importe declarado en reparaciones", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Importes declarados; no equivale a cobros" },
     { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
     { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
     { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del periodo" }
@@ -213,25 +213,23 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
   const exportQuery = `from=${range.from}&to=${range.to}`;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <Card>
-        <div className="flex flex-col gap-4 min-[1600px]:flex-row min-[1600px]:items-end min-[1600px]:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Bloque profesional</p>
-            <h2 className="text-2xl font-semibold text-slate-950">Reportes operativos</h2>
+            <h1 className="text-2xl font-semibold text-slate-950">Reportes</h1>
             <p className="mt-2 max-w-2xl text-sm text-slate-500">
-              Revisa rendimiento del local, compara operaciones por quien las registro y exporta
-              cada modulo con el mismo rango que estas mirando.
+              Compara resultados y exporta los movimientos del periodo.
             </p>
           </div>
           <form className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto]">
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="from">Desde</label>
-              <Input defaultValue={range.from} name="from" type="date" />
+              <Input defaultValue={range.from} id="from" name="from" type="date" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="to">Hasta</label>
-              <Input defaultValue={range.to} name="to" type="date" />
+              <Input defaultValue={range.to} id="to" name="to" type="date" />
             </div>
             <div className="flex items-end">
               <button className={cn(buttonVariants(), "w-full sm:w-auto")} type="submit">
@@ -248,10 +246,10 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             </div>
           </form>
         </div>
-        <div className="mt-4 rounded-2xl border border-graphite/10 bg-white/70 px-4 py-3 text-sm text-slate-600">
+        <div className="mt-3 text-sm text-slate-600">
           {range.isToday
-            ? "Rango actual: hoy."
-            : `Rango actual: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
+            ? `Periodo: ${formatDate(range.today)}.`
+            : `Periodo: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
         </div>
       </Card>
 
@@ -262,17 +260,16 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Lectura de negocio</p>
-            <h3 className="text-xl font-semibold text-slate-950">Mes actual vs mes anterior</h3>
+            <h2 className="text-xl font-semibold text-slate-950">Mes actual vs mes anterior</h2>
             <p className="mt-1 text-sm text-slate-500">
               {monthlyComparison.currentLabel} contra {monthlyComparison.previousLabel}.
             </p>
           </div>
-          <Badge variant="warning">Comparativa mensual automatica</Badge>
+          <p className="text-sm text-slate-500">Comparacion mensual, independiente del rango.</p>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {monthlyComparison.rows.map((row) => (
-            <div key={row.key} className="rounded-3xl border border-slate-100 bg-white/70 p-5">
+            <div key={row.key} className="min-w-0 border-t border-slate-200 py-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
                   <p className="text-sm text-slate-500">{row.label}</p>
@@ -284,7 +281,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                   trend={row.variation.trend}
                 />
               </div>
-              <div className="mt-4 rounded-2xl border border-slate-100 bg-[#fbfbf8] px-4 py-3 text-sm text-slate-600">
+              <div className="mt-3 space-y-2 text-sm text-slate-600">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>{monthlyComparison.currentLabel}</span>
                   <span className="font-semibold text-slate-950">{formatCurrency(row.current)}</span>
@@ -303,7 +300,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm text-slate-500">Objetivos mensuales</p>
-            <h3 className="text-xl font-semibold text-slate-950">Avance contra meta</h3>
+            <h2 className="text-xl font-semibold text-slate-950">Avance contra meta</h2>
             <p className="mt-1 text-sm text-slate-500">
               Objetivos tomados desde Configuracion para {monthlyGoals.label}.
             </p>
@@ -323,20 +320,19 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
 
       <div className="grid gap-4 xl:grid-cols-[1fr_1fr_0.9fr]">
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Ventas por vendedor</p>
-              <h3 className="text-xl font-semibold text-slate-950">Ranking del periodo</h3>
+              <h2 className="text-xl font-semibold text-slate-950">Ventas por vendedor</h2>
             </div>
             <Badge>{sellerSummary.length} perfiles</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {sellerSummary.length ? (
               sellerSummary.map((row) => (
-                <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
+                <div key={row.label} className="border-b border-slate-200 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="rounded-2xl bg-brand-100 p-2 text-graphite">
+                      <div className="text-slate-500">
                         <UserRound className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
@@ -355,10 +351,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Operaciones por quien las registro</p>
-              <h3 className="text-xl font-semibold text-slate-950">Registro financiero del periodo</h3>
+              <h2 className="text-xl font-semibold text-slate-950">Reparaciones por quien las registro</h2>
               <p className="mt-2 text-xs text-slate-500">Muestra importes declarados, no dinero cobrado. El responsable tecnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
             </div>
             <Badge>{technicianSummary.length} perfiles</Badge>
@@ -366,10 +361,10 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           <div className="mt-4 space-y-3">
             {technicianSummary.length ? (
               technicianSummary.map((row) => (
-                <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
+                <div key={row.label} className="border-b border-slate-200 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="rounded-2xl bg-brand-100 p-2 text-graphite">
+                      <div className="text-slate-500">
                         <Wrench className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
@@ -389,10 +384,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
 
         <Card className="space-y-4">
           <div>
-            <p className="text-sm text-slate-500">Caja consolidada</p>
-            <h3 className="text-xl font-semibold text-slate-950">Lectura rapida del periodo</h3>
+            <h2 className="text-xl font-semibold text-slate-950">Resultado de caja del periodo</h2>
           </div>
-          <div className="space-y-3 rounded-3xl border border-slate-100 bg-white/70 p-4">
+          <div className="space-y-3 border-t border-slate-200 pt-4">
             <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
               <span>Facturacion total</span>
               <span className="font-semibold text-slate-950">{formatCurrency(metrics.invoicesTotal)}</span>
@@ -422,10 +416,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Ranking comercial</p>
-              <h3 className="text-xl font-semibold text-slate-950">Top productos del periodo</h3>
+              <h2 className="text-xl font-semibold text-slate-950">Top productos del periodo</h2>
             </div>
             <Badge variant="warning">
               <Trophy className="mr-1 h-3.5 w-3.5" />
@@ -435,7 +428,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           <div className="mt-4 space-y-3">
             {rankings.products.length ? (
               rankings.products.map((row) => (
-                <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
+                <div key={row.label} className="border-b border-slate-200 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900">{row.label}</p>
@@ -455,17 +448,16 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </Card>
 
         <Card>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Ranking por categoria</p>
-              <h3 className="text-xl font-semibold text-slate-950">Que familia mueve mas plata</h3>
+              <h2 className="text-xl font-semibold text-slate-950">Ventas por categoria</h2>
             </div>
             <Badge>Por facturacion</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {rankings.categories.length ? (
               rankings.categories.map((row) => (
-                <div key={row.label} className="rounded-2xl border border-slate-100 px-4 py-3">
+                <div key={row.label} className="border-b border-slate-200 py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="font-medium text-slate-900">{row.label}</p>
@@ -486,10 +478,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       </div>
 
       <Card>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm text-slate-500">Exportaciones por modulo</p>
-            <h3 className="text-xl font-semibold text-slate-950">Descargas limpias para gestion</h3>
+            <h2 className="text-xl font-semibold text-slate-950">Exportar movimientos del periodo</h2>
           </div>
           {canExport ? (
             <Badge variant="success">Admin habilitado</Badge>
@@ -501,15 +492,15 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           {EXPORT_MODULES.map((module) => (
             <div
               key={module.slug}
-              className="flex h-full flex-col justify-between rounded-3xl border border-slate-100 bg-white/70 p-5"
+              className="flex h-full flex-col justify-between min-w-0 border-t border-slate-200 py-4"
             >
               <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">{module.title}</p>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{module.description}</p>
+                <p className="text-sm font-semibold text-slate-500">{module.title}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{module.description}</p>
               </div>
               {canExport ? (
                 <a
-                  className={cn(buttonVariants({ variant: "secondary" }), "mt-5 w-full justify-center")}
+                  className={cn(buttonVariants({ variant: "secondary" }), "mt-3 w-full justify-center")}
                   href={`/api/reportes/${module.slug}?${exportQuery}`}
                 >
                   <Download className="mr-2 h-4 w-4" />

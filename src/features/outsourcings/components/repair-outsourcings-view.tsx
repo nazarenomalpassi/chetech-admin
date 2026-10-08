@@ -1,15 +1,17 @@
 "use client";
 
-import type React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { MapPin, PackageCheck, Search, Truck, Undo2 } from "lucide-react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { OperationsPagination } from "@/features/visits/components/operations-pagination";
 import type { PaginationMeta } from "@/lib/pagination";
 import { OutsourcingOperations } from "@/features/outsourcings/components/outsourcing-operations";
@@ -115,43 +117,42 @@ export function RepairOutsourcingsView({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <Card>
+        <div className="space-y-4">
           <div className="max-w-3xl">
-            <p className="panel-kicker">Control externo</p>
-            <h1 className="panel-heading mt-3">Terciarizaciones</h1>
-            <p className="panel-subheading mt-3">
-              Registra las ordenes de reparacion que se llevan a talleres externos y controla donde esta cada equipo.
-              Esta seccion no impacta caja ni pagos.
+            <h1 className="text-2xl font-semibold text-slate-950">Terciarizaciones</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni entrega al cliente.
             </p>
-            <p className="mt-2 text-xs text-slate-500">Indicadores de todo el resultado filtrado. Historial completo paginado, incluidas anuladas.</p>
+            <p className="mt-1 text-sm text-slate-500">Indicadores de todo el resultado filtrado.</p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[34rem]">
-            <MetricCard icon={<Truck className="h-4 w-4" />} label="En talleres externos" value={summary.active} />
-            <MetricCard icon={<PackageCheck className="h-4 w-4" />} label="Buscadas" value={summary.retrieved} />
-            <MetricCard icon={<MapPin className="h-4 w-4" />} label="Talleres" value={summary.workshops} />
-            <MetricCard icon={<Undo2 className="h-4 w-4" />} label="Llevadas hoy" value={summary.sentToday} />
-            <MetricCard icon={<Truck className="h-4 w-4" />} label="Promesas vencidas" value={summary.overdue} />
-            <MetricCard icon={<PackageCheck className="h-4 w-4" />} label="Retornos sin controlar" value={summary.pendingQuality} />
-          </div>
+          <dl className="grid grid-cols-2 gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-3 xl:grid-cols-6">
+            <SummaryValue label="En talleres externos" value={summary.active} />
+            <SummaryValue label="Retornadas al local" value={summary.retrieved} />
+            <SummaryValue label="Talleres" value={summary.workshops} />
+            <SummaryValue label="Enviadas hoy" value={summary.sentToday} />
+            <SummaryValue label="Promesas vencidas" value={summary.overdue} />
+            <SummaryValue label="Control pendiente" value={summary.pendingQuality} />
+          </dl>
         </div>
 
         {message ? (
-          <div className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div role={message.success ? "status" : "alert"} aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
             {message.message}
           </div>
         ) : null}
 
         <form action={saveRepairOutsourcingAction} className="mt-6 space-y-4">
+          <h2 className="text-lg font-semibold">Registrar envio a taller externo</h2>
           <input name="returnTo" type="hidden" value={returnTo} />
           <input name="repairAccessOrderId" type="hidden" value={selectedOrder?.id ?? ""} />
 
-          <div className="rounded-[30px] border border-brand-100 bg-brand-50/70 p-4">
+          <div className="border-t border-graphite/10 pt-4">
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <label>
-                <span className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Llamar orden de Reparaciones
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Numero de orden REP
                 </span>
                 <Input
                   onChange={(event) => setOrderNumber(event.target.value)}
@@ -170,18 +171,18 @@ export function RepairOutsourcingsView({
               </Button>
             </div>
             {lookupStatus.message ? (
-              <p className={`mt-3 rounded-[22px] px-4 py-3 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+              <p role={lookupStatus.success || lookupStatus.loading ? "status" : "alert"} aria-live="polite" className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}>
                 {lookupStatus.message}
               </p>
             ) : (
               <p className="mt-3 text-sm text-slate-500">
-                Al cargar una REP se trae cliente, telefono, equipo y falla para evitar escribir datos duplicados.
+                Carga la REP para traer el cliente, equipo y falla.
               </p>
             )}
           </div>
 
           {selectedOrder ? (
-            <div className="grid gap-3 rounded-[30px] border border-graphite/8 bg-white/82 p-4 lg:grid-cols-4">
+            <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoBlock label="Orden" value={selectedOrder.repairNumber} />
               <InfoBlock label="Cliente" value={selectedOrder.customerName} helper={selectedOrder.customerPhone || selectedOrder.customerDni} />
               <InfoBlock label="Equipo" value={selectedOrder.device || "Equipo"} helper={selectedOrder.issueDescription} />
@@ -189,13 +190,10 @@ export function RepairOutsourcingsView({
             </div>
           ) : null}
 
-          <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 lg:grid-cols-[minmax(0,1fr)_220px]">
-            <label className="grid gap-2 text-sm">Responsable del seguimiento<Input name="responsibleName" required maxLength={120} placeholder="Persona del local que consulta al tercero" /></label>
-            <label className="grid gap-2 text-sm">Fecha prometida<Input name="promisedAt" type="date" min={sentAt} /></label>
-            <label className="grid gap-2 text-sm">Costo previsto (opcional)<Input name="expectedCost" type="number" min="0" step="0.01" placeholder="Desconocido" /></label>
+          <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Lugar donde se llevo
+              <label htmlFor="workshopName" className="mb-2 block text-sm font-medium text-slate-700">
+                Taller externo
               </label>
               <Input
                 name="workshopName"
@@ -206,17 +204,19 @@ export function RepairOutsourcingsView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Fecha
+              <label htmlFor="sentAt" className="mb-2 block text-sm font-medium text-slate-700">
+                Fecha de envio
               </label>
               <Input aria-label="Fecha de envio al taller" name="sentAt" onChange={(event) => setSentAt(event.target.value)} type="date" value={sentAt} />
             </div>
-            <div className="lg:col-span-2">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            <label className="grid gap-2 text-sm">Responsable del seguimiento<Input name="responsibleName" required maxLength={120} placeholder="Persona del local que consulta al tercero" /></label>
+            <label className="grid gap-2 text-sm">Fecha prometida<Input name="promisedAt" type="date" min={sentAt} /></label>
+            <label className="grid gap-2 text-sm">Costo previsto (opcional)<Input name="expectedCost" type="number" min="0" step="0.01" placeholder="Desconocido" /></label>
+            <div className="sm:col-span-2">
+              <label htmlFor="notes" className="mb-2 block text-sm font-medium text-slate-700">
                 Observaciones
               </label>
-              <textarea
-                className="min-h-24 w-full rounded-[22px] border border-graphite/10 bg-white/90 px-4 py-3 text-sm outline-none transition focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
+              <Textarea
                 name="notes"
                 aria-label="Observaciones de la terciarizacion"
                 onChange={(event) => setNotes(event.target.value)}
@@ -238,14 +238,14 @@ export function RepairOutsourcingsView({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
-          <form className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="border-b border-graphite/10 px-4 py-3">
+          <form className="grid items-end gap-3 md:grid-cols-2 min-[1600px]:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]">
             <div className="max-w-lg">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              <label htmlFor="search" className="mb-2 block text-sm font-medium text-slate-700">
                 Buscar terciarizacion
               </label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <Input
                   aria-label="Buscar terciarizaciones por orden, cliente, equipo o taller"
                   className="pl-10"
@@ -255,42 +255,43 @@ export function RepairOutsourcingsView({
                 />
               </div>
             </div>
-            <Select aria-label="Estado de terciarizacion" name="outsourceStatus" defaultValue={filters.status} options={[{ value: "en_taller", label: "En taller" }, { value: "retirado", label: "Buscadas" }, { value: "vencidas", label: "Vencidas" }, { value: "cancelado", label: "Anuladas" }, { value: "todos", label: "Todas" }]} />
-            <Input aria-label="Fecha de envio" type="date" name="date" defaultValue={filters.date} />
-            <Select aria-label="Periodo de envios" name="view" defaultValue={filters.view} options={[{ value: "all", label: "Todo / fecha exacta" }, { value: "day", label: "Dia" }, { value: "week", label: "Semana (lunes a domingo)" }]} />
-            <div className="flex gap-2"><Button type="submit">Filtrar</Button><Link className="inline-flex min-h-11 items-center underline" href="/terciarizaciones">Limpiar</Link></div>
+            <label className="grid gap-2 text-sm">Estado<Select aria-label="Estado de terciarizacion" name="outsourceStatus" defaultValue={filters.status} options={[{ value: "en_taller", label: "En taller" }, { value: "retirado", label: "Retornadas al local" }, { value: "vencidas", label: "Vencidas" }, { value: "cancelado", label: "Anuladas" }, { value: "todos", label: "Todas" }]} /></label>
+            <label className="grid gap-2 text-sm">Fecha de envio<Input aria-label="Fecha de envio" type="date" name="date" defaultValue={filters.date} /></label>
+            <label className="grid gap-2 text-sm">Periodo<Select aria-label="Periodo de envios" name="view" defaultValue={filters.view} options={[{ value: "all", label: "Todo / fecha exacta" }, { value: "day", label: "Dia" }, { value: "week", label: "Semana (lunes a domingo)" }]} /></label>
+            <div className="flex flex-wrap gap-2"><Button type="submit">Filtrar</Button><Link className="inline-flex min-h-11 items-center underline" href="/terciarizaciones">Limpiar</Link></div>
           </form>
         </div>
 
-        <div className="grid gap-3 p-3 lg:hidden">
+        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
           {filteredRecords.length ? (
             filteredRecords.map((record) => (
-              <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={record.id}>
+              <article className="py-4" key={record.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-brand-700">{record.order.repairNumber}</p>
                   <p className="mt-1 font-medium text-slate-950">{record.order.customerName}</p>
-                  <p className="mt-1 text-xs text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
+                  <p className="mt-1 text-sm text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
                 </div>
                 <StatusPill status={record.status} />
               </div>
-              <div className="mt-4 rounded-[18px] bg-brand-50 px-3 py-2.5">
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Equipo / falla</p>
+              <div className="mt-4 min-w-0">
+                <p className="text-sm text-slate-600">Equipo / falla</p>
                 <p className="mt-1 font-semibold text-slate-800">{record.order.deviceLabel}</p>
-                {record.order.serialNumber ? <p className="mt-1 text-xs text-slate-500">Serie: {record.order.serialNumber}</p> : null}
-                <p className="mt-1 text-xs leading-5 text-slate-500">{record.order.issueReported}</p>
+                {record.order.serialNumber ? <p className="mt-1 text-sm text-slate-500">Serie: {record.order.serialNumber}</p> : null}
+                <p className="mt-1 text-sm leading-5 text-slate-500">{record.order.issueReported}</p>
               </div>
-              <div className="mt-3 rounded-[18px] bg-brand-50 px-3 py-2.5">
-                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Lugar</p>
+              <div className="mt-3 min-w-0">
+                <p className="text-sm text-slate-600">Taller externo</p>
                 <p className="mt-1 font-semibold text-slate-950">{record.workshopName}</p>
-                {record.notes ? <p className="mt-1 whitespace-pre-line text-xs leading-5 text-slate-500">{record.notes}</p> : null}
+                {record.notes ? <p className="mt-1 whitespace-pre-line text-sm leading-5 text-slate-500">{record.notes}</p> : null}
               </div>
-                <p className="mt-3 text-xs text-slate-500">
-                  Llevado: {formatDate(record.sentAt)} - Buscado: {record.retrievedAt ? formatDate(record.retrievedAt) : "-"}
+                <p className="mt-3 text-sm text-slate-500">
+                  Enviado: {formatDate(record.sentAt)} / Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
                 </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="mt-4 space-y-2">
                 <OutsourcingOperations record={record} returnTo={returnTo} />
                 {record.status === "en_taller" ? (
+                  <ActionMenu label="Más acciones">
                   <form
                     action={cancelRepairOutsourcingAction}
                     onSubmit={(event) => {
@@ -305,6 +306,7 @@ export function RepairOutsourcingsView({
                       Anular
                     </Button>
                   </form>
+                  </ActionMenu>
                 ) : null}
               </div>
               </article>
@@ -320,43 +322,44 @@ export function RepairOutsourcingsView({
           <table className="min-w-full text-sm">
             <thead className="bg-white/80 text-left text-slate-500">
               <tr>
-                <th className="px-4 py-4 font-medium">Orden</th>
-                <th className="px-4 py-4 font-medium">Cliente</th>
-                <th className="px-4 py-4 font-medium">Equipo / falla</th>
-                <th className="px-4 py-4 font-medium">Lugar</th>
-                <th className="px-4 py-4 font-medium">Fechas</th>
-                <th className="px-4 py-4 font-medium">Estado</th>
-                <th className="px-4 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">Orden</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Equipo / falla</th>
+                <th className="px-4 py-3 font-medium">Taller externo</th>
+                <th className="px-4 py-3 font-medium">Fechas</th>
+                <th className="px-4 py-3 font-medium">Estado</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.map((record) => (
-                <tr className="border-t border-graphite/8 bg-white/72 align-top transition duration-200 hover:bg-white" key={record.id}>
-                  <td className="px-4 py-4 font-semibold text-brand-700">{record.order.repairNumber}</td>
-                  <td className="px-4 py-4">
+                <tr className="border-t border-graphite/10 align-top" key={record.id}>
+                  <td className="px-4 py-3 font-semibold text-brand-700">{record.order.repairNumber}</td>
+                  <td className="px-4 py-3">
                     <p className="font-medium text-slate-950">{record.order.customerName}</p>
-                    <p className="text-xs text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
+                    <p className="text-sm text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
+                  <td className="px-4 py-3 text-slate-600">
                     <p className="font-medium text-slate-800">{record.order.deviceLabel}</p>
-                    {record.order.serialNumber ? <p className="mt-1 text-xs text-slate-400">Serie: {record.order.serialNumber}</p> : null}
-                    <p className="mt-1 max-w-sm text-xs leading-5 text-slate-500">{record.order.issueReported}</p>
+                    {record.order.serialNumber ? <p className="mt-1 text-sm text-slate-500">Serie: {record.order.serialNumber}</p> : null}
+                    <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">{record.order.issueReported}</p>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <p className="font-semibold text-slate-950">{record.workshopName}</p>
-                    {record.notes ? <p className="mt-1 max-w-xs whitespace-pre-line text-xs leading-5 text-slate-500">{record.notes}</p> : null}
+                    {record.notes ? <p className="mt-1 max-w-xs whitespace-pre-line text-sm leading-5 text-slate-500">{record.notes}</p> : null}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">
-                    <p>Llevado: {formatDate(record.sentAt)}</p>
-                    <p className="mt-1 text-xs text-slate-500">Buscado: {record.retrievedAt ? formatDate(record.retrievedAt) : "-"}</p>
+                  <td className="px-4 py-3 text-slate-600">
+                    <p>Enviado: {formatDate(record.sentAt)}</p>
+                    <p className="mt-1 text-sm text-slate-500">Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}</p>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <StatusPill status={record.status} />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">
                       <OutsourcingOperations record={record} returnTo={returnTo} />
                       {record.status === "en_taller" ? (
+                        <ActionMenu label="Más acciones">
                         <form
                           action={cancelRepairOutsourcingAction}
                           onSubmit={(event) => {
@@ -371,6 +374,7 @@ export function RepairOutsourcingsView({
                             Anular
                           </Button>
                         </form>
+                        </ActionMenu>
                       ) : null}
                     </div>
                   </td>
@@ -390,44 +394,20 @@ export function RepairOutsourcingsView({
   );
 }
 
-function MetricCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
-  return (
-    <div className="metric-tile min-h-[unset] p-4">
-      <div className="flex items-center gap-3">
-        <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-          {icon}
-        </span>
-        <div>
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">{label}</p>
-          <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{value}</p>
-        </div>
-      </div>
-    </div>
-  );
+function SummaryValue({ label, value }: { label: string; value: number }) {
+  return <div><dt className="text-sm text-slate-600">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{value}</dd></div>;
 }
 
 function InfoBlock({ label, value, helper }: { label: string; value: string; helper?: string }) {
   return (
-    <div className="rounded-[24px] bg-slate-50 px-4 py-3">
-      <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
+    <div className="min-w-0">
+      <p className="text-sm text-slate-600">{label}</p>
       <p className="mt-1 font-semibold text-slate-950">{value || "-"}</p>
-      {helper ? <p className="mt-1 line-clamp-2 text-xs text-slate-500">{helper}</p> : null}
+      {helper ? <p className="mt-1 break-words text-sm text-slate-500">{helper}</p> : null}
     </div>
   );
 }
 
 function StatusPill({ status }: { status: string }) {
-  const tone = getRepairOutsourcingStatusTone(status);
-  const classes = {
-    default: "bg-slate-100 text-slate-700",
-    success: "bg-emerald-100 text-emerald-700",
-    warning: "bg-amber-100 text-amber-800",
-    danger: "bg-rose-100 text-rose-700"
-  }[tone];
-
-  return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${classes}`}>
-      {getRepairOutsourcingStatusLabel(status)}
-    </span>
-  );
+  return <Badge variant={getRepairOutsourcingStatusTone(status)}>{getRepairOutsourcingStatusLabel(status)}</Badge>;
 }

@@ -28,16 +28,16 @@ export function MetricCard({
   const colors = tones[effectiveTone];
   return (
     <div className={cn("metric-tile relative min-w-0 overflow-hidden", className)} data-tone={effectiveTone}>
-      <span aria-hidden="true" className={cn("absolute inset-x-5 top-0 h-0.5 rounded-full", colors.accent)} />
+      <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-0.5", colors.accent)} />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[0.7rem] font-semibold uppercase leading-5 tracking-[0.16em] text-slate-600">{label}</p>
-          <p className={cn("mt-2 break-words font-brand text-[1.6rem] font-semibold leading-tight tracking-[-0.04em] tabular-nums min-[1440px]:text-[1.85rem]", colors.value)}>
+          <p className="text-sm font-medium leading-5 text-slate-600">{label}</p>
+          <p className={cn("mt-2 break-words text-2xl font-semibold leading-tight tracking-tight tabular-nums min-[1440px]:text-[1.75rem]", colors.value)}>
             {format === "currency" ? formatCurrency(value) : value.toLocaleString("es-AR")}
           </p>
           {description ? <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p> : null}
         </div>
-        <span aria-hidden="true" className={cn("inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", colors.icon)}>
+        <span aria-hidden="true" className={cn("inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", colors.icon)}>
           <Icon className="h-5 w-5" />
         </span>
       </div>

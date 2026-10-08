@@ -69,39 +69,41 @@ export function RepairAccessCustomersSection({
     <Card className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Clientes</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">Base importada y manual</h2>
+          <h2 className="text-xl font-semibold text-slate-950">Clientes</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Busqueda rapida por nombre, telefono, DNI, email o domicilio. Sin busqueda se muestran como maximo los ultimos 40 clientes cargados/importados. Con al menos 2 caracteres se consulta toda la base y se muestran hasta 12 coincidencias.
+            Ultimos 40 clientes. Escribi al menos 2 caracteres para buscar en toda la base.
           </p>
         </div>
         <div className="w-full lg:max-w-sm">
-          <Input onChange={(event) => onSearchChange(event.target.value)} placeholder="Buscar cliente o telefono..." value={search} />
+          <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <span>Buscar cliente</span>
+            <Input onChange={(event) => onSearchChange(event.target.value)} placeholder="Nombre, telefono, DNI o email" value={search} />
+          </label>
           {isSearching ? <p className="mt-2 text-xs text-slate-500">Buscando en toda la base...</p> : null}
         </div>
       </div>
 
       {searchError ? <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">No se pudo completar la busqueda de clientes. Intenta de nuevo; no se confirmo si hay coincidencias.</p> : null}
-      <div className="overflow-hidden rounded-3xl border border-slate-100">
-        <div className="grid gap-3 p-3 lg:hidden">
+      <div className="min-w-0">
+        <div className="divide-y divide-slate-200 lg:hidden">
           {filteredCustomers.length ? (
             filteredCustomers.map((customer) => (
-              <article className="rounded-[22px] border border-slate-100 bg-white px-4 py-3" key={customer.id}>
+              <article className="min-w-0 py-3 text-sm" key={customer.id}>
                 <p className="font-semibold text-slate-950">{customer.fullName}</p>
                 <p className="mt-1 text-sm text-slate-600">{customer.phone || customer.alternatePhone || "-"}</p>
-                <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-[16px] bg-slate-50 px-3 py-2">
-                    <span className="uppercase tracking-[0.14em] text-slate-400">DNI</span>
+                <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-slate-500">DNI</span>
                     <p className="mt-1 font-semibold text-slate-700">{customer.dni || "-"}</p>
                   </div>
-                  <div className="rounded-[16px] bg-slate-50 px-3 py-2">
-                    <span className="uppercase tracking-[0.14em] text-slate-400">Alta</span>
+                  <div>
+                    <span className="text-slate-500">Alta</span>
                     <p className="mt-1 font-semibold text-slate-700">{formatDate(customer.createdAt)}</p>
                   </div>
                 </div>
-                {customer.email ? <p className="mt-3 text-xs text-slate-500">{customer.email}</p> : null}
-                {customer.address ? <p className="mt-2 text-xs leading-5 text-slate-500">{customer.address}</p> : null}
-                <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">{customer.source}</p>
+                {customer.email ? <p className="mt-2 break-words text-sm text-slate-500">{customer.email}</p> : null}
+                {customer.address ? <p className="mt-1 break-words text-sm leading-5 text-slate-500">{customer.address}</p> : null}
+                <p className="mt-2 text-xs text-slate-500">{customer.source}</p>
               </article>
             ))
           ) : (
@@ -111,7 +113,7 @@ export function RepairAccessCustomersSection({
           )}
         </div>
 
-        <div className="hidden overflow-x-auto lg:block">
+        <div className="hidden overflow-x-auto rounded-xl border border-slate-200 lg:block">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>

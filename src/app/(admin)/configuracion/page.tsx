@@ -32,47 +32,45 @@ export default async function ConfiguracionPage({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <p className="text-sm text-slate-500">Configuracion</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Seguridad y ajustes</h1>
+      <header>
+        <h1 className="text-2xl font-semibold text-slate-950">Configuracion</h1>
         <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Roles admin/tecnico, auditoria, backups y parametros del local.
+          Exportaciones, objetivos del negocio, garantia y estado fiscal.
         </p>
-      </Card>
+      </header>
 
       {message ? (
         <Card>
-          <p className={`text-sm ${message.success ? "text-graphite" : "text-rose-600"}`}>{message.message}</p>
+          <p role={message.success ? "status" : "alert"} className={`text-sm ${message.success ? "text-graphite" : "text-rose-600"}`}>{message.message}</p>
         </Card>
       ) : null}
 
       {isAdmin ? (
         <>
           <Card>
-            <p className="text-sm text-slate-500">Backup</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">Exportar datos del sistema</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Exportar datos del sistema</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               El Excel es una exportacion parcial para consulta. El JSON incluye los registros y
               un manifiesto para comprobar cantidades e integridad. Ninguno reemplaza el respaldo
               tecnico de PostgreSQL, usuarios y archivos privados.
             </p>
-            <a className={cn(buttonVariants(), "mt-5")} href="/api/backup">
+            <div className="mt-4 flex flex-wrap gap-2">
+            <a className={cn(buttonVariants())} href="/api/backup">
               Exportar Excel
             </a>
-            <a className={cn(buttonVariants({ variant: "secondary" }), "mt-3 sm:ml-3")} href="/api/backup?format=json">
+            <a className={cn(buttonVariants({ variant: "secondary" }))} href="/api/backup?format=json">
               Exportar registros JSON
             </a>
+            </div>
           </Card>
 
           <Card>
-            <p className="text-sm text-slate-500">Metas del negocio</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">Objetivos mensuales</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Objetivos mensuales</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Define tus metas del mes para ventas, ganancia, reparaciones y facturacion. Estas metas se
-              reflejan despues en Reportes con avance real y desvio contra el objetivo.
+              Se comparan con el avance real del mes en Reportes.
             </p>
 
-            <form action={saveBusinessGoalsAction} className="mt-6 grid gap-4 lg:grid-cols-4">
+            <form action={saveBusinessGoalsAction} className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <div>
                 <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="salesTarget">Meta de ventas</label>
                 <Input defaultValue={businessGoals.salesTarget} min={0} name="salesTarget" step="0.01" type="number" />
@@ -89,24 +87,21 @@ export default async function ConfiguracionPage({
                 <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="invoicingTarget">Meta de facturacion</label>
                 <Input defaultValue={businessGoals.invoicingTarget} min={0} name="invoicingTarget" step="0.01" type="number" />
               </div>
-              <div className="lg:col-span-4">
+              <div className="col-span-full">
                 <button className={cn(buttonVariants())} type="submit">
                   Guardar metas mensuales
                 </button>
               </div>
             </form>
           </Card>
-          <FiscalInvoicePanel />
-
           <Card>
-            <p className="text-sm text-slate-500">Servicio tecnico</p>
-            <h2 className="mt-1 text-2xl font-semibold text-slate-950">Garantia predeterminada</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Garantia predeterminada</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
               Se propone al asignar una garantia nueva. Cada orden puede conservar una duracion
               diferente y la cobertura empieza unicamente en la fecha efectiva de retiro.
             </p>
 
-            <form action={saveRepairWarrantySettingsAction} className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-end">
+            <form action={saveRepairWarrantySettingsAction} className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-end">
               <div className="w-full sm:max-w-xs">
                 <label
                   className="mb-2 block text-sm font-medium text-slate-700"
@@ -129,13 +124,13 @@ export default async function ConfiguracionPage({
               </button>
             </form>
           </Card>
+          <FiscalInvoicePanel />
         </>
       ) : (
         <Card>
-          <p className="text-sm text-slate-500">Modo tecnico</p>
-          <h2 className="mt-1 text-2xl font-semibold text-slate-950">Ajustes protegidos</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Ajustes protegidos</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            Podes usar el sistema operativo diario, pero backups y ajustes sensibles quedan disponibles solo para administradores.
+            Las exportaciones y los ajustes sensibles estan disponibles solo para administradores.
           </p>
         </Card>
       )}

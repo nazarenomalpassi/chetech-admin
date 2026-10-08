@@ -1,14 +1,12 @@
 "use client";
 
-import { Globe2 } from "lucide-react";
-
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { updateRepairCustomerPortalAction } from "@/features/repairs-access/actions";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
-import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 
 export function RepairCustomerPortalForm({
   order,
@@ -23,36 +21,21 @@ export function RepairCustomerPortalForm({
   const budgetVisible = publishedBudgetAmount > 0;
   const content = (
     <>
-      <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-          <Globe2 aria-hidden="true" className="h-5 w-5" />
-        </span>
-        <div className="min-w-0">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
-            Información pública
-          </p>
-          <h2
-            className={cn(
-              "mt-1 font-semibold text-slate-950",
-              embedded ? "text-lg" : "text-2xl",
-            )}
-          >
+      <div className="min-w-0">
+          {!embedded ? <h2 className="text-lg font-semibold text-slate-950">
             Seguimiento para el cliente
-          </h2>
+          </h2> : null}
           <p className="mt-1 text-sm leading-6 text-slate-500">
             Esta actualización será visible para el cliente.
           </p>
-        </div>
       </div>
 
       {!order.customerPortalLinked ? (
-        <p className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
-          La orden todavía no tiene una cuenta vinculada. Podés preparar la
-          información ahora; el cliente podrá verla después de vincular su
-          cuenta.
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-800">
+          Sin cuenta vinculada. El cliente podra ver esta informacion cuando vincules su cuenta.
         </p>
       ) : (
-        <p className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+        <p className="mt-3 text-sm text-slate-600">
           Vinculada con{" "}
           {order.storefrontCustomer?.fullName ?? "una cuenta de cliente"}.
         </p>
@@ -86,30 +69,28 @@ export function RepairCustomerPortalForm({
 
         <section
           aria-labelledby={`portal-auto-fields-${order.id}`}
-          className="rounded-2xl border border-sky-200 bg-sky-50 p-4 md:col-span-2"
+          className="border-y border-slate-200 py-3 md:col-span-2"
         >
           <p
-            className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-700"
+            className="text-sm font-medium text-slate-700"
             id={`portal-auto-fields-${order.id}`}
           >
             Publicación automática
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Estos tres datos se toman del formulario “Actualizar trabajo” y se
-            publican automáticamente. Para corregirlos, editá y guardá ese
-            formulario.
+            Se actualizan al guardar en “Actualizar trabajo”.
           </p>
-          <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3 sm:col-span-2">
-              <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="min-w-0 sm:col-span-2">
+              <dt className="text-sm text-slate-500">
                 Avance de reparación
               </dt>
               <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-800">
                 {order.repairProgress || "Sin avance cargado"}
               </dd>
             </div>
-            <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3">
-              <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <div className="min-w-0">
+              <dt className="text-sm text-slate-500">
                 Presupuesto
               </dt>
               <dd className="mt-1 text-sm font-semibold text-slate-900">
@@ -118,8 +99,8 @@ export function RepairCustomerPortalForm({
                   : "Sin importe cargado"}
               </dd>
             </div>
-            <div className="rounded-2xl border border-sky-100 bg-white px-4 py-3">
-              <dt className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+            <div className="min-w-0">
+              <dt className="text-sm text-slate-500">
                 Detalle del presupuesto
               </dt>
               <dd className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-800">
@@ -143,9 +124,9 @@ export function RepairCustomerPortalForm({
           />
         </label>
 
-        <label className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 md:col-span-2">
+        <label className="flex min-h-11 items-start gap-3 py-2 text-sm text-slate-700 md:col-span-2">
           <input
-            className="mt-1"
+            className="mt-1 h-5 w-5 shrink-0 accent-graphite"
             defaultChecked={order.customerActionRequired}
             name="customerActionRequired"
             type="checkbox"
@@ -173,9 +154,9 @@ export function RepairCustomerPortalForm({
           />
         </label>
 
-        <label className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 md:col-span-2">
+        <label className="flex min-h-11 items-start gap-3 py-2 text-sm text-slate-700 md:col-span-2">
           <input
-            className="mt-1"
+            className="mt-1 h-5 w-5 shrink-0 accent-graphite"
             defaultChecked
             name="publishUpdate"
             type="checkbox"

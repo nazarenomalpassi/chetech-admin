@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BadgeDollarSign, CalendarRange, Search, ShieldCheck } from "lucide-react";
+import { CalendarRange, Search } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
 import { Button } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { deleteRepairAction, saveRepairAction } from "@/features/repairs/actions";
 import type { RepairCollectionTarget } from "@/features/repairs/queries";
@@ -167,11 +169,11 @@ export function RepairsList({
     const requestedNumber = formValues.accessOrderNumber.trim();
 
     if (!requestedNumber) {
-      setLookupStatus({ loading: false, message: "Ingresa un numero de orden Access.", success: false });
+      setLookupStatus({ loading: false, message: "Ingresa un numero de orden REP.", success: false });
       return;
     }
 
-    setLookupStatus({ loading: true, message: "Buscando orden Access...", success: false });
+    setLookupStatus({ loading: true, message: "Buscando orden REP...", success: false });
 
     try {
       const response = await fetch(`/api/repair-access/orders/${encodeURIComponent(requestedNumber)}`, {
@@ -180,14 +182,14 @@ export function RepairsList({
       const result = await response.json();
 
       if (!response.ok || !result.order) {
-        setLookupStatus({ loading: false, message: result.error || "No encontre una orden Access con ese numero.", success: false });
+        setLookupStatus({ loading: false, message: result.error || "No encontre una REP con ese numero.", success: false });
         return;
       }
 
       const order = result.order as AccessOrder;
       if (result.financialRecord) {
         if (result.financialRecord.repairAccessOrderId !== order.id) throw new Error("Vinculo financiero inconsistente");
-        startEdit(result.financialRecord as Repair);
+        startEdit(result.financialRecord as Repair, true);
         setLookupStatus({ loading: false, message: `Registro financiero de ${order.repairNumber} seleccionado. Agrega la sena o saldo debajo; no se crea un registro duplicado.`, success: true });
         return;
       }
@@ -203,50 +205,25 @@ export function RepairsList({
         success: true
       });
     } catch {
-      setLookupStatus({ loading: false, message: "No pude consultar la orden Access. Proba de nuevo.", success: false });
+      setLookupStatus({ loading: false, message: "No se pudo consultar la REP. Proba de nuevo.", success: false });
     }
   }
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <header>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
-            <p className="panel-kicker">Servicio tecnico</p>
-            <h1 className="panel-heading mt-3">Nuevo pago de reparacion</h1>
-            <p className="panel-subheading mt-3">
-              Registra el cobro de una orden de reparacion y actualiza caja recien cuando el cliente paga.
+            <h1 className="text-2xl font-semibold text-slate-950">Cobros de reparaciones</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Selecciona la REP y registra solo el dinero recibido. Cobrar no entrega el equipo ni inicia la garantia.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[23rem]">
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <ShieldCheck className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Pagos listados
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{totalRepairs}</p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
-                  <BadgeDollarSign className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Ingresos listados
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{formatCurrency(revenue)}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div><dt className="text-sm text-slate-600">Registros en esta pagina</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{totalRepairs}</dd></div>
+            <div><dt className="text-sm text-slate-600">Cobrado en esta pagina</dt><dd className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(revenue)}</dd></div>
+          </dl>
         </div>
 
         {message ? (
@@ -254,8 +231,14 @@ export function RepairsList({
             {message.message}
           </div>
         ) : null}
-
-        <form action={saveRepairAction} className="mt-6 space-y-4">
+      </header>
+      {currentLedger ? <div ref={ledgerRef} tabIndex={-1} role="group" aria-label={`Cobros de ${currentLedger.repairAccessOrderNumber || currentLedger.orderNumber || "la reparación seleccionada"}`} className="scroll-mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
+        <RepairPaymentsPanel key={`${currentLedger.id}:${currentLedger.financialVersion}`} repair={currentLedger} canReverse={canDelete} />
+      </div> : null}
+      <Card>
+        <details open={!editing || undefined}>
+          <summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold">{editing ? "Editar datos y precio del registro" : "Nuevo registro de cobro"}</summary>
+        <form action={saveRepairAction} className="mt-4 space-y-4">
           <input name="id" type="hidden" value={formValues.id} />
           <input name="requestId" type="hidden" value={requestId} />
           <input name="expectedVersion" type="hidden" value={editing?.financialVersion ?? ""} />
@@ -263,12 +246,13 @@ export function RepairsList({
           <input name="customerPhone" type="hidden" value={formValues.customerPhone} />
           <input name="issueDescription" type="hidden" value={formValues.issueDescription} />
           <input name="paymentsJson" type="hidden" value={JSON.stringify(payments)} />
+          <input name="amount" type="hidden" value={amount} />
 
-          <div className="rounded-[30px] border border-brand-100 bg-brand-50/70 p-4">
+          <div className="border-t border-graphite/10 pt-4">
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <label>
-                <span className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Cargar desde Reparaciones
+                <span className="mb-2 block text-sm font-medium text-slate-700">
+                  Numero de orden REP
                 </span>
                 <Input
                   name="accessOrderNumber"
@@ -288,7 +272,7 @@ export function RepairsList({
               </Button>
             </div>
             {lookupStatus.message ? (
-              <p aria-live="polite" className={`mt-3 rounded-[22px] px-4 py-3 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`} role={lookupStatus.success ? "status" : "alert"}>
+              <p aria-live="polite" className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`} role={lookupStatus.success ? "status" : "alert"}>
                 {lookupStatus.message}
               </p>
             ) : (
@@ -298,9 +282,9 @@ export function RepairsList({
             )}
           </div>
 
-          <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-5">
+          <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-3">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerName">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerName">
                 Cliente
               </label>
               <Input
@@ -311,7 +295,7 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="device">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="device">
                 Equipo
               </label>
               <Input
@@ -322,7 +306,7 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="orderNumber">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="orderNumber">
                 Número de orden
               </label>
               <Input
@@ -333,37 +317,34 @@ export function RepairsList({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="amount">
-                Monto
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="amount">
+                Precio de reparacion
               </label>
-              <Input
+              <MoneyInput
                 key={`${editing?.id}-amount`}
-                min={0}
-                name="amount"
-                onChange={(event) => setAmount(event.target.value)}
-                step="0.01"
-                type="number"
-                value={amount}
+                id="amount"
+                onValueChange={(value) => setAmount(String(value))}
+                value={amountValue}
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="entryDate">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="entryDate">
                 Fecha de ingreso
               </label>
               <div className="relative">
-                <CalendarRange className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <CalendarRange aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <Input className="pl-10" name="entryDate" onChange={(event) => setEntryDate(event.target.value)} type="date" value={entryDate} />
               </div>
             </div>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
-            {editing ? <p className="rounded-3xl bg-brand-50 p-5 text-sm">Esta edicion actualiza datos y precio, no reemplaza pagos anteriores. Usa el registro de señas y saldo debajo para agregar o revertir un cobro.</p> : <div className="space-y-3">
-              <label className="block text-sm">Fecha de cobro<Input className="mt-2" name="paymentDate" onChange={(event) => setPaymentDate(event.target.value)} type="date" value={paymentDate} /></label>
+          <div className="space-y-4">
+            {editing ? <p className="text-sm text-slate-600">Estos cambios actualizan datos y precio, no reemplazan pagos. Para cobrar o corregir, usa el historial de esta REP.</p> : <div className="space-y-3">
               <p className="text-sm text-slate-500">El precio puede quedar pendiente o cobrarse parcialmente. Registra solo el dinero recibido.</p>
               <PaymentSplitFields onChange={setPayments} payments={payments} title="Seña o cobro inicial" totalAmount={amountValue} syncAmountWithTotal={false} />
+              <label className="block text-sm">Fecha de cobro<Input className="mt-2 max-w-xs" name="paymentDate" onChange={(event) => setPaymentDate(event.target.value)} type="date" value={paymentDate} /></label>
             </div>}
-            <div className="flex items-end gap-2">
+            <div className="flex flex-wrap items-end justify-end gap-2">
               <FormSubmitButton
                 disabled={!requestId}
                 className="w-full"
@@ -378,55 +359,53 @@ export function RepairsList({
             </div>
           </div>
         </form>
+        </details>
       </Card>
-      {currentLedger ? <div ref={ledgerRef} tabIndex={-1} className="scroll-mt-4 rounded-[28px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">
-        <RepairPaymentsPanel key={`${currentLedger.id}:${currentLedger.financialVersion}`} repair={currentLedger} canReverse={canDelete} />
-      </div> : null}
 
       <div className="table-shell">
-        <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
+        <div className="border-b border-graphite/10 px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-md">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repair-search">
-                Buscar pago
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repair-search">
+                Buscar cobros de reparacion
               </label>
               <div className="relative">
-                <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
                 <Input id="repair-search" onChange={(event) => setSearch(event.target.value)} placeholder="Número de orden, cliente o equipo..." value={search} className="pl-10" />
               </div>
             </div>
             <p className="text-sm text-slate-500">
-              Mostrando los ultimos 100 pagos de reparaciones para sostener buena velocidad en mostrador.
+              Busca entre los {totalRepairs} registros de esta pagina. Hay {pagination.total} en el historial.
             </p>
           </div>
         </div>
-        <div className="grid gap-3 p-3 lg:hidden">
+        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
           {filteredRepairs.map((repair) => (
-            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={repair.id}>
-              <div className="flex min-w-0 items-start justify-between gap-3">
+            <article className="py-4" key={repair.id}>
+              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-950">{repair.customerName}</p>
-                  <p className="mt-1 text-xs text-slate-500">{repair.customerPhone || repair.issueDescription || "-"}</p>
+                  <p className="mt-1 text-sm text-slate-500">{repair.customerPhone || repair.issueDescription || "-"}</p>
                 </div>
-                <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">
+                <p className="text-lg font-semibold tabular-nums text-slate-950">
                   {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
                 </p>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Orden</p>
-                  <p className="mt-1 font-semibold text-slate-800">{repair.repairAccessOrderNumber || repair.orderNumber || "-"}</p>
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-600">Orden</p>
+                  <p className="mt-1 break-words font-semibold text-slate-800">{repair.repairAccessOrderNumber || repair.orderNumber || "-"}</p>
                 </div>
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Ingreso</p>
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-600">Ingreso</p>
                   <p className="mt-1 font-semibold text-slate-800">{formatDate(repair.entryDate)}</p>
                 </div>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">{repair.device}</p>
               <p className="mt-2 text-sm">Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}</p>
               {repair.payments.length ? (
-                <p className="mt-2 text-xs leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-slate-500">
                   {repair.payments.map((payment) => `${formatCashMethod(payment.method)} ${formatCurrency(payment.amount)}`).join(" + ")}
                 </p>
               ) : null}
@@ -435,11 +414,12 @@ export function RepairsList({
                 <Button className="w-full" onClick={() => startEdit(repair, true)} type="button" variant="secondary">
                   Gestionar cobros
                 </Button>
-                {canDelete && repair.paidTotal > 0 ? <Button className="w-full" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : canDelete ? (
+                {canDelete ? <ActionMenu label="Más acciones">
+                {repair.paidTotal > 0 ? <Button className="w-full" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : (
                   <form
                     action={deleteRepairAction}
                     onSubmit={(event) => {
-                      if (!window.confirm(`Eliminar el pago de reparacion de ${repair.customerName}?`)) {
+                      if (!window.confirm(`Eliminar el registro sin cobros de ${repair.customerName}?`)) {
                         event.preventDefault();
                       }
                     }}
@@ -449,50 +429,53 @@ export function RepairsList({
                       Eliminar
                     </Button>
                   </form>
-                ) : null}
+                )}
+                </ActionMenu> : null}
               </div>
             </article>
           ))}
+          {!filteredRepairs.length ? <div className="py-6 text-sm text-slate-500">No encontre cobros de reparaciones con esa busqueda.</div> : null}
         </div>
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/80 text-left text-slate-500">
+            <thead className="bg-slate-50 text-left text-slate-600">
               <tr>
-                <th className="px-4 py-4 font-medium">Cliente</th>
-                <th className="px-4 py-4 font-medium">Equipo</th>
-                <th className="px-4 py-4 font-medium">Orden</th>
-                <th className="px-4 py-4 font-medium">Ingreso</th>
-                <th className="px-4 py-4 font-medium">Precio final</th>
-                <th className="px-4 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Equipo</th>
+                <th className="px-4 py-3 font-medium">Orden</th>
+                <th className="px-4 py-3 font-medium">Ingreso</th>
+                <th className="px-4 py-3 font-medium">Precio final</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredRepairs.map((repair) => (
-                <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={repair.id}>
-                  <td className="px-4 py-4">
+                <tr className="border-t border-graphite/10 align-top" key={repair.id}>
+                  <td className="px-4 py-3">
                     <p className="font-medium text-slate-950">{repair.customerName}</p>
-                    <p className="text-xs text-slate-500">{repair.customerPhone || repair.issueDescription || "-"}</p>
+                    <p className="text-sm text-slate-500">{repair.customerPhone || repair.issueDescription || "-"}</p>
                   </td>
-                  <td className="px-4 py-4 text-slate-600">{repair.device}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">
+                  <td className="px-4 py-3 text-slate-600">{repair.device}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-950">
                     {repair.repairAccessOrderNumber || repair.orderNumber || "-"}
                   </td>
-                  <td className="px-4 py-4 text-slate-600">{formatDate(repair.entryDate)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">
+                  <td className="px-4 py-3 text-slate-600">{formatDate(repair.entryDate)}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">
                     {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
-                    <p className="mt-1 text-xs font-normal text-slate-600">Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}</p>
+                    <p className="mt-1 text-sm font-normal text-slate-600">Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}</p>
                   </td>
-                  <td className="px-4 py-4">
-                    <div className="flex justify-end gap-2">
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <Button onClick={() => startEdit(repair, true)} size="sm" type="button" variant="secondary">
                         Gestionar cobros
                       </Button>
-                      {canDelete && repair.paidTotal > 0 ? <Button size="sm" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : canDelete ? (
+                      {canDelete ? <ActionMenu label="Más acciones">
+                      {repair.paidTotal > 0 ? <Button size="sm" onClick={() => startEdit(repair, true)} type="button" variant="danger">Eliminar pago</Button> : (
                         <form
                           action={deleteRepairAction}
                           onSubmit={(event) => {
-                            if (!window.confirm(`Eliminar el pago de reparacion de ${repair.customerName}?`)) {
+                            if (!window.confirm(`Eliminar el registro sin cobros de ${repair.customerName}?`)) {
                               event.preventDefault();
                             }
                           }}
@@ -502,7 +485,8 @@ export function RepairsList({
                             Eliminar
                           </Button>
                         </form>
-                      ) : null}
+                      )}
+                      </ActionMenu> : null}
                     </div>
                   </td>
                 </tr>

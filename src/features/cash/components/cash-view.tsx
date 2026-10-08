@@ -56,15 +56,14 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Control operativo</p>
-            <h1 className="text-3xl font-semibold text-slate-950">Caja</h1>
+            <h1 className="text-2xl font-semibold text-slate-950">Caja</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-              Saldos actuales por medio de pago, movimientos del dia y cierre diario del local.
+              Saldos disponibles y movimientos del {formatDate(data.today)}.
             </p>
           </div>
-          <div className="rounded-[28px] bg-graphite px-5 py-4 text-white">
-            <p className="text-xs uppercase tracking-[0.24em] text-white/55">Saldo total actual</p>
-            <p className="mt-2 text-2xl font-semibold">{formatCurrency(data.totalBalance)}</p>
+          <div className="border-l border-slate-200 pl-4">
+            <p className="text-sm text-slate-600">Saldo total disponible</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-950">{formatCurrency(data.totalBalance)}</p>
           </div>
         </div>
 
@@ -74,25 +73,25 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           </p>
         ) : null}
 
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
           {data.balances.map((account) => (
-            <div key={account.method} className="rounded-[28px] border border-graphite/10 bg-white p-5">
+            <div key={account.method} className="min-w-0 border-t border-slate-200 py-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.22em] text-fog">{formatCashMethod(account.method)}</p>
-                  <p className="mt-2 text-2xl font-semibold text-graphite">{formatCurrency(account.balance)}</p>
+                  <p className="text-sm text-slate-600">{formatCashMethod(account.method)}</p>
+                  <p className="mt-2 break-words text-2xl font-semibold tabular-nums text-graphite">{formatCurrency(account.balance)}</p>
                 </div>
-                <div className="rounded-2xl bg-brand-100 p-3 text-graphite">
+                <div className="text-slate-500">
                   <Wallet className="h-5 w-5" />
                 </div>
               </div>
-              <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-2xl bg-brand-50 p-3">
-                  <p className="text-xs text-fog">Ingresos hoy</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+                <div className="py-1">
+                  <p className="text-sm text-slate-600">Ingresos hoy</p>
                   <p className="mt-1 font-semibold text-graphite">{formatCurrency(account.todayIncome)}</p>
                 </div>
-                <div className="rounded-2xl bg-brand-50 p-3">
-                  <p className="text-xs text-fog">Egresos hoy</p>
+                <div className="py-1">
+                  <p className="text-sm text-slate-600">Egresos hoy</p>
                   <p className="mt-1 font-semibold text-graphite">{formatCurrency(account.todayOutcome)}</p>
                 </div>
               </div>
@@ -105,8 +104,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500">Cierre diario</p>
-              <h2 className="text-xl font-semibold text-slate-950">Registrar cierre de hoy</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Cierre del {formatDate(data.today)}</h2>
             </div>
             <LockKeyhole className="h-5 w-5 text-fog" />
           </div>
@@ -114,7 +112,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           {canClose ? (
             <ReconciliationPanel today={data.today} balances={data.balances} />
           ) : (
-            <div className="mt-5 rounded-3xl bg-brand-50 p-5 text-sm leading-6 text-slate-600">
+            <div className="mt-5 rounded-xl bg-brand-50 p-5 text-sm leading-6 text-slate-600">
               Podes consultar caja y movimientos, pero el cierre diario queda reservado para administradores.
             </div>
           )}
@@ -124,7 +122,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
             <div className="mt-3 space-y-2">
               {data.closures.length ? (
                 data.closures.map((closure) => (
-                  <div key={closure.id} className="rounded-2xl border border-graphite/10 bg-white px-4 py-3">
+                  <div key={closure.id} className="border-b border-slate-200 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-medium text-graphite">{formatDate(closure.date)}</span>
                       <span className="font-semibold text-graphite">{formatCurrency(closure.finalBalance)}</span>
@@ -142,19 +140,18 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-slate-500">Movimientos</p>
-              <h2 className="text-xl font-semibold text-slate-950">Historial reciente</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Movimientos recientes</h2>
             </div>
             <Landmark className="h-5 w-5 text-fog" />
           </div>
 
-          <div className="mt-4 overflow-hidden rounded-3xl border border-graphite/10">
-            <div className="grid max-h-[560px] gap-3 overflow-auto bg-white p-3 md:hidden">
+          <div className="mt-4 overflow-hidden border-t border-slate-200">
+            <div className="grid max-h-[560px] overflow-auto bg-white px-4 md:hidden">
               {data.recentMovements.map((movement) => {
                 const income = isIncome(movement.type);
                 const Icon = income ? ArrowUpRight : ArrowDownLeft;
                 return (
-                  <article className="rounded-[22px] border border-graphite/8 bg-white px-4 py-3 shadow-[0_8px_18px_rgba(20,20,19,0.04)]" key={movement.id}>
+                  <article className="border-b border-slate-200 py-3" key={movement.id}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
