@@ -289,15 +289,14 @@ export function RepairAccessNewOrderWizard({
   }
 
   return (
-    <Card className="space-y-6 [&_button]:min-h-11">
+    <Card className="space-y-4 [&_button]:min-h-11">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Nueva orden</p>
-          <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-950">
-            {editing ? `Editar ingreso ${editing.repairNumber}` : "Ingreso rapido de recepcion"}
+          <h2 className="break-words text-xl font-semibold text-slate-950 [overflow-wrap:anywhere]">
+            {editing ? `Editar ingreso ${editing.repairNumber}` : "Nueva orden"}
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Carga cliente, equipo y falla en una sola pantalla. Los datos adicionales son opcionales; diagnostico, presupuesto y cobro se cargan despues.
+            Cliente, equipo y falla. Presupuesto y cobro se cargan despues.
           </p>
         </div>
         {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar edicion</Button> : null}
@@ -426,9 +425,9 @@ export function RepairAccessNewOrderWizard({
           </p>
         </OptionalFields>
 
-        <div className="flex flex-col gap-3 rounded-3xl bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500">
-            {editing ? `Se conserva el numero de orden ${editing.repairNumber}.` : "Al guardar, el sistema genera un numero REP correlativo para pegar en el equipo fisico."}
+            {editing ? `Se conserva el numero de orden ${editing.repairNumber}.` : "El numero REP se genera al guardar."}
           </p>
           <div className="grid gap-2 sm:flex sm:flex-wrap">
             {editing ? <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">Cancelar</Button> : null}
@@ -486,7 +485,7 @@ function CustomerSuggestions({
   if (!show) return null;
 
   return (
-    <div aria-label="Clientes sugeridos" className="absolute left-0 right-0 top-[76px] z-20 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-soft" id={id} role="listbox">
+    <div aria-label="Clientes sugeridos" className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-slate-300 bg-white" id={id} role="listbox">
       {suggestions.length ? suggestions.map((customer, index) => (
         <button
           aria-selected={index === activeIndex}
@@ -519,7 +518,7 @@ function CustomerSuggestions({
 
 function OptionalFields({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <details className="rounded-2xl border border-graphite/10 bg-white/70 px-4">
+    <details className="border-t border-slate-200">
       <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/30">
         {label}
       </summary>

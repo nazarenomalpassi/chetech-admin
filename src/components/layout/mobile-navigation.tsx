@@ -18,27 +18,28 @@ export function MobileNavigation({ role }: { role: AppRole }) {
   const currentSection = sidebarItems.find((item) => item.href === pathname)?.label ?? "Panel";
 
   return (
-    <div className="sticky top-0 z-40 -mx-1 px-1 pt-[env(safe-area-inset-top)] xl:hidden">
-      <div className="rounded-[22px] border border-white/10 bg-graphite p-2.5 text-white shadow-[0_12px_30px_rgba(20,20,19,0.18)] sm:p-3">
+    <div className="no-print sticky top-0 z-40 -mx-1 px-1 pt-[env(safe-area-inset-top)] lg:hidden">
+      <div data-navigation-theme="dark" className="rounded-xl bg-graphite p-2.5 text-white">
         <div className="flex items-center justify-between gap-3">
           <Link
             className="flex min-w-0 items-center gap-3"
             href="/dashboard"
             onClick={() => setOpen(false)}
           >
-            <span className="flex h-11 w-11 flex-none items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.06] sm:h-12 sm:w-12">
-              <img alt="" className="h-7 w-7" src="/brand/chetech-isologo-white.svg" />
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/[0.06]">
+              <img alt="" className="h-6 w-6" width={24} height={24} src="/brand/chetech-isologo-white.svg" />
             </span>
             <span className="min-w-0">
-              <span className="font-brand block truncate text-xl tracking-[-0.04em]">Chetech</span>
-              <span className="block truncate text-xs text-white/70" data-testid="mobile-current-section">{currentSection}</span>
+              <span className="font-brand block text-lg">Chetech</span>
+              <span className="block text-xs leading-5 text-white/80" data-testid="mobile-current-section">{currentSection}</span>
             </span>
           </Link>
 
           <Button
             aria-expanded={open}
+            aria-controls={open ? "mobile-navigation" : undefined}
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
-            className="h-11 w-11 flex-none rounded-[14px] border-white/10 bg-white text-graphite hover:bg-brand-50 sm:h-12 sm:w-12"
+            className="h-11 w-11 flex-none rounded-lg border-white/10 bg-white text-graphite hover:bg-brand-50"
             onClick={() => setOpen((value) => !value)}
             type="button"
             variant="secondary"
@@ -48,29 +49,29 @@ export function MobileNavigation({ role }: { role: AppRole }) {
         </div>
 
         {open ? (
-          <div className="mt-3 max-h-[calc(100svh-7.5rem)] overflow-y-auto overscroll-contain rounded-[22px] border border-white/8 bg-white/[0.04] p-2">
+          <div className="mt-3 max-h-[calc(100svh-7.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 pt-3" id="mobile-navigation" onKeyDown={(event) => { if (event.key === "Escape") { setOpen(false); event.currentTarget.parentElement?.querySelector<HTMLButtonElement>("button[aria-expanded]")?.focus(); } }}>
             <nav className="grid gap-3" aria-label="Navegacion del local">
-              {groups.map((group) => <section key={group.label}><h2 className="mb-2 px-3 text-xs font-medium text-white/50">{group.label}</h2><div className="grid gap-2 sm:grid-cols-2">{group.items.map((item) => {
+              {groups.map((group) => <section key={group.label}><h2 className="mb-2 px-3 text-xs font-medium text-white/65">{group.label}</h2><div className="grid gap-1 sm:grid-cols-2">{group.items.map((item) => {
                 const Icon = item.icon;
                 const active = pathname === item.href;
 
                 return (
                   <Link
                     className={cn(
-                      "flex min-h-12 items-center gap-3 rounded-[18px] px-3 py-2.5 text-sm font-semibold transition",
+                      "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
                       active
-                        ? "bg-white text-graphite shadow-[0_14px_24px_rgba(0,0,0,0.18)]"
-                        : "text-white/68 hover:bg-white/[0.07] hover:text-white"
+                        ? "bg-white text-graphite"
+                        : "text-white/80 hover:bg-white/10 hover:text-white"
                     )}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     key={item.href}
                     onClick={() => setOpen(false)}
                   >
-                    <span className={cn("flex h-9 w-9 items-center justify-center rounded-2xl", active ? "bg-brand-100" : "bg-white/[0.06]")}>
-                      <Icon className="h-4.5 w-4.5" />
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                      <Icon aria-hidden="true" className="h-4 w-4" />
                     </span>
-                    <span className="truncate">{item.label}</span>
+                    <span>{item.label}</span>
                   </Link>
                 );
               })}</div></section>)}

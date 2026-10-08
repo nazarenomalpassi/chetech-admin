@@ -45,6 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es-AR">
+      <head><link rel="preload" href="/brand/SourceSans3VF-Upright.woff2" as="font" type="font/woff2" crossOrigin="anonymous" /></head>
       <body>
         {children}
         <PwaRegister />

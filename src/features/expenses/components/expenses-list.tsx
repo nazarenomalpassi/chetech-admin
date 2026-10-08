@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarRange, CreditCard, Landmark } from "lucide-react";
+import { CalendarRange } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
@@ -65,48 +66,10 @@ export function ExpensesList({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <p className="panel-kicker">Egresos reales</p>
-            <h1 className="panel-heading mt-3">Nuevo gasto rapido</h1>
-            <p className="panel-subheading mt-3">
-              Registra gastos con una carga mas clara para caja: fecha, categoria, monto y cuenta de salida.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[23rem]">
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-expenseSoft text-finance-expense">
-                  <CreditCard className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Total gastos
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
-                    {formatCurrency(totalExpenses)}
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <Landmark className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Impacta caja
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">
-                    {formatCurrency(cashImpact)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <Card>
+        <div>
+          <h1 className="panel-heading">{editing ? "Editar gasto" : "Nuevo gasto"}</h1>
+          <p className="mt-1 text-sm text-slate-600">Registra el importe, la fecha y el medio de egreso.</p>
         </div>
 
         {message ? (
@@ -115,10 +78,10 @@ export function ExpensesList({
           </div>
         ) : null}
 
-        <ExpenseSaveForm ownerId={ownerId} scope={editing?.id ?? "new"} savedOperation={savedOperation} savedScope={savedScope} className="mt-6 grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-6">
+        <ExpenseSaveForm ownerId={ownerId} scope={editing?.id ?? "new"} savedOperation={savedOperation} savedScope={savedScope} className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="expenseDate">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="expenseDate">
               Fecha
             </label>
             <div className="relative">
@@ -127,13 +90,13 @@ export function ExpensesList({
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="type">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="type">
               Categoría
             </label>
             <Input defaultValue={editing?.type ?? ""} key={`${editing?.id}-type`} name="type" placeholder="Mercaderia, alquiler..." />
           </div>
-          <div className="xl:col-span-2">
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="description">
+          <div className="sm:col-span-2 xl:col-span-2">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="description">
               Descripción
             </label>
             <Input
@@ -144,13 +107,13 @@ export function ExpensesList({
             />
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="amount">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="amount">
               Monto
             </label>
             <Input defaultValue={editing?.amount ?? ""} key={`${editing?.id}-amount`} min={0} name="amount" step="0.01" type="number" />
           </div>
           <div>
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="paymentMethod">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="paymentMethod">
               Medio de egreso
             </label>
             <Select
@@ -160,18 +123,18 @@ export function ExpensesList({
               options={PAYMENT_METHODS.map((method) => ({ value: method.value, label: method.label }))}
             />
           </div>
-          <div className="xl:col-span-5">
-            <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="observations">
-              Observaciones
+          <div className="sm:col-span-2 xl:col-span-6">
+            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="observations">
+              Observaciones (opcional)
             </label>
-            <Textarea defaultValue={editing?.observations ?? ""} key={`${editing?.id}-observations`} name="observations" placeholder="Contexto interno, comprobante o nota util" />
+            <Textarea rows={2} defaultValue={editing?.observations ?? ""} key={`${editing?.id}-observations`} name="observations" placeholder="Comprobante o nota interna" />
           </div>
-          <div className="xl:col-span-6">
-            {editing ? <p className="text-sm text-slate-600">Para cambiar solo el destino usa Vincular pago en el historial. Este formulario modifica los datos financieros del gasto.</p> : <ExpenseLinkSelector key="new-expense-link" prefix="new-expense" />}
+          <div className="sm:col-span-2 xl:col-span-6">
+            {editing ? <p className="text-sm text-slate-600">Para cambiar solo el destino, usa Vincular pago en el historial.</p> : <ExpenseLinkSelector key="new-expense-link" prefix="new-expense" />}
           </div>
-          <div className="flex items-end gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-4 sm:col-span-2 xl:col-span-6">
             <FormSubmitButton
-              className="w-full"
+              className="w-full sm:w-auto"
               idleLabel={editing ? "Actualizar gasto" : "Guardar gasto"}
               pendingLabel={editing ? "Actualizando..." : "Guardando..."}
             />
@@ -184,10 +147,10 @@ export function ExpensesList({
         </ExpenseSaveForm>
       </Card>
 
-      {linking ? <section className="rounded-[30px] border border-graphite/10 bg-white p-5" aria-label="Enlace de gasto existente">
+      {linking ? <section className="rounded-2xl border border-graphite/10 bg-white p-4" aria-label="Enlace de gasto existente">
         <h2 className="text-xl font-semibold text-slate-950">Vincular gasto existente</h2>
         <p className="mt-2 break-words text-sm text-slate-700">{linking.description} · {formatCurrency(linking.amount)} · {formatDate(linking.expenseDate)}</p>
-        <p className="mt-2 text-sm text-slate-600">Solo cambia el vinculo, sin volver a registrar dinero ni modificar fecha, actor o identificadores de caja.</p>
+        <p className="mt-2 text-sm text-slate-600">Cambia el destino sin volver a registrar dinero ni modificar el gasto.</p>
         <form action={linkExpensePurchaseAction} className="mt-4 space-y-4">
           <input name="id" type="hidden" value={linking.id} />
           <input name="expectedOrderId" type="hidden" value={linking.repairOrderId ?? ""} />
@@ -198,30 +161,31 @@ export function ExpensesList({
       </section> : null}
 
       <div className="table-shell">
-        <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 text-sm text-slate-600">
-          Historial paginado: {pagination.pageSize} gastos por pagina. Vincula un pago ya registrado en lugar de cargarlo otra vez.
+        <div className="space-y-2 border-b border-graphite/8 px-4 py-3">
+          <h2 className="text-base font-semibold text-slate-950">Historial de gastos</h2>
+          <p className="text-sm text-slate-600">En esta pagina: gastos {formatCurrency(totalExpenses)}, egresos de caja {formatCurrency(cashImpact)}.</p>
+          <p className="text-sm text-slate-500">Vincula un pago existente para no registrarlo dos veces.</p>
         </div>
-        <div className="grid gap-3 p-3 lg:hidden">
+        <div className="divide-y divide-slate-200 xl:hidden">
           {expenses.map((expense) => (
-            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={expense.id}>
+            <article className="bg-white p-4" key={expense.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-950">{expense.type}</p>
-                  <p className="mt-1 text-xs text-slate-500">{formatDate(expense.expenseDate)}</p>
+                  <p className="mt-1 text-sm text-slate-500">{formatDate(expense.expenseDate)}</p>
                 </div>
-                <p className="shrink-0 text-lg font-semibold tracking-[-0.03em] text-slate-950">{formatCurrency(expense.amount)}</p>
+                <p className="shrink-0 text-lg font-semibold text-slate-950">{formatCurrency(expense.amount)}</p>
               </div>
               <p className="mt-3 break-words text-sm leading-6 text-slate-600">{expense.description}</p>
               {expense.linkLabel ? <p className="mt-2 break-words text-sm font-semibold text-slate-800">{expense.linkLabel}</p> : null}
-              <div className="mt-3 rounded-[18px] bg-brand-50 px-3 py-2.5 text-sm">
-                <span className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Cuenta</span>
+              <div className="mt-3 text-sm">
+                <span className="text-sm font-medium text-slate-400">Cuenta</span>
                 <p className="mt-1 font-semibold text-slate-800">{formatCashMethod(expense.paymentMethod)}</p>
               </div>
-              {expense.observations ? <p className="mt-3 text-xs leading-5 text-slate-500">{expense.observations}</p> : null}
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                <Button className="w-full" disabled={expense.isVoided} onClick={() => setLinking(expense)} type="button" variant="secondary">{expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}</Button>
+              {expense.observations ? <p className="mt-3 text-sm leading-5 text-slate-500">{expense.observations}</p> : null}
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button disabled={expense.isVoided} onClick={() => setLinking(expense)} type="button" variant="secondary">{expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}</Button>
                 <Button
-                  className="w-full"
                   onClick={() => {
                     setEditing(expense);
                     setExpenseDate(expense.expenseDate);
@@ -232,6 +196,7 @@ export function ExpensesList({
                   Editar
                 </Button>
                 {canDelete ? (
+                  <ActionMenu label="Mas acciones">
                   <form
                     action={deleteExpenseAction}
                     onSubmit={(event) => {
@@ -245,33 +210,34 @@ export function ExpensesList({
                       Eliminar
                     </Button>
                   </form>
+                  </ActionMenu>
                 ) : null}
               </div>
             </article>
           ))}
         </div>
 
-        <div className="hidden overflow-x-auto lg:block">
+        <div className="hidden overflow-x-auto xl:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/80 text-left text-slate-500">
+            <thead className="bg-white text-left text-slate-500">
               <tr>
-                <th className="px-4 py-4 font-medium">Fecha</th>
-                <th className="px-4 py-4 font-medium">Categoria</th>
-                <th className="px-4 py-4 font-medium">Descripcion</th>
-                <th className="px-4 py-4 font-medium">Monto</th>
-                <th className="px-4 py-4 font-medium">Cuenta</th>
-                <th className="px-4 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Categoria</th>
+                <th className="px-4 py-3 font-medium">Descripcion</th>
+                <th className="px-4 py-3 font-medium">Monto</th>
+                <th className="px-4 py-3 font-medium">Cuenta</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {expenses.map((expense) => (
-                <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={expense.id}>
-                  <td className="px-4 py-4 text-slate-600">{formatDate(expense.expenseDate)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{expense.type}</td>
-                  <td className="px-4 py-4 text-slate-600">{expense.description}{expense.linkLabel ? <p className="mt-1 font-semibold text-slate-800">{expense.linkLabel}</p> : null}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(expense.amount)}</td>
-                  <td className="px-4 py-4 text-slate-600">{formatCashMethod(expense.paymentMethod)}</td>
-                  <td className="px-4 py-4">
+                <tr className="border-t border-graphite/8 bg-white hover:bg-slate-50" key={expense.id}>
+                  <td className="px-4 py-3 text-slate-600">{formatDate(expense.expenseDate)}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">{expense.type}</td>
+                  <td className="px-4 py-3 text-slate-600">{expense.description}{expense.linkLabel ? <p className="mt-1 font-semibold text-slate-800">{expense.linkLabel}</p> : null}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">{formatCurrency(expense.amount)}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatCashMethod(expense.paymentMethod)}</td>
+                  <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       <Button disabled={expense.isVoided} onClick={() => setLinking(expense)} size="sm" type="button" variant="secondary">{expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}</Button>
                       <Button
@@ -286,6 +252,7 @@ export function ExpensesList({
                         Editar
                       </Button>
                       {canDelete ? (
+                        <ActionMenu label="Mas acciones">
                         <form
                           action={deleteExpenseAction}
                           onSubmit={(event) => {
@@ -299,6 +266,7 @@ export function ExpensesList({
                             Eliminar
                           </Button>
                         </form>
+                        </ActionMenu>
                       ) : null}
                     </div>
                   </td>

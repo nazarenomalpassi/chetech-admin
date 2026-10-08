@@ -3,6 +3,7 @@ import React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RepairAccessOrdersSection } from "./repair-access-orders-section";
+import { cancelRepairAccessOrderAction } from "../actions";
 import type { RepairAccessOrderRecord } from "../queries";
 
 Object.assign(globalThis, { React });
@@ -13,6 +14,7 @@ vi.mock("./repair-access-workshop-card", () => ({
     <article aria-label={order.repairNumber}><form data-workshop-form><input aria-label={`Avance ${order.repairNumber}`} /></form>{canManageIntake ? <button onClick={() => onOpenDetail(order)}>Ficha {order.repairNumber}</button> : null}</article>
 }));
 vi.mock("./repair-access-whatsapp-actions", () => ({ RepairAccessWhatsAppButton: () => <button>WhatsApp</button> }));
+vi.mock("./repair-quick-editor", () => ({ RepairQuickEditor: ({ order }: { order: RepairAccessOrderRecord }) => <form data-workshop-form><input aria-label="Avance rapido" defaultValue={order.repairProgress ?? ""} /></form> }));
 
 function makeOrder(index = 1): RepairAccessOrderRecord {
   return {
@@ -57,10 +59,12 @@ describe("order workspace list", () => {
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.queryByRole("article", { hidden: true })).toBeNull();
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Ver detalle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
     expect(props.onOpenDetail).toHaveBeenCalledWith(orders[0]);
+    fireEvent.click(screen.getByText("Mas acciones"));
     fireEvent.click(screen.getByRole("button", { name: "Editar ingreso" }));
     expect(props.onEdit).toHaveBeenCalledWith(orders[0]);
+    fireEvent.click(screen.getByRole("button", { name: "Mas acciones" }));
     expect(screen.getByRole("button", { name: "Anular" }).closest("form")?.querySelector('input[name="id"]')?.getAttribute("value")).toBe(orders[0].id);
     expect(screen.getByRole("button", { name: "WhatsApp" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ver tarjetas" }));
@@ -72,6 +76,36 @@ describe("order workspace list", () => {
     render(<RepairAccessOrdersSection {...props} canManageIntake={false} onNew={vi.fn()} />);
     expect(screen.queryByRole("button", { name: "Ver tabla" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Nueva orden" })).toBeNull();
+  });
+
+  it("keeps quick work available in the table without opening the complete record", () => {
+    const record = { ...makeOrder(), workflow: { version: 3 }, repairProgress: "En revision" } as RepairAccessOrderRecord;
+    render(<RepairAccessOrdersSection {...props} orders={[record]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
+    const quick = screen.getByText("Actualizar trabajo").closest("details")!;
+    quick.open = true;
+    fireEvent(quick, new Event("toggle"));
+    const progress = screen.getByRole("textbox", { name: "Avance rapido" });
+    fireEvent.change(progress, { target: { value: "Fuente reparada" } });
+    quick.open = false;
+    fireEvent(quick, new Event("toggle"));
+    quick.open = true;
+    fireEvent(quick, new Event("toggle"));
+    expect((screen.getByRole("textbox", { name: "Avance rapido" }) as HTMLInputElement).value).toBe("Fuente reparada");
+  });
+
+  it("requires confirmation before cancelling from the table", () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    render(<RepairAccessOrdersSection {...props} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
+    fireEvent.click(screen.getByText("Mas acciones"));
+    const form = screen.getByRole("button", { name: "Anular" }).closest("form")!;
+    expect(fireEvent.submit(form)).toBe(false);
+    expect(confirm).toHaveBeenCalledOnce();
+    confirm.mockReturnValue(true);
+    fireEvent.submit(form);
+    expect(cancelRepairAccessOrderAction).toHaveBeenCalledOnce();
+    expect(form.querySelector('input[name="id"]')?.getAttribute("value")).toBe(orders[0].id);
   });
 
   it("keeps the card editor mounted if leaving a dirty workspace is declined", () => {

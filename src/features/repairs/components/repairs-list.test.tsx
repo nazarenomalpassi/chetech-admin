@@ -18,7 +18,7 @@ describe("REP collection screen opening", () => {
 
   it("opens the linked out-of-page record and ledger instead of preparing a duplicate record", () => {
     const { container } = render(<RepairsList {...props} collectionTarget={{ order: native, repair, error: null }} />);
-    const form = new FormData(container.querySelector("form")!);
+    const form = new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!);
     expect(form.get("id")).toBe(repair.id);
     expect(form.get("expectedVersion")).toBe("4");
     expect(form.get("repairAccessOrderId")).toBe(native.id);
@@ -31,7 +31,7 @@ describe("REP collection screen opening", () => {
 
   it("shows an empty payment method immediately without assuming the quote was collected", () => {
     const { container } = render(<RepairsList {...props} collectionTarget={{ order: native, repair: null, error: null }} />);
-    const form = new FormData(container.querySelector("form")!);
+    const form = new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!);
     expect(form.get("id")).toBe("");
     expect(form.get("repairAccessOrderId")).toBe(native.id);
     expect(form.get("amount")).toBe("80000");
@@ -47,7 +47,8 @@ describe("REP collection screen opening", () => {
     const { container } = render(<RepairsList {...props} />);
     fireEvent.change(container.querySelector<HTMLInputElement>('input[name="accessOrderNumber"]')!, { target: { value: "REP-000123" } });
     fireEvent.click(screen.getByRole("button", { name: "Cargar orden" }));
-    await waitFor(() => expect(new FormData(container.querySelector("form")!).get("id")).toBe(repair.id));
+    await waitFor(() => expect(new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!).get("id")).toBe(repair.id));
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" }).closest('[tabindex="-1"]')));
     expectNoMoneyWritten();
   });
 
@@ -56,22 +57,36 @@ describe("REP collection screen opening", () => {
     const { container } = render(<RepairsList {...props} />);
     fireEvent.change(container.querySelector<HTMLInputElement>('input[name="accessOrderNumber"]')!, { target: { value: "123" } });
     fireEvent.click(screen.getByRole("button", { name: "Cargar orden" }));
-    await waitFor(() => expect(new FormData(container.querySelector("form")!).get("repairAccessOrderId")).toBe(native.id));
-    expect(JSON.parse(String(new FormData(container.querySelector("form")!).get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 0 }]);
+    await waitFor(() => expect(new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!).get("repairAccessOrderId")).toBe(native.id));
+    expect(JSON.parse(String(new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!).get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 0 }]);
     fireEvent.change(screen.getByRole("combobox", { name: "Medio 1" }), { target: { value: "mp" } });
     fireEvent.change(container.querySelector<HTMLInputElement>("#payment-amount-0")!, { target: { value: "30000" } });
     fireEvent.click(screen.getByRole("button", { name: "Agregar medio" }));
-    expect(JSON.parse(String(new FormData(container.querySelector("form")!).get("paymentsJson")))).toEqual([{ method: "mp", amount: 30000 }, { method: "efectivo", amount: 50000 }]);
+    expect(JSON.parse(String(new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!).get("paymentsJson")))).toEqual([{ method: "mp", amount: 30000 }, { method: "efectivo", amount: 50000 }]);
     expectNoMoneyWritten();
   });
 
   it("routes a paid row to individual payment removal instead of deleting the whole financial record", () => {
     render(<RepairsList {...props} repairs={[repair]} />);
     expect(screen.queryAllByRole("button", { name: "Eliminar" })).toHaveLength(0);
+    expect(screen.queryByRole("button", { name: "Eliminar pago" })).toBeNull();
+    fireEvent.click(screen.getAllByRole("button", { name: "Más acciones" })[0]);
     fireEvent.click(screen.getAllByRole("button", { name: "Eliminar pago" })[0]);
     expect(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).toBeTruthy();
-    fireEvent.click(within(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).getByRole("button", { name: "Eliminar pago" }));
+    fireEvent.click(within(screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })).getByRole("button", { name: "Más acciones" }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar pago" }));
     expect(screen.getByRole("textbox", { name: "Motivo para eliminar el pago" })).toBeTruthy();
+    expectNoMoneyWritten();
+  });
+  it("keeps a comma-decimal repair price draft without changing the amount sent or assuming payment", () => {
+    const { container } = render(<RepairsList {...props} collectionTarget={{ order: native, repair: null, error: null }} />);
+    const price = screen.getByLabelText("Precio de reparacion") as HTMLInputElement;
+    fireEvent.change(price, { target: { value: "80000," } });
+    expect(price.value).toBe("80000,");
+    fireEvent.change(price, { target: { value: "80000,25" } });
+    const data = new FormData(container.querySelector<HTMLInputElement>('input[name="expectedVersion"]')!.closest("form")!);
+    expect(data.get("amount")).toBe("80000.25");
+    expect(JSON.parse(String(data.get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 0 }]);
     expectNoMoneyWritten();
   });
 });

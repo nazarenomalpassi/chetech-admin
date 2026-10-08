@@ -49,7 +49,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid} readOnly={retiring} placeholder="Sin presupuestar" />
           </label>
         </div>
-        {order.isPaid && !retiring ? <p className="text-xs leading-5 text-slate-500">Importe protegido porque hay un cobro informado. Las correcciones de dinero se hacen en Cobros.</p> : null}
+        {order.isPaid && !retiring ? <p className="text-sm leading-5 text-slate-600">Importe protegido por un cobro informado. Corrige el dinero en Cobros.</p> : null}
         <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
           <span>Detalle del presupuesto</span>
           <Textarea id={`quick-${order.id}-budget`} name="budgetDetail" defaultValue={order.budgetDetail ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" placeholder="Trabajo a realizar y repuestos incluidos" />
@@ -75,7 +75,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <input name="confirmDelivery" type="checkbox" defaultChecked={fields.confirmDelivery === "on"} required className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
             Confirmo que el cliente retiro el equipo
           </label>
-          {!canDeliver ? <p role="status" className="text-sm text-amber-900">Primero guarda la orden como Listo para retirar, Sin solucion o Presupuestado y rechazado. Despues registra el retiro aqui.</p> : null}
+          {!canDeliver ? <p role="status" className="text-sm text-amber-900">Primero guarda como Listo para retirar, Sin solucion o Presupuestado y rechazado.</p> : null}
           {hasWorkChanges ? <p role="status" className="text-sm text-amber-900">Guarda primero los cambios de presupuesto o trabajo. Vuelve al estado anterior: lo que escribiste se conserva.</p> : null}
         </div> : null}
         {canManage && !retiring && (decisionSelected || state.needsConfirmation) ? <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
@@ -89,7 +89,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <input key={`confirmation-${quoteKey}`} name="confirmCustomer" type="checkbox" defaultChecked={fields.confirmCustomer === "on"} className="h-5 w-5 shrink-0 accent-graphite" />
             El cliente confirmo este presupuesto
           </label>
-          <p className="mt-1 text-xs leading-5 text-slate-600">Marcala solo si autorizo este importe y detalle. Se registra junto con el trabajo al guardar.</p>
+          <p className="mt-1 text-sm leading-5 text-slate-600">Solo si autorizo este importe y detalle.</p>
           </>}
           {responseNeedsRecording || (!decisionSelected && confirmSelected) ? <div className="mt-3 grid gap-3">
             <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{decisionSelected ? "Como respondio el cliente" : "Como confirmo"}</span><Select id={`quick-${order.id}-channel`} name="decisionChannel" defaultValue={fields.decisionChannel || "presencial"} options={[
@@ -106,9 +106,9 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           <input key={`quality-${quoteKey}`} name="qualityChecked" type="checkbox" defaultChecked={"qualityChecked" in fields ? fields.qualityChecked === "on" : state.hasCurrentQuality} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
           Equipo probado y funcionando
         </label> : null}
-        {pendingParts > 0 && !retiring ? <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Hay {pendingParts} solicitudes de repuestos pendientes de recibir. Revisalas en las acciones de esta orden antes de marcar listo.</p> : null}
-        <details className={retiring ? "hidden" : "rounded-xl border border-slate-200 p-3"}>
-          <summary className="min-h-11 cursor-pointer text-sm font-medium text-slate-600">Resultado de las pruebas (opcional)</summary>
+        {pendingParts > 0 && !retiring ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinacion y repuestos.</p> : null}
+        <details className={retiring ? "hidden" : "border-t border-slate-200 pt-2"}>
+          <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Resultado de las pruebas (opcional)</summary>
           <label className="mt-2 grid gap-2 text-sm"><span>Detalle de las pruebas</span><Textarea id={`quick-${order.id}-quality-notes`} name="qualityNotes" defaultValue={order.workflow?.qualityNotes ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" /></label>
         </details>
         <div className="grid gap-2">

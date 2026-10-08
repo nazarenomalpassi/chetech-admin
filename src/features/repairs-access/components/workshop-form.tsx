@@ -88,6 +88,6 @@ export function WorkshopForm({ orderId, orderVersion, children, action = saveWor
     {pending ? <p role="status" className="text-sm text-slate-500">Guardando actualizacion...</p> : null}
     {refreshing ? <p role="status" className="text-sm text-slate-500">Guardado. Actualizando la ficha...</p> : null}
     {!pending && result ? <p role={result.success ? "status" : "alert"} className={`rounded-xl p-3 text-sm ${result.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>{result.message}</p> : null}
-    {dirty && draft.lastSavedAt ? <p className="text-xs text-slate-500">Borrador guardado en este dispositivo. Aun no se envio al taller.</p> : null}
+    {dirty && draft.lastSavedAt ? <p className="text-xs text-slate-500">Borrador local. Pendiente de guardar en el taller.</p> : null}
   </form>;
 }

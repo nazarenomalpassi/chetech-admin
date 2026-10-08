@@ -14,10 +14,10 @@ export function FormSubmitButton({ idleLabel, pendingLabel, ...props }: FormSubm
   const { pending } = useFormStatus();
 
   return (
-    <Button {...props} disabled={pending || props.disabled} type="submit">
+    <Button {...props} aria-busy={pending} disabled={pending || props.disabled} type="submit">
       {pending ? (
         <>
-          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+          <LoaderCircle aria-hidden="true" className="h-4 w-4 animate-spin" />
           {pendingLabel}
         </>
       ) : (

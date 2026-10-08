@@ -1,4 +1,4 @@
-import { ChevronDown, Package } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -14,27 +14,23 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
   const alertLabel = `${products.length} ${products.length === 1 ? "alerta" : "alertas"}`;
 
   return (
-    <Card className="self-start overflow-hidden rounded-[34px] p-0">
+    <Card className="self-start overflow-hidden p-0">
       <details className="group">
-        <summary className="flex min-h-[7.5rem] cursor-pointer list-none items-center justify-between gap-4 p-5 outline-none transition-colors hover:bg-brand-50/70 focus-visible:bg-brand-50/70 lg:p-6 [&::-webkit-details-marker]:hidden">
-          <div className="flex min-w-0 items-start gap-4">
-            <span className="mt-0.5 hidden h-11 w-11 shrink-0 items-center justify-center rounded-[17px] border border-graphite/8 bg-brand-100 text-graphite sm:inline-flex">
-              <Package className="h-5 w-5" />
-            </span>
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-500 [&::-webkit-details-marker]:hidden">
+          <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <p className="panel-kicker">Inventario critico</p>
-              <h3 className="mt-2 text-[1.45rem] font-semibold tracking-[-0.04em] text-slate-950 sm:text-[1.6rem]">
+              <h2 className="text-lg font-semibold text-slate-950">
                 Reposicion sugerida
-              </h3>
-              <p className="mt-2 text-sm leading-5 text-slate-500">
-                Toca para ver los productos que necesitan reposicion.
+              </h2>
+              <p className="mt-1 text-sm leading-5 text-slate-500">
+                Productos por debajo del stock minimo.
               </p>
             </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="warning">{alertLabel}</Badge>
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-[15px] border border-graphite/8 bg-white text-slate-700 shadow-[0_8px_18px_rgba(20,20,19,0.05)]">
+            <span className="inline-flex h-6 w-6 items-center justify-center text-slate-600">
               <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
             </span>
           </div>
@@ -45,12 +41,12 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
             {products.length ? (
               products.map((product) => (
                 <div
-                  className="rounded-[22px] border border-graphite/8 bg-white/90 px-4 py-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]"
+                  className="border-b border-slate-200 py-3"
                   key={product.id}
                 >
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-950 sm:truncate">{product.name}</p>
+                      <p className="font-medium text-slate-950 break-words">{product.name}</p>
                       <p className="mt-1 text-sm text-slate-500">
                         Minimo recomendado: {product.min_stock} unidades
                       </p>
@@ -63,7 +59,7 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
               ))
             ) : (
               <div className="empty-panel">
-                No hay alertas de stock. El inventario de seguridad esta bajo control en este momento.
+                No hay productos bajo el stock minimo.
               </div>
             )}
           </div>

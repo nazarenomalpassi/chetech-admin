@@ -6,7 +6,7 @@ import { FiscalInvoicePanel } from "./fiscal-invoice-panel";
 import { snapshotFixture } from "../fixtures";
 
 beforeEach(() => vi.stubGlobal("React", React));
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 const ready = { environment: "homologation", pointOfSale: 2, issuerCuit: "20123456786", today: "2026-10-05", ready: true, issues: [] };
 describe("manual fiscal panel", () => {
   it("only reads configuration on mount and clearly disables issuance when setup is missing", async () => {
@@ -33,6 +33,25 @@ describe("manual fiscal panel", () => {
     fireEvent.click(button);
     const select = screen.getByLabelText("Concepto fiscal") as HTMLSelectElement;
     expect(Array.from(select.options).filter((option) => option.value && !option.disabled).map((option) => option.value)).toEqual(["2"]);
+  });
+  it("protects changed fiscal data when closing, but never issues from a close action", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ readiness: ready, sourceType: "repair_access", customerName: "Cliente", records: [] })));
+    vi.stubGlobal("fetch", fetcher);
+    render(<FiscalInvoicePanel invoiceId={snapshotFixture().invoiceId} />);
+    await screen.findByText(/Configuracion local validada/);
+    fireEvent.click(screen.getByRole("button", { name: "Emitir factura C manualmente" }));
+    fireEvent.change(screen.getByLabelText("Domicilio del receptor"), { target: { value: "Domicilio nuevo" } });
+    fireEvent.click(screen.getByRole("button", { name: "Cerrar dialogo fiscal" }));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(confirm).toHaveBeenCalledTimes(2);
+    expect((screen.getByLabelText("Domicilio del receptor") as HTMLInputElement).value).toBe("Domicilio nuevo");
+    confirm.mockReturnValue(true);
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fetcher).toHaveBeenCalledTimes(1);
   });
   it("requires preview and explicit consent before posting a confirm", async () => {
     const preview = { requestId: "00000000-0000-4000-8000-000000000030", snapshotHash: "a".repeat(64), snapshot: snapshotFixture() };

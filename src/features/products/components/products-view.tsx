@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { PackagePlus, ShieldAlert, Store } from "lucide-react";
+import { PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -50,63 +50,11 @@ export function ProductsView({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <p className="panel-kicker">Catalogo operativo</p>
-            <h1 className="panel-heading mt-3">Productos</h1>
-            <p className="panel-subheading mt-3">
-              Administra el inventario con una lectura mas clara para mostrador: busqueda rapida,
-              categorias visibles y alertas que saltan a la vista.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 xl:min-w-[31rem]">
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <Store className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Resultados filtrados
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{totalProducts}</p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <PackagePlus className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Activos en pagina
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{activeProducts}</p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-cautionSoft text-finance-caution">
-                  <ShieldAlert className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Stock sensible en pagina
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{lowStockProducts}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex-1">
-            <ProductFilters categories={categories} />
+      <Card>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="panel-heading">Productos</h1>
+            <p className="mt-1 text-sm text-slate-600">{totalProducts} resultados. En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.</p>
           </div>
 
           {canManage ? (
@@ -120,11 +68,10 @@ export function ProductsView({
               Nuevo producto
             </Button>
           ) : (
-            <div className="status-banner">
-              Modo tecnico: podes consultar el catalogo y los precios, sin alterar stock ni productos.
-            </div>
+            <p className="text-sm text-slate-600">Catalogo de consulta</p>
           )}
         </div>
+        <div className="mt-4"><ProductFilters categories={categories} /></div>
       </Card>
 
       <ProductTable

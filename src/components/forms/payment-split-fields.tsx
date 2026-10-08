@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { ArrowRightLeft, Landmark, WalletCards } from "lucide-react";
+import { WalletCards } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { Select } from "@/components/ui/select";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { getPaymentTotal, roundPaymentAmount, type PaymentSplit } from "@/lib/payment-splits";
@@ -78,16 +78,14 @@ export function PaymentSplitFields({
   }
 
   return (
-    <div className="rounded-[28px] border border-graphite/8 bg-[linear-gradient(180deg,rgba(255,255,255,0.98),rgba(248,248,244,0.94))] p-4 shadow-[0_14px_30px_rgba(20,20,19,0.05)]">
-      <div className="flex flex-col gap-4 border-b border-graphite/8 pb-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-3">
-          <span className="inline-flex h-11 w-11 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
-            <WalletCards className="h-5 w-5" />
-          </span>
+    <div className="min-w-0 rounded-xl border border-line bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+        <div className="flex items-start gap-2">
+          <WalletCards aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
           <div>
             <p className="text-sm font-semibold text-slate-950">{title}</p>
-            <p className="mt-1 text-sm text-slate-500">
-              Reparti el cobro entre las cuentas que use el cliente sin perder claridad operativa.
+            <p className="mt-1 text-sm text-slate-600">
+              Indicá cuánto recibe cada cuenta.
             </p>
           </div>
         </div>
@@ -99,11 +97,11 @@ export function PaymentSplitFields({
       <div className="mt-4 space-y-3">
         {payments.map((payment, index) => (
           <div
-            className="grid gap-3 rounded-[24px] border border-graphite/8 bg-white/88 p-4 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_12px_22px_rgba(20,20,19,0.04)] md:grid-cols-[minmax(0,1fr)_180px_100px] md:items-end"
-            key={`${payment.method}-${index}`}
+            className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,180px)_auto] sm:items-end"
+            key={index}
           >
             <div className="space-y-2">
-              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor={`payment-method-${index}`}>
+              <label className="block text-sm font-medium text-slate-700" htmlFor={`payment-method-${index}`}>
                 Medio {index + 1}
               </label>
               <Select
@@ -114,17 +112,16 @@ export function PaymentSplitFields({
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor={`payment-amount-${index}`}>
+              <label className="block text-sm font-medium text-slate-700" htmlFor={`payment-amount-${index}`}>
                 Monto
               </label>
-              <Input
+              <MoneyInput
                 id={`payment-amount-${index}`}
                 min={0}
-                onChange={(event) => updatePayment(index, "amount", event.target.value)}
+                onValueChange={(value) => updatePayment(index, "amount", value)}
                 onFocus={(event) => event.currentTarget.select()}
-                step="0.01"
-                type="number"
-                value={Number.isFinite(payment.amount) && payment.amount > 0 ? payment.amount : ""}
+                placeholder="0,00"
+                value={Number.isFinite(payment.amount) ? payment.amount : 0}
               />
             </div>
             <Button className="md:mb-[1px]" onClick={() => removePaymentRow(index)} size="sm" type="button" variant="ghost">
@@ -134,34 +131,28 @@ export function PaymentSplitFields({
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 rounded-[24px] bg-brand-50/85 p-4 md:grid-cols-3">
-        <div className="rounded-[20px] border border-graphite/8 bg-white/85 p-4">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-            <Landmark className="h-3.5 w-3.5" />
-            Total declarado
-          </div>
-          <p className="mt-3 text-xl font-semibold tracking-[-0.04em] text-slate-950">{formatCurrency(totalAmount)}</p>
+      <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
+        <div className="min-w-0">
+          <p className="text-sm text-slate-600">Total a cobrar</p>
+          <p className="mt-1 font-semibold tabular-nums text-slate-950">{formatCurrency(totalAmount)}</p>
         </div>
-        <div className="rounded-[20px] border border-graphite/8 bg-white/85 p-4">
-          <div className="flex items-center gap-2 text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-            <ArrowRightLeft className="h-3.5 w-3.5" />
-            Total operacion
-          </div>
-          <p className="mt-3 text-xl font-semibold tracking-[-0.04em] text-slate-950">{formatCurrency(assignedTotal)}</p>
+        <div className="min-w-0">
+          <p className="text-sm text-slate-600">Importe distribuido</p>
+          <p className="mt-1 font-semibold tabular-nums text-slate-950">{formatCurrency(assignedTotal)}</p>
         </div>
-        <div className="rounded-[20px] border border-graphite/8 bg-white/85 p-4">
-          <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Diferencia</p>
+        <div className="min-w-0">
+          <p className="text-sm text-slate-600">{difference < 0 ? "Excedente asignado" : "Falta distribuir"}</p>
           <p
             aria-live="polite"
-            className={`mt-3 text-xl font-semibold tracking-[-0.04em] ${
+            className={`mt-1 font-semibold tabular-nums ${
               Math.abs(difference) < 0.01 ? "text-finance-profit" : "text-finance-expense"
             }`}
           >
             {formatCurrency(difference)}
           </p>
           <p className="mt-1 text-xs text-slate-500">
-            {Math.abs(difference) < 0.01
-              ? "Cobro completo y balanceado."
+            {totalAmount <= 0 ? "Cargá el total antes de confirmar el cobro." : Math.abs(difference) < 0.01
+              ? "Importes completos."
               : difference > 0
                 ? "Todavia falta asignar parte del cobro."
                 : "Hay mas dinero asignado que el declarado."}

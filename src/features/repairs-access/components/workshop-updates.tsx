@@ -65,7 +65,7 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
     };
   }, [router]);
   if (!waiting && !offline) return null;
-  return <div role="status" className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 text-sm ${offline ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
+  return <div role="status" className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${offline ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}>
     <span className="flex items-center gap-2">{offline ? <WifiOff className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}{offline ? "Sin conexion. Los cambios no estan guardados en el servidor hasta que recibas la confirmacion." : "Hay novedades en el taller. Tus cambios sin guardar se conservan."}</span>
     {waiting && !offline ? <Button type="button" variant="secondary" size="sm" onClick={() => { if (!dirty.current || window.confirm("Hay cambios sin guardar. ¿Querés actualizar la pantalla?")) { dirty.current = false; setWaiting(false); router.refresh(); } }}>Revisar novedades</Button> : null}
   </div>;

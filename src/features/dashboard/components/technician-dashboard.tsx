@@ -29,10 +29,9 @@ export function TechnicianDashboard({ technicianName, data, workshopInbox }: Tec
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="panel-kicker">Mesa tecnica</p>
-            <h1 className="panel-heading mt-3">Buen trabajo, {technicianName}</h1>
-            <p className="panel-subheading mt-3 max-w-2xl">
-              Tu vista operativa de reparaciones y visitas, sin informacion contable ni acciones administrativas.
+            <h1 className="text-2xl font-semibold text-slate-950">Taller de {technicianName}</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600 max-w-2xl">
+              Ordenes y visitas asignadas.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -54,10 +53,9 @@ export function TechnicianDashboard({ technicianName, data, workshopInbox }: Tec
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.65fr)]">
         <Card>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="panel-kicker">Trabajo pendiente</p>
-              <h2 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-slate-950">Ordenes activas recientes</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Ordenes activas recientes</h2>
             </div>
             <Link className={cn(buttonVariants({ variant: "secondary", size: "sm" }))} href="/reparaciones-access?view=ordenes">
               Ver todas
@@ -67,7 +65,7 @@ export function TechnicianDashboard({ technicianName, data, workshopInbox }: Tec
           <div className="mt-5 grid gap-3">
             {data.recentOrders.length ? data.recentOrders.map((order) => (
               <Link
-                className="rounded-[22px] border border-graphite/8 bg-white/80 p-4 transition hover:-translate-y-0.5 hover:border-graphite/16 hover:shadow-soft"
+                className="border-b border-slate-200 py-4 transition-colors hover:bg-slate-50"
                 href={`/reparaciones-access?view=ordenes&order=${order.id}`}
                 key={order.id}
               >
@@ -88,16 +86,15 @@ export function TechnicianDashboard({ technicianName, data, workshopInbox }: Tec
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-100"><CalendarDays className="h-5 w-5" /></span>
             <div>
-              <p className="panel-kicker">Agenda</p>
               <h2 className="mt-1 text-xl font-semibold text-slate-950">Visitas de hoy: {data.visits.todayCount}</h2>
             </div>
           </div>
           {data.visits.nextVisit ? (
-            <div className="mt-5 rounded-[22px] border border-graphite/8 bg-white/80 p-4">
+            <div className="mt-4 border-t border-slate-200 pt-4">
               <p className="font-semibold text-slate-950">{data.visits.nextVisit.customerName}</p>
               <p className="mt-2 text-sm text-slate-600">{getVisitTimeLabel(data.visits.nextVisit.timeFrom, data.visits.nextVisit.timeTo)}</p>
               <p className="mt-1 text-sm text-slate-500">{data.visits.nextVisit.address}</p>
-              <p className="mt-3 text-xs uppercase tracking-[0.16em] text-slate-400">{formatDate(data.visits.nextVisit.visitDate)}</p>
+              <p className="mt-3 text-xs text-slate-400">{formatDate(data.visits.nextVisit.visitDate)}</p>
             </div>
           ) : <div className="empty-panel mt-5">No hay visitas pendientes en agenda.</div>}
         </Card>

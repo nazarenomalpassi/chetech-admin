@@ -3,8 +3,9 @@
 import { useEffect, useState, type Ref } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Input } from "@/components/ui/input";
+import { LazyDisclosure } from "@/components/ui/lazy-disclosure";
 import { Select } from "@/components/ui/select";
 import { cancelRepairAccessOrderAction } from "@/features/repairs-access/actions";
 import {
@@ -25,6 +26,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { WorkshopTechnician } from "./order-coordination-panel";
 import { normalizeRepairAccessLookup } from "../customer-search";
+import { RepairQuickEditor } from "./repair-quick-editor";
 
 export function RepairAccessOrdersSection({
   orders,
@@ -103,19 +105,17 @@ export function RepairAccessOrdersSection({
   }
 
   return (
-    <Card className="space-y-4 sm:space-y-5">
+    <section className="min-w-0 space-y-4">
       <div className="grid min-w-0 gap-4 min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] min-[1600px]:items-end">
         <div className="min-w-0">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-brand-700 sm:text-xs sm:tracking-[0.28em]">Ordenes de service</p>
-          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-2xl font-semibold tracking-[-0.04em] text-slate-950 outline-none sm:text-3xl" ref={headingRef} tabIndex={-1}>Mesa de trabajo</h2>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-slate-950 outline-none" ref={headingRef} tabIndex={-1}>Mesa de trabajo</h2>
             {canManageIntake && onNew ? <Button onClick={onNew} type="button">Nueva orden</Button> : null}
           </div>
-          <p className="mt-2 max-w-2xl text-[0.84rem] leading-6 text-slate-500 sm:text-sm">
-            Encontra la orden por numero, equipo, cliente o falla y actualiza el trabajo sin salir del listado.
-          </p>
         </div>
         <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+            <span>Buscar orden</span>
           <Input
             aria-label="Buscar orden de service"
             onChange={(event) => onSearchChange(event.target.value)}
@@ -125,6 +125,9 @@ export function RepairAccessOrdersSection({
             placeholder="Numero de orden, cliente, equipo o falla..."
             value={search}
           />
+          </label>
+          <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+            <span>Estado</span>
           <Select
             aria-label="Filtrar ordenes por estado"
             name="statusFilter"
@@ -132,6 +135,7 @@ export function RepairAccessOrdersSection({
             options={[{ value: "todos", label: "Todos los estados" }, ...repairAccessStatusOptions]}
             value={statusFilter}
           />
+          </label>
           <details className="min-w-0 sm:col-span-2" open={warrantyFilter !== "todos" ? true : undefined}>
             <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Filtros</summary>
             <div className="pt-2 sm:max-w-sm">
@@ -176,14 +180,14 @@ export function RepairAccessOrdersSection({
             />
           ))
         ) : (
-          <div className="rounded-[24px] border border-dashed border-graphite/15 bg-white/75 px-4 py-8 text-center text-sm leading-6 text-slate-500">
+          <div className="rounded-xl border border-dashed border-graphite/15 bg-white px-4 py-6 text-sm leading-6 text-slate-500 md:col-span-2 2xl:col-span-3">
             No hay ordenes para esa busqueda o estado.
           </div>
         )}
       </div>
       ) : (
-      <div className="overflow-hidden rounded-3xl border border-slate-100">
-        <div className="overflow-x-auto">
+      <div className="overflow-hidden rounded-xl border border-slate-100">
+        <div className="overflow-x-auto bg-white">
           <table className="min-w-full text-sm">
             <thead className="bg-slate-50 text-left text-slate-500">
               <tr>
@@ -206,10 +210,9 @@ export function RepairAccessOrdersSection({
                   return (
                     <tr className="border-t border-slate-100 align-top" key={order.id}>
                       <td className="px-4 py-4">
-                        <button className="whitespace-nowrap font-semibold text-brand-700 hover:text-brand-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" onClick={() => onOpenDetail(order)} type="button">
+                        <button aria-label={`Ficha completa ${order.repairNumber}`} className="min-h-11 whitespace-nowrap font-semibold text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" onClick={() => onOpenDetail(order)} type="button">
                           {order.repairNumber}
                         </button>
-                        <p className="mt-1 text-xs text-slate-400">Referencia fisica</p>
                       </td>
                       <td className="px-4 py-4">
                         <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
@@ -217,7 +220,7 @@ export function RepairAccessOrdersSection({
                       </td>
                       <td className="px-4 py-4 text-slate-600">
                         <p className="font-medium text-slate-800">{deviceLabel || "Equipo"}</p>
-                        {order.device.serialNumber ? <p className="mt-1 text-xs text-slate-400">Serie: {order.device.serialNumber}</p> : null}
+                        {order.device.serialNumber ? <p className="mt-1 text-xs text-slate-500">Serie: {order.device.serialNumber}</p> : null}
                         <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">{order.issueReported}</p>
                       </td>
                       <td className="px-4 py-4 text-slate-600">{formatDate(order.intakeDate)}</td>
@@ -225,7 +228,7 @@ export function RepairAccessOrdersSection({
                       <td className="px-4 py-4">
                         <RepairAccessWarrantyBadge warranty={order.warranty} />
                         {order.warranty.expiresOn ? (
-                          <p className="mt-1 text-xs text-slate-400">
+                          <p className="mt-1 text-xs text-slate-500">
                             Hasta {formatDate(order.warranty.expiresOn)}
                           </p>
                         ) : null}
@@ -233,21 +236,26 @@ export function RepairAccessOrdersSection({
                       <td className="px-4 py-4 text-slate-600">
                         <p>Pres.: {formatCurrency(order.budgetAmount)}</p>
                         <p className="mt-1 text-xs text-slate-500">Final: {formatCurrency(order.finalAmount)}</p>
-                        <p className="mt-1 text-xs text-slate-400">{order.isPaid ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}` : "Sin cobrar"}</p>
+                        <p className="mt-1 text-xs text-slate-500">{order.isPaid ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}` : "Sin cobrar"}</p>
                       </td>
                       <td className="px-4 py-4 text-slate-600">{order.technicianName || "-"}</td>
                       <td className="px-4 py-4">
-                        <div className="flex flex-wrap justify-end gap-2">
-                          <RepairAccessWhatsAppButton order={order} />
-                          <Button onClick={() => onOpenDetail(order)} size="sm" type="button">Ver detalle</Button>
+                        <div className="flex min-w-64 flex-wrap justify-end gap-2">
+                          <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">Ficha completa</Button>
+                          {order.workflow ? <LazyDisclosure className="w-full rounded-lg border border-slate-200" summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40" summary="Actualizar trabajo">
+                            <RepairQuickEditor order={order} canManage={canManageIntake} />
+                          </LazyDisclosure> : null}
+                          <span className="hidden lg:inline-flex"><RepairAccessWhatsAppButton order={order} /></span>
                           {canManageIntake ? (
-                            <>
+                            <ActionMenu label="Mas acciones">
                               <Button onClick={() => onEdit(order)} size="sm" type="button" variant="secondary">Editar ingreso</Button>
-                              <form action={cancelRepairAccessOrderAction}>
+                              <form action={cancelRepairAccessOrderAction} onSubmit={(event) => {
+                                if (!window.confirm(`Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`)) event.preventDefault();
+                              }}>
                                 <input name="id" type="hidden" value={order.id} />
                                 <Button size="sm" type="submit" variant="danger">Anular</Button>
                               </form>
-                            </>
+                            </ActionMenu>
                           ) : null}
                         </div>
                       </td>
@@ -281,6 +289,6 @@ export function RepairAccessOrdersSection({
           </Button>
         </div>
       ) : null}
-    </Card>
+    </section>
   );
 }

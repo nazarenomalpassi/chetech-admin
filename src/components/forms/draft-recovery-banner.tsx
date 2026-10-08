@@ -21,7 +21,7 @@ export function DraftRecoveryBanner({
   return (
     <section
       aria-labelledby="draft-recovery-title"
-      className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950"
+      className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"
       role="status"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

@@ -103,44 +103,43 @@ export function DashboardOverview({
   range,
   workshopInbox
 }: DashboardOverviewProps) {
-  const periodLabel = range.isToday ? "del dia" : "del periodo";
   const metrics = [
     {
       key: "sales",
-      label: `Ventas ${periodLabel}`,
-      description: "Ingresos por operaciones de mostrador",
+      label: "Ventas",
+      description: "Ingresos de mostrador",
       value: salesTodayTotal,
       tone: "income",
       icon: ShoppingBag
     },
     {
       key: "expenses",
-      label: `Gastos ${periodLabel}`,
-      description: "Egresos que consumen caja operativa",
+      label: "Gastos",
+      description: "Egresos operativos",
       value: expensesTodayTotal,
       tone: "expense",
       icon: CreditCard
     },
     {
       key: "repairs",
-      label: `Ingresos por reparaciones ${periodLabel}`,
-      description: "Servicio tecnico cobrado y registrado",
+      label: "Reparaciones",
+      description: "Servicio tecnico cobrado",
       value: repairsTodayTotal,
       tone: "service",
       icon: Wrench
     },
     {
       key: "invoicing",
-      label: `Facturacion ${periodLabel}`,
-      description: "Comprobantes internos emitidos",
+      label: "Facturacion",
+      description: "Comprobantes internos",
       value: invoiceIncomeToday,
       tone: "neutral",
       icon: ArrowUpRight
     },
     {
       key: "profit",
-      label: `Flujo neto de caja ${periodLabel}`,
-      description: "Ingresos menos gastos. No descuenta costo de productos ni retiros de sueldo.",
+      label: "Flujo neto de caja",
+      description: "Ingresos menos gastos; sin costo de productos ni sueldos.",
       value: realProfitToday,
       tone: "success",
       icon: Target
@@ -148,31 +147,30 @@ export function DashboardOverview({
   ] as const;
 
   return (
-    <div className="space-y-6">
-      <Card className="rounded-[24px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 min-[1440px]:flex-row min-[1440px]:items-end min-[1440px]:justify-between">
+    <div className="space-y-4">
+      <Card className="p-4 sm:p-5">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <span className="panel-kicker">Operación diaria</span>
-            <h1 className="panel-heading mt-3">Dashboard ejecutivo del local</h1>
-            <p className="panel-subheading mt-3">
+            <h1 className="text-2xl font-semibold text-slate-950">Resumen del local</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               {range.isToday
-                ? "Lectura en tiempo real del trabajo del dia, con foco en caja, ventas, reparaciones y reposicion critica."
-                : `Leyendo movimientos desde ${formatDate(range.from)} hasta ${formatDate(range.to)} para comparar el rendimiento real del negocio.`}
+                ? `Movimientos del ${formatDate(range.today)}.`
+                : `Movimientos del ${formatDate(range.from)} al ${formatDate(range.to)}.`}
             </p>
           </div>
 
-          <form className="grid w-full gap-3 rounded-[18px] border border-graphite/10 bg-brand-50/70 p-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto] min-[1440px]:w-auto min-[1440px]:min-w-[34rem]">
+          <form className="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] xl:w-auto">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="from">
+              <label className="mb-2 block text-sm font-semibold text-slate-500" htmlFor="from">
                 Desde
               </label>
-              <Input defaultValue={range.from} name="from" type="date" />
+              <Input defaultValue={range.from} id="from" name="from" type="date" />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="to">
+              <label className="mb-2 block text-sm font-semibold text-slate-500" htmlFor="to">
                 Hasta
               </label>
-              <Input defaultValue={range.to} name="to" type="date" />
+              <Input defaultValue={range.to} id="to" name="to" type="date" />
             </div>
             <div className="flex items-end">
               <button className={cn(buttonVariants(), "w-full sm:w-auto")} type="submit">
@@ -194,55 +192,54 @@ export function DashboardOverview({
 
       {workshopInbox}
 
-      <section aria-label="Metricas del periodo" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 min-[1800px]:grid-cols-5">
-        {metrics.map((metric) => <MetricCard {...metric} format="currency" key={metric.key} />)}
+      <section aria-label={`Metricas del ${formatDate(range.from)} al ${formatDate(range.to)}`} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        {metrics.map((metric) => <MetricCard {...metric} className="p-4 xl:[&>div>span]:hidden" format="currency" key={metric.key} />)}
       </section>
 
-      <div className="grid gap-4 2xl:grid-cols-[minmax(0,1.3fr)_minmax(0,0.95fr)]">
+      <div className="space-y-4">
         <LowStockDisclosure products={lowStockProducts} />
 
-        <div className="space-y-4">
-          <Card className="rounded-[34px] p-5 lg:p-6">
-            <div className="flex items-end justify-between gap-3">
+        <div className="grid items-start gap-4 xl:grid-cols-2">
+          <Card className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="panel-kicker">Caja y cuentas</p>
-                <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
-                  Saldo actual por medio
-                </h3>
+                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
+                  Saldo disponible por cuenta
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">Saldos actuales, no del periodo filtrado.</p>
               </div>
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-graphite/8 bg-brand-100 text-graphite">
                 <Wallet className="h-5 w-5" />
               </span>
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3">
               {accountBalances.map((account) => (
                 <div
                   key={account.method}
-                  className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]"
+                  className="border-t border-slate-200 py-3"
                 >
-                  <div className="flex items-center justify-between gap-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      <p className="text-sm font-semibold text-slate-500">
                         {getDashboardAccountLabel(account.method)}
                       </p>
-                      <p className="mt-1 text-xs text-slate-400">Saldo operativo consolidado</p>
                     </div>
-                    <p className="text-xl font-semibold tracking-[-0.03em] text-slate-950">
+                    <p className="text-xl font-semibold tabular-nums text-slate-950">
                       {formatCurrency(account.balance)}
                     </p>
                   </div>
                 </div>
               ))}
-              <div className="rounded-[22px] border border-amber-200 bg-finance-cautionSoft/70 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-                <div className="flex items-center justify-between gap-4">
+              <div className="border-t border-amber-200 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      MP PENDIENTE DE LIBERACION
+                    <p className="text-sm font-semibold text-slate-500">
+                      MP de placas pendiente
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Ventas de placas cargadas y todavia retenidas</p>
+                    <p className="mt-1 text-xs text-slate-400">Retenido; no disponible para operar</p>
                   </div>
-                  <p className="text-xl font-semibold tracking-[-0.03em] text-finance-caution">
+                  <p className="text-xl font-semibold text-finance-caution">
                     {formatCurrency(pendingMercadoPagoReleaseAmount)}
                   </p>
                 </div>
@@ -250,27 +247,26 @@ export function DashboardOverview({
             </div>
           </Card>
 
-          <Card className="rounded-[34px] p-5 lg:p-6">
-            <div className="flex items-end justify-between gap-3">
+          <Card className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="panel-kicker">Agenda del dia</p>
-                <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
+                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
                   Visitas de hoy
-                </h3>
+                </h2>
               </div>
               <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/visitas" as Route}>
                 Abrir visitas
               </Link>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Visitas hoy</p>
-                <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{visitsDashboard.todayCount}</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="border-t border-slate-200 py-3">
+                <p className="text-sm font-semibold text-slate-500">Visitas hoy</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{visitsDashboard.todayCount}</p>
                 <p className="mt-1 text-sm text-slate-500">Pendientes hoy: {visitsDashboard.pendingCount}</p>
               </div>
-              <div className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Proxima visita</p>
+              <div className="border-t border-slate-200 py-3">
+                <p className="text-sm font-semibold text-slate-500">Proxima visita</p>
                 {visitsDashboard.nextVisit ? (
                   <>
                     <p className="mt-2 text-base font-semibold text-slate-950">{visitsDashboard.nextVisit.customerName}</p>
@@ -285,38 +281,37 @@ export function DashboardOverview({
             </div>
           </Card>
 
-          <Card className="rounded-[34px] p-5 lg:p-6">
-            <div className="flex items-end justify-between gap-3">
+          <Card className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="panel-kicker">Cobranza del dia</p>
-                <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
+                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
                   Cuotas por cobrar
-                </h3>
+                </h2>
               </div>
               <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/cuotas" as Route}>
                 Ver cuotas
               </Link>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Cuotas por cobrar hoy</p>
-                <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950">{installmentsDashboard.dueTodayCount}</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="border-t border-slate-200 py-3">
+                <p className="text-sm font-semibold text-slate-500">Cuotas por cobrar hoy</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">{installmentsDashboard.dueTodayCount}</p>
                 <p className="mt-1 text-sm text-slate-500">{formatCurrency(installmentsDashboard.dueTodayTotal)}</p>
               </div>
-              <div className="rounded-[22px] border border-amber-200 bg-finance-cautionSoft/70 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-                <p className="text-[0.7rem] font-semibold uppercase tracking-[0.24em] text-slate-500">Cuotas vencidas</p>
-                <p className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-finance-caution">{installmentsDashboard.overdueCount}</p>
+              <div className="border-t border-amber-200 py-3">
+                <p className="text-sm font-semibold text-slate-500">Cuotas vencidas</p>
+                <p className="mt-2 text-2xl font-semibold text-finance-caution">{installmentsDashboard.overdueCount}</p>
                 <p className="mt-1 text-sm text-slate-500">{formatCurrency(installmentsDashboard.overdueTotal)}</p>
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 xl:grid-cols-2">
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-slate-950">Cobros de hoy</p>
                 {installmentsDashboard.dueToday.length ? (
                   installmentsDashboard.dueToday.map((installment) => (
-                    <div key={installment.id} className="rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
+                    <div key={installment.id} className="border-t border-slate-200 py-3">
                       <p className="font-medium text-slate-950">
                         {installment.customerName} | {installment.productName}
                       </p>
@@ -334,7 +329,7 @@ export function DashboardOverview({
                 <p className="text-sm font-semibold text-slate-950">Cuotas vencidas</p>
                 {installmentsDashboard.overdue.length ? (
                   installmentsDashboard.overdue.map((installment) => (
-                    <div key={installment.id} className="rounded-[22px] border border-amber-200 bg-finance-cautionSoft/70 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
+                    <div key={installment.id} className="border-t border-amber-200 py-3">
                       <p className="font-medium text-slate-950">
                         {installment.customerName} | {installment.productName}
                       </p>
@@ -350,31 +345,30 @@ export function DashboardOverview({
             </div>
           </Card>
 
-          <Card className="rounded-[34px] p-5 lg:p-6">
-            <div className="flex items-end justify-between gap-3">
+          <Card className="p-4 sm:p-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="panel-kicker">Rotacion comercial</p>
-                <h3 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">
-                  Top productos vendidos
-                </h3>
+                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
+                  Productos mas vendidos
+                </h2>
               </div>
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-brand-100 text-graphite">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-graphite/8 bg-brand-100 text-graphite">
                 <Package className="h-5 w-5" />
               </span>
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-4 space-y-3">
               {topProducts.length ? (
                 topProducts.map((product, index) => (
                   <div
                     key={product.name}
-                    className="flex items-center gap-4 rounded-[22px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]"
+                    className="flex items-center gap-4 border-t border-slate-200 py-3"
                   >
-                    <div className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] bg-graphite text-sm font-semibold text-white">
+                    <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm font-medium text-slate-500">
                       {String(index + 1).padStart(2, "0")}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-slate-950">{product.name}</p>
+                      <p className="break-words text-sm font-medium text-slate-950">{product.name}</p>
                       <p className="mt-1 text-xs text-slate-500">{product.quantity} unidades registradas</p>
                     </div>
                   </div>

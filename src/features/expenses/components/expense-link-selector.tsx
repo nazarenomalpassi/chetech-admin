@@ -44,8 +44,8 @@ export function ExpenseLinkSelector({ prefix, initial }: {
     setSelected(value === "repair" && selected ? { ...selected, id: selected.orderId } : null);
   }
 
-  return <fieldset className="min-w-0 space-y-3 rounded-[22px] border border-graphite/10 bg-brand-50/70 p-4">
-    <legend className="px-1 text-sm font-semibold text-slate-800">Compra o gasto directo de REP</legend>
+  return <fieldset className="min-w-0 space-y-3 border-t border-slate-200 pt-3">
+    <legend className="pr-2 text-sm font-semibold text-slate-800">Vinculo con REP (opcional)</legend>
     <input name="linkKind" type="hidden" value={kind} />
     <input name="partRequestId" type="hidden" value={kind === "part" ? selected?.id ?? "" : ""} />
     <input name="repairOrderId" type="hidden" value={kind === "none" ? "" : selected?.orderId ?? ""} />
@@ -53,7 +53,7 @@ export function ExpenseLinkSelector({ prefix, initial }: {
     <Select id={`${prefix}-kind`} value={kind} onChange={(event) => changeKind(event.target.value as typeof kind)} options={[
       { value: "none", label: "Sin vinculo" }, { value: "part", label: "Pago de compra de repuesto" }, { value: "repair", label: "Otro gasto directo de REP" }
     ]} />
-    <p className="text-sm leading-6 text-slate-600">Vincular no registra otro pago. Solo un pago de repuesto reduce su compromiso; un gasto directo de REP no paga sus partes.</p>
+    <p className="text-sm text-slate-600">Vincular no registra otro pago. Solo el pago de un repuesto reduce su pendiente.</p>
     {kind !== "none" ? <>
       <label className="block text-sm font-semibold text-slate-700" htmlFor={`${prefix}-search`}>{kind === "part" ? "Buscar REP, repuesto o proveedor" : "Buscar numero REP"}</label>
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -67,8 +67,8 @@ export function ExpenseLinkSelector({ prefix, initial }: {
         {loading ? <p className="text-sm text-slate-600">Cargando destinos...</p> : null}
         {error ? <p className="status-banner status-banner--error" role="alert">{error}</p> : null}
         {!loading && !error && data ? <>
-          <div className="max-h-80 space-y-2 overflow-y-auto">
-            {data.items.map((item) => <label className="flex min-h-11 cursor-pointer gap-3 rounded-[16px] border border-graphite/10 bg-white p-3 text-sm" key={item.id}>
+          <div className="max-h-80 divide-y divide-slate-200 overflow-y-auto">
+            {data.items.map((item) => <label className="flex min-h-11 cursor-pointer gap-3 bg-white py-3 text-sm" key={item.id}>
               <input type="radio" name={`${prefix}-selection`} checked={selected?.id === item.id} onChange={() => setSelected(item)} value={item.id} className="mt-1 shrink-0" />
               <span className="min-w-0 break-words"><span className="font-semibold text-slate-950">{item.repairNumber} / {item.description}</span>
                 {kind === "part" ? <span className="mt-1 block text-slate-600">{item.supplier ?? "Sin proveedor"} · {item.expectedCost == null ? "Costo desconocido; pendiente desconocido" : `Costo ${formatCurrency(item.expectedCost)} · Pendiente ${formatCurrency(item.outstanding ?? 0)}`} · Pagado {formatCurrency(item.paidAmount ?? 0)}</span> : null}

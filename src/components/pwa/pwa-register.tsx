@@ -69,7 +69,7 @@ export function PwaRegister() {
   return (
     <aside
       aria-live="polite"
-      className="fixed bottom-4 left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-2xl border border-black/10 bg-white p-4 shadow-[0_20px_60px_rgba(15,15,15,0.18)] sm:flex-row sm:items-center sm:justify-between"
+      className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between"
       role="status"
     >
       <div>

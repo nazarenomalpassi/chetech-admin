@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, CalendarRange, ClipboardList } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MetricCard } from "@/components/ui/metric-card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -100,25 +99,24 @@ export function VisitsView({
   return (
     <div className="space-y-4">
       <Card>
-        <div className="flex flex-col gap-5 min-[1600px]:flex-row min-[1600px]:items-start min-[1600px]:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
-            <p className="panel-kicker">Agenda operativa</p>
-            <h1 className="panel-heading mt-3">Visitas</h1>
-            <p className="panel-subheading mt-3">
-              Agenda salidas a domicilio del local para retiros, revisiones y reparaciones sin perder de vista lo que toca hoy.
+            <h1 className="text-2xl font-semibold text-slate-950">Visitas</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Retiros, revisiones y reparaciones a domicilio.
             </p>
-            <p className="mt-2 text-xs text-slate-500">Indicadores de esta pagina. El historial completo se consulta con paginacion, fecha, semana y tecnico.</p>
+            <p className="mt-1 text-sm text-slate-500">Indicadores de esta pagina.</p>
           </div>
 
-          <div className="grid min-w-0 gap-3 sm:grid-cols-3 min-[1600px]:min-w-[34rem]">
-            <MetricCard icon={CalendarDays} label="Visitas de hoy" tone="service" value={data.summary.todayCount} description={`Pendientes hoy: ${data.summary.pendingTodayCount}`} />
-            <MetricCard icon={ClipboardList} label="Abiertas" tone="warning" value={data.summary.openCount} description="Pendientes y confirmadas" />
-            <MetricCard icon={CalendarRange} label="Proximas" tone="income" value={data.summary.upcomingCount} description="Programadas despues de hoy" />
-          </div>
+          <dl className="grid min-w-0 gap-4 sm:grid-cols-3">
+            <div><dt className="text-sm text-slate-600">Visitas de hoy</dt><dd className="text-xl font-semibold">{data.summary.todayCount}</dd><dd className="text-sm text-slate-500">{data.summary.pendingTodayCount} pendientes</dd></div>
+            <div><dt className="text-sm text-slate-600">Abiertas</dt><dd className="text-xl font-semibold">{data.summary.openCount}</dd><dd className="text-sm text-slate-500">Pendientes y confirmadas</dd></div>
+            <div><dt className="text-sm text-slate-600">Proximas</dt><dd className="text-xl font-semibold">{data.summary.upcomingCount}</dd><dd className="text-sm text-slate-500">Despues de hoy</dd></div>
+          </dl>
         </div>
 
         {!data.migrationReady ? (
-          <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Falta ejecutar la migracion de Visitas en Supabase para activar este modulo.
           </p>
         ) : null}
@@ -127,7 +125,7 @@ export function VisitsView({
           <p
             aria-live="polite"
             className={cn(
-              "mt-4 rounded-2xl px-4 py-3 text-sm",
+              "mt-4 rounded-xl px-4 py-3 text-sm",
               message.success ? "bg-brand-100 text-graphite" : "bg-rose-50 text-rose-700"
             )}
             role={message.success ? "status" : "alert"}
@@ -137,9 +135,9 @@ export function VisitsView({
         ) : null}
 
         {data.summary.nextVisit ? (
-          <div className="mt-5 rounded-[24px] border border-graphite/8 bg-white/84 px-4 py-4 shadow-[0_8px_18px_rgba(20,20,19,0.04)]">
-            <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Proxima salida</p>
-            <p className="mt-2 text-lg font-semibold text-slate-950">
+          <div className="mt-4 border-t border-graphite/10 pt-4">
+            <p className="text-sm font-medium text-slate-600">Proxima salida</p>
+            <p className="mt-1 font-semibold text-slate-950">
               {data.summary.nextVisit.customerName} | {formatDate(data.summary.nextVisit.visitDate)} |{" "}
               {getVisitTimeLabel(data.summary.nextVisit.timeFrom, data.summary.nextVisit.timeTo)}
             </p>
@@ -150,7 +148,8 @@ export function VisitsView({
         ) : null}
 
         {canManage ? (
-        <VisitDraftForm key={editing ? `${editing.id}:${editing.updatedAt}` : "new"} ownerId={draftOwnerId} visitId={editing?.id ?? "new"} sourceVersion={editing?.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={saveVisitAction} className="mt-6 grid gap-4 xl:grid-cols-6">
+        <VisitDraftForm key={editing ? `${editing.id}:${editing.updatedAt}` : "new"} ownerId={draftOwnerId} visitId={editing?.id ?? "new"} sourceVersion={editing?.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={saveVisitAction} className="mt-5 grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-6">
+          <h2 className="col-span-full text-lg font-semibold">{editing ? `Editar visita de ${editing.customerName}` : "Nueva visita"}</h2>
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <input name="expectedUpdatedAt" type="hidden" value={editing?.updatedAt ?? ""} />
           <input name="returnTo" type="hidden" value={returnTo} />
@@ -159,7 +158,7 @@ export function VisitsView({
             <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="visitTechnician">Tecnico asignado</label>
             <Select id="visitTechnician" name="technicianId" key={`${editing?.id}-technician`} defaultValue={editing?.technicianId ?? ""}
               options={[{ value: "", label: "Sin asignar" }, ...data.technicians.map((person) => ({ value: person.id, label: person.full_name }))]} />
-            <p className="mt-1 text-xs text-slate-500">No se permiten visitas activas superpuestas del mismo tecnico.</p>
+            <p className="mt-1 text-sm text-slate-500">No puede tener visitas activas superpuestas.</p>
           </div>
           <div className="xl:col-span-2">
             <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="visitRep">REP vinculada (opcional)</label>
@@ -256,7 +255,7 @@ export function VisitsView({
               placeholder="Opcional"
             />
           </div>
-          <div className="flex items-end gap-2 xl:col-span-6 xl:justify-end">
+          <div className="col-span-full flex flex-wrap items-end gap-2 sm:justify-end">
             {editing ? (
               <Button onClick={() => setEditing(null)} type="button" variant="secondary">
                 Cancelar edicion
@@ -266,7 +265,8 @@ export function VisitsView({
           </div>
         </VisitDraftForm>
         ) : editing ? (
-          <VisitDraftForm key={`${editing.id}:${editing.updatedAt}`} ownerId={draftOwnerId} visitId={editing.id} sourceVersion={editing.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={updateVisitStatusAction} className="mt-6 grid gap-4 rounded-[24px] border border-graphite/10 bg-white/80 p-4 sm:grid-cols-2">
+          <VisitDraftForm key={`${editing.id}:${editing.updatedAt}`} ownerId={draftOwnerId} visitId={editing.id} sourceVersion={editing.updatedAt ?? ""} savedDraftToken={savedDraftToken} savedDraftVisitId={savedDraftVisitId} action={updateVisitStatusAction} className="mt-5 grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2">
+            <h2 className="col-span-full text-lg font-semibold">Seguimiento de {editing.customerName}</h2>
             <input name="id" type="hidden" value={editing.id} />
             <input name="expectedUpdatedAt" type="hidden" value={editing.updatedAt ?? ""} />
             <input name="returnTo" type="hidden" value={returnTo} />
@@ -299,21 +299,17 @@ export function VisitsView({
       </Card>
 
       <Card>
-        <div className="flex flex-col gap-4 min-[1600px]:flex-row min-[1600px]:items-end min-[1600px]:justify-between">
+        <div className="space-y-4">
           <div>
-            <p className="panel-kicker">Filtro rapido</p>
-            <h2 className="mt-2 text-[1.6rem] font-semibold tracking-[-0.04em] text-slate-950">Agenda cargada</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Busca por cliente, celular o domicilio y enfoca rapido las visitas del dia.
-            </p>
+            <h2 className="text-lg font-semibold text-slate-950">Agenda</h2>
           </div>
           <form className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            <Input aria-label="Buscar visitas por cliente, celular o domicilio" defaultValue={data.filters.search} name="search" placeholder="Cliente, celular o domicilio" />
-            <Select aria-label="Filtrar visitas por estado" defaultValue={data.filters.status} name="visitStatus" options={visitStatusOptions} />
-            <Input aria-label="Filtrar visitas por fecha" defaultValue={data.filters.date} name="date" type="date" />
-            <Select aria-label="Vista de agenda" name="view" defaultValue={data.filters.view} options={[{ value: "all", label: "Todas / fecha exacta" }, { value: "day", label: "Dia seleccionado" }, { value: "week", label: "Semana (lunes a domingo)" }]} />
-            <Select aria-label="Filtrar por tecnico" name="technicianId" defaultValue={data.filters.technicianId} options={[{ value: "", label: "Todos los tecnicos" }, { value: "unassigned", label: "Sin asignar" }, ...data.technicians.map((person) => ({ value: person.id, label: person.full_name }))]} />
-            <button className={cn(buttonVariants({ variant: "default" }), "w-full")} type="submit">
+            <label className="grid gap-2 text-sm">Buscar visita<Input aria-label="Buscar visitas por cliente, celular o domicilio" defaultValue={data.filters.search} name="search" placeholder="Cliente, celular o domicilio" /></label>
+            <label className="grid gap-2 text-sm">Estado<Select aria-label="Filtrar visitas por estado" defaultValue={data.filters.status} name="visitStatus" options={visitStatusOptions} /></label>
+            <label className="grid gap-2 text-sm">Fecha de agenda<Input aria-label="Filtrar visitas por fecha" defaultValue={data.filters.date} name="date" type="date" /></label>
+            <label className="grid gap-2 text-sm">Periodo<Select aria-label="Vista de agenda" name="view" defaultValue={data.filters.view} options={[{ value: "all", label: "Todas / fecha exacta" }, { value: "day", label: "Dia seleccionado" }, { value: "week", label: "Semana (lunes a domingo)" }]} /></label>
+            <label className="grid gap-2 text-sm">Tecnico<Select aria-label="Filtrar por tecnico" name="technicianId" defaultValue={data.filters.technicianId} options={[{ value: "", label: "Todos los tecnicos" }, { value: "unassigned", label: "Sin asignar" }, ...data.technicians.map((person) => ({ value: person.id, label: person.full_name }))]} /></label>
+            <button className={cn(buttonVariants({ variant: "default" }), "w-full self-end")} type="submit">
               Filtrar
             </button>
             <div className="flex gap-2">
@@ -330,17 +326,17 @@ export function VisitsView({
           </form>
         </div>
 
-        <div className="mt-5 grid gap-3 lg:hidden">
+        <div className="mt-4 divide-y divide-graphite/10 lg:hidden">
           {data.visits.length ? (
             data.visits.map((visit) => (
-              <article className="rounded-[22px] border border-slate-100 bg-white px-4 py-4" key={visit.id}>
+              <article className="py-4" key={visit.id}>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-950">{visit.customerName}</p>
                     <p className="mt-1 text-sm text-slate-500">{visit.customerPhone}</p>
                     <p className="mt-2 text-sm text-slate-600">{visit.address}</p>
                     <a
-                      className="mt-2 inline-flex text-sm font-semibold text-slate-950 underline underline-offset-4"
+                      className="mt-1 inline-flex min-h-11 items-center text-sm font-medium text-slate-950 underline underline-offset-4"
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(visit.address)}`}
                       rel="noreferrer"
                       target="_blank"
@@ -373,6 +369,7 @@ export function VisitsView({
                       </Button>
                     </form>
                   ) : null}
+                  {visit.status !== "cancelada" || canDelete ? <ActionMenu label="Más acciones">
                   {visit.status !== "cancelada" ? (
                     <form action={updateVisitStatusAction}>
                       <input name="id" type="hidden" value={visit.id} />
@@ -393,6 +390,7 @@ export function VisitsView({
                       </Button>
                     </form>
                   ) : null}
+                  </ActionMenu> : null}
                 </div>
               </article>
             ))
@@ -423,7 +421,7 @@ export function VisitsView({
                   <td className="px-4 py-3 text-slate-600">
                     <span className="block">{visit.address}</span>
                     <a
-                      className="mt-1 inline-flex font-semibold text-slate-950 underline underline-offset-4"
+                      className="mt-1 inline-flex min-h-11 items-center font-medium text-slate-950 underline underline-offset-4"
                       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(visit.address)}`}
                       rel="noreferrer"
                       target="_blank"
@@ -435,14 +433,14 @@ export function VisitsView({
                   <td className="px-4 py-3 text-slate-600">{getVisitTimeLabel(visit.timeFrom, visit.timeTo)}</td>
                   <td className="px-4 py-3 text-slate-600">
                     <p>{visit.reason}</p>
-                    <p className="mt-1 text-xs">Tecnico: {visit.technicianName || "Sin asignar"}</p>
-                    {visit.repairNumber ? <p className="mt-1 text-xs">{visit.repairNumber}</p> : null}
+                    <p className="mt-1 text-sm">Tecnico: {visit.technicianName || "Sin asignar"}</p>
+                    {visit.repairNumber ? <p className="mt-1 whitespace-nowrap text-sm">{visit.repairNumber}</p> : null}
                   </td>
                   <td className="px-4 py-3">
                     <Badge variant={getVisitStatusVariant(visit.status)}>{visitStatusLabels[visit.status]}</Badge>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex flex-wrap justify-end gap-2">
                       <Button onClick={() => setEditing(visit)} size="sm" type="button" variant="secondary">
                         {canManage ? "Editar" : "Actualizar"}
                       </Button>
@@ -457,6 +455,7 @@ export function VisitsView({
                           </Button>
                         </form>
                       ) : null}
+                      {visit.status !== "cancelada" || canDelete ? <ActionMenu label="Más acciones">
                       {visit.status !== "cancelada" ? (
                         <form action={updateVisitStatusAction}>
                           <input name="id" type="hidden" value={visit.id} />
@@ -477,6 +476,7 @@ export function VisitsView({
                           </Button>
                         </form>
                       ) : null}
+                      </ActionMenu> : null}
                     </div>
                   </td>
                 </tr>

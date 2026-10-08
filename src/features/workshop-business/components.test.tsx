@@ -13,11 +13,11 @@ describe("workshop business UI", () => {
     render(<WorkshopBusinessReportView data={{ range: reportFixture, report: reportFixture, migrationReady: true }} />);
     expect(screen.getByRole("heading", { name: "Negocio del taller" })).toBeTruthy();
     expect(within(screen.getByRole("group", { name: "Cobrado real" })).getByText(/520/)).toBeTruthy();
-    expect(within(screen.getByRole("group", { name: "Costo directo registrado" })).getByText("No determinable")).toBeTruthy();
+    expect(within(screen.getByRole("group", { name: "Costo directo registrado" })).getByText("Datos incompletos")).toBeTruthy();
     expect(screen.getByText(/No es utilidad neta/)).toBeTruthy();
     expect(screen.getByText(/No mide esperas por fase/)).toBeTruthy();
     expect(screen.getByRole("link", { name: /Repuestos pendientes/ }).getAttribute("href")).toBe("/reparaciones-access?view=ordenes&scope=parts");
-    expect(screen.getByText(/sin el filtro de ingreso/)).toBeTruthy();
+    expect(screen.getByText(/colas actuales completas/)).toBeTruthy();
     expect(screen.getByLabelText("Ingreso desde").getAttribute("value")).toBe("2026-10-01");
   });
   it("makes a missing migration explicit without misleading zero KPIs", () => {

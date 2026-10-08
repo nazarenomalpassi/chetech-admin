@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useId, useState, useTransition } from "react";
+import React, { useEffect, useId, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DialogShell } from "@/components/ui/dialog-shell";
+import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 import { fiscalInputFromSnapshot, IVA_CONDITIONS, type FiscalInput, type FiscalRecord } from "../model";
 import type { FiscalPanelState, FiscalPreview } from "../service";
 
@@ -17,7 +17,7 @@ async function api<T>(url: string, body?: unknown): Promise<T> {
   if (!response.ok) throw new Error(data.error ?? "No se pudo consultar el estado fiscal.");
   return data as T;
 }
-const environmentLabel = (environment: string) => environment === "production" ? "PRODUCCION" : "HOMOLOGACION - SIN VALIDEZ FISCAL";
+const environmentLabel = (environment: string) => environment === "production" ? "Produccion" : "Homologacion: sin validez fiscal";
 
 export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
   invoiceId?: string; className?: string; onIssued?: (record: FiscalRecord) => void;
@@ -29,7 +29,19 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
   const [consent, setConsent] = useState(false);
   const [pending, startTransition] = useTransition();
   const dialogId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialFields = useRef("");
   const endpoint = invoiceId ? `/api/fiscal/invoices/${invoiceId}` : "/api/fiscal/readiness";
+  useEffect(() => {
+    if (open && formRef.current) initialFields.current = JSON.stringify(Array.from(new FormData(formRef.current)));
+  }, [open]);
+
+  function requestClose() {
+    if (pending) return;
+    const form = formRef.current;
+    if (form && JSON.stringify(Array.from(new FormData(form))) !== initialFields.current && !window.confirm("Cerrar sin emitir? Los cambios del formulario fiscal no se guardaron.")) return;
+    setOpen(false);
+  }
 
   useEffect(() => {
     let active = true;
@@ -65,13 +77,13 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
     });
   }
 
-  return <section className={cn("rounded-[24px] border border-graphite/15 bg-[linear-gradient(135deg,#fff,#f3f2ec)] p-4 sm:p-6", className)} aria-label="Facturacion fiscal ARCA">
+  return <Card className={className}><section aria-label="Facturacion fiscal ARCA">
     <div className="flex flex-wrap items-start justify-between gap-3">
-      <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-600">ARCA / Emision seleccionada</p>
-        <h2 className="mt-1 text-xl font-semibold tracking-tight text-graphite">Factura C, solo cuando vos confirmes</h2></div>
-      <span className="rounded-lg border border-graphite/15 bg-white px-3 py-2 text-xs font-semibold">{state ? environmentLabel(state.readiness.environment) : "CONSULTANDO CONFIGURACION"}</span>
+      <h2 className="text-lg font-semibold text-graphite">{invoiceId ? "Factura C (ARCA)" : "Estado fiscal (ARCA)"}</h2>
+      <span className="text-sm font-medium text-slate-600">{state ? environmentLabel(state.readiness.environment) : "Consultando configuracion"}</span>
     </div>
-    <p className="mt-3 max-w-[75ch] text-sm leading-6 text-slate-600">Emitir es independiente del cobro. Se permiten documentos pagados o pendientes, sin registrar pagos ni mover stock. Solo el CAE de ARCA autoriza una factura fiscal.</p>
+    <p className="mt-2 max-w-[75ch] text-sm leading-6 text-slate-600">Solo se emite con vista previa y confirmacion manual. No registra cobros ni mueve stock. Una factura fiscal requiere CAE autorizado por ARCA.</p>
+    {!invoiceId ? <p className="mt-2 text-sm text-slate-600">La emision se inicia desde un comprobante interno vinculado a una venta o reparacion.</p> : null}
     {state ? <div className="mt-4 space-y-3">
       <p className="text-sm"><strong>CUIT {state.readiness.issuerCuit || "sin configurar"}</strong> | Responsable Monotributo | Tipo 11 (C) | PV {state.readiness.pointOfSale ? String(state.readiness.pointOfSale).padStart(5, "0") : "sin configurar"}</p>
       {state.readiness.ready ? <p className="text-sm text-slate-700">Configuracion local validada. La habilitacion de CUIT, PV y receptor se verifica con ARCA al confirmar.</p>
@@ -79,6 +91,7 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
           <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-700">{state.readiness.issues.map((issue) => <li key={issue}>{issue}</li>)}</ul>
           <p className="mt-3 text-sm">Produccion: PV00001 queda bloqueado para esta instalacion. Homologacion: cualquier PV exige configuracion explicita y habilitacion WS verificada. No se solicita ni almacena Clave Fiscal.</p></div>}
       {!eligible ? <p className="text-sm">Selecciona un comprobante interno vinculado a una venta o reparacion.</p> : null}
+      {accepted ? <p className="text-sm">Esta operacion ya tiene una factura C autorizada en este entorno.</p> : active ? <p className="text-sm">Hay una emision pendiente. Consulta y recupera el resultado antes de volver a emitir.</p> : null}
     </div> : null}
     {invoiceId ? <div className="mt-5 flex flex-wrap gap-3">
       <Button disabled={!state?.readiness.ready || !eligible || accepted || !!active || pending} onClick={() => { setPreview(null); setConsent(false); setOpen(true); }}>Emitir factura C manualmente</Button>
@@ -88,8 +101,8 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
       }}>Consultar y recuperar</Button> : null}
     </div> : null}
     {message ? <p role="status" aria-live="polite" className="mt-4 rounded-xl border border-graphite/15 bg-white p-3 text-sm leading-6">{message}</p> : null}
-    {state?.records.length ? <div className="mt-5 space-y-3">{state.records.map((record) => <article key={record.id} className="rounded-xl border border-graphite/15 bg-white p-4">
-      <p className="text-xs font-semibold text-slate-600">{environmentLabel(record.snapshot.environment)}</p>
+    {state?.records.length ? <div className="mt-5 divide-y divide-graphite/10 border-t border-graphite/10">{state.records.map((record) => <article key={record.id} className="py-4">
+      <p className="text-sm font-medium text-slate-600">{environmentLabel(record.snapshot.environment)}</p>
       <p className="mt-2 font-semibold">{record.status === "accepted" ? `Factura C ${String(record.snapshot.pointOfSale).padStart(5, "0")}-${String(record.number).padStart(8, "0")}` : record.status === "rejected" ? "Intento rechazado / no autorizado" : "Emision pendiente: reserva conservada"}</p>
       <p className="mt-1 text-sm">{formatCurrency(record.snapshot.totalCents / 100)} | {record.snapshot.receiver.name} | {record.snapshot.issuedOn}</p>
       {record.status === "accepted" && record.authorization ? <div className="mt-4 flex flex-wrap items-center gap-4">
@@ -99,13 +112,13 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
           {record.authorization.observationCodes.length ? <p>Observaciones ARCA: {record.authorization.observationCodes.join(", ")}</p> : null}</div>
       </div> : <p className="mt-2 text-sm text-slate-600">Sin CAE confirmado: no hay PDF ni QR fiscal.{record.errorCodes.length ? ` Codigos ARCA: ${record.errorCodes.join(", ")}.` : ""}</p>}
     </article>)}</div> : null}
-    {open && state && invoiceId ? <DialogShell labelledBy={dialogId} onClose={() => { if (!pending) setOpen(false); }} panelClassName="max-w-3xl">
-      <div className="flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-widest">{environmentLabel(state.readiness.environment)}</p>
+    {open && state && invoiceId ? <DialogShell labelledBy={dialogId} onClose={requestClose} panelClassName="max-w-3xl">
+      <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-medium text-slate-600">{environmentLabel(state.readiness.environment)}</p>
         <h3 id={dialogId} className="mt-2 text-xl font-semibold">{preview ? "Revisar y confirmar factura C" : "Datos fiscales de esta operacion"}</h3></div>
-        <Button variant="ghost" disabled={pending} onClick={() => setOpen(false)} aria-label="Cerrar dialogo fiscal">Cerrar</Button></div>
+        <Button variant="ghost" disabled={pending} onClick={requestClose} aria-label="Cerrar dialogo fiscal">Cerrar</Button></div>
       {preview ? <div className="mt-5 space-y-4">
         <p className="text-sm leading-6">Esta confirmacion solicita una autorizacion real al entorno indicado. En produccion es irreversible: no elimina ni anula el comprobante. Una nota de credito debe gestionarse por separado.</p>
-        <dl className="grid gap-3 rounded-xl border border-graphite/15 bg-white p-4 text-sm sm:grid-cols-2">
+        <dl className="grid gap-4 border-y border-graphite/10 py-4 text-sm sm:grid-cols-2">
           <div><dt className="text-slate-600">Emisor / CUIT / PV</dt><dd className="font-semibold">{preview.snapshot.issuer.name} / {preview.snapshot.issuer.cuit} / {String(preview.snapshot.pointOfSale).padStart(5, "0")}</dd></div>
           <div><dt className="text-slate-600">Receptor / documento</dt><dd className="font-semibold">{preview.snapshot.receiver.name} / {preview.snapshot.receiver.documentNumber}</dd><dd>{preview.snapshot.receiver.address}</dd></div>
           <div><dt className="text-slate-600">Concepto / condicion IVA</dt><dd>{preview.snapshot.concept === 1 ? "Productos" : preview.snapshot.concept === 2 ? "Servicios" : "Productos y servicios"} / {IVA_CONDITIONS.find(([id]) => id === preview.snapshot.receiver.ivaCondition)?.[1]}</dd></div>
@@ -116,7 +129,7 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
         <p className="text-2xl font-semibold">Total: {formatCurrency(preview.snapshot.totalCents / 100)}</p>
         <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-graphite/15 bg-white p-4 text-sm"><input type="checkbox" className="mt-1 h-4 w-4 accent-graphite" checked={consent} disabled={pending} onChange={(event) => setConsent(event.target.checked)} />Confirmo la emision manual de esta factura C</label>
         <Button className="w-full sm:w-auto" disabled={!consent || pending} onClick={confirm}>{pending ? "Consultando ARCA..." : state.readiness.environment === "production" ? "Confirmar emision en produccion" : "Confirmar emision en homologacion"}</Button>
-      </div> : <form className="mt-5 space-y-4" onSubmit={(event) => {
+      </div> : <form ref={formRef} className="mt-5 space-y-4" onSubmit={(event) => {
         event.preventDefault(); const form = new FormData(event.currentTarget);
         const concept = Number(form.get("concept")) as FiscalInput["concept"];
         const body = { concept, issuedOn: state.readiness.today,
@@ -131,12 +144,12 @@ export function FiscalInvoicePanel({ invoiceId, className, onIssued }: {
       </form>}
       {message ? <p className="mt-4 text-sm" role="alert">{message}</p> : null}
     </DialogShell> : null}
-  </section>;
+  </section></Card>;
 }
 
 function FiscalFields({ customerName, today, pending, sourceType }: { customerName: string; today: string; pending: boolean; sourceType?: string }) {
   const [concept, setConcept] = useState("");
-  const selectClass = "min-h-12 w-full rounded-[18px] border border-graphite/15 bg-white px-3 text-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-graphite sm:text-sm";
+  const selectClass = "h-11 min-w-0 w-full rounded-lg border border-line bg-white px-3 py-2 text-base text-graphite outline-none focus:border-graphite focus:ring-2 focus:ring-graphite/15 disabled:bg-brand-50 sm:text-sm";
   return <fieldset disabled={pending} className="grid gap-4 sm:grid-cols-2">
     <label className="grid gap-2 text-sm">Concepto fiscal<select className={selectClass} name="concept" required value={concept} onChange={(e) => setConcept(e.target.value)}><option value="">Seleccionar expresamente</option><option value="1" disabled={sourceType === "repair_access"}>Productos</option><option value="2">Servicios</option><option value="3" disabled={sourceType === "repair_access"}>Productos y servicios</option></select></label>
     <label className="grid gap-2 text-sm">Fecha de emision (Argentina)<Input value={today} readOnly type="date" /></label>

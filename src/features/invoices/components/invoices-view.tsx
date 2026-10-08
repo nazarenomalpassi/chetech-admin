@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { FileText, ReceiptText, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
+import { MoneyInput } from "@/components/ui/money-input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { saveInvoiceAction, voidInvoiceAction } from "@/features/invoices/actions";
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import { calculateInvoiceAmounts } from "@/features/invoices/document-model";
@@ -195,51 +197,18 @@ export function InvoicesView({
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-[34px] p-5 lg:p-6">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-2xl">
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="panel-kicker">Comprobantes internos</p>
-              {editingInvoice ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-graphite/8 bg-white/80 px-3 py-1 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  Editando comprobante
-                </span>
-              ) : null}
-            </div>
-            <h1 className="panel-heading mt-3">Facturacion interna</h1>
-            <p className="panel-subheading mt-3">
-              Genera comprobantes claros para ventas o reparaciones sin perder velocidad de uso diario.
+            <h1 className="text-2xl font-semibold text-slate-950">Facturacion interna</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Comprobantes de ventas y reparaciones. No son facturas fiscales autorizadas por ARCA.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:min-w-[23rem]">
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-brand-100 text-graphite">
-                  <FileText className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Comprobantes
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{invoices.length}</p>
-                </div>
-              </div>
-            </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-[16px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
-                  <ReceiptText className="h-4 w-4" />
-                </span>
-                <div>
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Total actual
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-slate-950">{formatCurrency(total)}</p>
-                </div>
-              </div>
-            </div>
+          <div className="shrink-0 text-sm text-slate-600">
+            <p>Total del comprobante</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(total)}</p>
           </div>
         </div>
 
@@ -263,12 +232,13 @@ export function InvoicesView({
           <input name="requestId" type="hidden" value={requestId} />
           <input name="expectedVersion" type="hidden" value={editingInvoice?.documentVersion ?? ""} />
           <input name="itemsJson" type="hidden" value={JSON.stringify(items)} />
-          <p className="text-sm text-slate-600">Emitir o reimprimir no cobra ni mueve stock. Pagado y saldo se calculan desde los cobros efectivos vinculados.</p>
+          <input name="discount" type="hidden" value={discount} />
+          <p className="text-sm text-slate-600">Crear o reimprimir no cobra ni mueve stock. Pagado y saldo provienen de los cobros vinculados, no de este formulario.</p>
           {documentLocked ? <p className="status-banner" role="status">Documento bloqueado por anulacion o circuito fiscal. Su contenido no puede modificarse.</p> : null}
 
-          <div className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 xl:grid-cols-4">
+          <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="sourceType">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="sourceType">
                 Origen
               </label>
               <Select
@@ -285,15 +255,16 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repairAccessOrderId">REP principal</label>
-              <Select id="repairAccessOrderId" name="repairAccessOrderId" disabled={sourceType !== "repair_access"} value={repairAccessOrderId} onChange={(event) => applyPrimaryOrder(event.target.value)} options={[{ label: "Seleccionar REP", value: "" }, ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))]} />
-              <p className="mt-2 text-xs text-slate-500">Disponible antes del cobro. No requiere un registro financiero historico.</p>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repairAccessOrderId">REP principal</label>
+              <SearchableSelect searchLabel="Buscar REP o cliente" id="repairAccessOrderId" name="repairAccessOrderId" disabled={sourceType !== "repair_access"} value={repairAccessOrderId} onChange={(event) => applyPrimaryOrder(event.target.value)} options={[{ label: "Seleccionar REP", value: "" }, ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))]} />
+              <p className="mt-2 text-sm text-slate-500">Disponible antes del cobro. No requiere un registro financiero historico.</p>
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="repairId">
-                Reparación
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repairId">
+                Reparación historica
               </label>
-              <Select
+              <SearchableSelect
+                searchLabel="Buscar reparacion o cliente"
                 id="repairId"
                 disabled={sourceType !== "repair"}
                 name="repairId"
@@ -306,10 +277,11 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="saleId">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="saleId">
                 Venta
               </label>
-              <Select
+              <SearchableSelect
+                searchLabel="Buscar venta o cliente"
                 id="saleId"
                 disabled={sourceType !== "sale"}
                 name="saleId"
@@ -322,44 +294,46 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="discount">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="discount">
                 Descuento
               </label>
-              <Input id="discount" min={0} name="discount" onChange={(event) => setDiscount(Number(event.target.value))} step="0.01" type="number" value={discount} />
+              <MoneyInput id="discount" onValueChange={setDiscount} value={discount} />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerName">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerName">
                 Cliente
               </label>
               <Input id="customerName" name="customerName" onChange={(event) => setCustomerName(event.target.value)} value={customerName} />
             </div>
             <div>
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="customerPhone">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerPhone">
                 Teléfono
               </label>
               <Input id="customerPhone" name="customerPhone" onChange={(event) => setCustomerPhone(event.target.value)} value={customerPhone} />
             </div>
             <div className="xl:col-span-2">
-              <label className="mb-2 block text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500" htmlFor="notes">
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">
                 Observaciones
               </label>
               <Input id="notes" defaultValue={editingInvoice?.notes ?? initialPrimary?.notes ?? ""} name="notes" placeholder="Opcional" />
             </div>
           </div>
 
-          <fieldset className="grid gap-4 rounded-[30px] border border-graphite/8 bg-white/82 p-4 md:grid-cols-3" disabled={documentLocked}>
-            <legend className="px-2 text-sm font-semibold">Referencia fiscal externa opcional</legend>
+          <details className="border-t border-graphite/10 pt-2" open={documentLocked || undefined}>
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Referencia fiscal externa opcional</summary>
+          <fieldset className="grid gap-4 md:grid-cols-3" disabled={documentLocked}>
+            <legend className="sr-only">Datos de la referencia fiscal externa</legend>
             <div><label className="mb-2 block text-sm" htmlFor="fiscalProvider">Sistema emisor</label><Input id="fiscalProvider" name="fiscalProvider" maxLength={100} defaultValue={editingInvoice?.fiscalProvider ?? ""} placeholder="Proveedor o sistema externo" /></div>
             <div><label className="mb-2 block text-sm" htmlFor="fiscalReference">Referencia del comprobante</label><Input id="fiscalReference" name="fiscalReference" maxLength={300} defaultValue={editingInvoice?.fiscalReference ?? ""} /></div>
             <div><label className="mb-2 block text-sm" htmlFor="fiscalIssuedAt">Fecha externa</label><Input id="fiscalIssuedAt" name="fiscalIssuedAt" type="date" defaultValue={editingInvoice?.fiscalIssuedAt?.slice(0, 10) ?? ""} /></div>
             <p className="text-sm text-slate-500 md:col-span-3">Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se bloquea la edicion del documento interno.</p>
           </fieldset>
+          </details>
 
-          <div className="rounded-[30px] border border-graphite/8 bg-white/82 p-4">
+          <div className="border-t border-graphite/10 pt-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="panel-kicker">Items</p>
-                <h2 className="mt-2 text-[1.2rem] font-semibold tracking-[-0.03em] text-slate-950">
+                <h2 className="text-lg font-semibold text-slate-950">
                   Detalle del comprobante
                 </h2>
               </div>
@@ -370,10 +344,10 @@ export function InvoicesView({
             <div className="mt-4 space-y-3">
               {items.map((item, index) => (
                 <div
-                  className="grid gap-3 rounded-[24px] border border-graphite/8 bg-white/90 p-4 xl:grid-cols-[1fr_2fr_110px_150px_130px_auto]"
+                  className="grid items-end gap-3 border-b border-graphite/10 pb-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_100px_130px_120px_auto]"
                   key={index}
                 >
-                  <Select
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Producto opcional<Select
                     aria-label={`Producto opcional del ítem ${index + 1}`}
                     onChange={(event) => {
                       const product = options.products.find((candidate) => candidate.id === event.target.value);
@@ -385,13 +359,13 @@ export function InvoicesView({
                     }}
                     options={productOptions}
                     value={item.productId ?? ""}
-                  />
-                  <Input aria-label={`Descripción del ítem ${index + 1}`} onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Descripción" value={item.description} />
-                  <Input aria-label={`Cantidad del ítem ${index + 1}`} min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} />
-                  <Input aria-label={`Precio unitario del ítem ${index + 1}`} min={0} onChange={(event) => updateItem(index, { unitPrice: Number(event.target.value) })} step="0.01" type="number" value={item.unitPrice} />
-                  <div className="flex h-11 items-center rounded-[18px] border border-graphite/8 bg-brand-50 px-4 text-sm font-semibold text-slate-950">
+                  /></label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Descripcion<Input aria-label={`Descripción del ítem ${index + 1}`} onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Descripción" value={item.description} /></label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Cantidad<Input aria-label={`Cantidad del ítem ${index + 1}`} min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} /></label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Precio unitario<MoneyInput aria-label={`Precio unitario del ítem ${index + 1}`} onValueChange={(unitPrice) => updateItem(index, { unitPrice })} value={item.unitPrice} /></label>
+                  <div><p className="mb-2 text-sm text-slate-600">Importe</p><div className="flex min-h-11 items-center text-sm font-semibold tabular-nums text-slate-950">
                     {formatCurrency(amounts.lineTotals[index])}
-                  </div>
+                  </div></div>
                   <Button disabled={items.length <= 1} onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button" variant="ghost">
                     Quitar
                   </Button>
@@ -400,18 +374,18 @@ export function InvoicesView({
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-3">
-            <div className="metric-tile min-h-[unset] p-4">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Subtotal</p>
-              <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{formatCurrency(subtotal)}</p>
+          <div className="grid gap-3 border-t border-graphite/10 pt-3 sm:grid-cols-3">
+            <div className="py-2">
+              <p className="text-sm text-slate-600">Subtotal</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(subtotal)}</p>
             </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Descuento</p>
-              <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{formatCurrency(discount)}</p>
+            <div className="py-2">
+              <p className="text-sm text-slate-600">Descuento</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(discount)}</p>
             </div>
-            <div className="metric-tile min-h-[unset] p-4">
-              <p className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Total</p>
-              <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{formatCurrency(total)}</p>
+            <div className="py-2">
+              <p className="text-sm text-slate-600">Total</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(total)}</p>
             </div>
           </div>
 
@@ -425,58 +399,59 @@ export function InvoicesView({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4">
+        <div className="border-b border-graphite/10 px-4 py-3">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="panel-kicker">Historial documental</p>
-              <h2 className="mt-2 text-[1.4rem] font-semibold tracking-[-0.04em] text-slate-950">Comprobantes</h2>
+              <h2 className="text-lg font-semibold text-slate-950">Comprobantes internos</h2>
             </div>
-            <p className="text-sm text-slate-500">Listado listo para imprimir, revisar o anular desde admin.</p>
+            <p className="text-sm text-slate-500">{pagination.total} comprobantes. El estado indica el cobro, no la autorizacion fiscal.</p>
           </div>
         </div>
-        <div className="grid gap-3 p-3 lg:hidden">
+        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
           {invoices.map((invoice) => (
-            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={invoice.id}>
+            <article className="py-4" key={invoice.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-950">{invoice.invoiceNumber}</p>
-                  <p className="mt-1 text-xs text-slate-500">{formatDate(invoice.createdAt)}</p>
+                  <p className="mt-1 text-sm text-slate-500">{formatDate(invoice.createdAt)}</p>
                 </div>
-                <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
+                <div className="text-right"><p className="mb-1 text-sm text-slate-500">Cobro / estado</p><Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge></div>
               </div>
               <div className="mt-4 grid gap-2 text-sm">
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Cliente</p>
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-600">Cliente</p>
                   <p className="mt-1 font-semibold text-slate-800">{invoice.customerName || "Sin cliente"}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Origen</p>
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-600">Origen</p>
                     <p className="mt-1 font-semibold text-slate-800">{formatInvoiceSource(invoice.sourceType)}</p>
                   </div>
-                  <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                    <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Total</p>
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-600">Total</p>
                     <p className="mt-1 font-semibold text-slate-950">{formatCurrency(invoice.total)}</p>
-                    <p className="mt-1 text-xs text-slate-600">Pagado {formatCurrency(invoice.paidTotal)} / Saldo {formatCurrency(invoice.balance)}</p>
+                    <p className="mt-1 text-sm text-slate-600">Pagado {formatCurrency(invoice.paidTotal)} / Saldo {formatCurrency(invoice.balance)}</p>
                   </div>
                 </div>
               </div>
+              <p className="mt-2 text-sm text-slate-600">{invoice.fiscalReference ? "Referencia fiscal externa vinculada" : invoice.fiscalLockedAt ? "Documento protegido por circuito fiscal" : "Sin vinculo fiscal"}</p>
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
                 <Link
-                  className="inline-flex min-h-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                  className={buttonVariants({ variant: "secondary", size: "sm" })}
                   href={`/facturacion/${invoice.id}`}
                 >
                   Ver / imprimir
                 </Link>
                 {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                   <Link
-                    className="inline-flex min-h-11 items-center justify-center rounded-[18px] border border-graphite/10 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                    className={buttonVariants({ variant: "secondary", size: "sm" })}
                     href={`/facturacion?edit=${invoice.id}`}
                   >
                     Editar
                   </Link>
                 ) : null}
                 {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                  <ActionMenu label="Más acciones">
                   <form
                     action={voidInvoiceAction}
                     onSubmit={(event) => {
@@ -489,6 +464,7 @@ export function InvoicesView({
                     <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
                     <FormSubmitButton className="w-full" idleLabel="Anular" pendingLabel="Anulando..." variant="danger" />
                   </form>
+                  </ActionMenu>
                 ) : null}
               </div>
             </article>
@@ -497,45 +473,46 @@ export function InvoicesView({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/80 text-left text-slate-500">
+            <thead className="bg-slate-50 text-left text-slate-600">
               <tr>
-                <th className="px-4 py-4 font-medium">Numero</th>
-                <th className="px-4 py-4 font-medium">Fecha</th>
-                <th className="px-4 py-4 font-medium">Cliente</th>
-                <th className="px-4 py-4 font-medium">Origen</th>
-                <th className="px-4 py-4 font-medium">Total</th>
-                <th className="px-4 py-4 font-medium">Estado</th>
-                <th className="px-4 py-4 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 font-medium">Numero</th>
+                <th className="px-4 py-3 font-medium">Fecha</th>
+                <th className="px-4 py-3 font-medium">Cliente</th>
+                <th className="px-4 py-3 font-medium">Origen</th>
+                <th className="px-4 py-3 font-medium">Total</th>
+                <th className="px-4 py-3 font-medium">Cobro / estado</th>
+                <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {invoices.map((invoice) => (
-                <tr className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white" key={invoice.id}>
-                  <td className="px-4 py-4 font-medium text-slate-950">{invoice.invoiceNumber}</td>
-                  <td className="px-4 py-4 text-slate-600">{formatDate(invoice.createdAt)}</td>
-                  <td className="px-4 py-4 text-slate-600">{invoice.customerName}</td>
-                  <td className="px-4 py-4 text-slate-600">{formatInvoiceSource(invoice.sourceType)}</td>
-                  <td className="px-4 py-4 font-medium text-slate-950">{formatCurrency(invoice.total)}<p className="mt-1 text-xs font-normal text-slate-600">Pagado {formatCurrency(invoice.paidTotal)}<br />Saldo {formatCurrency(invoice.balance)}</p></td>
-                  <td className="px-4 py-4">
+                <tr className="border-t border-graphite/10 align-top" key={invoice.id}>
+                  <td className="px-4 py-3 font-medium text-slate-950">{invoice.invoiceNumber}<p className="mt-1 text-sm font-normal text-slate-600">{invoice.fiscalReference ? "Referencia fiscal externa" : invoice.fiscalLockedAt ? "Circuito fiscal protegido" : "Sin vinculo fiscal"}</p></td>
+                  <td className="px-4 py-3 text-slate-600">{formatDate(invoice.createdAt)}</td>
+                  <td className="px-4 py-3 text-slate-600">{invoice.customerName}</td>
+                  <td className="px-4 py-3 text-slate-600">{formatInvoiceSource(invoice.sourceType)}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">{formatCurrency(invoice.total)}<p className="mt-1 text-sm font-normal text-slate-600">Pagado {formatCurrency(invoice.paidTotal)}<br />Saldo {formatCurrency(invoice.balance)}</p></td>
+                  <td className="px-4 py-3">
                     <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <div className="flex flex-wrap justify-end gap-2">
                       <Link
-                        className="inline-flex items-center rounded-full border border-graphite/10 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                        className={buttonVariants({ variant: "secondary", size: "sm" })}
                         href={`/facturacion/${invoice.id}`}
                       >
                         Ver / imprimir
                       </Link>
                       {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
                         <Link
-                          className="inline-flex items-center rounded-full border border-graphite/10 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-graphite/20 hover:bg-brand-50"
+                          className={buttonVariants({ variant: "secondary", size: "sm" })}
                           href={`/facturacion?edit=${invoice.id}`}
                         >
                           Editar
                         </Link>
                       ) : null}
                       {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                        <ActionMenu label="Más acciones">
                         <form
                           action={voidInvoiceAction}
                           onSubmit={(event) => {
@@ -548,6 +525,7 @@ export function InvoicesView({
                           <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
                           <FormSubmitButton idleLabel="Anular" pendingLabel="Anulando..." size="sm" variant="danger" />
                         </form>
+                        </ActionMenu>
                       ) : null}
                     </div>
                   </td>

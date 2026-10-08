@@ -53,14 +53,14 @@ export function RepairOrderActivity({ orderId }: { orderId: string }) {
   }
 
   return <div className="mt-4 border-t border-slate-100 pt-3">
-    <button type="button" aria-expanded={open} aria-controls={regionId} onClick={toggle} className="flex min-h-11 w-full items-center gap-2 text-left text-xs font-medium text-slate-600">
+    <button type="button" aria-expanded={open} aria-controls={regionId} onClick={toggle} className="flex min-h-11 w-full items-center gap-2 rounded-lg text-left text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
       <History aria-hidden="true" className="h-4 w-4" />Historial de trabajo
     </button>
     {open ? <div id={regionId} aria-busy={loading}>
       <p className="mt-2 text-xs text-slate-500">{page && page.events.length > 20 ? `${page.events.length} movimientos cargados, del mas reciente al mas antiguo.` : "Ultimos 20 movimientos, del mas reciente al mas antiguo."}</p>
-      {page?.events.length ? <ol className="mt-3 space-y-3 border-l-2 border-slate-100 pl-4">{page.events.map((event) => <li key={event.id} className="text-xs">
+      {page?.events.length ? <ol className="mt-3 space-y-3 border-l border-slate-200 pl-3">{page.events.map((event) => <li key={event.id} className="text-sm">
         <p className="whitespace-pre-wrap break-words text-slate-700">{event.message}</p>
-        <p className="mt-1 text-slate-400">{event.actorName} · <time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}</time></p>
+        <p className="mt-1 text-xs text-slate-500">{event.actorName} · <time dateTime={event.createdAt}>{new Date(event.createdAt).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" })}</time></p>
       </li>)}</ol> : page && !loading ? <p className="mt-3 text-xs text-slate-500">No hay movimientos registrados.</p> : null}
       {loading ? <p role="status" className="mt-3 text-xs text-slate-500">Cargando historial...</p> : null}
       {failed ? <div className="mt-3 rounded-xl bg-rose-50 p-3">

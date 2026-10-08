@@ -1,6 +1,4 @@
 import { redirect } from "next/navigation";
-import { LockKeyhole, MonitorSmartphone } from "lucide-react";
-
 import { LoginForm } from "@/features/auth/components/login-form";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -9,12 +7,11 @@ export default async function LoginPage() {
   if (!hasSupabaseEnv()) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
-        <div className="w-full max-w-2xl rounded-[32px] border border-white/70 bg-white/90 p-10 shadow-soft backdrop-blur">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">Chetech</p>
-          <h1 className="mt-4 text-3xl font-semibold text-slate-950">Falta configurar Supabase</h1>
+        <div className="w-full max-w-lg rounded-2xl border border-line bg-white p-6">
+          <p className="font-brand text-xl text-graphite">Chetech</p>
+          <h1 className="mt-4 text-3xl font-semibold text-slate-950">Acceso no disponible</h1>
           <p className="mt-4 text-sm text-slate-600">
-            La pantalla de login no puede inicializarse sin `NEXT_PUBLIC_SUPABASE_URL` y
-            `NEXT_PUBLIC_SUPABASE_ANON_KEY` en `.env.local`.
+            El acceso todavía no está disponible. Contactá al administrador para completar la configuración.
           </p>
         </div>
       </main>
@@ -31,48 +28,17 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen bg-[linear-gradient(140deg,#f8f8f5_0%,#ecece8_48%,#d8d8d2_100%)] lg:grid-cols-[1.15fr_0.85fr]">
-      <section className="hidden flex-col justify-between px-10 py-12 lg:flex">
-        <div className="max-w-xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.32em] text-brand-700">Chetech</p>
-          <h1 className="mt-4 text-5xl font-semibold leading-tight text-slate-950">
-            Todo el local en una sola operación clara.
-          </h1>
-          <p className="mt-6 text-lg text-slate-600">
-            Controlá productos, ventas, gastos y reparaciones desde una interfaz pensada para el día
-            a día del mostrador.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-3xl border border-white/60 bg-white/80 p-6 shadow-soft">
-            <MonitorSmartphone className="h-6 w-6 text-graphite" />
-            <h2 className="mt-4 text-lg font-semibold text-slate-900">Mostrador y taller conectados</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Inventario, ventas y reparaciones conectados sobre una misma base.
-            </p>
+    <main className="flex min-h-svh items-center justify-center px-4 py-10">
+      <section className="w-full max-w-sm rounded-2xl border border-line bg-white p-6 sm:p-8" aria-labelledby="login-title">
+        <div className="mb-6">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-graphite"><img alt="" src="/brand/chetech-isologo-white.svg" width={24} height={24} /></span>
+            <span className="font-brand text-2xl text-graphite">Chetech</span>
           </div>
-          <div className="rounded-3xl border border-white/10 bg-graphite p-6 text-white shadow-soft">
-            <LockKeyhole className="h-6 w-6 text-white/70" />
-            <h2 className="mt-4 text-lg font-semibold">Acceso seguro</h2>
-            <p className="mt-2 text-sm text-white/65">
-              Roles, auditoría y protección de rutas listos para crecer con el negocio.
-            </p>
-          </div>
+          <h1 className="text-xl font-semibold text-slate-950" id="login-title">Ingresar al sistema</h1>
+          <p className="mt-2 text-sm leading-6 text-slate-600">Usá tu cuenta para acceder al local y al taller.</p>
         </div>
-      </section>
-
-      <section className="flex items-center justify-center px-4 py-10 sm:px-8">
-        <div className="w-full max-w-md rounded-[32px] border border-white/60 bg-white/90 p-8 shadow-soft backdrop-blur">
-          <div className="mb-8">
-            <p className="text-sm font-semibold uppercase tracking-[0.32em] text-brand-700">Bienvenido</p>
-            <h2 className="mt-3 text-3xl font-semibold text-slate-950">Ingresar al panel</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Usá tu cuenta de CHETECH para entrar al mostrador o al taller.
-            </p>
-          </div>
-          <LoginForm />
-        </div>
+        <LoginForm />
       </section>
     </main>
   );

@@ -7,7 +7,7 @@ import { workshopCategoryHref, type WorkshopBusinessReportResult, type WorkshopC
 
 const numberFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 const days = (value: number | null) => value === null ? "Sin datos" : `${numberFormat.format(value)} dias`;
-const money = (value: number | null) => value === null ? "No determinable" : formatCurrency(value);
+const money = (value: number | null) => value === null ? "Datos incompletos" : formatCurrency(value);
 
 function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
   return <Card role="group" aria-label={label} className="min-w-0 space-y-2">
@@ -32,8 +32,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
       <Card className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">REP principal / cohorte de ingreso</p>
-            <h2 id="workshop-business-heading" className="mt-2 text-2xl font-semibold text-slate-950">Negocio del taller</h2>
+            <h2 id="workshop-business-heading" className="text-xl font-semibold text-slate-950">Negocio del taller</h2>
             <p className="mt-2 text-sm leading-relaxed text-slate-600">Estado actual de las ordenes ingresadas en el rango elegido. Los cobros y costos incluyen toda su historia registrada, no solo movimientos de esas fechas.</p>
           </div>
           <form action="/reportes" method="get" className="grid gap-3 sm:grid-cols-[minmax(0,170px)_minmax(0,170px)_auto]">
@@ -42,7 +41,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
             <Button type="submit" className="self-end">Aplicar ingreso</Button>
           </form>
         </div>
-        <p className="rounded-2xl bg-slate-100/70 p-3 text-sm text-slate-600">
+        <p className="rounded-lg bg-brand-50 p-3 text-sm text-slate-600">
           Ingreso: {formatDate(range.from)} al {formatDate(range.to)}.
           {report && <> Foto actual al {formatDate(report.snapshotAt)}. No reconstruye el estado historico al cierre del rango.</>}
         </p>
@@ -53,14 +52,14 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           <Metric label="Ordenes ingresadas" value={numberFormat.format(totals.orders)} detail={`${totals.activeCustody} siguen en custodia. Agregado completo, sin limite de filas.`} />
           <Metric label="Cobrado real" value={money(totals.collected)} detail="Pagos nativos e historicos efectivos, incluidos parciales. Sin duplicar sus espejos ni sumar comprobantes." />
-          <Metric label="Deuda de la cohorte" value={money(totals.debt)} detail={totals.unknownChargeOrders > 0 ? `Subtotal conocido: ${money(totals.knownDebtSubtotal)}. ${totals.unknownChargeOrders} ordenes sin importe exigible conocido.` : `Importe exigible menos pagos por orden. Credito conocido a favor: ${money(totals.knownCreditSubtotal)}.`} />
+          <Metric label="Saldo pendiente de estas ordenes" value={money(totals.debt)} detail={totals.unknownChargeOrders > 0 ? `Subtotal conocido: ${money(totals.knownDebtSubtotal)}. ${totals.unknownChargeOrders} ordenes sin importe a cobrar definido.` : `Importe a cobrar menos pagos por orden. Credito conocido a favor: ${money(totals.knownCreditSubtotal)}.`} />
           <Metric label="Costo directo registrado" value={money(totals.directCost)} detail={`Subtotal registrado: ${money(totals.knownDirectCostSubtotal)}. ${totals.unknownCostOrders} ordenes con costos incompletos o ambiguos.`} />
           <Metric label="Margen directo registrado" value={money(totals.directMargin)} detail={`Subtotal de ordenes con importe y costos conocidos: ${money(totals.knownDirectMarginSubtotal)}. No es utilidad neta: excluye mano de obra y gastos generales.`} />
           <Metric label="Aceptacion vigente" value={totals.acceptanceRate === null ? "Sin decisiones" : `${numberFormat.format(totals.acceptanceRate)}%`} detail={`${totals.acceptedCurrent} aceptadas / ${totals.rejectedCurrent} rechazadas con evidencia de la version actual. Denominador: esas decisiones vigentes, no todas las ordenes.`} />
         </div>
 
         <Card className="space-y-4">
-          <div><h3 className="text-lg font-semibold">Pendientes dentro de la cohorte</h3><p className="mt-1 text-sm text-slate-600">Los numeros respetan el rango de ingreso. Cada enlace abre la cola REP actual completa, sin el filtro de ingreso; REP aun no admite ese filtro.</p></div>
+          <div><h3 className="text-lg font-semibold">Pendientes de estas ordenes</h3><p className="mt-1 text-sm text-slate-600">Los números corresponden al rango de ingreso. Los enlaces abren las colas actuales completas del taller.</p></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {categories.map(({ key, label }) => <Link key={key} href={workshopCategoryHref(key)} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-800 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600">
               <p className="text-xs font-medium">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{report.categories[key]}</p><p className="mt-2 text-xs underline">Ver cola actual completa</p>

@@ -77,22 +77,19 @@ export function RepairCustomerLinkCard({
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-800">
+        <span className="mt-1 shrink-0 text-slate-500">
           <Link2 aria-hidden="true" className="h-5 w-5" />
         </span>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-700">
-            Portal del cliente
-          </p>
-          <h2 className="mt-1 text-xl font-semibold text-slate-950">Cuenta de la tienda</h2>
+          <h2 className="text-lg font-semibold text-slate-950">Cuenta del cliente</h2>
           <p className="mt-1 text-sm leading-6 text-slate-500">
-            Vinculá esta reparación con la cuenta que usará el cliente para consultar su estado.
+            Vincula una cuenta para consultar esta reparacion.
           </p>
         </div>
       </div>
 
-      <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+      <div className="mt-4 border-y border-slate-200 py-3">
+        <p className="text-sm font-medium text-slate-500">
           Vinculación actual
         </p>
         {linkedCustomer ? (
@@ -121,7 +118,7 @@ export function RepairCustomerLinkCard({
           <span className="relative block">
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
             />
             <Input
               autoComplete="off"
@@ -150,7 +147,7 @@ export function RepairCustomerLinkCard({
               const isSelected = selected?.id === customer.id;
               return (
                 <button
-                  className={`w-full rounded-2xl border p-3 text-left transition ${
+                  className={`w-full rounded-xl border p-3 text-left transition ${
                     isSelected
                       ? "border-graphite bg-graphite text-white"
                       : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"

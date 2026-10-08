@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LayoutGrid, Search } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -42,23 +41,21 @@ export function BoardFilters() {
   }, [search, updateParam]);
 
   return (
-    <div className="table-toolbar">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <label className="space-y-1 text-sm font-medium text-slate-700">
+        <span>Buscar placas</span>
         <Input
           aria-label="Buscar placas"
-          className="pl-10"
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Buscar por marca, modelo o texto"
+          placeholder="Marca o modelo"
           value={search}
         />
-      </div>
+      </label>
 
-      <div className="relative">
-        <LayoutGrid className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <label className="space-y-1 text-sm font-medium text-slate-700">
+        <span>Tipo de placa</span>
         <Select
           aria-label="Filtrar placas por tipo"
-          className="pl-10"
           defaultValue={searchParams.get("boardType") ?? "all"}
           onChange={(event) => updateParam("boardType", event.target.value)}
           options={[
@@ -66,8 +63,10 @@ export function BoardFilters() {
             ...TV_BOARD_TYPES.map((type) => ({ label: type.label, value: type.value }))
           ]}
         />
-      </div>
+      </label>
 
+      <label className="space-y-1 text-sm font-medium text-slate-700">
+      <span>Estado</span>
       <Select
         aria-label="Filtrar placas por estado"
         defaultValue={searchParams.get("status") ?? "all"}
@@ -81,6 +80,7 @@ export function BoardFilters() {
           { label: "Liberacion confirmada", value: "released" }
         ]}
       />
+      </label>
     </div>
   );
 }

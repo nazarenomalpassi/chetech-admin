@@ -48,9 +48,9 @@ export function VisitDraftForm({ ownerId, visitId, sourceVersion, savedDraftToke
   return <form ref={formRef} action={action} className={className} onChange={persist} onSubmit={persist}>
     <input type="hidden" name="draftToken" defaultValue="" />
     <input type="hidden" name="draftVisitId" value={visitId} />
-    {pendingDraft ? <div className="col-span-full rounded-2xl bg-amber-50 p-4 text-sm">
+    {pendingDraft ? <div className="col-span-full rounded-xl bg-amber-50 p-3 text-sm">
       <p>{stale ? "La visita cambio desde este borrador. No se puede restaurar sobre la version nueva; revisa el texto anterior." : "Hay un borrador local sin enviar. Recuperalo o descartalo antes de editar."}</p>
-      <div className="mt-2 flex gap-2">
+      <div className="mt-2 flex flex-wrap gap-2">
         <Button type="button" variant="secondary" disabled={Boolean(stale)} onClick={() => {
           if (!formRef.current || !pendingDraft) return;
           for (const [name, value] of Object.entries(pendingDraft.fields)) {
@@ -65,9 +65,9 @@ export function VisitDraftForm({ ownerId, visitId, sourceVersion, savedDraftToke
           tokenRef.current = null; setPendingDraft(null); setNotice("");
         }}>Descartar borrador</Button>
       </div>
-      {stale ? <details className="mt-2"><summary>Consultar texto del borrador anterior</summary><pre className="mt-2 whitespace-pre-wrap break-words">{Object.entries(pendingDraft.fields).map(([key, value]) => `${key}: ${value}`).join("\n")}</pre></details> : null}
+      {stale ? <details className="mt-2"><summary className="min-h-11 cursor-pointer py-3">Consultar texto del borrador anterior</summary><pre className="mt-2 whitespace-pre-wrap break-words">{Object.entries(pendingDraft.fields).map(([key, value]) => `${key}: ${value}`).join("\n")}</pre></details> : null}
     </div> : null}
     <fieldset disabled={Boolean(pendingDraft)} className="contents">{children}</fieldset>
-    {notice ? <p role="status" aria-live="polite" className="col-span-full text-xs text-slate-500">{notice}</p> : null}
+    {notice ? <p role="status" aria-live="polite" className="col-span-full text-sm text-slate-500">{notice}</p> : null}
   </form>;
 }

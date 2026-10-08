@@ -28,12 +28,11 @@ export function RepairAccessCommandCenter({
         <Card className="overflow-hidden">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.28em] text-brand-700">Centro de servicio</p>
-              <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-[-0.04em] text-slate-950">
-                Reparaciones
+              <h1 className="text-xl font-semibold text-slate-950">
+                Resumen del taller
               </h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                Del ingreso a la entrega. Toca un estado para encontrar los equipos de esa etapa y continuar el trabajo.
+                Selecciona un estado para continuar el trabajo.
               </p>
             </div>
             <div className="grid gap-2 sm:flex sm:flex-wrap">
@@ -51,15 +50,15 @@ export function RepairAccessCommandCenter({
           </div>
         </Card>
 
-        <Card className="bg-none bg-graphite text-white before:bg-none">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-emerald-200">Caja protegida</p>
-          <p className="mt-3 text-3xl font-semibold tracking-[-0.04em]">{formatCurrency(summary.totalCollected)}</p>
-          <p className="mt-2 text-sm leading-6 text-slate-300">
-            El presupuesto no registra dinero. Los cobros reales se cargan en Pagos de reparaciones; emitir o reimprimir un documento no cambia la caja ni marca la entrega.
+        <Card>
+          <h2 className="text-lg font-semibold text-slate-950">Cobros informados</h2>
+          <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(summary.totalCollected)}</p>
+          <p className="mt-2 text-sm leading-6 text-slate-500">
+            Los cobros reales se registran en Pagos de reparaciones. Presupuestar o emitir documentos no modifica caja ni registra una entrega.
           </p>
-          <div className="mt-5 rounded-2xl bg-white/10 p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Proyectado</p>
-            <p className="mt-1 text-xl font-semibold">{formatCurrency(summary.totalProjected)}</p>
+          <div className="mt-4 border-t border-slate-200 pt-3">
+            <p className="text-sm text-slate-500">Proyectado</p>
+            <p className="mt-1 text-lg font-semibold text-slate-950">{formatCurrency(summary.totalProjected)}</p>
           </div>
         </Card>
       </section>
@@ -69,19 +68,18 @@ export function RepairAccessCommandCenter({
           const total = lane.statuses.reduce((acc, status) => acc + (summary.statusCounts[status] ?? 0), 0);
 
           return (
-            <Card className="p-5" key={lane.key}>
+            <Card key={lane.key}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">{lane.title}</p>
-                  <p className="mt-2 text-3xl font-semibold text-slate-950">{total}</p>
+                  <h2 className="text-base font-semibold text-slate-700">{lane.title}</h2>
+                  <p className="mt-2 text-2xl font-semibold text-slate-950">{total}</p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">{lane.statuses.length} estados</span>
               </div>
               <p className="mt-3 min-h-10 text-sm leading-5 text-slate-500">{lane.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {lane.statuses.map((status) => (
                   <button
-                    className="min-h-11 rounded-xl border border-slate-200 bg-white px-3 py-2 text-left text-xs font-medium text-slate-700 transition-colors hover:border-graphite/30 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                    className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:border-graphite/30 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
                     key={status}
                     onClick={() => onOpenStatus(status)}
                     type="button"
@@ -101,8 +99,7 @@ export function RepairAccessCommandCenter({
         <Card>
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm text-slate-500">Alertas de control</p>
-              <h2 className="text-xl font-semibold text-slate-950">Trabajo pendiente</h2>
+              <h2 className="text-lg font-semibold text-slate-950">Trabajo pendiente</h2>
             </div>
             <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">{summary.delayedOrders} demoradas</span>
           </div>
@@ -126,7 +123,7 @@ function AttentionList({ title, orders, empty, onOpenDetail, onViewAll }: { titl
     <Card>
       <h2 className="text-xl font-semibold text-slate-950">{title}</h2>
       <div className="mt-4 space-y-3">
-        {orders.length ? orders.map((order) => <CompactOrder onOpenDetail={onOpenDetail} order={order} key={order.id} />) : <p className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-500">{empty}</p>}
+        {orders.length ? orders.map((order) => <CompactOrder onOpenDetail={onOpenDetail} order={order} key={order.id} />) : <p className="rounded-xl bg-slate-50 p-4 text-sm text-slate-500">{empty}</p>}
       </div>
       <Button className="mt-4 w-full" onClick={onViewAll} type="button" variant="secondary">Ver todas <ArrowRight aria-hidden="true" className="h-4 w-4" /></Button>
     </Card>
@@ -137,10 +134,10 @@ function CompactOrder({ order, onOpenDetail }: { order: RepairAccessOrderRecord;
   const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" ");
 
   return (
-    <button className="w-full rounded-2xl border border-slate-200 p-4 text-left transition-colors hover:border-graphite/30 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" onClick={() => onOpenDetail(order)} type="button">
+    <button className="w-full rounded-xl border border-slate-200 p-4 text-left transition-colors hover:border-graphite/30 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" onClick={() => onOpenDetail(order)} type="button">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="mb-1 whitespace-nowrap text-sm font-semibold text-slate-950">{order.repairNumber}</p>
+          <p className="mb-1 break-words text-sm font-semibold text-slate-950 [overflow-wrap:anywhere]">{order.repairNumber}</p>
           <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
           <p className="mt-1 text-xs text-slate-500">{deviceLabel || "Equipo"} - {formatDate(order.intakeDate)}</p>
         </div>
@@ -154,7 +151,7 @@ function CompactOrder({ order, onOpenDetail }: { order: RepairAccessOrderRecord;
 
 function AlertRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between rounded-2xl bg-slate-50 px-4 py-3">
+    <div className="flex items-center justify-between gap-3 border-b border-slate-200 py-2">
       <span className="text-sm text-slate-600">{label}</span>
       <span className="text-sm font-semibold text-slate-950">{value}</span>
     </div>

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
@@ -17,13 +17,28 @@ export function ReconciliationAmendmentDialog({ record, onRecorded }: { record: 
   const [requestId] = useState(() => crypto.randomUUID());
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const initialFormRef = useRef("");
+  useEffect(() => {
+    if (open && formRef.current) {
+      initialFormRef.current = JSON.stringify(Array.from(new FormData(formRef.current).entries()));
+    }
+  }, [open]);
+
+  function closeDialog() {
+    if (pending) return;
+    const form = formRef.current;
+    const changed = form && JSON.stringify(Array.from(new FormData(form).entries())) !== initialFormRef.current;
+    if (changed && !window.confirm("Descartar los cambios del arqueo sin guardar?")) return;
+    setOpen(false);
+  }
   return <div className="mt-3">
     <p className="font-semibold">Estado vigente: {isOpenRevision ? "Reabierto; pendiente de corregir y cerrar" : "Cerrado"}</p>
     <Button className="mt-2" type="button" variant="secondary" onClick={() => { setMessage(""); setOpen(true); }}>{isOpenRevision ? "Corregir conteo y volver a cerrar" : "Reabrir con motivo"}</Button>
-    {open ? <DialogShell labelledBy={`cash-amend-${record.id}`} onClose={() => setOpen(false)} panelClassName="max-w-2xl">
+    {open ? <DialogShell labelledBy={`cash-amend-${record.id}`} onClose={closeDialog} panelClassName="max-w-2xl">
       <h2 className="text-xl font-semibold" id={`cash-amend-${record.id}`}>{isOpenRevision ? "Correccion del conteo" : "Reapertura auditada"}: {formatDate(record.business_date)}</h2>
       <p className="mt-2 text-sm text-slate-600">El saldo esperado sigue siendo el del cierre historico. Esto no corrige balances ni registra pagos posteriores. El original y cada revision se conservan.</p>
-      <form className="mt-4 space-y-4" onSubmit={(event) => {
+      <form className="mt-4 space-y-4" ref={formRef} onSubmit={(event) => {
         event.preventDefault(); const form = new FormData(event.currentTarget);
         startTransition(async () => {
           try {
@@ -38,8 +53,8 @@ export function ReconciliationAmendmentDialog({ record, onRecorded }: { record: 
       }}>
         <label className="grid gap-2 text-sm">Motivo obligatorio<Textarea name="amendmentReason" required minLength={3} maxLength={2000} /></label>
         {isOpenRevision ? <>
-          {accounts.map((account) => <fieldset className="rounded-2xl border border-graphite/10 p-3" key={account.method}>
-            <legend className="px-2 font-semibold">{formatCashMethod(account.method)}</legend>
+          {accounts.map((account) => <fieldset className="border-t border-slate-200 py-3" key={account.method}>
+            <legend className="pr-2 font-semibold">{formatCashMethod(account.method)}</legend>
             <p className="text-sm">Esperado historico: {formatCurrency(account.expected)} | Conteo previo: {formatCurrency(account.physical)}</p>
             <label className="mt-2 grid gap-2 text-sm">Conteo corregido<Input name={`physical-${account.method}`} required type="number" step="0.01" min="0" defaultValue={account.physical} /></label>
             <label className="mt-2 grid gap-2 text-sm">Motivo de diferencia con el esperado<Input name={`reason-${account.method}`} maxLength={1000} defaultValue={account.reason} /></label>
@@ -47,7 +62,7 @@ export function ReconciliationAmendmentDialog({ record, onRecorded }: { record: 
           <label className="grid gap-2 text-sm">Observaciones<Textarea name="observations" maxLength={2000} /></label>
         </> : null}
         {message ? <p role="status" aria-live="polite" className="text-sm">{message}</p> : null}
-        <div className="flex justify-end gap-2"><Button type="button" variant="secondary" disabled={pending} onClick={() => setOpen(false)}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Registrando..." : isOpenRevision ? "Cerrar correccion inmutable" : "Registrar reapertura"}</Button></div>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" disabled={pending} onClick={closeDialog}>Cancelar</Button><Button type="submit" disabled={pending}>{pending ? "Registrando..." : isOpenRevision ? "Cerrar correccion inmutable" : "Registrar reapertura"}</Button></div>
       </form>
     </DialogShell> : null}
   </div>;

@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarClock, WalletCards, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
@@ -40,6 +40,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
     resolver: zodResolver(tvBoardSaleSchema),
     defaultValues: buildDefaultValues(board)
   });
+  const hasChanges = form.formState.isDirty;
 
   useEffect(() => {
     form.reset(buildDefaultValues(board));
@@ -50,30 +51,26 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
     return null;
   }
 
+  function requestClose() {
+    if (hasChanges && !window.confirm("Descartar los cambios de la venta?")) return;
+    onClose();
+  }
+
   return (
-    <DialogShell labelledBy="board-sale-dialog-title" onClose={onClose} panelClassName="max-w-3xl">
+    <DialogShell labelledBy="board-sale-dialog-title" onClose={requestClose} panelClassName="max-w-2xl">
         <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-3 sm:gap-4">
-            <span className="inline-flex h-12 w-12 items-center justify-center rounded-[18px] border border-graphite/8 bg-finance-profitSoft text-finance-profit">
-              <WalletCards className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <p className="panel-kicker">Venta Mercado Libre</p>
-              <h2 className="mt-3 text-[1.9rem] font-semibold tracking-[-0.05em] text-slate-950" id="board-sale-dialog-title">
-                Marcar placa como vendida
+          <div className="min-w-0">
+              <h2 className="text-xl font-semibold text-slate-950" id="board-sale-dialog-title">
+                Registrar venta de placa
               </h2>
-              <p className="mt-2 text-sm text-slate-500">
-                Guarda el dinero neto real que vas a recibir y la fecha en la que Mercado Pago lo libera.
-              </p>
-              <p className="mt-3 text-sm font-medium text-slate-950">
+              <p className="mt-2 break-words text-sm font-medium text-slate-950">
                 {board.brand} <span className="text-slate-500">{board.model}</span>
               </p>
-            </div>
           </div>
           <button
             aria-label="Cerrar registro de venta"
-            className="flex h-11 w-11 flex-none items-center justify-center rounded-full text-slate-500 transition hover:bg-white"
-            onClick={onClose}
+            className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+            onClick={requestClose}
             type="button"
           >
             <X className="h-5 w-5" />
@@ -81,7 +78,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
         </div>
 
         <form
-          className="mt-6 space-y-5"
+          className="mt-4 space-y-4"
           onSubmit={form.handleSubmit((values) =>
             startTransition(async () => {
               const result = await markTvBoardSoldAction(values);
@@ -93,79 +90,54 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
             })
           )}
         >
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-            <div className="rounded-[26px] border border-graphite/8 bg-brand-50/90 p-5">
-              <p className="text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                Precio publicado
-              </p>
-              <p className="mt-4 text-[2rem] font-semibold tracking-[-0.05em] text-slate-950">
-                {formatCurrency(board.price)}
-              </p>
-              <p className="mt-2 text-sm text-slate-500">
-                Este importe es solo de referencia. Las metricas financieras se calculan con el neto real.
-              </p>
-            </div>
-
-            <div className="rounded-[26px] border border-graphite/8 bg-white/92 p-5">
-              <div className="flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                <CalendarClock className="h-4 w-4" />
-                Liberacion estimada
-              </div>
-              <p className="mt-3 text-sm text-slate-500">
-                Si la fecha todavía no llegó, la placa queda en espera de liberación. Cuando llegue, pasa a liberada.
-              </p>
-            </div>
-          </div>
+          <p className="border-y border-slate-200 py-3 text-sm text-slate-600">Precio publicado: <span className="font-medium text-slate-950">{formatCurrency(board.price)}</span>. Solo de referencia; el neto se informa abajo.</p>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
+            <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="netAmount">
-                Plata final con retenciones de MercadoLibre
+                Neto de venta
               </label>
               <Input
+                id="netAmount"
                 min={0}
                 step="0.01"
                 type="number"
                 {...form.register("netAmount", { valueAsNumber: true })}
               />
-              <p className="mt-2 text-xs text-slate-500">
-                Ingresá solo el dinero real final que efectivamente vas a cobrar.
+              <p className="mt-2 text-sm text-slate-500">
+                Importe a recibir despues de comisiones y retenciones. No es ganancia.
               </p>
-              <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.netAmount?.message}</p>
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.netAmount?.message}</p>
             </div>
 
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="releaseDate">Fecha de liberación del dinero</label>
-              <Input type="date" {...form.register("releaseDate")} />
-              <p className="mt-2 text-xs text-slate-500">
-                Esta fecha define si el dinero aparece pendiente o ya liberado en las KPI.
+            <div>
+              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="releaseDate">Fecha prevista de liberacion</label>
+              <Input id="releaseDate" type="date" {...form.register("releaseDate")} />
+              <p className="mt-2 text-sm text-slate-500">
+                La fecha no confirma el deposito. Confirma la liberacion cuando Mercado Pago la informe.
               </p>
-              <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.releaseDate?.message}</p>
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.releaseDate?.message}</p>
             </div>
 
-            <div className="rounded-[24px] border border-graphite/8 bg-white/88 p-4 md:col-span-2">
+            <div className="md:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">Observaciones</label>
-              <Textarea placeholder="Ej: envio demorado, venta express, devolucion, cliente habitual..." {...form.register("notes")} />
-              <p className="mt-1 text-xs text-finance-expense">{form.formState.errors.notes?.message}</p>
+              <Textarea id="notes" rows={2} placeholder="Nota interna (opcional)" {...form.register("notes")} />
+              <p className="mt-1 text-sm text-finance-expense">{form.formState.errors.notes?.message}</p>
             </div>
           </div>
 
           {message ? (
             <div
               aria-live="polite"
-              className={
-                message.toLowerCase().includes("no") || message.toLowerCase().includes("error")
-                  ? "status-banner status-banner--error"
-                  : "status-banner status-banner--success"
-              }
-              role="status"
+              className="status-banner status-banner--error"
+              role="alert"
             >
               {message}
             </div>
           ) : null}
 
           <div className="flex flex-col-reverse gap-3 border-t border-graphite/8 pt-5 sm:flex-row sm:justify-end">
-            <Button onClick={onClose} type="button" variant="secondary">
+            <Button onClick={requestClose} type="button" variant="secondary">
               Cancelar
             </Button>
             <Button disabled={isPending} type="submit">

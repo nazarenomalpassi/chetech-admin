@@ -20,8 +20,8 @@ const config: Config = {
         graphite: "#1c1b19",
         fog: "#7b7a74",
         ink: "#141413",
-        canvas: "#f5f4ef",
-        line: "#dddcd4",
+        canvas: "#f5f6f5",
+        line: "#dfe3e0",
         finance: {
           profit: "#11795a",
           profitSoft: "#ebf8f2",
@@ -32,9 +32,9 @@ const config: Config = {
         }
       },
       boxShadow: {
-        soft: "0 24px 58px rgba(20, 20, 19, 0.08)",
-        panel: "0 16px 36px rgba(20, 20, 19, 0.06)",
-        pop: "0 28px 52px rgba(20, 20, 19, 0.14)"
+        soft: "0 2px 8px rgba(20, 20, 19, 0.04)",
+        panel: "0 1px 2px rgba(20, 20, 19, 0.025)",
+        pop: "0 12px 36px rgba(20, 20, 19, 0.12)"
       },
       fontFamily: {
         sans: ["var(--font-sans)", "ui-sans-serif", "system-ui"],

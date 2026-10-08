@@ -1,5 +1,5 @@
 function LoadingTile({ className = "h-32" }: { className?: string }) {
-  return <div className={`animate-pulse rounded-[30px] border border-graphite/10 bg-white/70 ${className}`} />;
+  return <div aria-hidden="true" className={`animate-pulse rounded-xl border border-line bg-white ${className}`} />;
 }
 
 export function ModulePageLoading({
@@ -10,8 +10,9 @@ export function ModulePageLoading({
   showTable?: boolean;
 }) {
   return (
-    <div className="space-y-4">
-      <LoadingTile className="h-44" />
+    <div aria-busy="true" aria-label="Cargando sección" role="status" className="space-y-4">
+      <span className="sr-only">Cargando información…</span>
+      <LoadingTile className="h-24" />
       <div className={`grid gap-4 ${statCount >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-2 xl:grid-cols-3"}`}>
         {Array.from({ length: statCount }).map((_, index) => (
           <LoadingTile className="h-28" key={index} />

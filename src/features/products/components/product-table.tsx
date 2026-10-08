@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { Pencil, Power, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
 import { PaginationNav } from "@/components/ui/pagination-nav";
 import type { PaginationMeta } from "@/lib/pagination";
@@ -77,67 +78,53 @@ export function ProductTable({
 
   return (
     <div className="table-shell">
-      <div className="border-b border-graphite/8 bg-brand-50/80 px-4 py-4 sm:px-5">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="panel-kicker">Inventario activo</p>
-            <h2 className="mt-2 text-[1.4rem] font-semibold tracking-[-0.04em] text-slate-950">
-              Lectura de productos
-            </h2>
-          </div>
-          <p className="text-sm text-slate-500">
-            SKU, categoria, margen visual y estado operativo en una sola vista.
-          </p>
-        </div>
-      </div>
-
-      <div className="grid gap-3 p-3 lg:hidden">
+      <div className="divide-y divide-slate-200 xl:hidden">
         {visibleProducts.map((product) => {
           return (
-            <article className="rounded-[24px] border border-graphite/8 bg-white/86 p-4 shadow-[0_10px_20px_rgba(20,20,19,0.04)]" key={product.id}>
+            <article className="bg-white p-4" key={product.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="break-words font-semibold text-slate-950">{product.name}</p>
-                  <p className="mt-1 text-xs uppercase tracking-[0.16em] text-slate-500">{product.sku}</p>
+                  <p className="mt-1 break-words text-sm text-slate-500">SKU {product.sku}</p>
                 </div>
                 <Badge variant={product.isActive ? "success" : "default"}>
                   {product.isActive ? "Activo" : "Inactivo"}
                 </Badge>
               </div>
 
-              <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Categoria</p>
+              <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+                <div>
+                  <p className="text-sm text-slate-500">Categoria</p>
                   <p className="mt-1 font-semibold text-slate-800">{product.category ?? "Sin categoria"}</p>
                 </div>
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Stock</p>
+                <div className="row-span-2 sm:order-last sm:row-span-1">
+                  <p className="text-sm text-slate-500">Stock</p>
                   <div className="mt-1"><ProductStockReadout product={product} /></div>
                 </div>
-                {canManage ? <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Costo</p>
+                {canManage ? <div>
+                  <p className="text-sm text-slate-500">Costo</p>
                   <p className="mt-1 font-semibold text-slate-800">{formatCurrency(product.cost)}</p>
                 </div> : null}
-                <div className="rounded-[18px] bg-brand-50 px-3 py-2.5">
-                  <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-slate-400">Precio</p>
+                <div>
+                  <p className="text-sm text-slate-500">Precio de venta</p>
                   <p className="mt-1 font-semibold text-slate-950">{formatCurrency(product.salePrice)}</p>
                 </div>
               </div>
 
               {canManage ? (
-                <p className="mt-3 text-xs text-slate-500">
-                  Margen visible {formatCurrency(product.salePrice - product.cost)}
+                <p className="mt-3 text-sm text-slate-500">
+                  Diferencia precio-costo {formatCurrency(product.salePrice - product.cost)}
                 </p>
               ) : null}
 
               {canManage ? (
-                <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                  <Button className="w-full" onClick={() => onEdit(product.id)} variant="secondary">
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button onClick={() => onEdit(product.id)} variant="secondary">
                     <Pencil className="h-4 w-4" />
                     Editar
                   </Button>
+                  <ActionMenu label="Mas acciones">
                   <Button
-                    className="w-full"
                     disabled={isPending}
                     onClick={() =>
                       startTransition(async () => {
@@ -150,72 +137,74 @@ export function ProductTable({
                     <Power className="h-4 w-4" />
                     {product.isActive ? "Desactivar" : "Reactivar"}
                   </Button>
-                  <Button className="w-full" disabled={isPending} onClick={() => handleDelete(product)} variant="danger">
+                  <Button disabled={isPending} onClick={() => handleDelete(product)} variant="danger">
                     <Trash2 className="h-4 w-4" />
                     Eliminar
                   </Button>
+                  </ActionMenu>
                 </div>
               ) : (
-                <p className="mt-4 rounded-[18px] bg-brand-50 px-3 py-2 text-sm text-slate-500">Solo administracion</p>
+                <p className="mt-3 text-sm text-slate-500">Solo administracion</p>
               )}
             </article>
           );
         })}
       </div>
 
-      <div className="hidden overflow-x-auto lg:block">
-        <table className="min-w-full text-sm">
-          <thead className="bg-white/80 text-left text-slate-500">
+      <div className="hidden overflow-x-auto xl:block">
+        <table className="w-full min-w-[960px] text-sm">
+          <thead className="bg-white text-left text-slate-500">
             <tr>
-              <th className="px-4 py-4 font-medium sm:px-5">Producto</th>
-              <th className="px-4 py-4 font-medium">Categoria</th>
-              {canManage ? <th className="px-4 py-4 font-medium">Costo</th> : null}
-              <th className="px-4 py-4 font-medium">Precio</th>
-              <th className="px-4 py-4 font-medium">Stock</th>
-              <th className="px-4 py-4 font-medium">Estado</th>
-              <th className="px-4 py-4 font-medium text-right sm:px-5">Acciones</th>
+              <th className="px-4 py-3 font-medium sm:px-5">Producto</th>
+              <th className="px-4 py-3 font-medium">Categoria</th>
+              {canManage ? <th className="px-4 py-3 font-medium">Costo</th> : null}
+              <th className="px-4 py-3 font-medium">Precio</th>
+              <th className="px-4 py-3 font-medium">Stock</th>
+              <th className="px-4 py-3 font-medium">Estado</th>
+              <th className="px-4 py-3 font-medium text-right sm:px-5">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {visibleProducts.map((product) => {
               return (
                 <tr
-                  className="border-t border-graphite/8 bg-white/72 transition duration-200 hover:bg-white"
+                  className="border-t border-graphite/8 bg-white transition duration-200 hover:bg-white"
                   key={product.id}
                 >
-                  <td className="px-4 py-4 align-top sm:px-5">
+                  <td className="px-4 py-3 align-top sm:px-5">
                     <div className="space-y-1">
                       <p className="font-medium text-slate-950">{product.name}</p>
-                      <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{product.sku}</p>
+                      <p className="break-words text-sm text-slate-500">SKU {product.sku}</p>
                     </div>
                   </td>
-                  <td className="px-4 py-4 text-slate-600">{product.category ?? "Sin categoria"}</td>
-                  {canManage ? <td className="px-4 py-4 text-slate-600">{formatCurrency(product.cost)}</td> : null}
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3 text-slate-600">{product.category ?? "Sin categoria"}</td>
+                  {canManage ? <td className="px-4 py-3 text-slate-600">{formatCurrency(product.cost)}</td> : null}
+                  <td className="px-4 py-3">
                     <div className="space-y-1">
                       <p className="font-medium text-slate-950">{formatCurrency(product.salePrice)}</p>
                       {canManage ? (
-                        <p className="text-xs text-slate-500">
-                          Margen visible {formatCurrency(product.salePrice - product.cost)}
+                        <p className="text-sm text-slate-500">
+                          Diferencia precio-costo {formatCurrency(product.salePrice - product.cost)}
                         </p>
                       ) : null}
                     </div>
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <ProductStockReadout product={product} />
                   </td>
-                  <td className="px-4 py-4">
+                  <td className="px-4 py-3">
                     <Badge variant={product.isActive ? "success" : "default"}>
                       {product.isActive ? "Activo" : "Inactivo"}
                     </Badge>
                   </td>
-                  <td className="px-4 py-4 sm:px-5">
+                  <td className="px-4 py-3 sm:px-5">
                     {canManage ? (
                       <div className="flex flex-wrap justify-end gap-2">
                         <Button onClick={() => onEdit(product.id)} size="sm" variant="secondary">
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </Button>
+                        <ActionMenu label="Mas acciones">
                         <Button
                           disabled={isPending}
                           onClick={() =>
@@ -238,6 +227,7 @@ export function ProductTable({
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </Button>
+                        </ActionMenu>
                       </div>
                     ) : (
                       <p className="text-right text-xs text-slate-500">Solo administracion</p>
@@ -252,7 +242,7 @@ export function ProductTable({
 
       {pagination ? <PaginationNav meta={pagination} pathname="/productos" searchParams={searchParams} /> : null}
       {products.length && !pagination ? (
-        <div className="flex flex-col gap-3 border-t border-graphite/8 bg-brand-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 border-t border-graphite/8 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <p aria-live="polite" className="text-sm text-slate-600">Mostrando {visibleProducts.length} de {products.length} productos</p>
           {visibleProducts.length < products.length ? (
             <Button onClick={() => setVisibleLimit((current) => Math.min(current + 25, products.length))} type="button" variant="secondary">Mostrar mas productos</Button>

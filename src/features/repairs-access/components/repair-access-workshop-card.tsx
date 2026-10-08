@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { ActionMenu } from "@/components/ui/action-menu";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { LazyDisclosure } from "@/components/ui/lazy-disclosure";
@@ -56,21 +57,20 @@ export function RepairAccessWorkshopCard({
   const quoteAmount = order.budgetAmount || order.finalAmount;
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-[28px] border border-graphite/12 bg-[#fbfaf6] shadow-panel">
-      <header className="grid min-w-0 gap-3 border-b border-graphite/10 px-4 pb-4 pt-5 sm:px-5">
+    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <header className="grid min-w-0 gap-2 border-b border-slate-200 p-4">
         <div className="min-w-0">
-          <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-slate-500">Numero de orden</p>
           {canManageIntake ? (
             <button
               aria-label={`Abrir orden ${order.repairNumber}`}
-              className="mt-1 block w-full whitespace-normal break-words text-left text-[1.8rem] font-bold leading-tight tracking-[-0.045em] text-slate-950 [overflow-wrap:anywhere] hover:text-brand-700"
+              className="block min-h-11 w-full whitespace-normal break-words rounded-lg text-left text-xl font-semibold leading-tight text-slate-950 [overflow-wrap:anywhere] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
               onClick={() => onOpenDetail(order)}
               type="button"
             >
               {order.repairNumber}
             </button>
           ) : (
-            <p className="mt-1 block w-full whitespace-normal break-words text-[1.8rem] font-bold leading-tight tracking-[-0.045em] text-slate-950 [overflow-wrap:anywhere]">
+            <p className="block w-full whitespace-normal break-words text-xl font-semibold leading-tight text-slate-950 [overflow-wrap:anywhere]">
               {order.repairNumber}
             </p>
           )}
@@ -81,13 +81,13 @@ export function RepairAccessWorkshopCard({
         </div>
       </header>
 
-      <div className="space-y-4 p-4 sm:p-5">
-        <section className="rounded-[22px] bg-graphite px-4 py-4 text-white">
-          <div className="flex items-center gap-2 text-white/60">
+      <div className="space-y-3 p-4">
+        <section>
+          <div className="flex items-center gap-2 text-slate-500">
             <Wrench aria-hidden="true" className="h-4 w-4" />
-            <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em]">Falla reportada</p>
+            <p className="text-sm font-medium">Falla reportada</p>
           </div>
-          <p className="mt-3 whitespace-pre-wrap break-words text-base font-semibold leading-6 text-white">
+          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
             {order.issueReported || "Sin falla declarada"}
           </p>
         </section>
@@ -108,13 +108,11 @@ export function RepairAccessWorkshopCard({
           ) : null}
         </div>
 
-        <LazyDisclosure className="group overflow-hidden rounded-[22px] border border-graphite/12 bg-white"
-          summaryClassName="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-slate-950 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/25 [&::-webkit-details-marker]:hidden"
+        <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
+          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
           summary={<>
-            <span className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-graphite text-white">
-                <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
-              </span>
+            <span className="flex items-center gap-2">
+              <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
               Actualizar trabajo
             </span>
             <ChevronDown aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
@@ -127,12 +125,12 @@ export function RepairAccessWorkshopCard({
             <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={canManageIntake} />
 
             <label>
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Estado de la orden</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Estado de la orden</span>
               <Select defaultValue={order.status} id={`workshop-${order.id}-status`} name="status" options={repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status)} />
             </label>
 
             <label>
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Presupuesto · visible para el cliente</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Presupuesto · visible para el cliente</span>
               <Input
                 defaultValue={quoteAmount ? String(quoteAmount) : ""}
                 disabled={order.isPaid}
@@ -150,7 +148,7 @@ export function RepairAccessWorkshopCard({
             </label>
 
             <label>
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Detalle del presupuesto · visible para el cliente</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Detalle del presupuesto · visible para el cliente</span>
               <Textarea
                 className="min-h-24"
                 defaultValue={order.budgetDetail ?? ""}
@@ -162,7 +160,7 @@ export function RepairAccessWorkshopCard({
             </label>
 
             <label>
-              <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Avance de reparacion · visible para el cliente</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">Avance de reparacion · visible para el cliente</span>
               <Textarea
                 className="min-h-24"
                 defaultValue={order.repairProgress ?? ""}
@@ -183,22 +181,19 @@ export function RepairAccessWorkshopCard({
           </WorkshopCardForm>}
         </LazyDisclosure>
 
-        {canManageIntake ? <div className="grid grid-cols-2 gap-2">
-          <a className={cn(buttonVariants({ variant: "secondary" }), "min-h-11 w-full")} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Cobrar</a>
+        {canManageIntake ? <div className="flex flex-wrap gap-2">
           <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>
         </div> : null}
-        {order.workflow ? <LazyDisclosure className="rounded-2xl border border-slate-200 bg-white" summaryClassName="min-h-11 cursor-pointer p-3 text-sm font-medium text-slate-600" summary="Repuestos, entrega y documentos">
+        {order.workflow ? <LazyDisclosure className="border-t border-slate-200" summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" summary="Coordinacion y repuestos">
           <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
         </LazyDisclosure> : null}
         {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
-        <LazyDisclosure className="group overflow-hidden rounded-[22px] border border-graphite/12 bg-white"
-          summaryClassName="flex min-h-14 cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold text-slate-950 transition hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/25 [&::-webkit-details-marker]:hidden"
+        <LazyDisclosure className="group border-t border-slate-200"
+          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
           summary={<>
-            <span className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
-                <Globe2 aria-hidden="true" className="h-4 w-4" />
-              </span>
+            <span className="flex items-center gap-2">
+              <Globe2 aria-hidden="true" className="h-4 w-4" />
               Portal del cliente
             </span>
             <ChevronDown aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
@@ -225,19 +220,13 @@ export function RepairAccessWorkshopCard({
         </div>
 
         {canManageIntake ? (
-          <details className="group rounded-[20px] border border-dashed border-graphite/12">
-            <summary className="cursor-pointer list-none px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 [&::-webkit-details-marker]:hidden">
-              Acciones administrativas
-            </summary>
-            <div className="grid grid-cols-2 gap-2 border-t border-graphite/8 p-3">
-              <Button className="w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">
-                Ficha completa
-              </Button>
+          <div className="flex justify-end border-t border-slate-200 pt-2">
+            <ActionMenu label="Mas acciones">
+              <a className={buttonVariants({ variant: "secondary" })} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a>
               <Button className="w-full" onClick={() => onEdit(order)} type="button" variant="secondary">
                 Editar ingreso
               </Button>
               <form
-                className="col-span-2"
                 action={cancelRepairAccessOrderAction}
                 onSubmit={(event) => {
                   if (!window.confirm(`Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`)) {
@@ -248,8 +237,8 @@ export function RepairAccessWorkshopCard({
                 <input name="id" type="hidden" value={order.id} />
                 <Button className="w-full" type="submit" variant="danger">Anular orden</Button>
               </form>
-            </div>
-          </details>
+            </ActionMenu>
+          </div>
         ) : null}
       </div>
     </article>
@@ -271,9 +260,9 @@ function WorkshopInfo({
 }) {
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-2 text-slate-400">
+      <div className="flex items-center gap-2 text-slate-500">
         <Icon aria-hidden="true" className="h-4 w-4" />
-        <p className="text-[0.68rem] font-semibold uppercase tracking-[0.16em]">{label}</p>
+        <p className="text-sm font-medium">{label}</p>
       </div>
       <p className="mt-1.5 break-words text-sm font-semibold leading-5 text-slate-900">{value}</p>
     </div>
@@ -293,11 +282,11 @@ function WorkshopMeta({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <div className="flex items-center gap-2 text-slate-400">
+      <div className="flex items-center gap-2 text-slate-500">
         <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-        <p className="text-[0.65rem] font-semibold uppercase tracking-[0.14em]">{label}</p>
+        <p className="text-sm font-medium">{label}</p>
       </div>
-      <p className="mt-1 break-words font-semibold leading-5 text-slate-800">{value}</p>
+      <p className="mt-1 break-words font-medium leading-5 text-slate-800">{value}</p>
     </div>
   );
 }
