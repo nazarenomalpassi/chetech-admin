@@ -20,6 +20,16 @@ function values(form: FormData) {
   return Object.fromEntries(Array.from(form.entries()).filter((entry): entry is [string, string] => typeof entry[1] === "string"));
 }
 
+function workshopValues(form: FormData) {
+  const input = values(form);
+  if (input.status === "no_presenta_fallas") {
+    // Ignore even stale draft values: this outcome never edits the quote.
+    delete input.repairAmount;
+    delete input.budgetDetail;
+  }
+  return { ...input, repairAmount: input.repairAmount || 0 };
+}
+
 async function execute(rpc: string, args: Record<string, unknown>, success: string): Promise<ActionResult> {
   const supabase = await createServerSupabaseClient();
   const result = await (supabase as any).rpc(rpc, args);
@@ -38,21 +48,21 @@ async function execute(rpc: string, args: Record<string, unknown>, success: stri
 
 export async function saveWorkshopForm(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {
   await requirePermission("repairs.update");
-  const parsed = repairAccessWorkshopSchema.safeParse({
-    ...values(form), repairAmount: form.get("repairAmount") || 0
-  });
+  const parsed = repairAccessWorkshopSchema.safeParse(workshopValues(form));
   const expectedVersion = version.safeParse(form.get("expectedVersion"));
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   if (!expectedVersion.success) return { success: false, message: "Actualiza la orden antes de guardar." };
   const p = parsed.data;
+  const noFault = p.status === "no_presenta_fallas";
   return execute("workshop_save", {
     p_order_id: p.id, p_expected_version: expectedVersion.data,
     p_payload: {
       status: p.status,
-      ...(form.has("repairAmount") ? { budget_amount: p.repairAmount } : {}),
-      budget_detail: p.budgetDetail, repair_progress: p.repairProgress,
-      quality_checked: form.get("qualityChecked") === "on",
-      quality_notes: String(form.get("qualityNotes") ?? "").slice(0, 2000)
+      ...(!noFault && form.has("repairAmount") ? { budget_amount: p.repairAmount } : {}),
+      ...(!noFault && form.has("budgetDetail") ? { budget_detail: p.budgetDetail } : {}),
+      ...(form.has("repairProgress") ? { repair_progress: p.repairProgress } : {}),
+      ...(!noFault ? { quality_checked: form.get("qualityChecked") === "on" } : {}),
+      ...(form.has("qualityNotes") ? { quality_notes: String(form.get("qualityNotes") ?? "").slice(0, 2000) } : {})
     }
   }, "Actualizacion guardada. Mostrador puede ver el avance.");
 }
@@ -71,19 +81,20 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
     const result = await execute("workshop_deliver", { p_order_id: p.id, p_expected_version: p.version, p_recipient: p.recipient, p_notes: p.notes, p_allow_balance: p.allowBalance }, "Retiro registrado. Se conservaron los cobros y el historial.");
     return result.success ? { ...result, orderClosed: true } : result;
   }
-  const parsed = repairAccessWorkshopSchema.safeParse({ ...values(form), repairAmount: form.get("repairAmount") || 0 });
+  const parsed = repairAccessWorkshopSchema.safeParse(workshopValues(form));
   const expectedVersion = version.safeParse(form.get("expectedVersion"));
   const operationId = uuid.safeParse(form.get("operationId"));
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   if (!expectedVersion.success || !operationId.success) return { success: false, message: "No se pudo preparar el guardado. Recarga la ficha conservando el borrador." };
   const budgetResponse = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
-  const confirmCustomer = (user.role === "admin" && budgetResponse) || form.get("confirmCustomer") === "on";
-  const hasAmount = form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
+  const noFault = parsed.data.status === "no_presenta_fallas";
+  const confirmCustomer = !noFault && ((user.role === "admin" && budgetResponse) || form.get("confirmCustomer") === "on");
+  const hasAmount = !noFault && form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
   if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el importe del presupuesto antes de registrar la respuesta. Si es sin cargo, ingresa 0." };
   if (confirmCustomer && user.role !== "admin") return { success: false, message: "La confirmacion del cliente se registra desde la cuenta de administracion." };
   const channel = confirmCustomer ? z.enum(["presencial", "telefono", "whatsapp", "portal"]).safeParse(form.get("decisionChannel")) : null;
   if (channel && !channel.success) return { success: false, message: "Selecciona como respondio el cliente." };
-  const notes = optionalText().safeParse(String(form.get("decisionNotes") ?? ""));
+  const notes = optionalText().safeParse(noFault ? "" : String(form.get("decisionNotes") ?? ""));
   if (!notes.success) return { success: false, message: "La nota de la respuesta del cliente es demasiado larga." };
   const p = parsed.data;
   const supabase = await createServerSupabaseClient();
@@ -92,9 +103,9 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
     p_payload: {
       status: p.status,
       ...(hasAmount ? { budget_amount: p.repairAmount } : {}),
-      ...(form.has("budgetDetail") ? { budget_detail: p.budgetDetail } : {}),
+      ...(!noFault && form.has("budgetDetail") ? { budget_detail: p.budgetDetail } : {}),
       ...(form.has("repairProgress") ? { repair_progress: p.repairProgress } : {}),
-      quality_checked: form.get("qualityChecked") === "on",
+      ...(!noFault ? { quality_checked: form.get("qualityChecked") === "on" } : {}),
       ...(form.has("qualityNotes") ? { quality_notes: String(form.get("qualityNotes") ?? "").slice(0, 2000) } : {})
     },
     p_confirm_customer: confirmCustomer,
@@ -171,8 +182,10 @@ export async function claimRepairOrder(_previous: ActionResult | null, form: For
 
 export async function deliverRepairOrder(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {
   await requireAdmin();
+  if (form.get("confirmDelivery") !== "on") return { success: false, message: "Confirma que el cliente retiro el equipo antes de guardar." };
   const parsed = z.object({ id: uuid, version, recipient: z.string().trim().min(2, "Indica quien retira."), notes: optionalText(), allowBalance: z.boolean() }).safeParse({ ...values(form), allowBalance: form.get("allowBalance") === "on" });
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   const p = parsed.data;
+  if (p.allowBalance && p.notes.trim().length < 3) return { success: false, message: "Indica el motivo de entregar con saldo pendiente en las observaciones." };
   return execute("workshop_deliver", { p_order_id: p.id, p_expected_version: p.version, p_recipient: p.recipient, p_notes: p.notes, p_allow_balance: p.allowBalance }, "Entrega registrada. Se conservaron los cobros y el historial.");
 }

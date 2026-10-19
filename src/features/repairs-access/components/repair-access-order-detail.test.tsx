@@ -16,6 +16,24 @@ vi.mock("./repair-access-whatsapp-actions", () => ({ RepairAccessWhatsAppPanel: 
 Object.assign(globalThis, { React });
 afterEach(() => { cleanup(); localStorage.clear(); });
 
+it.each([true, false])("keeps original administrator corrections reachable separately from warranty (%s)", (hasWorkflow) => {
+  const order = {
+    id: "10000000-0000-4000-8000-000000000001", repairNumber: "REP-000513", status: "retirado", intakeDate: "2026-10-06",
+    issueReported: "No enciende", budgetAmount: 100, finalAmount: 100, hasWarranty: false, warrantyDays: 0,
+    customer: { fullName: "Cliente", phone: "" }, device: { deviceType: "TV" },
+    workflow: hasWorkflow ? { version: 1, approvalStatus: "legacy", parts: [], events: [] } : undefined
+  } as unknown as RepairAccessOrderRecord;
+  const { container } = render(<RepairAccessOrderDetail order={order} onBack={vi.fn()} onEditIntake={vi.fn()} defaultWarrantyDays={90} />);
+  expect(screen.getByRole("button", { name: "Editar ingreso" })).toBeTruthy();
+  if (hasWorkflow) {
+    expect(screen.getByText(/Esta orden ya fue entregada/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Mas campos administrativos" }));
+  }
+  expect(container.querySelector('[name="finalAmount"]')).toBeTruthy();
+  expect(screen.getByText("Registrar reingreso por garantia")).toBeTruthy();
+  expect(screen.getByText("Retiro y garantia")).toBeTruthy();
+});
+
 it("la ficha abre el editor diario y reserva el formulario administrativo para mas campos", () => {
   const order = {
     id: "10000000-0000-4000-8000-000000000001", repairNumber: "REP-000513", status: "presupuestado", intakeDate: "2026-10-06",

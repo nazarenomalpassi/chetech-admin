@@ -19,6 +19,73 @@ const order = {
 } as unknown as RepairAccessOrderRecord;
 
 describe("editor unico de reparaciones", () => {
+  it.each([false, true])("guarda no presenta fallas sin enviar presupuesto ni aprobacion (admin=%s)", async (canManage) => {
+    mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
+    render(<RepairQuickEditor order={order} canManage={canManage} />);
+    fireEvent.change(screen.getByLabelText("Presupuesto"), { target: { value: "999" } });
+    fireEvent.change(screen.getByLabelText("Detalle del presupuesto"), { target: { value: "Borrador cambiado" } });
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "no_presenta_fallas" } });
+    expect((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).value).toBe("no_presenta_fallas");
+    expect(screen.queryByRole("spinbutton", { name: "Presupuesto" })).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Detalle del presupuesto" })).toBeNull();
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.queryByText(/Pedile a mostrador/)).toBeNull();
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
+    const data = mocks.save.mock.calls[0][1] as FormData;
+    for (const key of ["repairAmount", "budgetDetail", "confirmCustomer", "decisionChannel", "decisionNotes", "issueReported"]) expect(data.has(key)).toBe(false);
+  });
+  it("permite retirar una orden guardada sin fallas y sin cargo sin autorizar saldo", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "no_presenta_fallas", budgetAmount: 0, finalAmount: 0, budgetDetail: null }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect((screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled).toBe(false);
+    expect(screen.queryByLabelText(/Autorizo entrega con saldo pendiente/)).toBeNull();
+    expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).required).toBe(true);
+    expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).required).toBe(true);
+  });
+  it("conserva el presupuesto del borrador al salir de no presenta fallas", () => {
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.change(screen.getByLabelText("Presupuesto"), { target: { value: "999" } });
+    fireEvent.change(screen.getByLabelText("Detalle del presupuesto"), { target: { value: "Borrador cambiado" } });
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "no_presenta_fallas" } });
+    const data = new FormData(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    expect(data.has("repairAmount")).toBe(false);
+    expect(data.has("budgetDetail")).toBe(false);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "presupuestado" } });
+    expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("999");
+    expect((screen.getByLabelText("Detalle del presupuesto") as HTMLTextAreaElement).value).toBe("Borrador cambiado");
+  });
+  it("recupera no presenta fallas sin enviar una aprobacion vieja del borrador", async () => {
+    localStorage.setItem(getFormDraftStorageKey(`repair-access:workshop:${order.id}`), JSON.stringify(createFormDraftEnvelope({
+      expectedVersion: "1", status: "no_presenta_fallas", repairAmount: "999", budgetDetail: "Borrador cambiado",
+      confirmCustomer: "on", decisionChannel: "telefono", decisionNotes: "Autorizacion anterior", qualityChecked: "on"
+    })));
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Recuperar" }));
+    expect((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).value).toBe("no_presenta_fallas");
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.queryByLabelText("Equipo probado y funcionando")).toBeNull();
+    const data = new FormData(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    for (const key of ["repairAmount", "budgetDetail", "confirmCustomer", "decisionChannel", "decisionNotes", "qualityChecked"]) expect(data.has(key)).toBe(false);
+  });
+  it.each([
+    { budgetAmount: 100, finalAmount: 0, hasFinalAmount: false, isPaid: false, debt: true },
+    { budgetAmount: 100, finalAmount: 0, hasFinalAmount: true, isPaid: false, debt: true },
+    { budgetAmount: 0, finalAmount: 100, isPaid: false, debt: true },
+    { budgetAmount: 100, finalAmount: 100, isPaid: true, debt: false },
+    { budgetAmount: 0, finalAmount: 0, isPaid: false, debt: false }
+  ])("muestra autorizacion de saldo solo ante cargos positivos impagos: %j", (amounts) => {
+    render(<RepairQuickEditor order={{ ...order, status: "no_presenta_fallas", ...amounts }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    const authorization = screen.queryByLabelText(/Autorizo entrega con saldo pendiente/);
+    expect(Boolean(authorization)).toBe(amounts.debt);
+    if (authorization) {
+      expect((authorization as HTMLInputElement).checked).toBe(false);
+      fireEvent.click(authorization);
+      expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).required).toBe(true);
+    }
+  });
+
   it("registra el retiro desde el selector rapido con confirmacion explicita", async () => {
     mocks.save.mockResolvedValue({ success: true, message: "Retiro registrado" });
     render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);
@@ -70,6 +137,11 @@ describe("editor unico de reparaciones", () => {
     fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
     fireEvent.click(screen.getByLabelText(/Autorizo entrega con saldo pendiente/));
     expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).required).toBe(true);
+  });
+  it("conserva la autorizacion de entrega del flujo listo para retirar aunque el importe sea cero", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", budgetAmount: 0, finalAmount: 0 }} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect(screen.getByLabelText(/Autorizo entrega con saldo pendiente/)).toBeTruthy();
   });
   it("conserva los cambios tecnicos y pide guardarlos antes de registrar el retiro", () => {
     render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage />);

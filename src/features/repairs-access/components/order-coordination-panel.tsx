@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CheckCircle2, PackagePlus, UserRound, Truck, ClipboardCheck } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { confirmRepairCustomerDecision, requestRepairPart, assignRepairResponsibility, deliverRepairOrder, manageRepairPart, claimRepairOrder } from "../coordination-actions";
-import { getPartOutstandingQuantity, getWorkshopNextAction, PART_STATUS_LABELS, type WorkshopPart } from "../workflow";
+import { getPartOutstandingQuantity, getWorkshopNextAction, hasWorkshopDeliveryBalance, PART_STATUS_LABELS, type WorkshopPart } from "../workflow";
 import type { RepairAccessOrderRecord } from "../queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -21,6 +21,7 @@ export type WorkshopTechnician = { id: string; name: string };
 export function OrderCoordinationPanel({ order, canManage, technicians = [], compact = false }: { order: RepairAccessOrderRecord; canManage: boolean; technicians?: WorkshopTechnician[]; compact?: boolean }) {
   const [modal, setModal] = useState<Modal | null>(null);
   const [partToManage, setPartToManage] = useState<WorkshopPart | null>(null);
+  const [deliveryWithBalance, setDeliveryWithBalance] = useState(false);
   const context = order.workflow;
   if (!context) return null;
   const pendingParts = context.parts.filter((p) => getPartOutstandingQuantity(p) > 0).length;
@@ -28,6 +29,8 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
   const accepted = context.approvalStatus === "accepted";
   const zeroQuote = order.budgetAmount === 0 && order.finalAmount === 0 && (order.budgetDetail ?? "").trim().length >= 3;
   const delivered = Boolean(order.deliveredAt || order.status === "retirado");
+  const noFault = order.status === "no_presenta_fallas";
+  const hasBalance = hasWorkshopDeliveryBalance(order);
 
   return <section className={`min-w-0 bg-white ${compact ? "border-t border-slate-200 p-3" : "rounded-xl border border-slate-200 p-4"}`} aria-label="Coordinacion de la orden">
     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -36,18 +39,18 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
         <p className="mt-1 text-sm font-semibold text-slate-950">{nextAction}</p>
         <p className="mt-1 text-xs text-slate-500">{context.assignedTechnicianName || "Sin tecnico asignado"}{context.location ? ` · ${context.location}` : ""}{context.nextActionDate ? ` · Revisar ${formatDate(context.nextActionDate)}` : ""}</p>
       </div>
-      <span className={`max-w-full rounded-lg px-2 py-1 text-sm font-medium ${accepted ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
-        {accepted ? `Autorizada: ${formatCurrency(context.approvedAmount ?? order.budgetAmount)}` : context.approvalStatus === "rejected" ? "Cliente rechazo" : context.approvalStatus === "revoked" ? "Requiere nueva autorizacion" : order.status === "presupuestado_aceptado" && context.approvalStatus === "legacy" ? "Aceptacion historica" : "Sin confirmacion vigente"}
+      <span className={`max-w-full rounded-lg px-2 py-1 text-sm font-medium ${accepted || noFault ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}>
+        {noFault ? "No presenta fallas" : accepted ? `Autorizada: ${formatCurrency(context.approvedAmount ?? order.budgetAmount)}` : context.approvalStatus === "rejected" ? "Cliente rechazo" : context.approvalStatus === "revoked" ? "Requiere nueva autorizacion" : order.status === "presupuestado_aceptado" && context.approvalStatus === "legacy" ? "Aceptacion historica" : "Sin confirmacion vigente"}
       </span>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
-      {canManage && !delivered && !accepted && (order.budgetAmount > 0 || zeroQuote) ? <Button className="min-h-11" type="button" onClick={() => setModal("accepted")}><CheckCircle2 className="h-4 w-4" aria-hidden="true" />{zeroQuote ? "Autorizar trabajo sin cargo" : "Cliente confirmo"}</Button> : null}
-      {canManage && !delivered && !accepted ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("rejected")}>Cliente rechazo</Button> : null}
-      {canManage && accepted && !delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("revoked")}>Corregir aceptacion</Button> : null}
+      {canManage && !delivered && !noFault && !accepted && (order.budgetAmount > 0 || zeroQuote) ? <Button className="min-h-11" type="button" onClick={() => setModal("accepted")}><CheckCircle2 className="h-4 w-4" aria-hidden="true" />{zeroQuote ? "Autorizar trabajo sin cargo" : "Cliente confirmo"}</Button> : null}
+      {canManage && !delivered && !noFault && !accepted ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("rejected")}>Cliente rechazo</Button> : null}
+      {canManage && accepted && !delivered && !noFault ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("revoked")}>Corregir aceptacion</Button> : null}
       {!delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("part")}><PackagePlus className="h-4 w-4" aria-hidden="true" />Solicitar repuesto</Button> : null}
       {!canManage && !delivered && !context.assignedTechnicianId ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("claim")}><UserRound className="h-4 w-4" aria-hidden="true" />Tomar esta orden</Button> : null}
       {canManage && !delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("assignment")}><UserRound className="h-4 w-4" aria-hidden="true" />Asignar y organizar</Button> : null}
-      {canManage && !delivered && ["listo_para_retirar", "sin_solucion", "presupuestado_rechazado"].includes(order.status) ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("delivery")}><Truck className="h-4 w-4" aria-hidden="true" />Registrar entrega</Button> : null}
+      {canManage && !delivered && ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status) ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => { setDeliveryWithBalance(false); setModal("delivery"); }}><Truck className="h-4 w-4" aria-hidden="true" />Registrar entrega</Button> : null}
     </div>
     {canManage ? <details className="mt-3 border-t border-slate-200 pt-2">
       <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Documentos y cobros</summary>
@@ -91,8 +94,9 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       </> : null}
       {modal === "delivery" ? <>
         <DialogField label="Persona que retira"><Input name="recipient" required minLength={2} defaultValue={order.customer.fullName} /></DialogField>
-        <DialogField label="Accesorios devueltos y observaciones"><Textarea name="notes" maxLength={2000} /></DialogField>
-        {!order.isPaid && order.status === "listo_para_retirar" ? <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><input className="mt-1" name="allowBalance" type="checkbox" />Autorizo entrega con saldo pendiente. El motivo debe constar en las observaciones.</label> : null}
+        <DialogField label="Accesorios devueltos y observaciones"><Textarea name="notes" maxLength={2000} required={hasBalance && deliveryWithBalance} minLength={hasBalance && deliveryWithBalance ? 3 : undefined} /></DialogField>
+        {hasBalance ? <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><input className="mt-1" name="allowBalance" type="checkbox" checked={deliveryWithBalance} onChange={(event) => setDeliveryWithBalance(event.target.checked)} />Autorizo entrega con saldo pendiente. El motivo debe constar en las observaciones.</label> : null}
+        <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-slate-900"><input className="mt-1" name="confirmDelivery" type="checkbox" required />Confirmo que el cliente retiro el equipo</label>
       </> : null}
     </CoordinationDialog> : null}
     {partToManage ? <PartManagementDialog part={partToManage} canManage={canManage} onClose={() => setPartToManage(null)} /> : null}
@@ -129,7 +133,13 @@ export function CoordinationDialog({ title, action, children, onClose }: { title
   }
   return <DialogShell labelledBy="coordination-title" onClose={close} panelClassName="max-w-xl">
     <div className="flex items-center justify-between gap-3"><h2 id="coordination-title" className="text-xl font-semibold">{title}</h2><Button aria-label="Cerrar" type="button" variant="ghost" disabled={pending} onClick={close}>Cerrar</Button></div>
-    <form ref={formRef} action={submit} data-workshop-form className="mt-4 grid gap-4">
+    <form ref={formRef} data-workshop-form className="mt-4 grid gap-4" onSubmit={(event) => {
+      event.preventDefault();
+      if (pending || !operationId || result?.success) return;
+      const data = new FormData(event.currentTarget);
+      // Manual dispatch avoids React resetting entered values after a rejected save.
+      startTransition(() => submit(data));
+    }}>
       <input name="operationId" type="hidden" value={operationId} />
       {children}
       {result ? <p role={result.success ? "status" : "alert"} className={`rounded-xl p-3 text-sm ${result.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}>{result.message}</p> : null}

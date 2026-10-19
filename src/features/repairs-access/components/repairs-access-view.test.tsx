@@ -136,19 +136,46 @@ describe("workshop section navigation", () => {
     expect(screen.getByRole("button", { name: "Ordenes" }).getAttribute("aria-current")).toBe("page");
   });
 
-  it("keeps three primary destinations and secondary tools in an accessible disclosure", () => {
+  it("keeps warranty returns in primary navigation and secondary tools in an accessible disclosure", () => {
     render(<RepairsAccessView {...props} />);
     const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
     const more = within(nav).getByText("Mas opciones").closest("details");
     expect(more).not.toBeNull();
     expect(more?.open).toBe(false);
     // jsdom does not remove closed details contents from the accessibility tree.
-    expect(within(nav).getAllByRole("button").filter((button) => !button.closest("details")).map((button) => button.textContent)).toEqual(["Ordenes", "Nueva orden", "Clientes"]);
+    expect(within(nav).getAllByRole("button").filter((button) => !button.closest("details")).map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)", "Nueva orden", "Clientes"]);
     fireEvent.click(within(nav).getByText("Mas opciones"));
     expect(more?.open).toBe(true);
     expect(within(nav).getByRole("button", { name: "Resumen" })).toBeTruthy();
     expect(within(nav).getByRole("button", { name: "Consultas" })).toBeTruthy();
     expect(within(nav).getByRole("button", { name: "Importar" })).toBeTruthy();
+  });
+
+  it("lets technicians open warranty returns without exposing intake tools", () => {
+    render(<RepairsAccessView {...props} canManageIntake={false} />);
+    const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
+    expect(within(nav).queryByRole("button", { name: "Nueva orden" })).toBeNull();
+    fireEvent.click(within(nav).getByRole("button", { name: "Garantias (0)" }));
+    expect(screen.getByRole("heading", { name: "Reingresos por garantia" })).toBeTruthy();
+    expect(router.push.mock.calls.at(-1)?.[0]).toContain("view=garantias");
+  });
+
+  it("honors the technician warranty deep link and the global active count", () => {
+    render(<RepairsAccessView {...props} canManageIntake={false} initialView="garantias" warrantyReturnsCount={7} />);
+    expect(screen.getByRole("button", { name: "Garantias (7)" }).getAttribute("aria-current")).toBe("page");
+    expect(screen.getByRole("heading", { name: "Reingresos por garantia" })).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Mesa de trabajo" })).toBeNull();
+  });
+
+  it.each(["retirado", "no_presenta_fallas"])("preserves explicit administrator intake corrections after pickup (%s)", (status) => {
+    render(<RepairsAccessView {...props} initialView="nueva" initialOrderId={order.id} orders={[{ ...order, status, deliveredAt: "2026-10-01T12:00:00Z" }]} />);
+    expect(screen.getByRole("heading", { name: `Ingreso ${order.repairNumber}` })).toBeTruthy();
+  });
+
+  it("preserves the existing delivered intake correction path", () => {
+    render(<RepairsAccessView {...props} orders={[{ ...order, deliveredAt: "2026-10-01T12:00:00Z" }]} />);
+    fireEvent.click(screen.getByRole("button", { name: `Editar ${order.repairNumber}` }));
+    expect(screen.getByRole("heading", { name: `Ingreso ${order.repairNumber}` })).toBeTruthy();
   });
 
   it.each(["panel", "importar"])("retains the explicit %s route even with an order parameter", (initialView) => {
@@ -303,7 +330,8 @@ describe("workshop section navigation", () => {
   it.each(["detalle", "panel", "importar", "nueva", "clientes"])("does not grant technician access to %s", (initialView) => {
     render(<RepairsAccessView {...props} canManageIntake={false} initialView={initialView} initialOrderId={order.id} orders={[order]} />);
     expect(screen.getByRole("heading", { name: "Mesa de trabajo" })).toBeTruthy();
-    expect(screen.queryByRole("navigation", { name: "Secciones de reparaciones" })).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
+    expect(within(nav).getAllByRole("button").map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)"]);
     expect(screen.queryByRole("button", { name: "Crear desde listado" })).toBeNull();
   });
 });

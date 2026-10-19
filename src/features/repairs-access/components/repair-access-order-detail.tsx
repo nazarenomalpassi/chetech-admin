@@ -35,6 +35,7 @@ import { TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { RepairAttachments } from "./repair-attachments";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { RepairQuickEditor } from "./repair-quick-editor";
+import { WarrantyReturnPanel } from "./warranty-return-panel";
 
 export function RepairAccessOrderDetail({
   order,
@@ -209,8 +210,10 @@ export function RepairAccessOrderDetail({
           </div>
         </div>
 
-        <RepairAccessWhatsAppPanel order={liveOrder} />
+        <div className="hidden lg:block"><RepairAccessWhatsAppPanel order={liveOrder} /></div>
       </Card>
+
+      <WarrantyReturnPanel order={order} canManage />
 
       <div className={`grid min-w-0 items-start gap-4 ${order.workflow ? "xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]" : ""}`}>
       {order.workflow ? <Card>

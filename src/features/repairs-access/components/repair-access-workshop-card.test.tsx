@@ -104,6 +104,19 @@ const waitingOrder: RepairAccessOrderRecord = {
 };
 
 describe("RepairAccessWorkshopCard", () => {
+  it.each([true, false])("does not reopen the original workshop editor on a delivered order (admin=%s)", (canManageIntake) => {
+    render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z" }} />);
+    expect(screen.queryByText("Actualizar trabajo")).toBeNull();
+    expect(screen.queryByText("Coordinacion y repuestos")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
+    expect(Boolean(screen.queryByText("Registrar reingreso por garantia"))).toBe(canManageIntake);
+    expect(screen.getByText(order.issueReported)).toBeTruthy();
+    const history = screen.getByText("Historial de la orden original").closest("details")!;
+    history.open = true; fireEvent(history, new Event("toggle"));
+    expect(screen.getByRole("button", { name: "Historial de trabajo" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Solicitar repuesto" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Asignar y organizar" })).toBeNull();
+  });
   it.each([true, false])("reserva toda la fila para el REP sin que los badges lo compriman (admin=%s)", (canManageIntake) => {
     const { container } = render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
     const header = container.querySelector("article header")!;

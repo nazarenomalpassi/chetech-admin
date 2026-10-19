@@ -10,6 +10,8 @@ import { applyStableCreationOrder } from "@/lib/chronology";
 import { readRecordPages } from "@/lib/read-record-pages";
 import type { WorkshopOrderContext } from "./workflow";
 import { getRepairDeviceColor } from "./device-color";
+import type { WarrantyReturnRecord } from "./warranty-return";
+import { getOrderWarrantyReturns } from "./warranty-queries";
 
 type RawOrder = {
   id: string;
@@ -106,6 +108,7 @@ export type StorefrontCustomerSummary = {
 
 export type RepairAccessOrderRecord = {
   workflow?: WorkshopOrderContext;
+  warrantyReturns?: WarrantyReturnRecord[];
   id: string;
   repairNumber: string;
   intakeDate: string;
@@ -119,6 +122,7 @@ export type RepairAccessOrderRecord = {
   budgetResponseAt: string | null;
   approvedAmount: number;
   finalAmount: number;
+  hasFinalAmount?: boolean;
   paymentMethod: string;
   paymentNotes: string | null;
   isPaid: boolean;
@@ -269,6 +273,7 @@ export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
     budgetResponseAt: order.budget_response_at,
     approvedAmount: Number(order.approved_amount ?? 0),
     finalAmount: Number(order.final_amount ?? 0),
+    hasFinalAmount: order.final_amount !== null && order.final_amount !== undefined,
     paymentMethod: order.payment_method ?? "",
     paymentNotes: order.payment_notes,
     isPaid: Boolean(order.is_paid),
@@ -448,6 +453,8 @@ export async function getRepairsAccessDashboard({
     : ordersResult.map((row: { payload: RawOrder }) => row.payload);
   const orders: RepairAccessOrderRecord[] = rawOrders.map((order: RawOrder) => mapOrder(order));
   for (let from = 0; from < orders.length; from += 100) {
+    const warrantyReturns = await getOrderWarrantyReturns(orders.slice(from, from + 100).map((order) => order.id));
+    orders.slice(from, from + 100).forEach((order) => { order.warrantyReturns = warrantyReturns.filter((r) => r.orderId === order.id); });
     const contextResult = await (supabase as any).rpc("get_workshop_context", { p_order_ids: orders.slice(from, from + 100).map((order) => order.id) });
     if (contextResult.error) {
       if (contextResult.error.code === "PGRST202" || contextResult.error.code === "42883") break;

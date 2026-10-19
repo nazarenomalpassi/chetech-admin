@@ -45,6 +45,12 @@ describe("repairAccessTechnicalSchema", () => {
 });
 
 describe("repairAccessWorkshopSchema", () => {
+  it("acepta no presenta fallas sin importe, detalle ni falla adicional", () => {
+    expect(repairAccessWorkshopSchema.safeParse({
+      id: "11111111-1111-4111-8111-111111111111", status: "no_presenta_fallas"
+    }).success).toBe(true);
+  });
+
   it("acepta la actualizacion operativa que necesita un tecnico", () => {
     const result = repairAccessWorkshopSchema.safeParse({
       id: "11111111-1111-4111-8111-111111111111",

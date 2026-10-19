@@ -9,6 +9,7 @@ export const repairAccessStatusValues = [
   "en_reparacion",
   "en_pruebas",
   "listo_para_retirar",
+  "no_presenta_fallas",
   "retirado",
   "sin_solucion"
 ] as const;
@@ -105,7 +106,7 @@ export const repairAccessTechnicalSchema = z.object({
 export const repairAccessWorkshopSchema = z.object({
   id: z.string().uuid("No se pudo identificar la orden."),
   status: z.enum(repairAccessStatusValues),
-  repairAmount: z.coerce.number().min(0, "El monto de la reparacion no puede ser negativo."),
+  repairAmount: z.coerce.number().min(0, "El monto de la reparacion no puede ser negativo.").default(0),
   budgetDetail: z.string().max(2000, "El detalle del presupuesto es demasiado largo.").optional(),
   repairProgress: z.string().max(2000, "El avance tecnico es demasiado largo.").optional()
 });
