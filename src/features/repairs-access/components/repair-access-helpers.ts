@@ -23,6 +23,7 @@ export const repairAccessStatusMeta: Record<RepairAccessStatus, { label: string;
   en_reparacion: { label: "En reparacion", shortLabel: "Reparacion", tone: "default", lane: "Tecnica" },
   en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Tecnica" },
   listo_para_retirar: { label: "Listo para retirar", shortLabel: "Retirar", tone: "success", lane: "Entrega" },
+  no_presenta_fallas: { label: "No presenta fallas", shortLabel: "No presenta fallas", tone: "success", lane: "Entrega" },
   retirado: { label: "Retirado por cliente", shortLabel: "Retirado", tone: "success", lane: "Cierre" },
   sin_solucion: { label: "Sin solucion", shortLabel: "Sin solucion", tone: "danger", lane: "Cierre" }
 };
@@ -58,8 +59,8 @@ export const repairAccessLanes = [
   {
     key: "salida",
     title: "Salida",
-    description: "Equipos listos, entregados o sin solucion. Sin solucion sigue pendiente de devolucion.",
-    statuses: ["listo_para_retirar", "retirado", "sin_solucion"]
+    description: "Equipos listos, sin fallas, entregados o sin solucion. Los no entregados siguen pendientes de retiro.",
+    statuses: ["listo_para_retirar", "no_presenta_fallas", "retirado", "sin_solucion"]
   }
 ] as const;
 

@@ -37,6 +37,7 @@ import { WorkshopForm } from "./workshop-form";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { RepairQuickEditor } from "./repair-quick-editor";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
+import { WarrantyReturnPanel } from "./warranty-return-panel";
 
 export function RepairAccessWorkshopCard({
   order,
@@ -55,6 +56,7 @@ export function RepairAccessWorkshopCard({
   const phone = order.customer.phone || order.customer.alternatePhone;
   const repairAmount = order.finalAmount || order.budgetAmount;
   const quoteAmount = order.budgetAmount || order.finalAmount;
+  const delivered = order.status === "retirado" || Boolean(order.deliveredAt);
 
   return (
     <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -82,6 +84,7 @@ export function RepairAccessWorkshopCard({
       </header>
 
       <div className="space-y-3 p-4">
+        <WarrantyReturnPanel order={order} canManage={canManageIntake} />
         <section>
           <div className="flex items-center gap-2 text-slate-500">
             <Wrench aria-hidden="true" className="h-4 w-4" />
@@ -108,7 +111,7 @@ export function RepairAccessWorkshopCard({
           ) : null}
         </div>
 
-        <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
+        {!delivered ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
           summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
           summary={<>
             <span className="flex items-center gap-2">
@@ -179,12 +182,12 @@ export function RepairAccessWorkshopCard({
               pendingLabel="Guardando cambios..."
             />
           </WorkshopCardForm>}
-        </LazyDisclosure>
+        </LazyDisclosure> : null}
 
         {canManageIntake ? <div className="flex flex-wrap gap-2">
           <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>
         </div> : null}
-        {order.workflow ? <LazyDisclosure className="border-t border-slate-200" summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" summary="Coordinacion y repuestos">
+        {order.workflow ? <LazyDisclosure className="border-t border-slate-200" summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" summary={delivered ? "Historial de la orden original" : "Coordinacion y repuestos"}>
           <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
         </LazyDisclosure> : null}
         {order.workflow ? <RepairAttachments orderId={order.id} /> : null}

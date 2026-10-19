@@ -5,7 +5,7 @@ export function ReadyForPickupRequirements({ workflow, status, canManage }: {
   status: string;
   canManage: boolean;
 }) {
-  if (!workflow || ["listo_para_retirar", "retirado", "sin_solucion", "presupuestado_rechazado"].includes(status)) return null;
+  if (!workflow || ["listo_para_retirar", "no_presenta_fallas", "retirado", "sin_solucion", "presupuestado_rechazado"].includes(status)) return null;
   const pendingParts = workflow.parts.some((part) => getPartOutstandingQuantity(part) > 0);
 
   return <div role="note" aria-label="Antes de marcar listo para retirar" className="min-w-0 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">

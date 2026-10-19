@@ -29,11 +29,14 @@ import { WorkshopUpdates } from "./workshop-updates";
 import { WorkshopServerNavigation } from "./workshop-server-navigation";
 import { WorkshopInbox } from "./workshop-inbox";
 import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
+import { WarrantyReturnsSection } from "./warranty-returns-section";
+import type { WarrantyReturnsPage } from "../warranty-queries";
 
-type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "detalle" | "consultas" | "importar";
+type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "detalle" | "consultas" | "importar";
 
 const primarySections: { key: RepairAccessSection; label: string }[] = [
   { key: "ordenes", label: "Ordenes" },
+  { key: "garantias", label: "Garantias" },
   { key: "nueva", label: "Nueva orden" },
   { key: "clientes", label: "Clientes" }
 ];
@@ -56,7 +59,11 @@ export function RepairsAccessView({
   actionStatus,
   initialView,
   canManageIntake,
-  defaultWarrantyDays
+  defaultWarrantyDays,
+  warrantyReturnsPage = null,
+  warrantyReturnsCount = 0,
+  warrantyReturnsSearch = "",
+  warrantyReturnsClosed = false
 }: {
   orders: RepairAccessOrderRecord[];
   technicians?: WorkshopTechnician[];
@@ -71,6 +78,10 @@ export function RepairsAccessView({
   initialView?: string;
   canManageIntake: boolean;
   defaultWarrantyDays: number;
+  warrantyReturnsPage?: WarrantyReturnsPage | null;
+  warrantyReturnsCount?: number;
+  warrantyReturnsSearch?: string;
+  warrantyReturnsClosed?: boolean;
 }) {
   const router = useRouter();
   const initialSelectedOrder = orders.find((order) => order.id === initialOrderId) ?? null;
@@ -79,6 +90,7 @@ export function RepairsAccessView({
     : null;
   const intakeSaved = actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
   let entrySection: RepairAccessSection = "ordenes";
+  if (initialView === "garantias") entrySection = "garantias";
   if (canManageIntake) {
     if (initialView === "detalle" && initialSelectedOrder) entrySection = "detalle";
     else if (requestedSection && requestedSection !== "nueva") entrySection = requestedSection;
@@ -192,7 +204,7 @@ export function RepairsAccessView({
 
   function navigate(section: string) {
     if (![...primarySections, ...secondarySections].some((item) => item.key === section)) return;
-    if (!canManageIntake && section !== "ordenes") return;
+    if (!canManageIntake && section !== "ordenes" && section !== "garantias") return;
     if (activeSection === "nueva" && section === "nueva" && !editing) return;
     if (
       activeSection === "nueva" &&
@@ -280,34 +292,33 @@ export function RepairsAccessView({
         </p>
       ) : null}
 
-      {canManageIntake ? (
-          <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">
-            {primarySections.map((section) => (
-              <button
-                aria-current={activeSection === section.key ? "page" : undefined}
-                className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
-                key={section.key}
-                onClick={() => navigate(section.key)}
-                type="button"
-              >
-                {section.label}
-              </button>
+      <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">
+        {primarySections.filter((section) => canManageIntake || section.key === "ordenes" || section.key === "garantias").map((section) => (
+          <button
+            aria-current={activeSection === section.key ? "page" : undefined}
+            className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
+            key={section.key}
+            onClick={() => navigate(section.key)}
+            type="button"
+          >
+            {section.key === "garantias" ? `${section.label} (${warrantyReturnsCount})` : section.label}
+          </button>
+        ))}
+        {canManageIntake ? <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
+          <summary className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
+          <div className="flex flex-wrap gap-2 pt-2">
+            {secondarySections.map((section) => (
+              <Button aria-current={activeSection === section.key ? "page" : undefined} key={section.key} onClick={() => navigate(section.key)} type="button" variant="ghost">{section.label}</Button>
             ))}
-            <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
-              <summary className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
-              <div className="flex flex-wrap gap-2 pt-2">
-                {secondarySections.map((section) => (
-                  <Button aria-current={activeSection === section.key ? "page" : undefined} key={section.key} onClick={() => navigate(section.key)} type="button" variant="ghost">{section.label}</Button>
-                ))}
-              </div>
-            </details>
-          </nav>
-      ) : null}
+          </div>
+        </details> : null}
+      </nav>
 
       {pageInfo ? <WorkshopUpdates disabled={intakeDirty} /> : null}
       {activeSection === "panel" && inbox ? <WorkshopInbox inbox={inbox} /> : null}
       {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
       {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} isComposing={isSearchComposing} /> : null}
+      {activeSection === "garantias" ? <WarrantyReturnsSection data={warrantyReturnsPage} search={warrantyReturnsSearch} closed={warrantyReturnsClosed} canManage={canManageIntake} /> : null}
 
       {activeSection === "nueva" ? (
         <RepairAccessNewOrderWizard

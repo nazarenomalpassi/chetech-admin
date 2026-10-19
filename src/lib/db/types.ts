@@ -660,6 +660,7 @@ export type Database = {
             | "presupuestado_aceptado"
             | "presupuestado_rechazado"
             | "listo_para_retirar"
+            | "no_presenta_fallas"
             | "retirado"
             | "sin_solucion";
           created_by: string | null;

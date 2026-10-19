@@ -11,7 +11,7 @@ export const OPERATIONAL_TABLES: TableSpec[] = [
   ...["repairs", "repair_payments", "repair_access_customers", "repair_access_devices", "repair_access_orders", "repair_access_status_history", "repair_access_payments", "repair_access_budgets", "repair_access_import_batches", "repair_access_import_rows", "repair_outsourcings", "visits"].map(table => ({ table, module: "workshop", identity: "id" })),
   ...["invoices", "invoice_items", "invoice_payments"].map(table => ({ table, module: "documents", identity: "id" })),
   { table: "operations_cash_reconciliations", module: "finance", identity: "id", optional: true },
-  ...["repair_budget_versions", "repair_customer_decisions", "repair_part_requests", "workshop_events", "workshop_tasks"].map(table => ({ table, module: "workshop", identity: "id", optional: true })),
+  ...["repair_budget_versions", "repair_customer_decisions", "repair_part_requests", "workshop_events", "workshop_tasks", "repair_warranty_returns"].map(table => ({ table, module: "workshop", identity: "id", optional: true })),
   { table: "fiscal_issuance_records", module: "fiscal", identity: "id", optional: true },
   { table: "fiscal_issuance_counters", module: "fiscal", identity: ["environment", "issuer_cuit", "point_of_sale", "voucher_type"], optional: true },
   { table: "operations_cash_reconciliation_amendments", module: "finance", identity: "id", optional: true },

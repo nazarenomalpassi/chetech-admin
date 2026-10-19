@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { RepairAccessOrderRecord } from "../queries";
 import { CoordinationDialog, OrderCoordinationPanel, PartManagementDialog } from "./order-coordination-panel";
@@ -42,6 +42,30 @@ const order: RepairAccessOrderRecord = {
 };
 
 describe("order collection shortcut", () => {
+  it.each([
+    { budgetAmount: 0, finalAmount: 0, isPaid: false, debt: false },
+    { budgetAmount: 100, finalAmount: 0, hasFinalAmount: false, isPaid: false, debt: true },
+    { budgetAmount: 100, finalAmount: 0, hasFinalAmount: true, isPaid: false, debt: true },
+    { budgetAmount: 0, finalAmount: 100, isPaid: false, debt: true },
+    { budgetAmount: 100, finalAmount: 100, isPaid: true, debt: false }
+  ])("coordina la devolucion sin fallas con autorizacion solo ante deuda: %j", (amounts) => {
+    render(<OrderCoordinationPanel order={{ ...order, status: "no_presenta_fallas", ...amounts }} canManage />);
+    expect(screen.getByText("Coordinar devolucion del equipo")).toBeTruthy();
+    expect(screen.queryByText("Sin confirmacion vigente")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cliente confirmo" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cliente rechazo" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Registrar entrega" }));
+    expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).required).toBe(true);
+    expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).required).toBe(true);
+    const authorization = screen.queryByLabelText(/Autorizo entrega con saldo pendiente/);
+    expect(Boolean(authorization)).toBe(amounts.debt);
+    if (authorization) {
+      expect((authorization as HTMLInputElement).checked).toBe(false);
+      fireEvent.click(authorization);
+      expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).required).toBe(true);
+    }
+  });
+
   it("keeps workshop actions visible and documents in a separate disclosure", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
     expect(screen.getByRole("button", { name: "Cliente confirmo" }).closest("details")).toBeNull();
@@ -62,6 +86,51 @@ describe("order collection shortcut", () => {
     const html = renderToStaticMarkup(<OrderCoordinationPanel order={order} canManage={false} />);
     expect(html).not.toContain("Registrar cobro");
     expect(html).not.toContain("/reparaciones?rep=");
+  });
+});
+
+describe("coordination dialog failed pickup", () => {
+  it("preserves recipient, notes and confirmations after rejection and retries the same values", async () => {
+    const failure = { success: false, message: "La orden cambio. Revisa el estado antes de entregarla." };
+    const action = vi.fn().mockResolvedValueOnce(failure).mockResolvedValueOnce({ success: true, message: "Entrega registrada." });
+    render(<CoordinationDialog title="Entrega del equipo" action={action} onClose={vi.fn()}>
+      <input name="id" type="hidden" value={order.id} />
+      <input name="version" type="hidden" value={order.workflow!.version} />
+      <label>Persona que retira<input name="recipient" defaultValue={order.customer.fullName} required minLength={2} /></label>
+      <label>Accesorios devueltos y observaciones<textarea name="notes" /></label>
+      <label><input name="allowBalance" type="checkbox" />Autorizo entrega con saldo pendiente</label>
+      <label><input name="confirmDelivery" type="checkbox" required />Confirmo que el cliente retiro el equipo</label>
+    </CoordinationDialog>);
+    const recipient = screen.getByLabelText("Persona que retira") as HTMLInputElement;
+    const notes = screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement;
+    const allowBalance = screen.getByLabelText("Autorizo entrega con saldo pendiente") as HTMLInputElement;
+    const confirmDelivery = screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement;
+    fireEvent.change(recipient, { target: { value: "Familiar autorizado" } });
+    fireEvent.change(notes, { target: { value: "Cable y control. Saldo autorizado por mostrador." } });
+    fireEvent.click(allowBalance);
+    fireEvent.click(confirmDelivery);
+    const form = screen.getByRole("button", { name: "Confirmar y guardar" }).closest("form")!;
+    fireEvent.submit(form);
+
+    expect((await screen.findByRole("alert")).textContent).toBe(failure.message);
+    expect(recipient.value).toBe("Familiar autorizado");
+    expect(notes.value).toBe("Cable y control. Saldo autorizado por mostrador.");
+    expect(allowBalance.checked).toBe(true);
+    expect(confirmDelivery.checked).toBe(true);
+    expect(screen.getByRole("button", { name: "Confirmar y guardar" }).hasAttribute("disabled")).toBe(false);
+
+    fireEvent.submit(form);
+    await waitFor(() => expect(action).toHaveBeenCalledTimes(2));
+    const first = action.mock.calls[0][1] as FormData;
+    const retry = action.mock.calls[1][1] as FormData;
+    expect(Object.fromEntries(first)).toEqual({
+      operationId: expect.stringMatching(/^[0-9a-f-]{36}$/), id: order.id, version: "1",
+      recipient: "Familiar autorizado", notes: "Cable y control. Saldo autorizado por mostrador.",
+      allowBalance: "on", confirmDelivery: "on"
+    });
+    expect(Object.fromEntries(retry)).toEqual(Object.fromEntries(first));
+    expect(action.mock.calls[1][0]).toEqual(failure);
+    expect(await screen.findByRole("button", { name: "Listo" })).toBeTruthy();
   });
 });
 

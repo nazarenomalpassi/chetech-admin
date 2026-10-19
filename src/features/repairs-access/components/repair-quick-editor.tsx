@@ -6,7 +6,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { saveQuickWorkshopForm } from "../coordination-actions";
 import type { RepairAccessOrderRecord } from "../queries";
-import { getPartOutstandingQuantity, getQuickWorkshopState, TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
+import { getPartOutstandingQuantity, getQuickWorkshopState, hasWorkshopDeliveryBalance, TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
 import { repairAccessStatusOptions } from "./repair-access-helpers";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { WorkshopForm } from "./workshop-form";
@@ -23,13 +23,16 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
     {(fields, submitting) => {
       const state = getQuickWorkshopState(order, fields);
       const retiring = state.status === "retirado";
-      const canDeliver = ["listo_para_retirar", "sin_solucion", "presupuestado_rechazado"].includes(order.status);
+      const noFault = state.status === "no_presenta_fallas";
+      const protectQuote = noFault || (retiring && order.status === "no_presenta_fallas");
+      const canDeliver = ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status);
       const hasWorkChanges = state.quoteChanged
         || (fields.repairProgress ?? order.repairProgress ?? "") !== (order.repairProgress ?? "")
         || (fields.qualityNotes ?? order.workflow?.qualityNotes ?? "") !== (order.workflow?.qualityNotes ?? "");
-      const deliveryWithBalance = fields.allowBalance === "on";
+      const hasBalance = hasWorkshopDeliveryBalance(order);
+      const deliveryWithBalance = hasBalance && fields.allowBalance === "on";
       const quoteKey = JSON.stringify([fields.repairAmount ?? String(order.budgetAmount), fields.budgetDetail ?? order.budgetDetail ?? ""]);
-      const needsQuality = ["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality;
+      const needsQuality = !noFault && (["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality);
       const confirmSelected = fields.confirmCustomer === "on";
       const decisionSelected = canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
       const rejecting = state.status === "presupuestado_rechazado";
@@ -44,15 +47,16 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <span>Estado de la orden</span>
             <Select id={`quick-${order.id}-status`} name="status" defaultValue={order.status} options={statusOptions} />
           </label>
-          <label className={retiring ? "hidden" : "grid min-w-0 gap-2 text-sm font-medium text-slate-700"}>
+          <label hidden={retiring || noFault} className={retiring || noFault ? "hidden" : "grid min-w-0 gap-2 text-sm font-medium text-slate-700"}>
             <span>Presupuesto</span>
-            <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid} readOnly={retiring} placeholder="Sin presupuestar" />
+            <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid || protectQuote} readOnly={retiring} placeholder="Sin presupuestar" />
           </label>
         </div>
-        {order.isPaid && !retiring ? <p className="text-sm leading-5 text-slate-600">Importe protegido por un cobro informado. Corrige el dinero en Cobros.</p> : null}
-        <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
+        {noFault ? <p className="text-sm leading-5 text-slate-600">No requiere presupuesto ni confirmacion del cliente. Se conservan los importes, cobros y la falla reportada originalmente.</p> : null}
+        {order.isPaid && !retiring && !noFault ? <p className="text-sm leading-5 text-slate-600">Importe protegido por un cobro informado. Corrige el dinero en Cobros.</p> : null}
+        <label hidden={retiring || noFault} className={retiring || noFault ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
           <span>Detalle del presupuesto</span>
-          <Textarea id={`quick-${order.id}-budget`} name="budgetDetail" defaultValue={order.budgetDetail ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" placeholder="Trabajo a realizar y repuestos incluidos" />
+          <Textarea id={`quick-${order.id}-budget`} name="budgetDetail" defaultValue={order.budgetDetail ?? ""} maxLength={2000} disabled={protectQuote} readOnly={retiring} className="min-h-20" placeholder="Trabajo a realizar y repuestos incluidos" />
         </label>
         <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
           <span>Avance / trabajo realizado</span>
@@ -67,7 +71,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           <label className="grid gap-2 text-sm font-medium text-slate-700"><span>Accesorios devueltos y observaciones</span>
             <Textarea id={`quick-${order.id}-delivery-notes`} name="deliveryNotes" defaultValue={fields.deliveryNotes ?? ""} maxLength={2000} required={deliveryWithBalance} minLength={deliveryWithBalance ? 3 : undefined} className="min-h-20" placeholder="Control, cables y notas del retiro" />
           </label>
-          {!order.isPaid && order.status === "listo_para_retirar" ? <label className="flex min-h-11 items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          {canManage && hasBalance ? <label className="flex min-h-11 items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
             <input name="allowBalance" type="checkbox" defaultChecked={fields.allowBalance === "on"} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
             Autorizo entrega con saldo pendiente. Indica el motivo en las observaciones.
           </label> : null}
@@ -75,7 +79,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <input name="confirmDelivery" type="checkbox" defaultChecked={fields.confirmDelivery === "on"} required className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
             Confirmo que el cliente retiro el equipo
           </label>
-          {!canDeliver ? <p role="status" className="text-sm text-amber-900">Primero guarda como Listo para retirar, Sin solucion o Presupuestado y rechazado.</p> : null}
+          {!canDeliver ? <p role="status" className="text-sm text-amber-900">Primero guarda como Listo para retirar, No presenta fallas, Sin solucion o Presupuestado y rechazado.</p> : null}
           {hasWorkChanges ? <p role="status" className="text-sm text-amber-900">Guarda primero los cambios de presupuesto o trabajo. Vuelve al estado anterior: lo que escribiste se conserva.</p> : null}
         </div> : null}
         {canManage && !retiring && (decisionSelected || state.needsConfirmation) ? <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
@@ -101,7 +105,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             </label>
           </div> : null}
         </div> : null}
-        {!canManage ? <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={false} /> : null}
+        {!canManage && !noFault ? <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={false} /> : null}
         {needsQuality ? <label className={retiring ? "hidden" : "flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm font-semibold text-slate-900"}>
           <input key={`quality-${quoteKey}`} name="qualityChecked" type="checkbox" defaultChecked={"qualityChecked" in fields ? fields.qualityChecked === "on" : state.hasCurrentQuality} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
           Equipo probado y funcionando

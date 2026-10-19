@@ -3,10 +3,44 @@ const mocks = vi.hoisted(() => ({ permission: vi.fn(), rpc: vi.fn(), revalidate:
 vi.mock("@/lib/auth", () => ({ requirePermission: mocks.permission, requireAdmin: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
-import { saveWorkshopForm, saveQuickWorkshopForm, claimRepairOrder } from "./coordination-actions";
+import { saveWorkshopForm, saveQuickWorkshopForm, claimRepairOrder, deliverRepairOrder } from "./coordination-actions";
 beforeEach(() => { vi.clearAllMocks(); mocks.permission.mockResolvedValue({ id: "tech", role: "tecnico" }); mocks.rpc.mockResolvedValue({ data: {}, error: null }); });
 function form() { const data = new FormData(); data.set("id", "10000000-0000-4000-8000-000000000001"); data.set("status", "en_revision"); data.set("expectedVersion", "3"); return data; }
 describe("guardado breve del taller", () => {
+  it.each(["tecnico", "admin"])("guarda no presenta fallas como %s sin presupuesto ni confirmacion", async (role) => {
+    mocks.permission.mockResolvedValue({ id: role, role });
+    const data = form(); data.set("status", "no_presenta_fallas"); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    mocks.rpc.mockResolvedValue({ data: { id: data.get("id"), version: 4, status: "no_presenta_fallas", replayed: false }, error: null });
+    expect(await saveQuickWorkshopForm(null, data)).toMatchObject({ success: true, recordVersion: 4 });
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_save_quick", expect.objectContaining({
+      p_payload: { status: "no_presenta_fallas" }, p_confirm_customer: false, p_channel: "", p_decision_notes: ""
+    }));
+  });
+  it.each([saveQuickWorkshopForm, saveWorkshopForm])("no envia importes ni detalle antiguos al guardar no presenta fallas", async (save) => {
+    const data = form(); data.set("status", "no_presenta_fallas"); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    data.set("repairAmount", "-999"); data.set("budgetDetail", "x".repeat(2001));
+    data.set("confirmCustomer", "on"); data.set("decisionChannel", "invalido"); data.set("decisionNotes", "x".repeat(2001));
+    data.set("issueReported", "Falla reemplazada"); data.set("isPaid", "on"); data.set("finalAmount", "0");
+    data.set("repairProgress", "Revisado sin reproducir la falla");
+    mocks.rpc.mockResolvedValue({ data: { id: data.get("id"), version: 4, status: "no_presenta_fallas", replayed: false }, error: null });
+    expect((await save(null, data)).success).toBe(true);
+    expect(mocks.rpc.mock.calls[0][1].p_payload).toEqual({ status: "no_presenta_fallas", repair_progress: "Revisado sin reproducir la falla" });
+    if (save === saveQuickWorkshopForm) expect(mocks.rpc.mock.calls[0][1].p_confirm_customer).toBe(false);
+  });
+  it("exige confirmacion y motivo explicitos en la entrega desde coordinacion", async () => {
+    const data = form(); data.set("version", "3"); data.set("recipient", "Cliente");
+    expect((await deliverRepairOrder(null, data)).success).toBe(false);
+    data.set("confirmDelivery", "on"); data.set("allowBalance", "on");
+    expect((await deliverRepairOrder(null, data)).success).toBe(false);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    data.set("notes", "Saldo autorizado hasta el viernes");
+    expect((await deliverRepairOrder(null, data)).success).toBe(true);
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_deliver", {
+      p_order_id: data.get("id"), p_expected_version: 3, p_recipient: "Cliente",
+      p_notes: "Saldo autorizado hasta el viernes", p_allow_balance: true
+    });
+  });
+
   it("registra retirado por el cliente usando entrega, sin modificar presupuesto ni cobros", async () => {
     mocks.permission.mockResolvedValue({ id: "admin", role: "admin" });
     const data = form(); data.set("status", "retirado"); data.set("recipient", "Cliente de prueba");
@@ -47,6 +81,14 @@ describe("guardado breve del taller", () => {
     expect(await saveQuickWorkshopForm(null, data)).toMatchObject({ success: false, message: expect.stringContaining("no esta lista") });
     mocks.rpc.mockResolvedValue({ error: { code: "40001", message: "stale" } });
     expect(await saveQuickWorkshopForm(null, data)).toMatchObject({ success: false, message: expect.stringContaining("otro dispositivo") });
+    expect(mocks.revalidate).not.toHaveBeenCalled();
+  });
+  it("no reintenta con saldo autorizado si la entrega rechaza un cobro pendiente", async () => {
+    mocks.permission.mockResolvedValue({ id: "admin", role: "admin" });
+    const data = form(); data.set("status", "retirado"); data.set("recipient", "Cliente"); data.set("confirmDelivery", "on");
+    mocks.rpc.mockResolvedValue({ error: { code: "23514", message: "Hay un cobro pendiente. Cobra o autoriza la entrega con saldo." } });
+    expect(await saveQuickWorkshopForm(null, data)).toEqual({ success: false, message: "Hay un cobro pendiente. Cobra o autoriza la entrega con saldo." });
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_deliver", expect.objectContaining({ p_allow_balance: false }));
     expect(mocks.revalidate).not.toHaveBeenCalled();
   });
   it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("registra %s en el mismo guardado atomico", async (status) => {

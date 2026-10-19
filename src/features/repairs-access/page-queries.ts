@@ -2,6 +2,7 @@ import { z } from "zod";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { mapOrder, type RepairAccessOrderRecord, type RepairAccessSummary, type RepairAccessCustomerSummary, type RepairAccessImportSummary } from "./queries";
 import type { WorkshopOrderContext } from "./workflow";
+import { getOrderWarrantyReturns } from "./warranty-queries";
 
 export type WorkshopPageInfo = { total: number; pageSize: number; cursor: string; nextCursor: string | null; search: string; status: string; warranty: string; scope: string };
 const cursorSchema = z.object({ date: z.string().datetime({ offset: true }), id: z.string().uuid() });
@@ -24,14 +25,15 @@ export async function getRepairWorkshopPage(params: { q?: string; state?: string
     if (selected.data) rawOrders.unshift(selected.data);
   }
   const orders: RepairAccessOrderRecord[] = rawOrders.map(mapOrder);
-  const [contexts, customerResult, importResult] = await Promise.all([
+  const [contexts, customerResult, importResult, warrantyReturns] = await Promise.all([
     (supabase as any).rpc("get_workshop_context", { p_order_ids: orders.map((o) => o.id) }),
     includeAdministration ? (supabase as any).from("repair_access_customers").select("id,full_name,phone,alternate_phone,dni,email,address,notes,source,created_at").order("created_at", { ascending: false }).limit(40) : Promise.resolve({ data: [], error: null }),
-    includeAdministration ? (supabase as any).from("repair_access_import_batches").select("id,file_name,total_rows,imported_count,updated_count,duplicate_count,error_count,created_at").order("created_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null, error: null })
+    includeAdministration ? (supabase as any).from("repair_access_import_batches").select("id,file_name,total_rows,imported_count,updated_count,duplicate_count,error_count,created_at").order("created_at", { ascending: false }).limit(1).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    getOrderWarrantyReturns(orders.map((o) => o.id))
   ]);
   for (const r of [contexts, customerResult, importResult]) if (r.error) throw new Error(r.error.message);
   const contextMap = new Map<string, WorkshopOrderContext>((contexts.data ?? []).map((c: WorkshopOrderContext & { id: string }) => [c.id, c]));
-  orders.forEach((o) => { o.workflow = contextMap.get(o.id); });
+  orders.forEach((o) => { o.workflow = contextMap.get(o.id); o.warrantyReturns = warrantyReturns.filter((r) => r.orderId === o.id); });
   const customers: RepairAccessCustomerSummary[] = (customerResult.data ?? []).map((c: any) => ({ id: c.id, fullName: c.full_name, phone: c.phone ?? "", alternatePhone: c.alternate_phone ?? "", dni: c.dni ?? "", email: c.email ?? "", address: c.address ?? "", notes: c.notes ?? "", source: c.source, createdAt: c.created_at }));
   const i = importResult.data;
   const latestImport: RepairAccessImportSummary | null = i ? { id: i.id, fileName: i.file_name, totalRows: i.total_rows, importedCount: i.imported_count, updatedCount: i.updated_count, duplicateCount: i.duplicate_count, errorCount: i.error_count, createdAt: i.created_at } : null;

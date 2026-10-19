@@ -38,6 +38,32 @@ function optionalFormString(formData: FormData, key: string) {
   return typeof value === "string" ? value : undefined;
 }
 
+async function saveNoFaultOutcome(formData: FormData, adminOnly = false): Promise<never> {
+  if (adminOnly) await requireAdmin(); else await requirePermission("repairs.update");
+  const id = z.string().uuid().safeParse(formData.get("id"));
+  if (!id.success) redirectWithError("No se pudo identificar la orden.");
+  const supabase = await createServerSupabaseClient();
+  let expectedVersion = Number(formData.get("expectedVersion"));
+  if (!formData.has("expectedVersion")) {
+    const context = await (supabase as any).rpc("get_workshop_context", { p_order_ids: [id.data] });
+    if (context.error || !context.data?.[0]) redirectWithError("Actualiza la ficha antes de guardar.", id.data);
+    expectedVersion = context.data[0].version;
+  }
+  if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1) redirectWithError("Actualiza la ficha antes de guardar.", id.data);
+  const payload: Record<string, unknown> = { status: "no_presenta_fallas" };
+  for (const [field, column] of [["repairProgress", "repair_progress"], ["technicalDiagnosis", "technical_diagnosis"], ["qualityNotes", "quality_notes"]]) {
+    if (!formData.has(field)) continue;
+    const value = z.string().max(2000).safeParse(formData.get(field));
+    if (!value.success) redirectWithError("El detalle no puede superar 2000 caracteres.", id.data);
+    payload[column] = value.data;
+  }
+  // Old forms may still send financial/warranty inputs. This outcome ignores them.
+  const result = await (supabase as any).rpc("workshop_save", { p_order_id: id.data, p_expected_version: expectedVersion, p_payload: payload });
+  if (result.error) redirectWithError(getFriendlyDatabaseError(result.error, "No se pudo guardar la revision."), id.data);
+  revalidatePath("/reparaciones-access");
+  redirect(`/reparaciones-access?status=repair_access_workshop_updated&order=${id.data}&view=ordenes` as Route);
+}
+
 function normalizePhone(value?: string | null) {
   const text = emptyToNull(value);
   if (!text) return null;
@@ -254,6 +280,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
 }
 
 export async function updateRepairAccessTechnicalAction(formData: FormData) {
+  if (formData.get("status") === "no_presenta_fallas") return saveNoFaultOutcome(formData, true);
   const parsed = repairAccessTechnicalSchema.safeParse({
     id: formData.get("id"),
     technicianName: optionalFormString(formData, "technicianName"),
@@ -406,6 +433,7 @@ export async function updateRepairAccessTechnicalAction(formData: FormData) {
 }
 
 export async function updateRepairAccessWorkshopAction(formData: FormData) {
+  if (formData.get("status") === "no_presenta_fallas") return saveNoFaultOutcome(formData);
   const parsed = repairAccessWorkshopSchema.safeParse({
     id: formData.get("id"),
     status: formData.get("status"),
@@ -526,6 +554,7 @@ export async function updateRepairAccessWorkshopAction(formData: FormData) {
 }
 
 export async function updateRepairAccessStatusAction(formData: FormData) {
+  if (formData.get("status") === "no_presenta_fallas") return saveNoFaultOutcome(formData);
   const parsed = z.object({
     id: z.string().uuid("No se pudo identificar la orden."),
     status: z.enum(repairAccessStatusValues)

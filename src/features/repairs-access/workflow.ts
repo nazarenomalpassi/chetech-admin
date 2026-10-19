@@ -7,13 +7,15 @@ export function getQuickWorkshopState(order: {
   status: string; budgetAmount: number; budgetDetail: string | null; isPaid: boolean;
   workflow?: { approvalStatus: string; qualityCheckedAt: string | null };
 }, fields: Record<string, string>) {
-  const quoteAmount = order.isPaid ? order.budgetAmount : Number(fields.repairAmount ?? order.budgetAmount);
-  const quoteChanged = quoteAmount !== order.budgetAmount || (fields.budgetDetail ?? order.budgetDetail ?? "") !== (order.budgetDetail ?? "");
+  const status = fields.status || order.status;
+  const noFault = status === "no_presenta_fallas" || (status === "retirado" && order.status === "no_presenta_fallas");
+  const quoteAmount = order.isPaid || noFault ? order.budgetAmount : Number(fields.repairAmount ?? order.budgetAmount);
+  const quoteChanged = !noFault && (quoteAmount !== order.budgetAmount || (fields.budgetDetail ?? order.budgetDetail ?? "") !== (order.budgetDetail ?? ""));
   return {
-    status: fields.status || order.status,
+    status,
     quoteAmount,
     quoteChanged,
-    needsConfirmation: order.workflow?.approvalStatus !== "accepted" || quoteChanged,
+    needsConfirmation: !noFault && (order.workflow?.approvalStatus !== "accepted" || quoteChanged),
     hasCurrentQuality: Boolean(order.workflow?.qualityCheckedAt) && !quoteChanged
   };
 }
@@ -52,7 +54,12 @@ export type WorkshopOrderContext = {
   events: WorkshopEvent[];
 };
 
-export const TECHNICAL_WORKSHOP_STATUSES = ["pendiente_revision", "en_revision", "presupuestado", "en_reparacion", "en_pruebas", "listo_para_retirar", "sin_solucion"];
+export const TECHNICAL_WORKSHOP_STATUSES = ["pendiente_revision", "en_revision", "presupuestado", "en_reparacion", "en_pruebas", "listo_para_retirar", "no_presenta_fallas", "sin_solucion"];
+
+export function hasWorkshopDeliveryBalance(order: { status: string; isPaid: boolean; finalAmount: number; hasFinalAmount?: boolean; budgetAmount: number }) {
+  return !order.isPaid && (order.status === "listo_para_retirar"
+    || (order.status === "no_presenta_fallas" && (order.finalAmount || order.budgetAmount) > 0));
+}
 
 export function canChooseWorkshopStatus(role: AppRole, status: string) {
   return role === "admin" || TECHNICAL_WORKSHOP_STATUSES.includes(status);
@@ -68,7 +75,7 @@ export function validatePartReceipt(quantity: number, received: number, addition
 
 export function getWorkshopNextAction(order: { status: string; deliveredAt: string | null; approvalStatus: string; pendingParts: number }) {
   if (order.deliveredAt || order.status === "retirado") return "Equipo entregado";
-  if (["sin_solucion", "presupuestado_rechazado"].includes(order.status)) return "Coordinar devolucion del equipo";
+  if (["sin_solucion", "presupuestado_rechazado", "no_presenta_fallas"].includes(order.status)) return "Coordinar devolucion del equipo";
   if (order.pendingParts > 0) return "Gestionar repuestos pendientes";
   if (order.status === "listo_para_retirar") return "Avisar y coordinar retiro";
   if (order.status === "presupuestado" || order.approvalStatus === "revoked") return "Consultar autorizacion del cliente";
