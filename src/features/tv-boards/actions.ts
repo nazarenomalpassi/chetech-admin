@@ -1,12 +1,12 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tvBoardSaleSchema, tvBoardSchema } from "@/features/tv-boards/schemas";
+import { changeTvBoardSaleAction } from "./claim-actions";
 
 export async function upsertTvBoardAction(input: unknown) {
   const user = await requireAdmin();
@@ -198,7 +198,7 @@ export async function markTvBoardSoldAction(input: unknown) {
     is_active: false
   };
 
-  const { error } = await (supabase as any).from("tv_boards").update(salePayload).eq("id", parsed.data.id);
+  const { data: saved, error } = await (supabase as any).from("tv_boards").update(salePayload).eq("id", parsed.data.id).is("sold_at", null).select("id").maybeSingle();
 
   if (error) {
     return {
@@ -206,6 +206,8 @@ export async function markTvBoardSoldAction(input: unknown) {
       message: error.message
     };
   }
+
+  if (!saved) return { success: false, message: "La placa ya fue vendida en otro dispositivo. Actualiza el listado." };
 
   await createAuditLog({
     entityType: "tv_boards",
@@ -216,6 +218,7 @@ export async function markTvBoardSoldAction(input: unknown) {
   });
 
   revalidatePath("/placas-tv");
+  revalidatePath("/dashboard");
 
   return {
     success: true,
@@ -224,60 +227,5 @@ export async function markTvBoardSoldAction(input: unknown) {
 }
 
 export async function markTvBoardReleasedAction(input: unknown) {
-  const user = await requireAdmin();
-  const parsed = z.string().uuid().safeParse(input);
-
-  if (!parsed.success) {
-    return { success: false, message: "La placa seleccionada no es valida" };
-  }
-
-  const supabase = await createServerSupabaseClient();
-  const { data: board, error: boardError } = await (supabase as any)
-    .from("tv_boards")
-    .select("sold_at, release_date, released_at")
-    .eq("id", parsed.data)
-    .maybeSingle();
-
-  if (boardError) {
-    return { success: false, message: boardError.message };
-  }
-
-  if (!board) {
-    return { success: false, message: "No encontramos la placa" };
-  }
-
-  if (!board.sold_at || board.released_at) {
-    return { success: false, message: "Esta placa ya figura como liberada o no fue vendida" };
-  }
-
-  const releasedAt = new Date().toISOString();
-  const { data: updated, error } = await (supabase as any)
-    .from("tv_boards")
-    .update({ released_at: releasedAt })
-    .eq("id", parsed.data)
-    .is("released_at", null)
-    .not("sold_at", "is", null)
-    .select("id")
-    .maybeSingle();
-
-  if (error) {
-    return { success: false, message: error.message };
-  }
-
-  if (!updated) {
-    return { success: false, message: "El estado de la placa cambio. Actualiza la pagina e intenta nuevamente" };
-  }
-
-  await createAuditLog({
-    entityType: "tv_boards",
-    entityId: parsed.data,
-    action: "update",
-    changes: { released_at: releasedAt },
-    userId: user.id
-  });
-
-  revalidatePath("/placas-tv");
-  revalidatePath("/dashboard");
-
-  return { success: true, message: "Dinero marcado como liberado" };
+  return changeTvBoardSaleAction({ ...(typeof input === "object" && input !== null ? input : {}), kind: "confirm_release", notes: "" });
 }

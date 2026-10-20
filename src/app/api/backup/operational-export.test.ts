@@ -95,4 +95,13 @@ describe("operational JSON export", () => {
     expect(backup.data.fiscal_issuance_counters).toEqual(rows);
     expect(verifyOperationalExport(backup).rowCount).toBe(2);
   });
+  it("preserves cancelled board sale amounts and claim events in an export round trip", async () => {
+    const board = { id: "board", sold_at: "2026-10-01", mercado_libre_net_amount: 104000.25, claim_status: "cancelled", claim_notes: "Returned", claim_resolved_at: "2026-10-20", financial_version: 3 };
+    const event = { id: "event", board_id: "board", kind: "cancel_sale", net_amount: 104000.25, notes: "Returned" };
+    const backup = await createOperationalExport(client({ tv_boards: [board], tv_board_sale_events: [event] }));
+    const restored = JSON.parse(JSON.stringify(backup));
+    expect(verifyOperationalExport(restored).rowCount).toBe(2);
+    expect(restored.data.tv_boards).toEqual([board]);
+    expect(restored.data.tv_board_sale_events).toEqual([event]);
+  });
 });

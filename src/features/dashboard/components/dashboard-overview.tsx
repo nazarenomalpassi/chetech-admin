@@ -34,6 +34,7 @@ type DashboardOverviewProps = {
     balance: number;
   }[];
   pendingMercadoPagoReleaseAmount: number;
+  heldMercadoPagoClaimAmount?: number;
   topProducts: { name: string; quantity: number }[];
   invoiceIncomeToday: number;
   realProfitToday: number;
@@ -95,6 +96,7 @@ export function DashboardOverview({
   lowStockProducts,
   accountBalances,
   pendingMercadoPagoReleaseAmount,
+  heldMercadoPagoClaimAmount = 0,
   topProducts,
   invoiceIncomeToday,
   realProfitToday,
@@ -237,11 +239,20 @@ export function DashboardOverview({
                     <p className="text-sm font-semibold text-slate-500">
                       MP de placas pendiente
                     </p>
-                    <p className="mt-1 text-xs text-slate-400">Retenido; no disponible para operar</p>
+                    <p className="mt-1 text-xs text-slate-500">Sin confirmar liberacion; excluye reclamos</p>
                   </div>
                   <p className="text-xl font-semibold text-finance-caution">
                     {formatCurrency(pendingMercadoPagoReleaseAmount)}
                   </p>
+                </div>
+              </div>
+              <div className="border-t border-amber-200 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <Link className="text-sm font-semibold text-amber-800 underline-offset-4 hover:underline" href={"/placas-tv?status=claim_open" as Route}>MP retenido por reclamos</Link>
+                    <p className="mt-1 text-xs text-slate-500">Separado del pendiente y de la caja disponible</p>
+                  </div>
+                  <p className="text-xl font-semibold tabular-nums text-amber-800">{formatCurrency(heldMercadoPagoClaimAmount)}</p>
                 </div>
               </div>
             </div>

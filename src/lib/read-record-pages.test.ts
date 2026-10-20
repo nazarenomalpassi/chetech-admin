@@ -19,4 +19,13 @@ describe("complete paged reads", () => {
     const result = await readRecordPages(async (from) => ({ data: pages[from / 2], error: null }), 2, (row) => row.id);
     expect(result.map(row => row.id)).toEqual(["3", "2", "1"]);
   });
+  it("uses exact counts to continue after capped responses below the requested page size", async () => {
+    const rows = [1, 2, 3, 4, 5];
+    const fetch = vi.fn(async (from: number) => ({ data: rows.slice(from, from + 2), count: rows.length, error: null }));
+    expect(await readRecordPages(fetch, 500)).toEqual(rows);
+    expect(fetch.mock.calls.map(([from]) => from)).toEqual([0, 2, 4]);
+  });
+  it("refuses a counted read that ends before the expected total", async () => {
+    await expect(readRecordPages(async from => ({ data: from ? [] : [1], count: 3, error: null }), 500)).rejects.toThrow(/incomplete/i);
+  });
 });

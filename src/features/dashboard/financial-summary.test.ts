@@ -39,7 +39,7 @@ describe("getPendingTvBoardsReleaseAmount", () => {
       "2026-05-12"
     );
 
-    expect(total).toBe(98000);
+    expect(total).toBe(173000);
   });
 
   it("excluye del pendiente las placas liberadas manualmente", () => {
@@ -47,6 +47,13 @@ describe("getPendingTvBoardsReleaseAmount", () => {
       { soldAt: "2026-05-10T14:20:00.000Z", releaseDate: "2026-05-20", releasedAt: "2026-05-11T14:20:00.000Z", netAmount: 98000 },
       { soldAt: "2026-05-10T14:20:00.000Z", releaseDate: "2026-05-20", releasedAt: null, netAmount: 50000 }
     ], "2026-05-12")).toBe(50000);
+  });
+
+  it("excluye reclamos y anulaciones pero conserva las estimaciones vencidas", () => {
+    const sale = { soldAt: "2026-10-01", releaseDate: "2026-10-02", releasedAt: null, netAmount: 104000 };
+    expect(getPendingTvBoardsReleaseAmount([
+      sale, { ...sale, claimStatus: "open" }, { ...sale, claimStatus: "cancelled" }, { ...sale, releaseDate: null }
+    ], "2026-10-20")).toBe(208000);
   });
 });
 

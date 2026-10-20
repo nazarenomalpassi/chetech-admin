@@ -4,10 +4,10 @@ import { getBalanceTransfers } from "@/features/balance-transfers/queries";
 import { CASH_METHODS, normalizeCashMethodValue } from "@/lib/cash";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
-  getPendingTvBoardsReleaseAmount,
   normalizeDashboardCashSummaryRows,
   type DashboardCashSummaryRow
 } from "@/features/dashboard/financial-summary";
+import { getTvBoardFinancialSummary } from "@/features/tv-boards/sales";
 import { getDashboardRange } from "@/features/dashboard/range";
 import { getDashboardInstallmentsData } from "@/features/installments/queries";
 import { getVisitsTodayDashboardSummary } from "@/features/visits/queries";
@@ -118,10 +118,11 @@ export async function getDashboardData({
       .gte("created_at", range.startIso)
       .lt("created_at", range.endIso),
     getDashboardCashSummary(supabase as any, range, cashSettingsPromise),
-    (supabase as any)
+    readRecordPages<any>((from, to) => (supabase as any)
       .from("tv_boards")
-      .select("sold_at, release_date, released_at, mercado_libre_net_amount")
-      .not("sold_at", "is", null),
+      .select("id,sold_at,release_date,released_at,mercado_libre_net_amount,claim_status", { count: "exact" })
+      .not("sold_at", "is", null).order("id").range(from, to), 500, board => board.id)
+      .then(data => ({ data, error: null })).catch(() => { throw new Error("No se pudieron cargar las liberaciones y reclamos de placas. Intenta nuevamente."); }),
     getDashboardInstallmentsData(supabase as any, todayDate),
     getBalanceTransfers(supabase as any),
     getVisitsTodayDashboardSummary(),
@@ -152,14 +153,14 @@ export async function getDashboardData({
       toPaymentMethod: transfer.toPaymentMethod
     }))
   );
-  const pendingReleaseAmount = getPendingTvBoardsReleaseAmount(
+  const boardSummary = getTvBoardFinancialSummary(
         ((tvBoardSales.data ?? []) as any[]).map((board) => ({
           soldAt: board.sold_at,
           releaseDate: board.release_date,
           releasedAt: board.released_at,
+          claimStatus: board.claim_status,
           netAmount: board.mercado_libre_net_amount === null ? null : Number(board.mercado_libre_net_amount)
-        })),
-        todayDate
+        }))
       );
 
   const accountBalances = CASH_METHODS.map((method) => {
@@ -195,7 +196,8 @@ export async function getDashboardData({
     repairsTodayTotal,
     lowStockProducts,
     accountBalances,
-    pendingMercadoPagoReleaseAmount: pendingReleaseAmount,
+    pendingMercadoPagoReleaseAmount: boardSummary.pendingAmount,
+    heldMercadoPagoClaimAmount: boardSummary.heldAmount,
     topProducts: topProducts.data ?? [],
     invoiceIncomeToday,
     realProfitToday,

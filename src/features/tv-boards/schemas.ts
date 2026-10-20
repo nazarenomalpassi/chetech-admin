@@ -25,7 +25,7 @@ export const tvBoardFiltersSchema = z.object({
   search: z.string().optional(),
   boardType: z.enum(["all", "fuente", "main", "tcom", "placa_unica"]).default("all"),
   status: z
-    .enum(["all", "active", "inactive", "sold", "pending_release", "released"])
+    .enum(["all", "active", "inactive", "sold", "pending_release", "released", "claim_open", "cancelled"])
     .default("all")
 });
 
