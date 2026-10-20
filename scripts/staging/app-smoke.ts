@@ -21,8 +21,11 @@ async function session(email: string) {
 async function read(path: string, cookie: string, init?: RequestInit) {
   const headers = new Headers(init?.headers);
   headers.set("cookie", cookie);
-  const response = await fetch(appUrl + path, { ...init, headers, redirect: "manual", signal: AbortSignal.timeout(45000) });
-  return response;
+  try {
+    return await fetch(appUrl + path, { ...init, headers, redirect: "manual", signal: AbortSignal.timeout(45000) });
+  } catch (error) {
+    throw new Error(`Local route ${path}: ${error instanceof Error ? error.message : "request failed"}`);
+  }
 }
 
 async function main() {
@@ -37,7 +40,7 @@ async function main() {
     orderId = result.rows[0].id;
   } finally { await db.end(); }
   const admin = await session(IDENTITIES[0].email), technician = await session(IDENTITIES[1].email);
-  for (const path of ["/dashboard", "/productos", "/ventas", "/gastos", "/sueldos", "/visitas", "/terciarizaciones", "/reportes", "/facturacion", "/configuracion", "/reparaciones", "/reparaciones-access?view=ordenes"]) {
+  for (const path of ["/dashboard", "/productos", "/ventas", "/gastos", "/placas-tv", "/sueldos", "/visitas", "/terciarizaciones", "/reportes", "/facturacion", "/configuracion", "/reparaciones", "/reparaciones-access?view=ordenes"]) {
     const response = await read(path, admin);
     assert.equal(response.status, 200, `Admin ${path}`);
     const body = await response.text();

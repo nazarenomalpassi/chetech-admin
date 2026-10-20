@@ -1,33 +1,19 @@
 "use client";
 
-import { useTransition } from "react";
-import { CircleCheck, Pencil, Power, Trash2, WalletCards } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import { CircleCheck, MessageSquareWarning, Pencil, Power, Trash2, WalletCards } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
 import { deleteTvBoardAction, markTvBoardReleasedAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
-import { getTvBoardMargin, type TvBoardSaleStatus, type TvBoardReleaseEvidence } from "@/features/tv-boards/sales";
+import { BoardSaleHistory } from "@/features/tv-boards/components/board-sale-history";
+import type { TvBoardRow } from "@/features/tv-boards/model";
+import { getTvBoardMargin } from "@/features/tv-boards/sales";
+import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
-type TvBoard = {
-  id: string;
-  brand: string;
-  model: string;
-  boardType: "fuente" | "main" | "tcom" | "placa_unica";
-  price: number;
-  acquisitionCost: number | null;
-  releaseEvidence: TvBoardReleaseEvidence;
-  isActive: boolean;
-  isSold: boolean;
-  soldAt: string | null;
-  netAmount: number | null;
-  releaseDate: string | null;
-  releasedAt: string | null;
-  saleNotes: string | null;
-  saleStatus: TvBoardSaleStatus;
-  createdAt: string;
-};
+type TvBoard = TvBoardRow;
 
 const TYPE_LABELS: Record<TvBoard["boardType"], string> = {
   fuente: "Fuente",
@@ -40,14 +26,40 @@ export function BoardTable({
   boards,
   canManage,
   onEdit,
-  onSell
+  onSell,
+  onStartClaim,
+  onSaleChanged,
+  updatedVersions
 }: {
   boards: TvBoard[];
   canManage: boolean;
   onEdit: (id: string) => void;
   onSell: (id: string) => void;
+  onStartClaim: (id: string) => void;
+  onSaleChanged?: (id: string, recordVersion: number | undefined, message: string) => void;
+  updatedVersions?: Readonly<Record<string, number>>;
 }) {
   const [isPending, startTransition] = useTransition();
+  const pendingRef = useRef(false);
+  const operationIds = useRef(new Map<string, string>());
+  const [feedback, setFeedback] = useState<ActionResult | null>(null);
+
+  function runMutation(operation: () => Promise<ActionResult & { recordVersion?: number }>, onSuccess?: (result: ActionResult & { recordVersion?: number }) => void) {
+    if (pendingRef.current) return;
+    pendingRef.current = true;
+    setFeedback(null);
+    startTransition(async () => {
+      try {
+        const result = await operation();
+        setFeedback(result);
+        if (result.success) onSuccess?.(result);
+      } catch {
+        setFeedback({ success: false, message: "No se pudo confirmar el cambio. Reintenta sin cambiar los datos para recuperar el resultado sin duplicarlo." });
+      } finally {
+        pendingRef.current = false;
+      }
+    });
+  }
 
   function handleDelete(board: TvBoard) {
     const confirmed = window.confirm(
@@ -56,24 +68,28 @@ export function BoardTable({
 
     if (!confirmed) return;
 
-    startTransition(async () => {
-      const result = await deleteTvBoardAction(board.id);
-      if (!result.success) {
-        window.alert(result.message);
+    runMutation(() => deleteTvBoardAction(board.id));
+  }
+
+  function handleRelease(board: TvBoard) {
+    if (pendingRef.current) return;
+    if (!window.confirm(`Confirmas que Mercado Pago ya libero ${formatCurrency(board.netAmount ?? 0)} por la placa ${board.brand} ${board.model}?`)) return;
+
+    const payload = { id: board.id, version: board.version };
+    const fingerprint = JSON.stringify(payload);
+    const operationId = operationIds.current.get(fingerprint) ?? crypto.randomUUID();
+    operationIds.current.set(fingerprint, operationId);
+    runMutation(() => markTvBoardReleasedAction({ ...payload, operationId }), (result) => {
+      if (onSaleChanged) {
+        setFeedback(null);
+        onSaleChanged(board.id, result.recordVersion, result.message);
       }
     });
   }
 
-  function handleRelease(board: TvBoard) {
-    if (!window.confirm(`Confirmas que Mercado Pago ya libero ${formatCurrency(board.netAmount ?? 0)} por la placa ${board.brand} ${board.model}?`)) return;
-
-    startTransition(async () => {
-      const result = await markTvBoardReleasedAction(board.id);
-      if (!result.success) window.alert(result.message);
-    });
-  }
-
   function renderSaleBadge(board: TvBoard) {
+    if (board.claimStatus === "open") return <Badge variant="warning">Dinero retenido</Badge>;
+    if (board.claimStatus === "cancelled") return <Badge variant="default">Venta anulada</Badge>;
     if (!board.isSold) {
       return <Badge variant={board.isActive ? "success" : "default"}>{board.isActive ? "Disponible" : "Baja"}</Badge>;
     }
@@ -92,35 +108,39 @@ export function BoardTable({
 
   function renderActions(board: TvBoard) {
     if (!canManage) return <p className="text-sm text-slate-500">Solo administracion</p>;
+    const disabled = isPending || (updatedVersions?.[board.id] ?? 0) > board.version;
     return (
       <div className="flex flex-wrap gap-2 xl:justify-end">
-        <Button onClick={() => onEdit(board.id)} size="sm" type="button" variant="secondary">
+        <Button disabled={disabled} onClick={() => onEdit(board.id)} size="sm" type="button" variant="secondary">
           <Pencil className="h-4 w-4" />
           Editar
         </Button>
         {!board.isSold ? (
-          <Button disabled={isPending} onClick={() => onSell(board.id)} size="sm" type="button">
+          <Button disabled={disabled} onClick={() => onSell(board.id)} size="sm" type="button">
             <WalletCards className="h-4 w-4" />
             Registrar venta
           </Button>
         ) : null}
-        {board.isSold && board.releaseEvidence !== "confirmed" ? (
-          <Button disabled={isPending} onClick={() => handleRelease(board)} size="sm" type="button" variant="secondary">
+        {board.isSold && board.claimStatus === "none" && !board.releasedAt && board.releaseEvidence !== "confirmed" ? (
+          <Button disabled={disabled} onClick={() => onStartClaim(board.id)} size="sm" type="button" variant="secondary">
+            <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />
+            Iniciar reclamo
+          </Button>
+        ) : null}
+        {board.isSold && board.claimStatus === "none" && !board.releasedAt && board.releaseEvidence !== "confirmed" ? (
+          <Button disabled={disabled} onClick={() => handleRelease(board)} size="sm" type="button" variant="secondary">
             <CircleCheck className="h-4 w-4" />
             Confirmar liberacion
           </Button>
         ) : null}
         <ActionMenu label="Mas acciones">
           {!board.isSold ? (
-            <Button disabled={isPending} onClick={() => startTransition(async () => {
-              const result = await toggleTvBoardStatusAction(board.id, !board.isActive);
-              if (!result.success) window.alert(result.message);
-            })} size="sm" type="button" variant="ghost">
+            <Button disabled={disabled} onClick={() => runMutation(() => toggleTvBoardStatusAction(board.id, !board.isActive))} size="sm" type="button" variant="ghost">
               <Power className="h-4 w-4" />
               {board.isActive ? "Dar de baja" : "Reactivar"}
             </Button>
           ) : null}
-          <Button disabled={isPending || board.isSold} onClick={() => handleDelete(board)} size="sm" type="button" variant="danger">
+          <Button disabled={disabled || board.isSold} onClick={() => handleDelete(board)} size="sm" type="button" variant="danger">
             <Trash2 className="h-4 w-4" />
             Eliminar
           </Button>
@@ -137,12 +157,14 @@ export function BoardTable({
         {board.releaseDate ? <p>Prevista: {formatDate(board.releaseDate)}</p> : null}
         {board.releasedAt ? <p>Confirmada: {formatDate(board.releasedAt)}</p> : null}
         {board.saleNotes ? <p className="break-words">{board.saleNotes}</p> : null}
+        <BoardSaleHistory events={board.events} />
       </div>
     );
   }
 
   return (
     <div className="table-shell">
+      {feedback ? <p className={`status-banner m-4${feedback.success ? "" : " status-banner--error"}`} role={feedback.success ? "status" : "alert"}>{feedback.message}</p> : null}
       <div className="divide-y divide-slate-200 xl:hidden">
         {boards.map((board) => (
           <article className="bg-white p-4" key={board.id}>
@@ -166,7 +188,7 @@ export function BoardTable({
                 <dt className="text-slate-500">Costo y margen directo</dt>
                 <dd className="mt-1 space-y-1 text-slate-600">
                   <p>Costo: {board.acquisitionCost == null ? "Sin informar" : formatCurrency(board.acquisitionCost)}</p>
-                  <p>Margen directo: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Costo / neto incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>
+                  {board.claimStatus !== "none" ? <p>Excluida del margen directo</p> : <p>Margen directo: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Costo / neto incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>}
                 </dd>
               </div>
             </dl>
@@ -198,7 +220,7 @@ export function BoardTable({
                 <td className="space-y-1 px-4 py-3 text-slate-600">
                   <p className="font-medium text-slate-950">Neto: {board.netAmount === null ? "Sin informar" : formatCurrency(board.netAmount)}</p>
                   <p>Costo: {board.acquisitionCost == null ? "Sin informar" : formatCurrency(board.acquisitionCost)}</p>
-                  <p>Margen: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>
+                  {board.claimStatus !== "none" ? <p>Excluida del margen directo</p> : <p>Margen: {getTvBoardMargin(board.netAmount, board.acquisitionCost) == null ? "Incompleto" : formatCurrency(getTvBoardMargin(board.netAmount, board.acquisitionCost)!)}</p>}
                 </td>
                 <td className="px-4 py-3">{renderSaleBadge(board)}</td>
                 <td className="px-4 py-3">{renderDates(board)}</td>

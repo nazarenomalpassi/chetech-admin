@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getDashboardData } from "@/features/dashboard/queries";
 
-const mocks = vi.hoisted(() => ({ failure: "", products: [] as Array<{ id: string; name: string; stock: number; min_stock: number }>, from: vi.fn(), rpc: vi.fn() }));
+const mocks = vi.hoisted(() => ({ failure: "", boards: [] as Array<Record<string, unknown>>, products: [] as Array<{ id: string; name: string; stock: number; min_stock: number }>, from: vi.fn(), rpc: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => mocks }));
 vi.mock("@/lib/app-settings", () => ({ getCashSettings: async () => ({ openingBalances: { efectivo: 0, nx: 0, mp: 0 }, movementCutoff: "2026-01-01" }) }));
 vi.mock("@/features/balance-transfers/queries", () => ({ getBalanceTransfers: async () => [] }));
@@ -11,8 +11,9 @@ vi.mock("@/features/visits/queries", () => ({ getVisitsTodayDashboardSummary: as
 beforeEach(() => {
   mocks.failure = "";
   mocks.products = [];
+  mocks.boards = [];
   mocks.from.mockImplementation((table: string) => {
-    let data = table === "products" ? mocks.products : [];
+    let data: Array<Record<string, unknown>> = table === "products" ? mocks.products : table === "tv_boards" ? mocks.boards : [];
     const builder: Record<string, unknown> = { then: (resolve: (result: unknown) => void) => Promise.resolve({ data, error: mocks.failure === table ? { message: "Database unavailable" } : null }).then(resolve) };
     for (const method of ["select", "order", "not", "neq", "gte", "lt"]) builder[method] = () => builder;
     builder.limit = (size: number) => { data = data.slice(0, size); return builder; };
@@ -31,6 +32,14 @@ describe("dashboard data integrity", () => {
     const result = await getDashboardData({});
     expect(result.salesTodayTotal).toBe(0);
     expect(result.pendingMercadoPagoReleaseAmount).toBe(0);
+  });
+  it("partitions held and pending board proceeds without changing account balances", async () => {
+    const sale = { id: "a", sold_at: "2026-01-01", release_date: "2026-01-02", released_at: null, mercado_libre_net_amount: "104000.25", claim_status: "none" };
+    mocks.boards = [sale, { ...sale, id: "b", claim_status: "open" }, { ...sale, id: "c", claim_status: "cancelled" }, { ...sale, id: "d", released_at: "2026-01-03" }];
+    const result = await getDashboardData({});
+    expect(result.pendingMercadoPagoReleaseAmount).toBe(104000.25);
+    expect(result.heldMercadoPagoClaimAmount).toBe(104000.25);
+    expect(result.accountBalances.map(b => b.balance)).toEqual([0, 0, 0]);
   });
   it("does not truncate replenishment alerts to the first 24 products", async () => {
     mocks.products = Array.from({ length: 35 }, (_, index) => ({ id: String(index), name: `Product ${index}`, stock: 0, min_stock: 1 }));

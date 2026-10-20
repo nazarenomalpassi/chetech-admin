@@ -1,4 +1,5 @@
-import { getTvBoardSaleStatus } from "@/features/tv-boards/sales";
+import { getTvBoardFinancialSummary } from "@/features/tv-boards/sales";
+import type { TvBoardClaimStatus } from "@/features/tv-boards/model";
 import { formatCashMethod, normalizeCashMethodValue, type CashMethod } from "@/lib/cash";
 
 export type DashboardCashSummaryRow = {
@@ -60,24 +61,12 @@ export function getPendingTvBoardsReleaseAmount(
     soldAt: string | null;
     releaseDate: string | null;
     releasedAt?: string | null;
+    claimStatus?: TvBoardClaimStatus;
     netAmount: number | null;
   }>,
-  today: string
+  _today: string
 ) {
-  return boards.reduce((acc, board) => {
-    const saleStatus = getTvBoardSaleStatus(
-      {
-        soldAt: board.soldAt,
-        releaseDate: board.releaseDate,
-        releasedAt: board.releasedAt
-      },
-      today
-    );
-
-    if (saleStatus !== "pending_release") {
-      return acc;
-    }
-
-    return acc + Number(board.netAmount ?? 0);
-  }, 0);
+  // Keep the legacy date argument compatible; an estimate never confirms a release.
+  void _today;
+  return getTvBoardFinancialSummary(boards).pendingAmount;
 }

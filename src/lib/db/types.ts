@@ -97,6 +97,14 @@ export type Database = {
           model: string;
           board_type: "fuente" | "main" | "tcom" | "placa_unica";
           listed_price: number;
+          acquisition_cost: number | null;
+          released_at: string | null;
+          claim_status: "none" | "open" | "cancelled";
+          claim_opened_at: string | null;
+          claim_notes: string | null;
+          claim_resolved_at: string | null;
+          claim_resolution_notes: string | null;
+          financial_version: number;
           is_active: boolean;
           sold_at: string | null;
           mercado_libre_net_amount: number | null;
@@ -112,6 +120,14 @@ export type Database = {
           model: string;
           board_type: "fuente" | "main" | "tcom" | "placa_unica";
           listed_price: number;
+          acquisition_cost?: number | null;
+          released_at?: string | null;
+          claim_status?: "none" | "open" | "cancelled";
+          claim_opened_at?: string | null;
+          claim_notes?: string | null;
+          claim_resolved_at?: string | null;
+          claim_resolution_notes?: string | null;
+          financial_version?: number;
           is_active?: boolean;
           sold_at?: string | null;
           mercado_libre_net_amount?: number | null;
@@ -126,6 +142,14 @@ export type Database = {
           model?: string;
           board_type?: "fuente" | "main" | "tcom" | "placa_unica";
           listed_price?: number;
+          acquisition_cost?: number | null;
+          released_at?: string | null;
+          claim_status?: "none" | "open" | "cancelled";
+          claim_opened_at?: string | null;
+          claim_notes?: string | null;
+          claim_resolved_at?: string | null;
+          claim_resolution_notes?: string | null;
+          financial_version?: number;
           is_active?: boolean;
           sold_at?: string | null;
           mercado_libre_net_amount?: number | null;
@@ -133,6 +157,21 @@ export type Database = {
           sale_notes?: string | null;
           updated_at?: string;
         };
+      };
+      tv_board_sale_events: {
+        Row: {
+          id: string;
+          board_id: string;
+          kind: "start_claim" | "resume_sale" | "cancel_sale" | "confirm_release";
+          notes: string;
+          net_amount: number;
+          from_state: string;
+          to_state: string;
+          actor_id: string;
+          created_at: string;
+        };
+        Insert: never;
+        Update: never;
       };
       sales: {
         Row: {
