@@ -56,12 +56,12 @@ describe("customer-facing repair documents", () => {
     expect(intake.sections.some((section) => section.label === "Falla declarada")).toBe(true);
     expect(delivery.date).toBe("2026-10-06T15:14:00Z");
     expect(delivery.dateLabel).toBe("Fecha de entrega");
-    expect(delivery.sections.some((section) => section.label === "Trabajo realizado")).toBe(true);
+    expect(delivery.sections.some((section) => section.label === "Detalle del presupuesto")).toBe(true);
     expect(intake.amount).toBeNull();
-    expect(delivery.amount).toBeNull();
+    expect(delivery.amount).toBe(order.budgetAmount);
     for (const kind of ["intake", "estimate", "delivery"] as const) {
       const data = buildRepairDocumentData({ ...order, pickedUpAt: "2026-10-06T15:14:00Z" }, kind, quote);
-      expect(JSON.stringify(data)).not.toMatch(/NOTA PRIVADA|DIAGNOSTICO INTERNO|NOTAS DE CAJA|isPaid|paidTotal/);
+      expect(JSON.stringify(data)).not.toMatch(/NOTA PRIVADA|DIAGNOSTICO INTERNO|NOTAS DE CAJA|isPaid/);
     }
     expect(() => buildRepairDocumentData(order, "delivery")).toThrow(/entrega/i);
   });
@@ -116,7 +116,30 @@ describe("repair document read-only route", () => {
   it("prints intake without querying budgets and refuses an unrecorded delivery", async () => {
     expect((await request("intake")).status).toBe(200);
     expect(mocks.from).not.toHaveBeenCalled();
+    mocks.single.mockResolvedValue({ data: { id, repairs: [], repair_access_payments: [] }, error: null });
     expect((await request("delivery")).status).toBe(409);
+  });
+
+  it("reads delivery order and real ledgers in one query, never writes or falls back to paid flags", async () => {
+    mocks.mapOrder.mockReturnValue({ ...order, pickedUpAt: "2026-10-20T03:00:00Z" });
+    mocks.single.mockResolvedValue({ data: { id, repairs: [], repair_access_payments: [] }, error: null });
+    const response = await request("delivery");
+    expect(response.status).toBe(200);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    expect(mocks.from).toHaveBeenCalledExactlyOnceWith("repair_access_orders");
+    expect(mocks.select.mock.calls[0][0]).toContain("repair_access_payments");
+    expect(mocks.pdf.mock.calls[0][0].client.paidTotal).toBe(0);
+    expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+  });
+
+  it("restricts financial PDFs and fails closed when payment data cannot be read", async () => {
+    mocks.permission.mockResolvedValue({ role: "tecnico" });
+    expect((await request("delivery")).status).toBe(403);
+    expect(mocks.client).not.toHaveBeenCalled();
+    mocks.permission.mockResolvedValue({ role: "admin" });
+    mocks.single.mockResolvedValue({ data: null, error: { code: "42501", message: "PRIVATE" } });
+    expect((await request("delivery")).status).toBe(503);
+    expect(mocks.pdf).not.toHaveBeenCalled();
   });
 
   it("rejects invalid requests and unversioned legacy estimates without attempting a fallback read", async () => {

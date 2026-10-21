@@ -29,6 +29,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
   const accepted = context.approvalStatus === "accepted";
   const zeroQuote = order.budgetAmount === 0 && order.finalAmount === 0 && (order.budgetDetail ?? "").trim().length >= 3;
   const delivered = Boolean(order.deliveredAt || order.status === "retirado");
+  const deliveryRecorded = Boolean(order.pickedUpAt || order.deliveredAt);
   const noFault = order.status === "no_presenta_fallas";
   const hasBalance = hasWorkshopDeliveryBalance(order);
 
@@ -57,7 +58,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       <div className="flex flex-wrap gap-2 pt-2">
         <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=intake`} target="_blank" rel="noreferrer">Comprobante de ingreso</a>
         {order.budgetAmount > 0 ? <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=estimate`} target="_blank" rel="noreferrer">Presupuesto PDF</a> : null}
-        {delivered ? <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=delivery`} target="_blank" rel="noreferrer">Constancia de entrega</a> : null}
+        {deliveryRecorded ? <a className={buttonVariants({ variant: "secondary" })} href={`/api/repair-access/documents/${order.id}?kind=delivery`} target="_blank" rel="noreferrer">Pago y garantía PDF</a> : null}
         <a className={buttonVariants({ variant: "secondary" })} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a>
         <a className={buttonVariants({ variant: "secondary" })} href={`/facturacion?order=${order.id}`}>Facturar esta reparacion</a>
       </div>

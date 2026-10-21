@@ -4,12 +4,14 @@ import PDFDocument from "pdfkit";
 import QRCode from "qrcode";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { RepairDocumentData } from "./documents";
+import { renderClientDocumentPdf } from "./client-document-pdf";
 
 const colors = { ink: "#222222", muted: "#666666", accent: "#888888", paper: "#eeeeee", rule: "#dddddd" };
 type PdfOptions = { orderUrl?: string };
 type Segment = { label: string; page: number; startY: number; endY: number; characters: number };
 
 export function renderRepairDocumentPdf(doc: PDFKit.PDFDocument, data: RepairDocumentData, qr?: Buffer) {
+  if (data.kind !== "estimate") return renderClientDocumentPdf(doc, data);
   doc.registerFont("Body", readFileSync(path.join(process.cwd(), "public/brand/InputSans.otf")));
   doc.registerFont("Brand", readFileSync(path.join(process.cwd(), "public/brand/MONTECHV02-Bold.otf")));
   const left = 42;
@@ -127,7 +129,7 @@ export function renderRepairDocumentPdf(doc: PDFKit.PDFDocument, data: RepairDoc
 }
 
 export async function generateRepairDocumentPdf(data: RepairDocumentData, options: PdfOptions = {}) {
-  const qr = options.orderUrl ? await QRCode.toBuffer(options.orderUrl, { width: 180, margin: 1, color: { dark: "#222222", light: "#ffffff" } }) : undefined;
+  const qr = data.kind === "estimate" && options.orderUrl ? await QRCode.toBuffer(options.orderUrl, { width: 180, margin: 1, color: { dark: "#222222", light: "#ffffff" } }) : undefined;
   const doc = new PDFDocument({ size: "A4", margin: 42, bufferPages: true, info: { Title: `CHETECH - ${data.number} - ${data.title}`, Author: "CHETECH" } });
   const chunks: Buffer[] = [];
   return new Promise<Buffer>((resolve, reject) => {

@@ -17,6 +17,7 @@ reports/repair-history-import/*.json
 reports/repair-order-number-reconciliation/*.json
 tmp/backups/
 tmp/qa/
+tmp/pdfs/
 *.pem
 *.key
 *.pfx
