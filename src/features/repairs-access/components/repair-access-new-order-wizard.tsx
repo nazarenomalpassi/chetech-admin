@@ -58,6 +58,7 @@ function readFormValues(form: HTMLFormElement) {
   new FormData(form).forEach((value, key) => {
     if (typeof value === "string") values[key] = value;
   });
+  values.whatsappDocumentConsent = form.querySelector<HTMLInputElement>('[data-whatsapp-consent]')?.checked ? "on" : "off";
   return values;
 }
 
@@ -91,6 +92,7 @@ export function RepairAccessNewOrderWizard({
   const editingIdRef = useRef(editing?.id ?? null);
   const suggestionsId = useId();
   const [customerForm, setCustomerForm] = useState<CustomerForm>(() => getInitialCustomer(editing));
+  const [documentConsent,setDocumentConsent] = useState(editing?.whatsappDocumentConsent===true);
   const [customerLookup, setCustomerLookup] = useState("");
   const [activeLookupField, setActiveLookupField] = useState<"name" | "phone" | null>(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -106,6 +108,7 @@ export function RepairAccessNewOrderWizard({
     if (editingIdRef.current === editingId) return;
     editingIdRef.current = editingId;
     setCustomerForm(getInitialCustomer(editing));
+    setDocumentConsent(editing?.whatsappDocumentConsent===true);
     setCustomerLookup("");
     setActiveLookupField(null);
     setShowSuggestions(false);
@@ -170,6 +173,7 @@ export function RepairAccessNewOrderWizard({
 
   const hasUnsavedChanges = meaningfulIntakeFields.some((field) => (draftFields[field] ?? "").trim().length > 0);
   const restoreDraft = useCallback((draft: RepairIntakeDraft) => {
+    setDocumentConsent(draft.fields.whatsappDocumentConsent==="on");
     setRestoredFields(draft.fields);
     setDraftFields(draft.fields);
     setCustomerForm({
@@ -197,7 +201,9 @@ export function RepairAccessNewOrderWizard({
   }, [hasUnsavedChanges, onDirtyChange]);
 
   function captureDraft(event: FormEvent<HTMLFormElement>) {
-    setDraftFields(readFormValues(event.currentTarget));
+    const fields=readFormValues(event.currentTarget);
+    if (event.target instanceof HTMLInputElement && event.target.name==="customerPhone") fields.whatsappDocumentConsent="off";
+    setDraftFields(fields);
   }
 
   function persistSubmittedDraft(event: FormEvent<HTMLFormElement>) {
@@ -219,6 +225,7 @@ export function RepairAccessNewOrderWizard({
   }
 
   function updateCustomerField(field: keyof CustomerForm, value: string) {
+    if (field==="phone") setDocumentConsent(false);
     setCustomerForm((current) => ({ ...current, [field]: value }));
     if (field === "fullName" || field === "phone") {
       setCustomerLookup(value);
@@ -261,8 +268,10 @@ export function RepairAccessNewOrderWizard({
   }
 
   function selectCustomer(customer: RepairAccessCustomerSummary) {
+    setDocumentConsent(false);
     setDraftFields({
       ...(formRef.current ? readFormValues(formRef.current) : draftFields),
+      whatsappDocumentConsent:"off",
       customerId: customer.id,
       customerName: customer.fullName,
       customerPhone: customer.phone,
@@ -320,6 +329,8 @@ export function RepairAccessNewOrderWizard({
         ref={formRef}
       >
         <input name="id" type="hidden" value={editing?.id ?? ""} />
+        <input name="whatsappConsentIncluded" type="hidden" value="1" />
+        <input name="whatsappDocumentConsent" type="hidden" value={documentConsent?"on":"off"}/>
         <input name="customerId" type="hidden" value={customerForm.id} />
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
@@ -369,6 +380,11 @@ export function RepairAccessNewOrderWizard({
           <Field className="min-w-0 sm:col-span-4" label="Direccion">
             <Input name="customerAddress" onChange={(event) => updateCustomerField("address", event.target.value)} placeholder="Domicilio o referencia" value={customerForm.address} />
           </Field>
+          <label className="col-span-full flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+            <input className="mt-0.5 h-4 w-4 shrink-0 accent-slate-900" type="checkbox" data-whatsapp-consent
+              checked={documentConsent} onChange={(event)=>setDocumentConsent(event.target.checked)} />
+            <span>El cliente acepta recibir por WhatsApp el comprobante de ingreso y el de pago y garantía de esta orden.</span>
+          </label>
           <Field className="min-w-0 sm:col-span-2" label="Fecha">
             <Input defaultValue={restoredValue("intakeDate", editing?.intakeDate ?? getLocalDateInputValue())} name="intakeDate" type="date" />
           </Field>

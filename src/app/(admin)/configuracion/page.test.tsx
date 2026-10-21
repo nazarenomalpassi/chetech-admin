@@ -16,6 +16,8 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 vi.mock("@/lib/app-settings", () => mocks);
+vi.mock("@/features/whatsapp/setup",()=>({getWhatsAppSetupStatus:async()=>({enabled:false,connected:false,templatesApproved:false,webhookVerified:false,ready:false,message:"Pendiente de conexión"})}));
+vi.mock("@/features/whatsapp/components/whatsapp-settings",()=>({WhatsAppSettings:()=> <p>Comprobantes por WhatsApp</p>}));
 
 import ConfiguracionPage from "@/app/(admin)/configuracion/page";
 

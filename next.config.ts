@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/invoices/[id]/pdf": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf"],
     "/api/repair-access/documents/*": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf", "./public/brand/document-*.png"],
+    "/api/whatsapp/worker": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf", "./public/brand/document-*.png"],
     "/api/fiscal/records/*/pdf": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf"]
   }
 };

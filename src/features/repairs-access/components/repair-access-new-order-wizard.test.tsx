@@ -134,6 +134,16 @@ class SaveErrorBoundary extends React.Component<{ children: React.ReactNode; onF
 }
 
 describe("RepairAccessNewOrderWizard", () => {
+  it("records WhatsApp opt-in explicitly and clears it when the recipient changes",async()=>{
+    renderIntake({editing:{...editing,whatsappDocumentConsent:true}});
+    const checkbox=screen.getByRole("checkbox",{name:/El cliente acepta recibir por WhatsApp/}) as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+    fireEvent.change(screen.getByLabelText("Telefono"),{target:{value:"3571654321"}});
+    expect(checkbox.checked).toBe(false);
+    expect(new FormData(intakeForm()).get("whatsappDocumentConsent")).toBe("off");
+    fireEvent.click(checkbox);
+    expect(new FormData(intakeForm()).get("whatsappDocumentConsent")).toBe("on");
+  });
   it("shows all reception fields in one responsive grid without disclosures or step navigation", () => {
     renderIntake();
 
@@ -174,7 +184,7 @@ describe("RepairAccessNewOrderWizard", () => {
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
     const data = action.mock.calls[0][0];
     expect(Object.fromEntries(data.entries())).toEqual({
-      id: "", customerId: "", deviceId: "",
+      id: "", customerId: "", deviceId: "",whatsappConsentIncluded:"1",whatsappDocumentConsent:"off",
       customerName: "Ana Gomez", customerPhone: "3571 123456", customerAlternatePhone: "",
       customerDni: "", customerEmail: "", customerAddress: "Belgrano 200", customerNotes: "",
       deviceType: "TV", deviceBrand: "LG", deviceModel: "43LM",
@@ -194,7 +204,7 @@ describe("RepairAccessNewOrderWizard", () => {
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
     expect(Object.fromEntries(action.mock.calls[0][0].entries())).toEqual({
-      id: "order-1", customerId: "customer-1", deviceId: "device-1",
+      id: "order-1", customerId: "customer-1", deviceId: "device-1",whatsappConsentIncluded:"1",whatsappDocumentConsent:"off",
       customerName: customer.fullName, customerPhone: customer.phone, customerAlternatePhone: customer.alternatePhone,
       customerDni: customer.dni, customerEmail: customer.email, customerAddress: customer.address, customerNotes: customer.notes,
       deviceType: "TV", deviceBrand: "Samsung", deviceModel: "UN43",

@@ -19,7 +19,18 @@ describe("complete reception sheet persistence", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.admin.mockResolvedValue({ id, role: "admin" }); mocks.rpc.mockResolvedValue({ data: { id }, error: null }); });
   it("sends color, address, serial, accessories and condition in the same atomic save", async () => {
     await expect(saveRepairAccessOrderAction(form(" Gris "))).rejects.toThrow(`order=${id}`);
-    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("save_repair_access_intake", { p_payload: expect.objectContaining({ device_color: "Gris", customer_name: "Belén Pérez", customer_address: "Direccion sintetica", serial_number: "SERIE-123", accessory_details: "Control y cable", visual_condition: "Rayas en la base" }) });
+    expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("save_repair_access_intake_with_documents", { p_payload: expect.objectContaining({ device_color: "Gris", customer_name: "Belén Pérez", customer_address: "Direccion sintetica", serial_number: "SERIE-123", accessory_details: "Control y cable", visual_condition: "Rayas en la base" }) });
+  });
+  it("records a customer's opt-in explicitly and preserves omitted preferences from older forms", async () => {
+    const data = form("Gris"); data.set("whatsappConsentIncluded", "1"); data.set("whatsappDocumentConsent", "on");
+    await expect(saveRepairAccessOrderAction(data)).rejects.toThrow(`order=${id}`);
+    expect(mocks.rpc.mock.calls[0][1].p_payload.whatsapp_document_consent).toBe(true);
+    mocks.rpc.mockClear(); data.delete("whatsappDocumentConsent");
+    await expect(saveRepairAccessOrderAction(data)).rejects.toThrow(`order=${id}`);
+    expect(mocks.rpc.mock.calls[0][1].p_payload.whatsapp_document_consent).toBe(false);
+    mocks.rpc.mockClear(); data.delete("whatsappConsentIncluded");
+    await expect(saveRepairAccessOrderAction(data)).rejects.toThrow(`order=${id}`);
+    expect(mocks.rpc.mock.calls[0][1].p_payload).not.toHaveProperty("whatsapp_document_consent");
   });
   it("distinguishes an explicit color clear from an omitted field on older forms", async () => {
     await expect(saveRepairAccessOrderAction(form(""))).rejects.toThrow(`order=${id}`);

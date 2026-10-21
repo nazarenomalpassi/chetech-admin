@@ -26,6 +26,12 @@ async function main() {
     const id = candidates.rows[0].id;
     const before = await db.query("select to_jsonb(o) data from public.repair_access_orders o where id=$1", [id]);
     const admin = await session(IDENTITIES[0].email);
+    const settings=await fetch(`${appUrl}/configuracion`,{headers:{cookie:admin.cookie},redirect:"manual"});
+    assert.equal(settings.status,200,"Settings page must render");assert.ok((await settings.text()).includes("Comprobantes por WhatsApp"));
+    const deliveryState=await fetch(`${appUrl}/api/whatsapp/documents?order=${id}`,{headers:{cookie:admin.cookie},redirect:"manual"});
+    assert.equal(deliveryState.status,200,await deliveryState.clone().text());assert.equal((await deliveryState.json()).enabled,false,"Local automation stays paused");
+    const worker=await fetch(`${appUrl}/api/whatsapp/worker`,{method:"POST",redirect:"manual"});assert.equal(worker.status,401);
+    const webhook=await fetch(`${appUrl}/api/whatsapp/webhook`,{method:"POST",body:"{}",redirect:"manual"});assert.equal(webhook.status,503);
     const snapshot = await admin.client.from("repair_access_orders").select(DELIVERY_DOCUMENT_SELECT).eq("id", id).single();
     assert.ifError(snapshot.error);
     const payments = readDocumentPayments(snapshot.data);
