@@ -2,7 +2,8 @@ import { getDashboardRange } from "@/features/dashboard/range";
 import { calculateVariation, getMonthlyComparisonPeriods } from "@/features/reports/comparison";
 import {
   normalizeReportsPerformanceSnapshot,
-  type ReportPeriodMetrics
+  type ReportPeriodMetrics,
+  type RankingRow
 } from "@/features/reports/performance-snapshot";
 import { getBusinessGoals } from "@/lib/app-settings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -94,6 +95,7 @@ async function getPeriodMetrics(
   return {
     salesTotal: sumAmount(salesResult.data ?? [], "subtotal"),
     salesProfit: sumAmount(salesResult.data ?? [], "profit_total"),
+    salesUnknownCostCount: (salesResult.data ?? []).filter((sale: any) => sale.profit_total == null).length,
     repairsTotal: (repairsResult.data ?? []).reduce(
       (acc: number, repair: any) => acc + Number(repair.final_price ?? repair.estimated_price ?? 0),
       0
@@ -133,8 +135,8 @@ function buildReportsResponse({
   previousMonthMetrics: PeriodMetrics;
   businessGoals: Awaited<ReturnType<typeof getBusinessGoals>>;
   rankings: {
-    products: Array<{ label: string; quantity: number; revenue: number; profit: number }>;
-    categories: Array<{ label: string; quantity: number; revenue: number; profit: number }>;
+    products: RankingRow[];
+    categories: RankingRow[];
   };
   sellerSummary: SummaryRow[];
   technicianSummary: SummaryRow[];
@@ -231,7 +233,7 @@ export async function getReportsData(from?: string, to?: string) {
       .lt("entry_date", range.endIso.slice(0, 10)),
     (supabase as any)
       .from("sale_items")
-      .select("quantity, total, unit_cost, products(name, categories(name)), sales!inner(sold_at)")
+      .select("description, quantity, total, unit_cost, products(name, categories(name)), sales!inner(sold_at)")
       .gte("sales.sold_at", range.startIso)
       .lt("sales.sold_at", range.endIso),
     getPeriodMetrics(supabase, monthlyPeriods.current),
@@ -296,38 +298,45 @@ export async function getReportsData(from?: string, to?: string) {
     repairsByUser.set(userId, current);
   }
 
-  const productMap = new Map<string, { label: string; quantity: number; revenue: number; profit: number }>();
-  const categoryMap = new Map<string, { label: string; quantity: number; revenue: number; profit: number }>();
+  const productMap = new Map<string, RankingRow>();
+  const categoryMap = new Map<string, RankingRow>();
 
   for (const item of saleItemsResult.data ?? []) {
     const product = Array.isArray(item.products) ? item.products[0] : item.products;
     const category = Array.isArray(product?.categories) ? product.categories[0] : product?.categories;
-    const productLabel = product?.name ?? "Producto sin nombre";
-    const categoryLabel = category?.name ?? "Sin categoria";
+    const productLabel = product?.name ?? (item.description?.trim() || "Venta sin producto de inventario");
+    const productKey = `${product ? "inventory" : "description"}:${productLabel}`;
+    const categoryLabel = product ? category?.name ?? "Sin categoria" : "Sin producto de inventario";
     const quantity = Number(item.quantity ?? 0);
     const revenue = Number(item.total ?? 0);
-    const profit = revenue - Number(item.unit_cost ?? 0) * quantity;
+    const profit = item.unit_cost == null || !Number.isFinite(Number(item.unit_cost))
+      ? null
+      : revenue - Number(item.unit_cost) * quantity;
 
-    const currentProduct = productMap.get(productLabel) ?? {
+    const currentProduct = productMap.get(productKey) ?? {
       label: productLabel,
       quantity: 0,
       revenue: 0,
-      profit: 0
+      profit: null,
+      unknownCostCount: 0
     };
     currentProduct.quantity += quantity;
     currentProduct.revenue += revenue;
-    currentProduct.profit += profit;
-    productMap.set(productLabel, currentProduct);
+    if (profit !== null) currentProduct.profit = (currentProduct.profit ?? 0) + profit;
+    else currentProduct.unknownCostCount = (currentProduct.unknownCostCount ?? 0) + 1;
+    productMap.set(productKey, currentProduct);
 
     const currentCategory = categoryMap.get(categoryLabel) ?? {
       label: categoryLabel,
       quantity: 0,
       revenue: 0,
-      profit: 0
+      profit: null,
+      unknownCostCount: 0
     };
     currentCategory.quantity += quantity;
     currentCategory.revenue += revenue;
-    currentCategory.profit += profit;
+    if (profit !== null) currentCategory.profit = (currentCategory.profit ?? 0) + profit;
+    else currentCategory.unknownCostCount = (currentCategory.unknownCostCount ?? 0) + 1;
     categoryMap.set(categoryLabel, currentCategory);
   }
 

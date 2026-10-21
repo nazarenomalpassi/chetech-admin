@@ -6,7 +6,7 @@ import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { tvBoardSaleSchema, tvBoardSchema } from "@/features/tv-boards/schemas";
-import { changeTvBoardSaleAction } from "./claim-actions";
+import { releaseTvBoardToSaleAction } from "./release-actions";
 
 export async function upsertTvBoardAction(input: unknown) {
   const user = await requireAdmin();
@@ -227,5 +227,5 @@ export async function markTvBoardSoldAction(input: unknown) {
 }
 
 export async function markTvBoardReleasedAction(input: unknown) {
-  return changeTvBoardSaleAction({ ...(typeof input === "object" && input !== null ? input : {}), kind: "confirm_release", notes: "" });
+  return releaseTvBoardToSaleAction(input);
 }

@@ -75,6 +75,11 @@ describe("backup export route", () => {
     expect(response.status).toBe(500);
     expect(await response.text()).not.toContain("secret");
   });
+  it("keeps board sale origins and item descriptions in the Excel extract", async () => {
+    await GET(new Request("https://test/api/backup"));
+    expect(mocks.read).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ table: "sales" }), 500, expect.stringContaining("tv_board_id"));
+    expect(mocks.read).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ table: "sale_items" }), 500, expect.stringContaining("description"));
+  });
   it("rejects unknown formats before reading any operational data", async () => {
     const response = await GET(new Request("https://test/api/backup?format=sql"));
     expect(response.status).toBe(400);

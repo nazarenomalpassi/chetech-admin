@@ -110,6 +110,12 @@ describe("RepairAccessWorkshopCard", () => {
     expect(screen.queryByText("Coordinacion y repuestos")).toBeNull();
     expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
     expect(Boolean(screen.queryByText("Registrar reingreso por garantia"))).toBe(canManageIntake);
+    if (canManageIntake) {
+      const correction = screen.getByText("Corregir garantia").closest("details")!;
+      correction.open = true; fireEvent(correction, new Event("toggle"));
+      expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
+      expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+    }
     expect(screen.getByText(order.issueReported)).toBeTruthy();
     const history = screen.getByText("Historial de la orden original").closest("details")!;
     history.open = true; fireEvent(history, new Event("toggle"));

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { normalizeReportsPerformanceSnapshot } from "@/features/reports/performance-snapshot";
+const emptyMetrics = { sales_total: 0, sales_profit: 0, repairs_total: 0, expenses_total: 0, invoices_total: 0, salaries_total: 0, net_cash: 0 };
 
 describe("normalizeReportsPerformanceSnapshot", () => {
   it("normaliza numericos de Postgres y mantiene rankings y responsables", () => {
@@ -15,8 +16,8 @@ describe("normalizeReportsPerformanceSnapshot", () => {
           salaries_total: "10",
           net_cash: "150"
         },
-        current: {},
-        previous: {}
+        current: emptyMetrics,
+        previous: emptyMetrics
       },
       rankings: {
         products: [{ label: "Cable", quantity: "2", revenue: "100", profit: "40" }],
@@ -50,10 +51,24 @@ describe("normalizeReportsPerformanceSnapshot", () => {
   });
 
   it("devuelve ceros y listas vacias ante agregados sin registros", () => {
-    const snapshot = normalizeReportsPerformanceSnapshot(null);
+    const snapshot = normalizeReportsPerformanceSnapshot({ metrics: { selected: emptyMetrics, current: emptyMetrics, previous: emptyMetrics }, rankings: { products: [], categories: [] }, seller_summary: [], technician_summary: [] });
 
     expect(snapshot.metrics.selected.salesTotal).toBe(0);
     expect(snapshot.rankings.products).toEqual([]);
     expect(snapshot.technicianSummary).toEqual([]);
+  });
+
+  it.each([null, {}, { metrics: { selected: { ...emptyMetrics, sales_total: null }, current: emptyMetrics, previous: emptyMetrics } }])("does not turn unavailable aggregates into valid zero activity", (payload) => {
+    expect(() => normalizeReportsPerformanceSnapshot(payload)).toThrow(/incompleto/);
+  });
+
+  it("normalizes optional coverage while preserving unknown margins and non-inventory labels", () => {
+    const snapshot = normalizeReportsPerformanceSnapshot({
+      metrics: { selected: { ...emptyMetrics, sales_unknown_cost_count: "2" }, current: emptyMetrics, previous: emptyMetrics },
+      rankings: { products: [{ label: "Producto sin nombre", quantity: "1", revenue: "200", profit: null, unknown_cost_count: "1" }], categories: [] },
+      seller_summary: [], technician_summary: []
+    });
+    expect(snapshot.metrics.selected.salesUnknownCostCount).toBe(2);
+    expect(snapshot.rankings.products[0]).toMatchObject({ label: "Conceptos sin producto de inventario (sin detalle)", profit: null, unknownCostCount: 1 });
   });
 });

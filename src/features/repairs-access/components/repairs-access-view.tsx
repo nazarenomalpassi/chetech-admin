@@ -336,6 +336,7 @@ export function RepairsAccessView({
 
       {activeSection === "ordenes" ? (
         <RepairAccessOrdersSection
+          defaultWarrantyDays={defaultWarrantyDays}
           canManageIntake={canManageIntake}
           headingRef={orderHeadingRef}
           onEdit={startEdit}

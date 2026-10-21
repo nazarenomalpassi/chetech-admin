@@ -42,7 +42,8 @@ export function RepairAccessOrdersSection({
   onOpenDetail,
   onNew,
   headingRef,
-  canManageIntake
+  canManageIntake,
+  defaultWarrantyDays
 }: {
   orders: RepairAccessOrderRecord[];
   technicians?: WorkshopTechnician[];
@@ -58,6 +59,7 @@ export function RepairAccessOrdersSection({
   onNew?: () => void;
   headingRef?: Ref<HTMLHeadingElement>;
   canManageIntake: boolean;
+  defaultWarrantyDays?: number;
 }) {
   const [visibleLimit, setVisibleLimit] = useState(WORKSHOP_INITIAL_VISIBLE_ORDERS);
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
@@ -171,6 +173,7 @@ export function RepairAccessOrdersSection({
         {visibleOrders.length ? (
           visibleOrders.map((order) => (
             <RepairAccessWorkshopCard
+              defaultWarrantyDays={defaultWarrantyDays}
               canManageIntake={canManageIntake}
               technicians={technicians}
               key={order.id}
@@ -243,7 +246,7 @@ export function RepairAccessOrdersSection({
                         <div className="flex min-w-64 flex-wrap justify-end gap-2">
                           <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">Ficha completa</Button>
                           {order.workflow ? <LazyDisclosure className="w-full rounded-lg border border-slate-200" summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40" summary="Actualizar trabajo">
-                            <RepairQuickEditor order={order} canManage={canManageIntake} />
+                            <RepairQuickEditor order={order} canManage={canManageIntake} defaultWarrantyDays={defaultWarrantyDays} />
                           </LazyDisclosure> : null}
                           <span className="hidden lg:inline-flex"><RepairAccessWhatsAppButton order={order} /></span>
                           {canManageIntake ? (

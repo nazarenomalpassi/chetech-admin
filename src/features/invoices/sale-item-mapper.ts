@@ -3,6 +3,8 @@ function readRelated<T>(value: T | T[] | null | undefined) {
 }
 
 function buildDescription(item: any) {
+  const snapshot = String(item.description ?? "").trim();
+  if (snapshot) return snapshot;
   const product = readRelated(item.products);
   const name = String(product?.name ?? "").trim() || "Producto vendido";
   const sku = String(product?.sku ?? "").trim();

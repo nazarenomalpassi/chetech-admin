@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ from: vi.fn(), cap: 500, boards: [] as Record<string, unknown>[], events: [] as Record<string, unknown>[] }));
+const mocks = vi.hoisted(() => ({ from: vi.fn(), select: vi.fn(), cap: 500, boards: [] as Record<string, unknown>[], events: [] as Record<string, unknown>[] }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mocks.from }) }));
 import { getTvBoards, getTvBoardsPageData } from "./queries";
 
 const board = { id: "a", brand: "LG", model: "Smart", board_type: "main", listed_price: 500000, acquisition_cost: 10000, is_active: false, sold_at: "2026-10-01", mercado_libre_net_amount: "104000.25", release_date: "2026-10-02", released_at: null, sale_notes: null, claim_status: "none", financial_version: 1, created_at: "2026-10-01", updated_at: "2026-10-01" };
 beforeEach(() => {
+  mocks.select.mockClear();
   mocks.boards = [board]; mocks.events = []; mocks.cap = 500;
   mocks.from.mockImplementation((table: string) => {
     const builder: Record<string, unknown> = {};
-    for (const key of ["select", "order", "eq"]) builder[key] = () => builder;
+    builder.select = (columns: string) => { mocks.select(table, columns); return builder; };
+    for (const key of ["order", "eq"]) builder[key] = () => builder;
     builder.range = (from: number, to: number) => {
       const rows = table === "tv_boards" ? mocks.boards : mocks.events;
       return Promise.resolve({ data: rows.slice(from, Math.min(to + 1, from + mocks.cap)), count: rows.length, error: null });
@@ -17,6 +19,18 @@ beforeEach(() => {
   });
 });
 describe("TV board financial read paths", () => {
+  it.each([false, true])("reads the unique linked sale and payment account (array relation: %s)", async (arrayRelation) => {
+    const sale = { id: "sale-1", sale_number: "V-0101", sale_payments: [{ method: "mp", amount: "104000.25" }] };
+    mocks.boards = [{ ...board, sales: arrayRelation ? [sale] : sale }];
+    expect((await getTvBoards())[0].linkedSale).toEqual({ id: "sale-1", number: "V-0101", method: "mp" });
+    expect(mocks.select).toHaveBeenCalledWith("tv_boards", expect.stringContaining("sales(id,sale_number,sale_payments(method,amount))"));
+  });
+  it("keeps legacy releases unlinked instead of inferring a sale or destination", async () => {
+    mocks.boards = [{ ...board, released_at: "2026-10-20", sales: [] }];
+    const row = (await getTvBoards())[0];
+    expect(row.linkedSale).toBeNull();
+    expect(row.saleStatus).toBe("released");
+  });
   it("filters pending and held independently of the estimated date", async () => {
     mocks.boards.push({ ...board, id: "b", claim_status: "open", claim_opened_at: "2026-10-20", financial_version: 2 });
     expect((await getTvBoards({ status: "pending_release" })).map(b => b.id)).toEqual(["a"]);

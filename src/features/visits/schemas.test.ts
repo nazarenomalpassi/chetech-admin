@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
 
-import { visitFormSchema } from "@/features/visits/schemas";
+import { parseVisitNotes, serializeVisitNotes, visitFormSchema } from "@/features/visits/schemas";
+
+describe("tools stored in existing visit notes", () => {
+  it("round trips the checklist without changing a byte of legacy notes", () => {
+    const notes = "  Tocar timbre\nNo retirar sin aviso  ";
+    const stored = serializeVisitNotes({ notes, toolsRequired: "yes", toolsDetail: "Escalera\nTester" });
+    expect(parseVisitNotes(stored)).toEqual({ notes, toolsRequired: "yes", toolsDetail: "Escalera\nTester" });
+    expect(serializeVisitNotes({ notes, toolsRequired: "", toolsDetail: "" })).toBe(notes);
+  });
+  it("does not interpret legacy prose or malformed metadata as a checklist", () => {
+    const notes = 'Herramientas: escalera\n[chetech:visit-tools:v1]\ninvalid';
+    expect(parseVisitNotes(notes)).toEqual({ notes, toolsRequired: "", toolsDetail: "" });
+  });
+  it("recovers the checklist when a technician appended a normal note after its metadata", () => {
+    const stored = serializeVisitNotes({ notes: "Tocar timbre", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
+    expect(parseVisitNotes(`${stored}\nRevision realizada`)).toEqual({ notes: "Tocar timbre\nRevision realizada", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
+  });
+});
 
 describe("visitFormSchema", () => {
   const base = { customerName: "Juan", customerPhone: "341", address: "Local", visitDate: "2026-10-05", timeFrom: "09:00", timeTo: "10:00", reason: "Revision" };

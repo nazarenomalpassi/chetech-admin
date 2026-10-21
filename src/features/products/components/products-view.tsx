@@ -46,7 +46,10 @@ export function ProductsView({
 
   const totalProducts = pagination.total;
   const activeProducts = products.filter((product) => product.isActive).length;
-  const lowStockProducts = products.filter((product) => (product.availableStock ?? product.stock) <= product.minStock).length;
+  const lowStockProducts = products.filter((product) => product.availableStock != null && product.availableStock <= product.minStock).length;
+  const unknownAvailability = products.filter((product) => product.availableStock == null).length;
+  const rangeStart = products.length ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
+  const rangeEnd = products.length ? rangeStart + products.length - 1 : 0;
 
   return (
     <div className="space-y-4">
@@ -54,7 +57,8 @@ export function ProductsView({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="panel-heading">Productos</h1>
-            <p className="mt-1 text-sm text-slate-600">{totalProducts} resultados. En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.</p>
+            <p aria-live="polite" className="mt-1 text-sm text-slate-600">Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos.</p>
+            <p className="mt-1 text-sm text-slate-500">En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.{unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}</p>
           </div>
 
           {canManage ? (

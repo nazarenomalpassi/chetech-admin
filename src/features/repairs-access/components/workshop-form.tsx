@@ -9,8 +9,9 @@ import type { WorkshopSaveResult } from "../workflow";
 
 type Fields = Record<string, string>;
 
-export function WorkshopForm({ orderId, orderVersion, children, action = saveWorkshopForm }: {
+export function WorkshopForm({ orderId, orderVersion, children, action = saveWorkshopForm, draftScope = "workshop" }: {
   orderId: string; orderVersion?: number;
+  draftScope?: "workshop" | "warranty-correction";
   children: ReactNode | ((fields: Fields, submitting: boolean) => ReactNode);
   action?: (previous: WorkshopSaveResult | null, form: FormData) => Promise<WorkshopSaveResult>;
 }) {
@@ -26,7 +27,7 @@ export function WorkshopForm({ orderId, orderVersion, children, action = saveWor
     catch { return { success: false, message: "No se pudo confirmar el guardado. Tus datos siguen disponibles; revisa la conexion y reintenta." }; }
   }, null);
   const draft = usePersistentFormDraft<Fields>({
-    draftKey: `repair-access:workshop:${orderId}`, isDirty: dirty, value: fields,
+    draftKey: `repair-access:${draftScope}:${orderId}`, isDirty: dirty, value: fields,
     onRestore: (saved) => {
       originalVersion.current = saved.expectedVersion ?? null;
       operation.current = saved.operationId && saved._requestFingerprint ? { id: saved.operationId, fingerprint: saved._requestFingerprint } : null;

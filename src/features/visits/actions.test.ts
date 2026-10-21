@@ -6,6 +6,7 @@ vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
 vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw new Error(decodeURIComponent(url)); } }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mocks.from }) }));
 import { deleteVisitAction, saveVisitAction, updateVisitStatusAction } from "./actions";
+import { parseVisitNotes, serializeVisitNotes } from "./schemas";
 const id = "11111111-1111-4111-8111-111111111111";
 function form(values: Record<string, string>) {
   const result = new FormData(); Object.entries(values).forEach(([key, value]) => result.set(key, value)); return result;
@@ -37,6 +38,69 @@ describe("visit server actions", () => {
   it("does not rewrite the original creator on edit", async () => {
     await expect(saveVisitAction(form({ ...valid, id, expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/visit_updated/);
     expect(mocks.update.mock.calls[0][0]).not.toHaveProperty("created_by");
+  });
+  it("leaves hidden legacy assignment, notes and REP columns untouched on a simple edit", async () => {
+    await expect(saveVisitAction(form({ ...valid, id, expectedUpdatedAt: "2026-10-05T10:00:00Z", status: "confirmada" }))).rejects.toThrow(/visit_updated/);
+    const payload = mocks.update.mock.calls[0][0];
+    for (const column of ["technician_id", "technician_name", "notes", "repair_access_order_id"]) expect(payload).not.toHaveProperty(column);
+    expect(payload).toMatchObject({ status: "confirmada", time_from: "09:00", time_to: "10:00" });
+  });
+  it("always creates visits pending, even if an old draft sends another state", async () => {
+    await expect(saveVisitAction(form({ ...valid, status: "realizada" }))).rejects.toThrow(/visit_created/);
+    expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({ status: "pendiente" }));
+  });
+  it("preserves exact legacy notes while adding a tool checklist", async () => {
+    const notes = "  Tocar timbre\nReferencia: patio  ";
+    await expect(saveVisitAction(form({ ...valid, notes, toolsRequired: "yes", toolsDetail: "Escalera" }))).rejects.toThrow(/visit_created/);
+    expect(mocks.insert.mock.calls[0][0].notes).toContain(notes);
+    expect(mocks.insert.mock.calls[0][0].notes).toContain("Escalera");
+  });
+  it("rejects tools without a checklist note rather than silently saving an incomplete request", async () => {
+    await expect(saveVisitAction(form({ ...valid, toolsRequired: "yes", toolsDetail: "" }))).rejects.toThrow(/herramientas/);
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+  it("keeps notes from the saved row when only the checklist is submitted on edit", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { notes: "No retirar equipo" }, error: null });
+    await expect(saveVisitAction(form({ ...valid, id, expectedUpdatedAt: "2026-10-05T10:00:00Z", toolsRequired: "no" }))).rejects.toThrow(/visit_updated/);
+    expect(mocks.update.mock.calls[0][0].notes).toContain("No retirar equipo");
+  });
+  it("rejects a combined checklist exceeding the existing notes column without truncation", async () => {
+    await expect(saveVisitAction(form({ ...valid, notes: "x".repeat(1950), toolsRequired: "yes", toolsDetail: "Escalera" }))).rejects.toThrow(/2000/);
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+  it("leaves notes untouched in quick state changes", async () => {
+    await expect(updateVisitStatusAction(form({ id, status: "realizada", expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/visit_status_updated/);
+    expect(mocks.update.mock.calls[0][0]).not.toHaveProperty("notes");
+  });
+  it("merges a technician's appended note with saved tools without rewriting hidden business fields", async () => {
+    const stored = serializeVisitNotes({ notes: "Tocar timbre", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
+    mocks.maybeSingle.mockResolvedValue({ data: { notes: stored, updated_at: "2026-10-05T10:00:00Z" }, error: null });
+    await expect(updateVisitStatusAction(form({ id, status: "realizada", expectedUpdatedAt: "2026-10-05T10:00:00Z", notes: `${stored}\nRevision realizada` }))).rejects.toThrow(/visit_status_updated/);
+    const payload = mocks.update.mock.calls[0][0];
+    expect(parseVisitNotes(payload.notes)).toEqual({ notes: "Tocar timbre\nRevision realizada", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
+    for (const key of ["technician_id", "technician_name", "repair_access_order_id", "visit_date", "time_from", "time_to"]) expect(payload).not.toHaveProperty(key);
+  });
+  it("keeps the saved checklist even when a technician clears all plain observations", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { notes: serializeVisitNotes({ notes: "Nota anterior", toolsRequired: "no", toolsDetail: "" }), updated_at: "2026-10-05T10:00:00Z" }, error: null });
+    await expect(updateVisitStatusAction(form({ id, status: "confirmada", notes: "", expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/visit_status_updated/);
+    expect(parseVisitNotes(mocks.update.mock.calls[0][0].notes)).toEqual({ notes: "", toolsRequired: "no", toolsDetail: "" });
+  });
+  it("does not erase a malformed legacy marker or treat technician text as a new checklist", async () => {
+    const notes = "  Herramientas: consultar\n\n[chetech:visit-tools:v1]\ninvalid\n[/chetech:visit-tools]\nTrabajo realizado  ";
+    mocks.maybeSingle.mockResolvedValue({ data: { notes, updated_at: "2026-10-05T10:00:00Z" }, error: null });
+    await expect(updateVisitStatusAction(form({ id, status: "realizada", notes, expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/visit_status_updated/);
+    expect(mocks.update.mock.calls[0][0].notes).toBe(notes);
+    expect(mocks.maybeSingle).toHaveBeenCalled();
+  });
+  it("refuses a notes edit if its saved checklist cannot be read at the expected version", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: null, error: null });
+    await expect(updateVisitStatusAction(form({ id, status: "realizada", notes: "Nuevo texto", expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/cambio/);
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+  it("rejects merged observations that exceed the existing limit without truncating the checklist", async () => {
+    mocks.maybeSingle.mockResolvedValue({ data: { notes: serializeVisitNotes({ notes: "", toolsRequired: "yes", toolsDetail: "Tester" }), updated_at: "2026-10-05T10:00:00Z" }, error: null });
+    await expect(updateVisitStatusAction(form({ id, status: "realizada", notes: "x".repeat(1950), expectedUpdatedAt: "2026-10-05T10:00:00Z" }))).rejects.toThrow(/2000/);
+    expect(mocks.update).not.toHaveBeenCalled();
   });
   it("resolves a human REP number before persisting the link", async () => {
     mocks.maybeSingle.mockResolvedValue({ data: { id }, error: null });

@@ -6,13 +6,13 @@ import { requireAdmin, requirePermission } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getFriendlyDatabaseError } from "@/lib/supabase/rpc-errors";
 import type { ActionResult } from "@/lib/form-state";
-import { repairAccessWorkshopSchema } from "./schemas";
+import { repairAccessWorkshopSchema, repairWarrantyFieldsSchema } from "./schemas";
 import type { WorkshopSaveResult } from "./workflow";
 
 const uuid = z.string().uuid("No se pudo identificar el registro.");
 const version = z.coerce.number().int().positive("Actualiza la orden antes de guardar.");
 const optionalText = (max = 2000) => z.string().max(max).default("");
-const decisionSchema = z.object({ id: uuid, version, operationId: uuid, decision: z.enum(["accepted", "rejected", "revoked"]), channel: z.enum(["presencial", "telefono", "whatsapp", "portal"]), notes: optionalText() });
+const decisionSchema = z.object({ id: uuid, version, operationId: uuid, decision: z.enum(["accepted", "rejected", "revoked"]), channel: z.enum(["registro", "presencial", "telefono", "whatsapp", "portal"]).default("registro"), notes: optionalText() });
 const partSchema = z.object({ id: uuid, operationId: uuid, description: z.string().trim().min(3, "Describe el repuesto.").max(500), quantity: z.coerce.number().int().min(1).max(10000), priority: z.enum(["normal", "alta", "urgente"]), notes: optionalText(), productId: uuid.or(z.literal("")).default(""), productSku: optionalText(100) });
 const managePartSchema = z.object({ id: uuid, version, action: z.enum(["order", "receive", "reserve", "install", "cancel"]), quantity: z.coerce.number().int().min(0).default(0), supplier: optionalText(200), unitCost: z.coerce.number().min(0).optional(), expectedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal("")), notes: optionalText() });
 
@@ -86,22 +86,28 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
   const operationId = uuid.safeParse(form.get("operationId"));
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   if (!expectedVersion.success || !operationId.success) return { success: false, message: "No se pudo preparar el guardado. Recarga la ficha conservando el borrador." };
-  const budgetResponse = ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
   const noFault = parsed.data.status === "no_presenta_fallas";
-  const confirmCustomer = !noFault && ((user.role === "admin" && budgetResponse) || form.get("confirmCustomer") === "on");
+  const confirmCustomer = !noFault && ((user.role === "admin" && parsed.data.status === "presupuestado_rechazado") || form.get("confirmCustomer") === "on");
   const hasAmount = !noFault && form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
   if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el importe del presupuesto antes de registrar la respuesta. Si es sin cargo, ingresa 0." };
   if (confirmCustomer && user.role !== "admin") return { success: false, message: "La confirmacion del cliente se registra desde la cuenta de administracion." };
-  const channel = confirmCustomer ? z.enum(["presencial", "telefono", "whatsapp", "portal"]).safeParse(form.get("decisionChannel")) : null;
+  const channel = confirmCustomer ? z.enum(["registro", "presencial", "telefono", "whatsapp", "portal"]).safeParse(form.get("decisionChannel") || "registro") : null;
   if (channel && !channel.success) return { success: false, message: "Selecciona como respondio el cliente." };
   const notes = optionalText().safeParse(noFault ? "" : String(form.get("decisionNotes") ?? ""));
   if (!notes.success) return { success: false, message: "La nota de la respuesta del cliente es demasiado larga." };
   const p = parsed.data;
+  const warranty = !noFault && form.get("warrantyIncluded") === "1" ? repairWarrantyFieldsSchema.safeParse({
+    hasWarranty: form.get("hasWarranty") === "on", warrantyDays: form.get("hasWarranty") === "on" ? form.get("warrantyDays") : 0,
+    warrantyConditions: String(form.get("warrantyConditions") ?? "")
+  }) : null;
+  if (warranty && !warranty.success) return { success: false, message: warranty.error.issues[0].message };
+  if (warranty?.success && user.role !== "admin") return { success: false, message: "La garantia se configura desde administracion." };
   const supabase = await createServerSupabaseClient();
   const result = await (supabase as any).rpc("workshop_save_quick", {
     p_order_id: p.id, p_expected_version: expectedVersion.data, p_operation_id: operationId.data,
     p_payload: {
       status: p.status,
+      ...(warranty?.success ? { has_warranty: warranty.data.hasWarranty, warranty_days: warranty.data.warrantyDays, warranty_conditions: warranty.data.warrantyConditions } : {}),
       ...(hasAmount ? { budget_amount: p.repairAmount } : {}),
       ...(!noFault && form.has("budgetDetail") ? { budget_detail: p.budgetDetail } : {}),
       ...(form.has("repairProgress") ? { repair_progress: p.repairProgress } : {}),
@@ -135,6 +141,7 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
 
 export async function confirmRepairCustomerDecision(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {
   await requireAdmin();
+  if (form.get("decision") === "accepted" && form.get("confirmCustomer") !== "on") return { success: false, message: 'Marca "El cliente confirmo este presupuesto" para registrar su autorizacion.' };
   const parsed = decisionSchema.safeParse(values(form));
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   const p = parsed.data;

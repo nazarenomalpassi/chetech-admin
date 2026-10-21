@@ -178,8 +178,9 @@ export type Database = {
           id: string;
           sale_number: string;
           subtotal: number;
-          cost_total: number;
-          profit_total: number;
+          cost_total: number | null;
+          profit_total: number | null;
+          tv_board_id: string | null;
           notes: string | null;
           sold_at: string;
           created_by: string | null;
@@ -190,8 +191,9 @@ export type Database = {
           id?: string;
           sale_number: string;
           subtotal: number;
-          cost_total: number;
-          profit_total: number;
+          cost_total: number | null;
+          profit_total: number | null;
+          tv_board_id?: string | null;
           notes?: string | null;
           sold_at?: string;
           created_by?: string | null;
@@ -200,8 +202,8 @@ export type Database = {
         };
         Update: {
           subtotal?: number;
-          cost_total?: number;
-          profit_total?: number;
+          cost_total?: number | null;
+          profit_total?: number | null;
           notes?: string | null;
           sold_at?: string;
           updated_at?: string;
@@ -211,25 +213,27 @@ export type Database = {
         Row: {
           id: string;
           sale_id: string;
-          product_id: string;
+          product_id: string | null;
+          description: string | null;
           quantity: number;
           unit_price: number;
-          unit_cost: number;
+          unit_cost: number | null;
           total: number;
         };
         Insert: {
           id?: string;
           sale_id: string;
-          product_id: string;
+          product_id: string | null;
+          description?: string | null;
           quantity: number;
           unit_price: number;
-          unit_cost: number;
+          unit_cost: number | null;
           total: number;
         };
         Update: {
           quantity?: number;
           unit_price?: number;
-          unit_cost?: number;
+          unit_cost?: number | null;
           total?: number;
         };
       };

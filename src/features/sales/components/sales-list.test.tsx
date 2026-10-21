@@ -9,6 +9,7 @@ vi.mock("@/components/ui/pagination-nav", () => ({ PaginationNav: () => null }))
 vi.mock("@/hooks/use-persistent-form-draft", () => ({ usePersistentFormDraft: () => ({ pendingDraft: null, lastSavedAt: null }) }));
 import { SalesList } from "./sales-list";
 import { deleteSaleAction } from "@/features/sales/actions";
+import { formatCurrency } from "@/lib/utils";
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const props = {
@@ -78,4 +79,38 @@ it("keeps deletion confirmation and the correct sale id inside the action menu",
   fireEvent.click(button);
   expect(confirm).toHaveBeenCalledWith("Eliminar la venta V-001? Esto restaura stock y borra el historial de cobro.");
   expect(deleteSaleAction).not.toHaveBeenCalled();
+});
+
+const boardSale = {
+  ...sale, id: "board-sale", tvBoardId: "board-1", saleNumber: "V-002", costTotal: null, profitTotal: null,
+  items: [{ productId: null, productName: "Placa Main LG Smart", quantity: 1, unitPrice: 120, total: 120 }]
+};
+
+it("shows board sales as immutable with a link to boards rather than edit or delete", () => {
+  render(<SalesList {...props} sales={[boardSale]} />);
+  expect(screen.getAllByText("Placa Main LG Smart x1")).toHaveLength(2);
+  expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Mas acciones" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Eliminar" })).toBeNull();
+  for (const link of screen.getAllByRole("link", { name: "Ver placa" })) expect(link.getAttribute("href")).toBe("/placas-tv");
+  expect(screen.getAllByText("Costo desconocido; margen no calculado")).toHaveLength(2);
+});
+
+it("totals only known margins and states how many sales were excluded", () => {
+  render(<SalesList {...props} sales={[sale, boardSale]} />);
+  const summary = screen.getByText(/En esta pagina:/);
+  expect(summary.textContent).toContain(`margen con costos conocidos ${formatCurrency(70)}`);
+  expect(screen.getByText(/1 venta\(s\) con costo desconocido, excluidas del margen/)).toBeTruthy();
+});
+
+it("keeps known zero board cost distinct from missing cost and protects known-cost board sales too", () => {
+  render(<SalesList {...props} sales={[{ ...boardSale, costTotal: 0, profitTotal: 120 }]} />);
+  expect(screen.queryByText("Costo desconocido; margen no calculado")).toBeNull();
+  expect(screen.getByText(/En esta pagina:/).textContent).toContain(`margen con costos conocidos ${formatCurrency(120)}`);
+  expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
+});
+
+it("never offers the product editor for a malformed row without a catalog product", () => {
+  render(<SalesList {...props} sales={[{ ...boardSale, tvBoardId: null }]} />);
+  expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
 });

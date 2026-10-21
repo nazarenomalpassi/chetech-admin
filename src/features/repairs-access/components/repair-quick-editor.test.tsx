@@ -19,6 +19,53 @@ const order = {
 } as unknown as RepairAccessOrderRecord;
 
 describe("editor unico de reparaciones", () => {
+  it("expone garantia y dias sin marcar garantia por defecto", () => {
+    render(<RepairQuickEditor order={order} canManage defaultWarrantyDays={90} />);
+    expect((screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked).toBe(false);
+    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
+    expect((screen.getByLabelText("Duracion de garantia en dias") as HTMLInputElement).value).toBe("90");
+    expect(screen.getByLabelText("Condiciones especiales de garantia")).toBeTruthy();
+  });
+  it("no pide donde ni como se confirmo el presupuesto", () => {
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.click(screen.getByLabelText("El cliente confirmo este presupuesto"));
+    expect(screen.queryByLabelText("Como confirmo")).toBeNull();
+    expect(screen.queryByLabelText("Como respondio el cliente")).toBeNull();
+  });
+  it("envia garantia, dias y condiciones en el guardado unico sin cambiar importe ni cobro", async () => {
+    mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
+    render(<RepairQuickEditor order={order} canManage defaultWarrantyDays={90} />);
+    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
+    fireEvent.change(screen.getByLabelText("Duracion de garantia en dias"), { target: { value: "30" } });
+    fireEvent.change(screen.getByLabelText("Condiciones especiales de garantia"), { target: { value: "Fuente reparada" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
+    const data = mocks.save.mock.calls[0][1] as FormData;
+    expect(data.get("warrantyIncluded")).toBe("1"); expect(data.get("hasWarranty")).toBe("on");
+    expect(data.get("warrantyDays")).toBe("30"); expect(data.get("warrantyConditions")).toBe("Fuente reparada");
+    expect(data.has("isPaid")).toBe(false); expect(data.has("confirmCustomer")).toBe(false);
+  });
+  it("no pierde un cambio de garantia al elegir retiro", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "listo_para_retirar", isPaid: true }} canManage defaultWarrantyDays={90} />);
+    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    expect((screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled).toBe(true);
+  });
+  it("una orden entregada ofrece solo correccion explicita de garantia sin reabrir trabajo", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "retirado", pickedUpAt: "2026-10-01T12:00:00Z", deliveredAt: "2026-10-01T12:00:00Z" }} canManage />);
+    expect(screen.getByLabelText("Esta reparacion tiene garantia")).toBeTruthy();
+    expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
+    expect((screen.getByLabelText("Confirmo la correccion desde el retiro original") as HTMLInputElement).checked).toBe(false);
+    expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+  });
+  it("no ofrece recuperar un borrador de trabajo anterior en la correccion de una orden entregada", async () => {
+    localStorage.setItem(getFormDraftStorageKey(`repair-access:workshop:${order.id}`), JSON.stringify(createFormDraftEnvelope({
+      expectedVersion: "1", repairAmount: "100", status: "retirado", hasWarranty: "", confirmDelivery: "on"
+    })));
+    render(<RepairQuickEditor order={{ ...order, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z", pickedUpAt: "2026-10-01T12:00:00Z" }} canManage />);
+    await waitFor(() => expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy());
+    expect(screen.queryByRole("button", { name: "Recuperar" })).toBeNull();
+  });
   it.each([false, true])("guarda no presenta fallas sin enviar presupuesto ni aprobacion (admin=%s)", async (canManage) => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
     render(<RepairQuickEditor order={order} canManage={canManage} />);
@@ -165,13 +212,14 @@ describe("editor unico de reparaciones", () => {
     expect(Array.from(select.options).map((option) => option.value)).toContain(status);
     fireEvent.change(select, { target: { value: status } });
     expect(select.value).toBe(status);
-    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
-    expect(screen.getByLabelText("Como respondio el cliente")).toBeTruthy();
+    if (status === "presupuestado_aceptado") fireEvent.click(screen.getByLabelText("El cliente confirmo este presupuesto"));
+    else expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.queryByLabelText("Como respondio el cliente")).toBeNull();
     fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
     await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
     const data = mocks.save.mock.calls[0][1] as FormData;
     expect(data.get("status")).toBe(status);
-    expect(data.get("decisionChannel")).toBe("presencial");
+    expect(data.has("decisionChannel")).toBe(false);
   });
   it("no ofrece decisiones del cliente como nuevos estados a la cuenta tecnica", () => {
     render(<RepairQuickEditor order={order} canManage={false} />);
@@ -190,7 +238,7 @@ describe("editor unico de reparaciones", () => {
     expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("0");
     expect(screen.queryByLabelText("Motivo del trabajo sin cargo")).toBeNull();
     expect(screen.queryByLabelText("Nota de confirmacion (opcional)")).toBeNull();
-    expect(screen.getByText("La aceptacion de este presupuesto ya esta registrada.")).toBeTruthy();
+    expect(screen.getByText(/La aceptacion de este presupuesto ya esta registrada/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Avance / trabajo realizado"), { target: { value: "Nota sin cambiar autorizacion" } });
     fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
     await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
@@ -216,7 +264,7 @@ describe("editor unico de reparaciones", () => {
     expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("150");
     expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(true);
     expect((screen.getByLabelText("Equipo probado y funcionando") as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByLabelText("Como confirmo") as HTMLSelectElement).value).toBe("telefono");
+    expect(screen.queryByLabelText("Como confirmo")).toBeNull();
   });
   it("permite guardar presupuesto, confirmacion y listo en un solo formulario", async () => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
@@ -232,7 +280,7 @@ describe("editor unico de reparaciones", () => {
     expect(payload.get("confirmCustomer")).toBe("on");
     expect(payload.get("qualityChecked")).toBe("on");
     expect(payload.get("status")).toBe("listo_para_retirar");
-    expect(payload.get("decisionChannel")).toBe("presencial");
+    expect(payload.has("decisionChannel")).toBe(false);
     expect(payload.get("operationId")).toBeTruthy();
   });
   it("no ofrece confirmar al cliente desde una cuenta tecnica", () => {
@@ -257,7 +305,7 @@ describe("editor unico de reparaciones", () => {
   it("desmarca la confirmacion cuando se modifica el detalle despues de haberla elegido", () => {
     render(<RepairQuickEditor order={order} canManage />);
     fireEvent.click(screen.getByLabelText("El cliente confirmo este presupuesto"));
-    expect(screen.getByLabelText("Como confirmo")).toBeTruthy();
+    expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(true);
     fireEvent.change(screen.getByLabelText("Detalle del presupuesto"), { target: { value: "Otro alcance" } });
     expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(false);
     expect(screen.queryByLabelText("Como confirmo")).toBeNull();

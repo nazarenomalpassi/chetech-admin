@@ -122,6 +122,11 @@ export async function saveSaleAction(formData: FormData) {
   const supabase = await createServerSupabaseClient();
   const input = parsed.data;
   const user = await requireAdmin();
+  if (input.id) {
+    const { data: origin, error } = await (supabase as any).from("sales").select("tv_board_id").eq("id", input.id).maybeSingle();
+    if (error) redirectWithError("No se pudo verificar el origen de la venta. Reintenta.", input.id);
+    if (origin?.tv_board_id) redirectWithError("Esta venta proviene de una liberacion de placa y no se modifica por separado.");
+  }
   const subtotal = input.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const paymentTotal = getPaymentTotal(input.payments);
   const paymentErrorMessage = getSaleValidationError({
@@ -333,6 +338,10 @@ export async function deleteSaleAction(formData: FormData) {
   const id = z.string().uuid().parse(formData.get("id"));
   const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
+
+  const { data: origin, error: originError } = await (supabase as any).from("sales").select("tv_board_id").eq("id", id).maybeSingle();
+  if (originError) redirectWithError("No se pudo verificar el origen de la venta. Reintenta.");
+  if (origin?.tv_board_id) redirectWithError("Esta venta proviene de una liberacion de placa y conserva su registro financiero.");
 
   const atomicResult = await (supabase as any).rpc("delete_sale_atomic", { p_sale_id: id });
   if (!atomicResult.error && atomicResult.data?.id) {

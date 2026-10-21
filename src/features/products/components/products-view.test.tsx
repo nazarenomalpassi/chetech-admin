@@ -12,6 +12,15 @@ afterEach(cleanup);
 const product = { id: "1", sku: "CAB-001", name: "Cable", category: "Cables", categoryId: "cat", cost: 4, salePrice: 10, stock: 7, reservedStock: 3, availableStock: 4, minStock: 1, isActive: true, notes: "Notes" };
 const props = { canManage: true, categories: [], products: [product], pagination: { page: 2, pageSize: 25, total: 60, totalPages: 3, hasPreviousPage: true, hasNextPage: true }, filterParams: {} };
 describe("paged products dialog integration", () => {
+  it("distinguishes the visible range from the filtered catalogue count", () => {
+    render(<ProductsView {...props} />);
+    expect(screen.getByText(/Mostrando 26 a 26 de 60 productos/)).toBeTruthy();
+  });
+  it("does not count unknown availability as confirmed low stock", () => {
+    render(<ProductsView {...props} products={[{ ...product, stock: 0, availableStock: null, reservedStock: null }]} />);
+    expect(screen.getByText(/0 con stock bajo/)).toBeTruthy();
+    expect(screen.getByText(/1 sin disponibilidad confirmada/)).toBeTruthy();
+  });
   it("does not turn an open edit into a new product after page revalidation", () => {
     const { rerender } = render(<ProductsView {...props} />);
     fireEvent.click(screen.getByText("Editar seleccionado"));

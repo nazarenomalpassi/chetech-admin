@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarRange, Trash2 } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
@@ -37,7 +38,7 @@ type CartItem = {
 };
 
 type SaleItem = {
-  productId: string;
+  productId: string | null;
   productName?: string;
   quantity: number;
   unitPrice: number;
@@ -46,10 +47,11 @@ type SaleItem = {
 
 type Sale = {
   id: string;
+  tvBoardId?: string | null;
   saleNumber: string;
   subtotal: number;
-  costTotal: number;
-  profitTotal: number;
+  costTotal: number | null;
+  profitTotal: number | null;
   soldAt: string;
   notes: string;
   payments: { method: string; amount: number }[];
@@ -67,6 +69,10 @@ type SaleDraft = {
   payments: PaymentSplit[];
   notes: string;
 };
+
+function isImmutableSale(sale: Sale) {
+  return Boolean(sale.tvBoardId) || sale.items.some((item) => !item.productId);
+}
 
 export function SalesList({
   canManageHistory,
@@ -99,7 +105,8 @@ export function SalesList({
   const selectedProduct = products.find((product) => product.id === productId);
   const cartTotal = cart.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const totalRevenue = sales.reduce((acc, sale) => acc + sale.subtotal, 0);
-  const totalProfit = sales.reduce((acc, sale) => acc + sale.profitTotal, 0);
+  const incompleteCostCount = sales.filter((sale) => sale.costTotal == null || sale.profitTotal == null).length;
+  const totalProfit = sales.reduce((acc, sale) => acc + (sale.costTotal == null ? 0 : sale.profitTotal ?? 0), 0);
 
   const filteredProducts = useMemo(() => {
     const query = productSearch.trim().toLowerCase();
@@ -121,6 +128,7 @@ export function SalesList({
   const paymentsJson = JSON.stringify(payments);
   const hasUnsavedChanges = Boolean(editing || cart.length || notes.trim());
   const restoreSaleDraft = useCallback((saved: SaleDraft) => {
+    if (saved.editing && isImmutableSale(saved.editing)) return;
     setEditing(saved.editing);
     setSaleDate(saved.saleDate);
     setProductId(saved.productId);
@@ -195,19 +203,21 @@ export function SalesList({
   }
 
   function startEdit(sale: Sale) {
+    if (isImmutableSale(sale)) return;
+    const nextCart: CartItem[] = [];
+    for (const item of sale.items) {
+      if (!item.productId) return;
+      const product = products.find((option) => option.id === item.productId);
+      nextCart.push({
+        productId: item.productId,
+        label: product?.label ?? item.productName ?? "Producto sin nombre",
+        stock: product?.stock ?? 0,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice
+      });
+    }
     setEditing(sale);
-    setCart(
-      sale.items.map((item) => {
-        const product = products.find((option) => option.id === item.productId);
-        return {
-          productId: item.productId,
-          label: product?.label ?? item.productName ?? "Producto sin nombre",
-          stock: product?.stock ?? 0,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice
-        };
-      })
-    );
+    setCart(nextCart);
     setProductId("");
     setProductSearch("");
     setQuantity(1);
@@ -495,7 +505,8 @@ export function SalesList({
       <div className="table-shell">
         <div className="space-y-2 border-b border-graphite/8 px-4 py-3">
           <h2 className="text-base font-semibold text-slate-950">Historial de ventas</h2>
-          <p className="text-sm text-slate-600">En esta pagina: ventas {formatCurrency(totalRevenue)}, margen de productos {formatCurrency(totalProfit)}. No es utilidad neta del local.</p>
+          <p className="text-sm text-slate-600">En esta pagina: ventas {formatCurrency(totalRevenue)}, margen con costos conocidos {formatCurrency(totalProfit)}. No es utilidad neta del local.</p>
+          {incompleteCostCount ? <p className="text-sm text-slate-600">{incompleteCostCount} venta(s) con costo desconocido, excluidas del margen.</p> : null}
         </div>
         <div className="divide-y divide-slate-200 xl:hidden">
           {sales.map((sale) => (
@@ -513,8 +524,11 @@ export function SalesList({
                   : "Sin producto vinculado"}
               </p>
               <p className="mt-2 text-sm leading-5 text-slate-500">{renderPaymentSummary(sale)}</p>
+              {sale.costTotal == null || sale.profitTotal == null ? <p className="mt-2 text-sm text-slate-600">Costo desconocido; margen no calculado</p> : null}
               <div className="mt-3 flex flex-wrap gap-2">
-                {canManageHistory ? (
+                {sale.tvBoardId ? (
+                  <Link className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-graphite underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite" href="/placas-tv">Ver placa</Link>
+                ) : canManageHistory && !isImmutableSale(sale) ? (
                   <>
                     <Button onClick={() => startEdit(sale)} type="button" variant="secondary">
                       Editar
@@ -569,11 +583,16 @@ export function SalesList({
                       : "Sin producto vinculado"}
                   </td>
                   <td className="px-4 py-3 text-slate-600">{formatDate(sale.soldAt)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-950">{formatCurrency(sale.subtotal)}</td>
+                  <td className="px-4 py-3 font-medium text-slate-950">
+                    {formatCurrency(sale.subtotal)}
+                    {sale.costTotal == null || sale.profitTotal == null ? <p className="mt-1 text-sm font-normal text-slate-600">Costo desconocido; margen no calculado</p> : null}
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{renderPaymentSummary(sale)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
-                      {canManageHistory ? (
+                      {sale.tvBoardId ? (
+                        <Link className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-graphite underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite" href="/placas-tv">Ver placa</Link>
+                      ) : canManageHistory && !isImmutableSale(sale) ? (
                         <>
                           <Button onClick={() => startEdit(sale)} size="sm" type="button" variant="secondary">
                             Editar

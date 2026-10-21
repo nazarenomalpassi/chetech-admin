@@ -43,12 +43,14 @@ export function RepairAccessWorkshopCard({
   order,
   technicians,
   canManageIntake,
+  defaultWarrantyDays,
   onEdit,
   onOpenDetail
 }: {
   order: RepairAccessOrderRecord;
   technicians?: WorkshopTechnician[];
   canManageIntake: boolean;
+  defaultWarrantyDays?: number;
   onEdit: (order: RepairAccessOrderRecord) => void;
   onOpenDetail: (order: RepairAccessOrderRecord) => void;
 }) {
@@ -111,18 +113,18 @@ export function RepairAccessWorkshopCard({
           ) : null}
         </div>
 
-        {!delivered ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
+        {!delivered || (canManageIntake && order.workflow) ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
           summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
           summary={<>
             <span className="flex items-center gap-2">
               <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
-              Actualizar trabajo
+              {delivered ? "Corregir garantia" : "Actualizar trabajo"}
             </span>
             <ChevronDown aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
           </>}
         >
 
-          {order.workflow ? <RepairQuickEditor order={order} canManage={canManageIntake} /> : <WorkshopCardForm order={order}>
+          {order.workflow ? <RepairQuickEditor order={order} canManage={canManageIntake} defaultWarrantyDays={defaultWarrantyDays} /> : <WorkshopCardForm order={order}>
             <input name="id" type="hidden" value={order.id} />
 
             <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={canManageIntake} />

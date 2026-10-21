@@ -117,7 +117,7 @@ export async function getInvoiceFormOptions(selectedPrimaryOrderId?: string) {
     applyStableCreationOrder(
       (supabase as any)
         .from("sales")
-        .select("id, sale_number, subtotal, notes, sold_at, created_at, cliente_id, clientes(nombre, telefono), sale_items(id, product_id, quantity, unit_price, total, products(name, sku))")
+        .select("id, sale_number, subtotal, notes, sold_at, created_at, cliente_id, clientes(nombre, telefono), sale_items(id, product_id, description, quantity, unit_price, total, products(name, sku))")
     )
       .limit(150),
     (supabase as any)

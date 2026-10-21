@@ -8,7 +8,7 @@ import { z } from "zod";
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin, requirePermission } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { visitFormSchema, visitStatusSchema } from "@/features/visits/schemas";
+import { parseVisitNotes, serializeVisitNotes, visitFormSchema, visitStatusSchema } from "@/features/visits/schemas";
 
 function getSafeVisitsRedirectPath(value: FormDataEntryValue | null | undefined) {
   if (typeof value === "string" && value.startsWith("/visitas")) {
@@ -51,7 +51,9 @@ export async function saveVisitAction(formData: FormData) {
     technicianId: formData.get("technicianId"),
     repairAccessOrderId: formData.get("repairAccessOrderId"),
     reason: formData.get("reason"),
-    notes: formData.get("notes") || undefined,
+    notes: formData.get("notes") ?? undefined,
+    toolsRequired: formData.get("toolsRequired") ?? undefined,
+    toolsDetail: formData.get("toolsDetail") ?? undefined,
     status: formData.get("status") || undefined
   });
 
@@ -90,6 +92,16 @@ export async function saveVisitAction(formData: FormData) {
     }
     technicianName = technician.full_name;
   }
+  let notes = parsed.data.notes;
+  if (formData.has("toolsRequired")) {
+    if (parsed.data.id && notes === undefined) {
+      const existing = await (supabase as any).from("visits").select("notes").eq("id", parsed.data.id).eq("updated_at", parsed.data.expectedUpdatedAt).maybeSingle();
+      if (existing.error || !existing.data) redirectWithError("La visita cambio. Revisa el borrador antes de guardar las herramientas.", formData.get("returnTo"));
+      notes = parseVisitNotes(existing.data.notes ?? "").notes;
+    }
+    notes = serializeVisitNotes({ notes: notes ?? "", toolsRequired: parsed.data.toolsRequired, toolsDetail: parsed.data.toolsDetail });
+    if (notes.length > 2000) redirectWithError("Las observaciones y herramientas superan 2000 caracteres. No se guardaron cambios.", formData.get("returnTo"));
+  }
   const payload = {
     customer_name: parsed.data.customerName,
     customer_phone: parsed.data.customerPhone,
@@ -97,12 +109,11 @@ export async function saveVisitAction(formData: FormData) {
     visit_date: parsed.data.visitDate,
     time_from: parsed.data.timeFrom,
     time_to: parsed.data.timeTo,
-    technician_id: parsed.data.technicianId,
-    technician_name: technicianName,
-    repair_access_order_id: repairAccessOrderId,
+    ...(!parsed.data.id || formData.has("technicianId") ? { technician_id: parsed.data.technicianId, technician_name: technicianName } : {}),
+    ...(!parsed.data.id || formData.has("repairNumber") || formData.has("repairAccessOrderId") ? { repair_access_order_id: repairAccessOrderId } : {}),
     reason: parsed.data.reason,
-    notes: parsed.data.notes?.trim() ? parsed.data.notes.trim() : null,
-    status: parsed.data.status,
+    ...(notes !== undefined || !parsed.data.id ? { notes: notes || null } : {}),
+    ...(!parsed.data.id ? { status: "pendiente" } : formData.has("status") ? { status: parsed.data.status } : {}),
     ...(!parsed.data.id ? { created_by: user.id } : {}),
     ...(operationId ? { client_operation_id: operationId } : {}),
     updated_at: new Date().toISOString()
@@ -119,7 +130,7 @@ export async function saveVisitAction(formData: FormData) {
     }
     const message =
       error?.code === "23P01"
-        ? "El tecnico ya tiene una visita que se superpone con ese horario. Elegi otro horario o responsable."
+        ? "La asignacion existente se superpone con otra visita. Elegi otro horario."
         : error?.code === "42P01" || error?.code === "42703"
         ? "Falta ejecutar la migracion de Visitas en Supabase antes de usar este modulo."
         : error?.code === "PGRST116" ? "La visita cambio. No se sobrescribio; recupera y revisa el borrador local."
@@ -155,10 +166,23 @@ export async function updateVisitStatusAction(formData: FormData) {
 
   const user = await requirePermission("visits.update");
   const supabase = await createServerSupabaseClient();
+  let notes = parsed.data.notes;
+  let expectedUpdatedAt = parsed.data.expectedUpdatedAt;
+  if (notes !== undefined) {
+    let savedQuery = (supabase as any).from("visits").select("notes, updated_at").eq("id", parsed.data.id);
+    if (expectedUpdatedAt) savedQuery = savedQuery.eq("updated_at", expectedUpdatedAt);
+    const saved = await savedQuery.maybeSingle();
+    if (saved.error || !saved.data) redirectWithError("La visita cambio o no se pudo leer. No se sobrescribieron las observaciones ni las herramientas.", formData.get("returnTo"));
+    expectedUpdatedAt ??= saved.data.updated_at;
+    if (!expectedUpdatedAt) redirectWithError("Actualiza la visita antes de editar las observaciones.", formData.get("returnTo"));
+    // Status/notes editors cannot replace the saved tool checklist, including old raw drafts.
+    notes = serializeVisitNotes({ ...parseVisitNotes(saved.data.notes ?? ""), notes: parseVisitNotes(notes).notes });
+    if (notes.length > 2000) redirectWithError("Las observaciones y herramientas superan 2000 caracteres. No se guardaron cambios.", formData.get("returnTo"));
+  }
   const payload = {
     status: parsed.data.status,
-    ...(parsed.data.notes !== undefined
-      ? { notes: parsed.data.notes.trim() || null }
+    ...(notes !== undefined
+      ? { notes: notes || null }
       : {}),
     updated_at: new Date().toISOString()
   };
@@ -166,7 +190,7 @@ export async function updateVisitStatusAction(formData: FormData) {
     .from("visits")
     .update(payload)
     .eq("id", parsed.data.id);
-  if (parsed.data.expectedUpdatedAt) query = query.eq("updated_at", parsed.data.expectedUpdatedAt);
+  if (expectedUpdatedAt) query = query.eq("updated_at", expectedUpdatedAt);
   const { data: updated, error } = await query.select("id").single();
 
   if (error || !updated) {

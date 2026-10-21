@@ -227,7 +227,7 @@ export function RepairAccessOrderDetail({
             {advanced ? "Volver al editor simple" : "Mas campos administrativos"}
           </Button>
         </div>
-        {!advanced ? <RepairQuickEditor order={order} canManage /> : <p className="mt-3 text-sm text-slate-500">El formulario administrativo esta debajo de los datos del equipo.</p>}
+        {!advanced || order.deliveredAt || order.status === "retirado" ? <RepairQuickEditor order={order} canManage defaultWarrantyDays={defaultWarrantyDays} /> : <p className="mt-3 text-sm text-slate-500">El formulario administrativo esta debajo de los datos del equipo.</p>}
       </Card> : null}
         <div className="min-w-0 space-y-4">
           <OrderCoordinationPanel order={order} canManage technicians={technicians} />
@@ -414,6 +414,7 @@ export function RepairAccessOrderDetail({
                 </label>
                 <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
                   <input
+                    disabled={Boolean(order.workflow && (order.deliveredAt || order.status === "retirado"))}
                     checked={hasWarranty}
                     name="hasWarranty"
                     onChange={(event) => {
@@ -428,7 +429,7 @@ export function RepairAccessOrderDetail({
                 </label>
                 <Field className="lg:col-span-2" label="Duracion de garantia en dias">
                   <Input
-                    disabled={!hasWarranty}
+                    disabled={!hasWarranty || Boolean(order.workflow && (order.deliveredAt || order.status === "retirado"))}
                     min={0}
                     name="warrantyDays"
                     onChange={(event) => setWarrantyDays(event.target.value)}
@@ -480,11 +481,13 @@ export function RepairAccessOrderDetail({
 
             <div className="flex justify-end lg:col-span-6">
               <FormSubmitButton
+                disabled={Boolean(order.workflow && (order.deliveredAt || order.status === "retirado"))}
                 className="w-full sm:w-auto"
                 idleLabel="Guardar seguimiento técnico"
                 pendingLabel="Guardando seguimiento..."
               />
             </div>
+            {order.workflow && (order.deliveredAt || order.status === "retirado") ? <p className="text-sm text-slate-600 lg:col-span-6">La orden original esta cerrada. Usa la correccion de garantia de arriba o registra un reingreso en esta misma REP.</p> : null}
             {draft.lastSavedAt && hasUnsavedChanges ? (
               <p aria-live="polite" className="text-right text-xs text-slate-500 lg:col-span-6">
                 Borrador técnico guardado en este dispositivo.

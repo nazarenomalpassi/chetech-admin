@@ -2,17 +2,20 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { BusinessChart } from "@/features/reports/components/business-chart";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { workshopCategoryHref, type WorkshopBusinessReportResult, type WorkshopCategory } from "../model";
 
 const numberFormat = new Intl.NumberFormat("es-AR", { maximumFractionDigits: 2 });
 const days = (value: number | null) => value === null ? "Sin datos" : `${numberFormat.format(value)} dias`;
-const money = (value: number | null) => value === null ? "Datos incompletos" : formatCurrency(value);
+const money = (value: number | null) => value === null ? "Por determinar" : formatCurrency(value);
 
-function Metric({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <Card role="group" aria-label={label} className="min-w-0 space-y-2">
+function Metric({ label, value, detail, tone = "neutral" }: { label: string; value: string; detail: string; tone?: "income" | "expense" | "pending" | "neutral" }) {
+  const tones = { income: "border-t-emerald-600 bg-finance-profitSoft/50", expense: "border-t-rose-600 bg-finance-expenseSoft/50", pending: "border-t-amber-600 bg-finance-cautionSoft/50", neutral: "border-t-sky-700 bg-sky-50/40" };
+  const textTones = { income: "text-finance-profit", expense: "text-finance-expense", pending: "text-finance-caution", neutral: "text-slate-950" };
+  return <Card role="group" aria-label={label} className={cn("min-w-0 space-y-2 border-t-2", tones[tone])}>
     <p className="text-sm font-medium text-slate-600">{label}</p>
-    <p className="break-words text-2xl font-semibold tracking-tight text-slate-950 tabular-nums">{value}</p>
+    <p className={cn("break-words text-2xl font-semibold tracking-tight tabular-nums", textTones[tone])}>{value}</p>
     <p className="text-xs leading-relaxed text-slate-600">{detail}</p>
   </Card>;
 }
@@ -49,19 +52,25 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
 
       {!report || !totals ? <Card role="status" className="border-amber-200"><p>Informe no disponible: falta habilitar la migracion de lectura de negocio del taller. No se muestran totales ficticios.</p></Card> : <>
         {totals.orders === 0 && <Card role="status">No hay ordenes ingresadas en este rango.</Card>}
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          <Metric label="Ordenes ingresadas" value={numberFormat.format(totals.orders)} detail={`${totals.activeCustody} siguen en custodia. Agregado completo, sin limite de filas.`} />
-          <Metric label="Cobrado real" value={money(totals.collected)} detail="Pagos nativos e historicos efectivos, incluidos parciales. Sin duplicar sus espejos ni sumar comprobantes." />
-          <Metric label="Saldo pendiente de estas ordenes" value={money(totals.debt)} detail={totals.unknownChargeOrders > 0 ? `Subtotal conocido: ${money(totals.knownDebtSubtotal)}. ${totals.unknownChargeOrders} ordenes sin importe a cobrar definido.` : `Importe a cobrar menos pagos por orden. Credito conocido a favor: ${money(totals.knownCreditSubtotal)}.`} />
-          <Metric label="Costo directo registrado" value={money(totals.directCost)} detail={`Subtotal registrado: ${money(totals.knownDirectCostSubtotal)}. ${totals.unknownCostOrders} ordenes con costos incompletos o ambiguos.`} />
-          <Metric label="Margen directo registrado" value={money(totals.directMargin)} detail={`Subtotal de ordenes con importe y costos conocidos: ${money(totals.knownDirectMarginSubtotal)}. No es utilidad neta: excluye mano de obra y gastos generales.`} />
-          <Metric label="Aceptacion vigente" value={totals.acceptanceRate === null ? "Sin decisiones" : `${numberFormat.format(totals.acceptanceRate)}%`} detail={`${totals.acceptedCurrent} aceptadas / ${totals.rejectedCurrent} rechazadas con evidencia de la version actual. Denominador: esas decisiones vigentes, no todas las ordenes.`} />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <Metric label="Cobrado real" value={money(totals.collected)} tone="income" detail="Pagos efectivos de estas ordenes, incluidos parciales. No suma comprobantes ni duplica sus espejos." />
+          <Metric label="Pendiente conocido" value={money(totals.debt ?? totals.knownDebtSubtotal)} tone="pending" detail={totals.debt === null ? `Subtotal parcial. ${totals.unknownChargeOrders} ordenes sin importe a cobrar definido; no representa toda la deuda.` : `Importe exigible menos pagos por orden. Credito conocido a favor: ${money(totals.knownCreditSubtotal)}.`} />
+          <Metric label="Costo directo registrado" value={money(totals.directCost)} tone={totals.directCost === null ? "neutral" : "expense"} detail={totals.directCost === null ? `${totals.unknownCostOrders} ordenes requieren completar costos. Registrado conocido: ${money(totals.knownDirectCostSubtotal)}; no es el costo total.` : "Repuestos consumidos y terceros con costo real. No vuelve a sumar compras vinculadas."} />
+          <Metric label="Margen directo registrado" value={money(totals.directMargin)} tone={totals.directMargin === null ? "neutral" : totals.directMargin < 0 ? "expense" : "income"} detail="Importe exigible menos costo directo completo. No es utilidad neta: excluye mano de obra y gastos generales." />
         </div>
 
+        <BusinessChart title="Cobros, cargos y costos de la cohorte" description="Importes independientes, no sumables. Cobrado: pagos reales de toda la historia de las ordenes ingresadas en el rango. Exigible y pendiente: solo importes conocidos; no son ingresos adicionales." rows={[
+          { label: "Cobrado real", value: totals.collected, tone: "income" },
+          { label: "Exigible conocido", value: totals.knownChargeSubtotal, tone: "service" },
+          { label: totals.debt === null ? "Pendiente parcial" : "Pendiente", value: totals.debt ?? totals.knownDebtSubtotal, tone: "pending" },
+          { label: "Costo directo total", value: totals.directCost, tone: "expense" },
+          { label: "Margen directo total", value: totals.directMargin, tone: "margin" }
+        ]} />
+
         <Card className="space-y-4">
-          <div><h3 className="text-lg font-semibold">Pendientes de estas ordenes</h3><p className="mt-1 text-sm text-slate-600">Los números corresponden al rango de ingreso. Los enlaces abren las colas actuales completas del taller.</p></div>
+          <div><h3 className="text-lg font-semibold">Pendientes de estas ordenes</h3><p className="mt-1 text-sm text-slate-600">{totals.orders} ordenes ingresadas; {totals.activeCustody} siguen en custodia. Las colas pueden superponerse: no se suman. Los enlaces abren las colas actuales completas del taller.</p></div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-            {categories.map(({ key, label }) => <Link key={key} href={workshopCategoryHref(key)} className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-800 transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600">
+            {categories.map(({ key, label }) => <Link key={key} href={workshopCategoryHref(key)} className={cn("rounded-xl border p-4 text-slate-800 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600", key === "ready" ? "border-emerald-200 bg-emerald-50" : key === "parts" || key === "return" ? "border-amber-200 bg-amber-50" : "border-sky-200 bg-sky-50")}>
               <p className="text-xs font-medium">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{report.categories[key]}</p><p className="mt-2 text-xs underline">Ver cola actual completa</p>
             </Link>)}
           </div>
@@ -99,9 +108,16 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
           </div>
         </Card>
 
-        <Card className="space-y-3">
-          <h3 className="text-lg font-semibold">Calidad de los datos</h3>
+        <Card className="p-0 sm:p-0">
+          <details>
+          <summary className="min-h-14 cursor-pointer rounded-xl p-4 text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-600">
+            <span className="font-semibold">Calidad y alcance de los datos</span>
+            <span className="mt-1 block text-sm text-slate-600">{totals.unknownCostOrders} ordenes con costos por completar; {totals.unknownChargeOrders} sin importe definido. Ver evidencia y reglas.</span>
+          </summary>
+          <div className="space-y-3 border-t border-slate-200 p-4 sm:p-5">
           <p className="text-sm text-slate-700">{totals.staleAcceptanceOrders} aceptaciones sin evidencia vigente; {totals.paidFlagWithoutPaymentsOrders} marcas de pagado sin registros de pago; {totals.unknownCostOrders} ordenes con costo incompleto. No se corrigen saldos ni historia desde este informe.</p>
+          <p className="text-sm text-slate-700">Deuda total: {money(totals.debt)}. Margen conocido parcial: {money(totals.knownDirectMarginSubtotal)}; solo ordenes con importe y costos conocidos. Nunca se extrapola a las demas ordenes.</p>
+          <p className="text-sm text-slate-700">Aceptacion vigente: {totals.acceptanceRate === null ? "Sin decisiones" : `${numberFormat.format(totals.acceptanceRate)}%`}; {totals.acceptedCurrent} aceptadas / {totals.rejectedCurrent} rechazadas con evidencia de la version actual. Denominador: esas decisiones vigentes, no todas las ordenes.</p>
           <details className="rounded-2xl border border-slate-200 bg-white/70 p-4">
             <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600">Fuentes y reglas de calculo</summary>
             <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">
@@ -111,6 +127,8 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
               <p>Deuda: monto final distinto de cero, o presupuesto vigente aceptado con evidencia, o precio final historico unico, menos cobros reales por orden, con piso cero. El cero por defecto del monto final no oculta un presupuesto aceptado ni prueba que el servicio sea gratuito. Un presupuesto gratuito aceptado conserva el cero; uno pendiente no genera deuda conocida. Credito conocido: {money(totals.knownCreditSubtotal)}. Una marca de pagado o un comprobante no es un pago.</p>
               <p>Margen directo: importe exigible menos costos directos registrados. No es resultado de caja ni utilidad neta. La falta de costo estructurado en historia importada o notas de repuestos tambien se advierte; no se inventa un costo historico.</p>
             </div>
+          </details>
+          </div>
           </details>
         </Card>
       </>}
