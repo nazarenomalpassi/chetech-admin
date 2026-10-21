@@ -46,10 +46,17 @@ async function main() {
     await page.waitForTimeout(500);
     assert.equal((await db.query("select status from public.repair_warranty_returns where order_id=$1", [order])).rows[0].status, "no_presenta_fallas");
     await page.screenshot({ path: `${output}/warranty-mobile.png`, fullPage: true });
+    // Reproduce the reported flow: do not pre-save a ready status before pickup.
+    await card.getByLabel("Estado del reingreso", { exact: true }).selectOption("en_reparacion");
+    await card.getByRole("button", { name: "Guardar reingreso", exact: true }).click();
+    await page.waitForFunction(() => !document.querySelector("fieldset[disabled]"));
+    await page.waitForTimeout(300);
+    assert.equal((await db.query("select status from public.repair_warranty_returns where order_id=$1", [order])).rows[0].status, "en_reparacion");
     await card.getByLabel("Estado del reingreso", { exact: true }).selectOption("retirado");
+    await card.getByLabel("Resolucion del reingreso", { exact: true }).fill("Se reparo la retroiluminacion y se probo el equipo");
     await card.getByLabel("Quien retira", { exact: true }).fill("Cliente sintetico");
     await card.getByLabel("Confirmo la devolucion del equipo de este reingreso.", { exact: true }).check();
-    await card.getByRole("button", { name: "Guardar reingreso", exact: true }).click();
+    await card.getByRole("button", { name: "Registrar retiro de garantia", exact: true }).click();
     await card.waitFor({ state: "hidden" });
     await page.getByRole("button", { name: "Historial de retirados", exact: true }).click();
     await page.getByRole("heading", { name: "Reingreso por garantia retirado", exact: true }).waitFor();
@@ -60,8 +67,11 @@ async function main() {
     await nfCard.getByText("Actualizar trabajo", { exact: true }).click();
     await nfCard.getByRole("combobox", { name: /^Estado de la orden/ }).selectOption("no_presenta_fallas");
     await nfCard.getByRole("button", { name: "Guardar cambios", exact: true }).click();
-    await page.waitForFunction(() => !document.querySelector("fieldset[disabled]"));
+    await nfCard.getByText("Cambios guardados en esta orden.", { exact: true }).waitFor();
     assert.equal((await db.query("select status from public.repair_access_orders where id=$1", [noFault])).rows[0].status, "no_presenta_fallas");
+    // This separate baseline flow starts a second action from a fresh order snapshot.
+    await page.reload({ waitUntil: "networkidle" });
+    await nfCard.getByText("Actualizar trabajo", { exact: true }).click();
     await nfCard.getByRole("combobox", { name: /^Estado de la orden/ }).selectOption("retirado");
     await nfCard.getByLabel("Confirmo que el cliente retiro el equipo", { exact: true }).check();
     await nfCard.getByRole("button", { name: "Registrar retiro", exact: true }).click();
