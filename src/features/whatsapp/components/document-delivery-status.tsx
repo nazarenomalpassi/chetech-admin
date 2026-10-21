@@ -32,9 +32,9 @@ export function DocumentDeliveryStatus({orderId,consent}:{orderId:string;consent
     return ()=>{controller?.abort();disclosure.removeEventListener("toggle",load);window.removeEventListener("chetech:workshop-saved",load);};
   },[orderId]);
   return <div ref={root} className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" aria-live="polite">
-    <p className="font-medium text-slate-800">Envíos automáticos al cliente</p>
+    <p className="font-medium text-slate-800">Automatización con API (opcional)</p>
     {error?<p className="mt-1 text-amber-800">No se pudo consultar el estado del envío.</p>:state?<>
-      {!state.enabled?<p className="mt-1 text-slate-600">WhatsApp automático pendiente de conexión o pausado. Podés descargar los PDF.</p>:!consent?<p className="mt-1 text-slate-600">Registrá en Editar ingreso si el cliente acepta recibir los comprobantes por WhatsApp.</p>:null}
+      {!state.enabled?<p className="mt-1 text-slate-600">La API está desactivada. Podés usar los botones de WhatsApp Web para enviar manualmente un enlace protegido, sin cargos de API.</p>:!consent?<p className="mt-1 text-slate-600">Registrá en Editar ingreso si el cliente acepta recibir los comprobantes por WhatsApp.</p>:null}
       {state.jobs.map(job=><div key={job.id} className="mt-2 flex flex-wrap items-center justify-between gap-2"><span>{job.kind==="intake"?"Ingreso de equipo":"Pago y garantía"}</span><span className={["read","delivered"].includes(job.status)?"text-emerald-700":"text-slate-600"}>{labels[job.status]||"Estado pendiente"}{job.error_code==="invalid_phone"?" · Revisá el teléfono":null}{job.delivered_at?` · ${formatDate(new Date(job.delivered_at))}`:""}</span>
         {state.enabled&&job.canRetry?<button className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium disabled:opacity-50" type="button" disabled={busyJob!==null} onClick={()=>void retry(job.id)}>{busyJob===job.id?"Preparando...":"Revisar datos y reintentar"}</button>:null}
       </div>)}

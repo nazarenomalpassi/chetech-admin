@@ -31,6 +31,7 @@ import { WorkshopInbox } from "./workshop-inbox";
 import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
 import { WarrantyReturnsSection } from "./warranty-returns-section";
 import type { WarrantyReturnsPage } from "../warranty-queries";
+import { RepairDocumentShareActions } from "./repair-document-share-actions";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "detalle" | "consultas" | "importar";
 
@@ -290,6 +291,13 @@ export function RepairsAccessView({
         <p className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
           {message.message}
         </p>
+      ) : null}
+
+      {canManageIntake && message?.success && actionStatus === "repair_access_created" && initialSelectedOrder && activeSection === "ordenes" ? (
+        <Card className="space-y-3">
+          <h2 className="break-words text-base font-semibold text-slate-950">Ingreso guardado: {initialSelectedOrder.repairNumber}</h2>
+          <RepairDocumentShareActions key={initialSelectedOrder.id} order={initialSelectedOrder} canManageIntake />
+        </Card>
       ) : null}
 
       <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">

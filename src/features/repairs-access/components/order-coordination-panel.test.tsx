@@ -42,6 +42,32 @@ const order: RepairAccessOrderRecord = {
 };
 
 describe("order collection shortcut", () => {
+  it("keeps manual receipt forms outside folded administration without nesting forms", () => {
+    const { container } = render(<OrderCoordinationPanel order={{ ...order, status: "listo_para_retirar" }} canManage />);
+    const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
+    expect(send.closest("details")).toBeNull();
+    expect(send.closest("form")?.parentElement?.closest("form")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Registrar entrega" }));
+    expect(container.querySelector("form form")).toBeNull();
+  });
+
+  it("reveals payment sharing only when refreshed order data contains a recorded pickup", () => {
+    const { rerender } = render(<OrderCoordinationPanel order={{ ...order, status: "retirado" }} canManage />);
+    expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
+    rerender(<OrderCoordinationPanel order={{ ...order, status: "retirado", deliveredAt: "2026-10-21T12:00:00Z" }} canManage />);
+    expect(screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")).toBeNull();
+  });
+
+  it("does not duplicate the card's receipt row in compact coordination", () => {
+    render(<OrderCoordinationPanel order={order} canManage compact />);
+    expect(screen.queryByRole("button", { name: "Enviar comprobante de ingreso" })).toBeNull();
+  });
+
+  it("keeps receipt sharing available for a legacy detail without workflow context", () => {
+    render(<OrderCoordinationPanel order={{ ...order, workflow: undefined }} canManage />);
+    expect(screen.getByRole("button", { name: "Enviar comprobante de ingreso" })).toBeTruthy();
+  });
+
   it("offers Pago y garantía only with a recorded pickup and preserves legacy closed-order actions", () => {
     const recorded = renderToStaticMarkup(<OrderCoordinationPanel order={{ ...order, status: "retirado", pickedUpAt: "2026-10-20T03:00:00Z" }} canManage />);
     expect(recorded).toContain("Pago y garantía PDF");
@@ -94,6 +120,8 @@ describe("order collection shortcut", () => {
     const html = renderToStaticMarkup(<OrderCoordinationPanel order={order} canManage={false} />);
     expect(html).not.toContain("Registrar cobro");
     expect(html).not.toContain("/reparaciones?rep=");
+    expect(html).not.toContain("Enviar comprobante de ingreso");
+    expect(html).not.toContain("Enlaces compartidos");
   });
 });
 

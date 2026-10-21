@@ -38,6 +38,7 @@ import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { RepairQuickEditor } from "./repair-quick-editor";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { WarrantyReturnPanel } from "./warranty-return-panel";
+import { RepairDocumentShareActions } from "./repair-document-share-actions";
 
 export function RepairAccessWorkshopCard({
   order,
@@ -86,6 +87,7 @@ export function RepairAccessWorkshopCard({
       </header>
 
       <div className="space-y-3 p-4">
+        <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManageIntake} />
         <WarrantyReturnPanel order={order} canManage={canManageIntake} />
         <section>
           <div className="flex items-center gap-2 text-slate-500">
