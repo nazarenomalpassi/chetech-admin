@@ -15,6 +15,7 @@ import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { RepairOrderActivity } from "./repair-order-activity";
 import { DocumentDeliveryStatus } from "@/features/whatsapp/components/document-delivery-status";
+import { RepairDocumentShareActions } from "./repair-document-share-actions";
 
 type Modal = "accepted" | "rejected" | "revoked" | "part" | "assignment" | "delivery" | "claim";
 export type WorkshopTechnician = { id: string; name: string };
@@ -24,7 +25,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
   const [partToManage, setPartToManage] = useState<WorkshopPart | null>(null);
   const [deliveryWithBalance, setDeliveryWithBalance] = useState(false);
   const context = order.workflow;
-  if (!context) return null;
+  if (!context) return compact ? null : <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManage} />;
   const pendingParts = context.parts.filter((p) => getPartOutstandingQuantity(p) > 0).length;
   const nextAction = getWorkshopNextAction({ status: order.status, deliveredAt: order.deliveredAt, approvalStatus: context.approvalStatus, pendingParts });
   const accepted = context.approvalStatus === "accepted";
@@ -54,6 +55,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       {canManage && !delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("assignment")}><UserRound className="h-4 w-4" aria-hidden="true" />Asignar y organizar</Button> : null}
       {canManage && !delivered && ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status) ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => { setDeliveryWithBalance(false); setModal("delivery"); }}><Truck className="h-4 w-4" aria-hidden="true" />Registrar entrega</Button> : null}
     </div>
+    {!compact ? <div className="mt-3"><RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManage} /></div> : null}
     {canManage ? <details className="mt-3 border-t border-slate-200 pt-2">
       <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Documentos y cobros</summary>
       <div className="flex flex-wrap gap-2 pt-2">

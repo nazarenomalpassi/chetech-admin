@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -8,10 +8,14 @@ import { RepairAccessWorkshopCard } from "@/features/repairs-access/components/r
 import { RepairAccessOrderDetail } from "@/features/repairs-access/components/repair-access-order-detail";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const mocks = vi.hoisted(() => ({ router: { refresh: vi.fn() }, save: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => mocks.router }));
+vi.mock("../coordination-actions", async (original) => ({
+  ...await original<typeof import("../coordination-actions")>(), saveQuickWorkshopForm: mocks.save
+}));
 
 Object.assign(globalThis, { React });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 const order: RepairAccessOrderRecord = {
   id: "repair-1",
@@ -104,6 +108,43 @@ const waitingOrder: RepairAccessOrderRecord = {
 };
 
 describe("RepairAccessWorkshopCard", () => {
+  it("shows payment sharing after quick pickup refresh even when the editor becomes warranty correction", async () => {
+    mocks.save.mockResolvedValueOnce({ success: true, orderClosed: true, recordVersion: 2, message: "Retiro registrado" });
+    const readyOrder: RepairAccessOrderRecord = { ...waitingOrder, status: "listo_para_retirar", isPaid: true };
+    const { container, rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={readyOrder} />);
+    const editor = screen.getByText("Actualizar trabajo").closest("details")!;
+    editor.open = true; fireEvent(editor, new Event("toggle"));
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    fireEvent.click(screen.getByLabelText("Confirmo que el cliente retiro el equipo"));
+    fireEvent.submit(screen.getByRole("button", { name: "Registrar retiro" }).closest("form")!);
+    await waitFor(() => expect(screen.getByText("Retiro registrado")).toBeTruthy());
+    await waitFor(() => expect(mocks.router.refresh).toHaveBeenCalled());
+    expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
+    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...readyOrder, status: "retirado", pickedUpAt: "2026-10-21T12:00:00Z", deliveredAt: "2026-10-21T12:00:00Z", workflow: { ...readyOrder.workflow!, version: 2 } }} />);
+    expect(screen.getByText("Corregir garantia")).toBeTruthy();
+    const send = screen.getByRole("button", { name: "Enviar pago y garant\u00eda" });
+    expect(send.closest("details")).toBeNull();
+    expect(send.closest("form")?.parentElement?.closest("form")).toBeNull();
+    expect(container.querySelector("form form")).toBeNull();
+  });
+
+  it("shows manual receipts above folded card actions without nested forms or duplicates", () => {
+    const { container, rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={waitingOrder} />);
+    expect(screen.getByRole("button", { name: "Enviar comprobante de ingreso" }).closest("details")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
+    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "retirado", pickedUpAt: "2026-10-21T12:00:00Z" }} />);
+    expect(screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")).toBeNull();
+    const history = screen.getByText("Historial de la orden original").closest("details")!;
+    history.open = true; fireEvent(history, new Event("toggle"));
+    expect(screen.getAllByRole("button", { name: "Enviar comprobante de ingreso" })).toHaveLength(1);
+    expect(container.querySelector("form form")).toBeNull();
+  });
+
+  it("does not expose receipt forms on a technician card", () => {
+    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={waitingOrder} />);
+    expect(screen.queryByRole("button", { name: "Enviar comprobante de ingreso" })).toBeNull();
+  });
+
   it.each([true, false])("does not reopen the original workshop editor on a delivered order (admin=%s)", (canManageIntake) => {
     render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z" }} />);
     expect(screen.queryByText("Actualizar trabajo")).toBeNull();

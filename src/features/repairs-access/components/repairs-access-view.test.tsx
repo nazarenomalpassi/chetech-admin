@@ -42,10 +42,32 @@ const props = {
   orders: [], customers: [], latestImport: null, summary: {} as RepairAccessSummary,
   message: null, canManageIntake: true, defaultWarrantyDays: 90
 };
-const order = { id: "repair-1", repairNumber: "REP-000357" } as RepairAccessOrderRecord;
+const order = { id: "repair-1", repairNumber: "REP-000357", customer: { phone: "3571573744", alternatePhone: "" } } as RepairAccessOrderRecord;
 const pageInfo: WorkshopPageInfo = { total: 1, pageSize: 30, cursor: "", nextCursor: null, search: "", status: "todos", warranty: "todos", scope: "all" };
 
 describe("workshop section navigation", () => {
+  it("offers the newly saved order's receipt beside success while retaining the default listing", () => {
+    const other = { ...order, id: "other-order", repairNumber: "REP-999999" };
+    const { container } = render(<RepairsAccessView {...props} orders={[other, order]} initialOrderId={order.id} actionStatus="repair_access_created" message={{ success: true, message: "Orden creada" }} />);
+    expect(screen.getByRole("heading", { name: "Mesa de trabajo" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: `Ingreso guardado: ${order.repairNumber}` })).toBeTruthy();
+    const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
+    expect(new FormData(send.closest("form")!).get("orderId")).toBe(order.id);
+    expect(send.closest("details")).toBeNull();
+    expect(screen.getByText("Orden creada").compareDocumentPosition(send) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(send.compareDocumentPosition(container.querySelector("nav")!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it.each([
+    { canManageIntake: false, actionStatus: "repair_access_created", initialOrderId: order.id, success: true },
+    { canManageIntake: true, actionStatus: "repair_access_intake_updated", initialOrderId: order.id, success: true },
+    { canManageIntake: true, actionStatus: "repair_access_created", initialOrderId: "missing", success: true },
+    { canManageIntake: true, actionStatus: "repair_access_created", initialOrderId: order.id, success: false }
+  ])("does not attach receipt confirmation to an unrelated or unauthorized save: %j", ({ success, ...input }) => {
+    render(<RepairsAccessView {...props} {...input} orders={[order]} message={{ success, message: "Resultado" }} />);
+    expect(screen.queryByRole("button", { name: "Enviar comprobante de ingreso" })).toBeNull();
+  });
+
   it("keeps the successful save screen operational when local draft removal is blocked", () => {
     vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => { throw new DOMException("Storage blocked", "SecurityError"); });
     expect(() => render(<RepairsAccessView {...props} actionStatus="repair_access_created" />)).not.toThrow();
