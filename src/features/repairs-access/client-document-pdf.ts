@@ -19,7 +19,7 @@ export function renderClientDocumentPdf(doc: PDFKit.PDFDocument, data: RepairDoc
   const logo = asset("document-logo-white.png");
   const symbol = asset("document-symbol.png");
   const left = 34, width = doc.page.width - 68, bodyTop = 267, bodyBottom = 761, footerY = 776;
-  const issued = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" }).format(new Date());
+  const issued = new Intl.DateTimeFormat("es-AR", { timeZone: "America/Argentina/Buenos_Aires", dateStyle: "short", timeStyle: "short" }).format(data.issuedAt ? new Date(data.issuedAt) : new Date());
   let y = bodyTop, pages = 0;
   const sectionSegments: Segment[] = [];
 

@@ -16,7 +16,8 @@ export const OPERATIONAL_TABLES: TableSpec[] = [
   { table: "fiscal_issuance_records", module: "fiscal", identity: "id", optional: true },
   { table: "fiscal_issuance_counters", module: "fiscal", identity: ["environment", "issuer_cuit", "point_of_sale", "voucher_type"], optional: true },
   { table: "operations_cash_reconciliation_amendments", module: "finance", identity: "id", optional: true },
-  { table: "repair_order_attachments", module: "workshop", identity: "id", optional: true }
+  { table: "repair_order_attachments", module: "workshop", identity: "id", optional: true },
+  { table: "repair_document_deliveries", module: "documents", identity: "id", optional: true }
 ];
 
 export type ExportClient = {

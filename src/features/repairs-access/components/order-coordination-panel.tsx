@@ -14,6 +14,7 @@ import type { RepairAccessOrderRecord } from "../queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { RepairOrderActivity } from "./repair-order-activity";
+import { DocumentDeliveryStatus } from "@/features/whatsapp/components/document-delivery-status";
 
 type Modal = "accepted" | "rejected" | "revoked" | "part" | "assignment" | "delivery" | "claim";
 export type WorkshopTechnician = { id: string; name: string };
@@ -62,6 +63,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
         <a className={buttonVariants({ variant: "secondary" })} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a>
         <a className={buttonVariants({ variant: "secondary" })} href={`/facturacion?order=${order.id}`}>Facturar esta reparacion</a>
       </div>
+      <DocumentDeliveryStatus orderId={order.id} consent={order.whatsappDocumentConsent===true} />
     </details> : null}
     {context.parts.length > 0 ? <div className="mt-4 divide-y divide-slate-200 border-t border-slate-200">
       {context.parts.map((part) => <div key={part.id} className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm">

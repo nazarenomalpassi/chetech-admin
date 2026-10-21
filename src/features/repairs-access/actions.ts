@@ -137,6 +137,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     id: parsed.data.id ?? null,
     customer_id: parsed.data.customerId ?? null,
     device_id: parsed.data.deviceId ?? null,
+    ...(formData.get("whatsappConsentIncluded") === "1" ? { whatsapp_document_consent: formData.get("whatsappDocumentConsent") === "on" } : {}),
     customer_name: parsed.data.customerName,
     customer_name_normalized: normalizeRepairAccessLookup(parsed.data.customerName),
     customer_phone: emptyToNull(parsed.data.customerPhone),
@@ -160,7 +161,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     notes: emptyToNull(parsed.data.notes),
     status: parsed.data.status
   };
-  const atomicResult = await (supabase as any).rpc("save_repair_access_intake", {
+  const atomicResult = await (supabase as any).rpc("save_repair_access_intake_with_documents", {
     p_payload: atomicPayload
   });
 
@@ -170,7 +171,7 @@ export async function saveRepairAccessOrderAction(formData: FormData) {
     redirect(`/reparaciones-access?status=${status}&order=${atomicResult.data.id}` as Route);
   }
 
-  if (!isMissingDatabaseFunctionError(atomicResult.error, "save_repair_access_intake")) {
+  if (!isMissingDatabaseFunctionError(atomicResult.error, "save_repair_access_intake_with_documents")) {
     redirectWithError(
       getFriendlyDatabaseError(atomicResult.error, "No se pudo guardar la orden. Intenta nuevamente."),
       parsed.data.id,

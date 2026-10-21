@@ -13,6 +13,8 @@ import {
 import { requirePermission } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
 import { cn } from "@/lib/utils";
+import { WhatsAppSettings } from "@/features/whatsapp/components/whatsapp-settings";
+import { getWhatsAppSetupStatus } from "@/features/whatsapp/setup";
 
 export default async function ConfiguracionPage({
   searchParams
@@ -22,9 +24,10 @@ export default async function ConfiguracionPage({
   const params = await searchParams;
   const profile = await requirePermission("settings.manage");
   const isAdmin = profile.role === "admin";
-  const [businessGoals, repairWarrantySettings] = await Promise.all([
+  const [businessGoals, repairWarrantySettings,whatsappSetup] = await Promise.all([
     getBusinessGoals(),
-    getRepairWarrantySettings()
+    getRepairWarrantySettings(),
+    isAdmin ? getWhatsAppSetupStatus() : Promise.resolve(null)
   ]);
   const message = params.error
     ? { success: false, message: params.error }
@@ -47,6 +50,7 @@ export default async function ConfiguracionPage({
 
       {isAdmin ? (
         <>
+          {whatsappSetup ? <WhatsAppSettings status={whatsappSetup} /> : null}
           <Card>
             <h2 className="text-lg font-semibold text-slate-950">Exportar datos del sistema</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">

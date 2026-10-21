@@ -12,8 +12,11 @@ import type { WorkshopOrderContext } from "./workflow";
 import { getRepairDeviceColor } from "./device-color";
 import type { WarrantyReturnRecord } from "./warranty-return";
 import { getOrderWarrantyReturns } from "./warranty-queries";
+import { normalizeWhatsAppPhone } from "./whatsapp";
 
 type RawOrder = {
+  whatsapp_document_consent?: boolean;
+  whatsapp_consent_phone?: string | null;
   id: string;
   repair_number: string | null;
   intake_date: string;
@@ -107,6 +110,7 @@ export type StorefrontCustomerSummary = {
 };
 
 export type RepairAccessOrderRecord = {
+  whatsappDocumentConsent?: boolean;
   workflow?: WorkshopOrderContext;
   warrantyReturns?: WarrantyReturnRecord[];
   id: string;
@@ -261,6 +265,8 @@ export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
 
   return {
     id: order.id,
+    whatsappDocumentConsent: order.whatsapp_document_consent === true && Boolean(order.whatsapp_consent_phone)
+      && order.whatsapp_consent_phone === normalizeWhatsAppPhone(order.repair_access_customers?.phone ?? ""),
     repairNumber: order.repair_number ?? "Sin numero",
     intakeDate: order.intake_date,
     issueReported: order.issue_reported,

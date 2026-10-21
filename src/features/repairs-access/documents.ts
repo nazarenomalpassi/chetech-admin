@@ -16,6 +16,7 @@ export type RepairDocumentData = {
   sections: Array<{ label: string; value: string }>;
   notice: string;
   signatureLabel: string;
+  issuedAt?: string;
   client?: ClientDocumentData;
 };
 
