@@ -96,19 +96,23 @@ export function WarrantyReturnCase({ record, canManage }: { record: WarrantyRetu
       <WorkshopForm orderId={`warranty-case:${record.id}`} orderVersion={record.version} action={updateReturn}>
         {(fields, submitting) => {
           const status = fields.status ?? record.status;
+          const retiring = status === "retirado";
+          const needsResolution = retiring && !["listo_para_retirar", "no_presenta_fallas", "sin_solucion"].includes(record.status)
+            && record.resolution.trim().length < 3;
           return <>
             <input name="id" type="hidden" value={record.id} />
             <input name="expectedVersion" type="hidden" value={record.version} />
             <WarrantyField htmlFor={`${fieldId}-status`} label="Estado del reingreso"><Select id={`${fieldId}-status`} name="status" defaultValue={status} options={options} /></WarrantyField>
             <WarrantyField htmlFor={`${fieldId}-progress`} label="Avance del reingreso"><Textarea id={`${fieldId}-progress`} name="progress" defaultValue={fields.progress ?? record.progress} maxLength={2000} /></WarrantyField>
-            <WarrantyField htmlFor={`${fieldId}-resolution`} label="Resolucion del reingreso"><Textarea id={`${fieldId}-resolution`} name="resolution" defaultValue={fields.resolution ?? record.resolution} maxLength={2000} /></WarrantyField>
+            <WarrantyField htmlFor={`${fieldId}-resolution`} label="Resolucion del reingreso"><Textarea id={`${fieldId}-resolution`} name="resolution" defaultValue={fields.resolution ?? record.resolution} maxLength={2000} required={needsResolution} minLength={needsResolution ? 3 : undefined} placeholder={needsResolution ? "Indica el resultado: reparado, sin fallas o sin solucion" : undefined} /></WarrantyField>
             {canManage && status === "retirado" ? <>
               <WarrantyField htmlFor={`${fieldId}-recipient`} label="Quien retira"><Input id={`${fieldId}-recipient`} name="recipient" defaultValue={fields.recipient ?? ""} minLength={2} maxLength={2000} required /></WarrantyField>
               <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm"><input id={`${fieldId}-delivery`} name="confirmDelivery" type="checkbox" defaultChecked={fields.confirmDelivery === "on"} required /><label htmlFor={`${fieldId}-delivery`} className="flex min-h-11 flex-1 items-center">Confirmo la devolucion del equipo de este reingreso.</label></div>
               <p className="text-sm text-slate-500">Esta entrega cierra solo el reingreso. No modifica cobros ni fechas de la orden original.</p>
+              <p className="text-sm text-slate-600">Podes guardar la resolucion y el retiro en un solo paso, sin cambiar antes a Listo para retirar.</p>
             </> : null}
             {!canManage ? <p className="text-sm text-slate-500">Mostrador registra el retiro del equipo.</p> : null}
-            <Button className="min-h-11 w-full" type="submit" disabled={submitting}>Guardar reingreso</Button>
+            <Button className="min-h-11 w-full" type="submit" disabled={submitting}>{retiring ? "Registrar retiro de garantia" : "Guardar reingreso"}</Button>
           </>;
         }}
       </WorkshopForm>

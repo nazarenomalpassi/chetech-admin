@@ -125,6 +125,23 @@ describe("warranty return intake", () => {
 });
 
 describe("separate technical cycle", () => {
+  it("collects a resolution and pickup in one submission from an in-progress return", async () => {
+    mocks.save.mockResolvedValue({success:true,message:"Retiro registrado",recordVersion:4});
+    render(<WarrantyReturnCase record={{...record,status:"en_reparacion"}} canManage />);
+    open("Actualizar reingreso");
+    fireEvent.change(screen.getByLabelText("Estado del reingreso"),{target:{value:"retirado"}});
+    const resolution=screen.getByLabelText("Resolucion del reingreso") as HTMLTextAreaElement;
+    expect(resolution.required).toBe(true);
+    expect(screen.getByText(/resolucion y el retiro en un solo paso/i)).toBeTruthy();
+    fireEvent.change(resolution,{target:{value:"Se reparo la retroiluminacion"}});
+    fireEvent.change(screen.getByLabelText("Quien retira"),{target:{value:"Cliente"}});
+    fireEvent.click(screen.getByLabelText(/Confirmo la devolucion/i));
+    submit("Registrar retiro de garantia");
+    await waitFor(()=>expect(mocks.save).toHaveBeenCalledOnce());
+    const data=mocks.save.mock.calls[0][1] as FormData;
+    expect(data.get("status")).toBe("retirado"); expect(data.get("resolution")).toBe("Se reparo la retroiluminacion");
+    expect(data.get("recipient")).toBe("Cliente"); expect(data.get("confirmDelivery")).toBe("on");
+  });
   it("keeps exact field labels separate from select options and saved textarea contents", () => {
     const { container } = render(<WarrantyReturnCase record={record} canManage />);
     open("Actualizar reingreso");
