@@ -42,6 +42,14 @@ const order: RepairAccessOrderRecord = {
 };
 
 describe("order collection shortcut", () => {
+  it("offers Pago y garantía only with a recorded pickup and preserves legacy closed-order actions", () => {
+    const recorded = renderToStaticMarkup(<OrderCoordinationPanel order={{ ...order, status: "retirado", pickedUpAt: "2026-10-20T03:00:00Z" }} canManage />);
+    expect(recorded).toContain("Pago y garantía PDF");
+    expect(recorded).toContain("kind=delivery");
+    const legacy = renderToStaticMarkup(<OrderCoordinationPanel order={{ ...order, status: "retirado", pickedUpAt: null, deliveredAt: null }} canManage />);
+    expect(legacy).not.toContain("kind=delivery");
+    expect(legacy).not.toContain("Solicitar repuesto");
+  });
   it.each([
     { budgetAmount: 0, finalAmount: 0, isPaid: false, debt: false },
     { budgetAmount: 100, finalAmount: 0, hasFinalAmount: false, isPaid: false, debt: true },

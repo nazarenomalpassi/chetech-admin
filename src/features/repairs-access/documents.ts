@@ -1,4 +1,5 @@
-import type { RepairAccessOrderRecord } from "./queries";
+import { buildClientDocumentData, type ClientDocumentData, type ClientDocumentSource } from "./client-document-data";
+import type { DocumentPaymentSnapshot } from "./document-payments";
 
 export type RepairDocumentKind = "intake" | "estimate" | "delivery";
 export type RepairBudgetSnapshot = { id: string; orderId: string; revision: number; amount: number; detail: string; createdAt: string };
@@ -15,14 +16,11 @@ export type RepairDocumentData = {
   sections: Array<{ label: string; value: string }>;
   notice: string;
   signatureLabel: string;
-};
-type Source = Pick<RepairAccessOrderRecord, "id" | "repairNumber" | "intakeDate" | "issueReported" | "deliveredAt" | "pickedUpAt" | "workPerformed" | "warrantyConditions"> & {
-  customer: Pick<RepairAccessOrderRecord["customer"], "fullName" | "phone">;
-  device: Pick<RepairAccessOrderRecord["device"], "deviceType" | "brand" | "model" | "color" | "serialNumber" | "accessoryDetails" | "visualCondition">;
+  client?: ClientDocumentData;
 };
 
-export function buildRepairDocumentData(order: Source, kind: RepairDocumentKind, quote?: RepairBudgetSnapshot | null): RepairDocumentData {
-  const deliveryDate = order.deliveredAt || order.pickedUpAt;
+export function buildRepairDocumentData(order: ClientDocumentSource, kind: RepairDocumentKind, quote?: RepairBudgetSnapshot | null, payments?: DocumentPaymentSnapshot): RepairDocumentData {
+  const deliveryDate = order.pickedUpAt || order.deliveredAt;
   if (kind === "delivery" && (!deliveryDate || !Number.isFinite(Date.parse(deliveryDate)))) throw new Error("Registra primero la entrega real del equipo.");
   if (kind === "estimate" && (!quote || quote.orderId !== order.id || !Number.isInteger(quote.revision) || quote.revision < 1
     || !Number.isFinite(quote.amount) || quote.amount < 0 || !Number.isFinite(Date.parse(quote.createdAt)))) {
@@ -37,19 +35,20 @@ export function buildRepairDocumentData(order: Source, kind: RepairDocumentKind,
     sections.push({ label: "Falla declarada", value: order.issueReported }, { label: "Accesorios recibidos", value: order.device.accessoryDetails || "No informados" }, { label: "Condicion de ingreso", value: order.device.visualCondition || "No informada" });
   }
   if (kind === "estimate") sections.push({ label: "Trabajo presupuestado", value: quote!.detail || "Detalle no informado en esta revision" });
-  if (kind === "delivery") sections.push({ label: "Trabajo realizado", value: order.workPerformed || "Consultar detalle de la orden" }, { label: "Condiciones de garantia", value: order.warrantyConditions || "Segun condiciones informadas del trabajo" });
+  if (kind === "delivery") sections.push({ label: "Detalle del presupuesto", value: order.budgetDetail || "Sin detalle de presupuesto registrado." });
+  const client = kind === "estimate" ? undefined : buildClientDocumentData(order, kind, payments);
   return {
     kind, number: order.repairNumber,
-    title: kind === "intake" ? "Ingreso de equipo" : kind === "estimate" ? "Presupuesto de reparacion" : "Constancia de entrega",
+    title: kind === "intake" ? "Ingreso de equipo" : kind === "estimate" ? "Presupuesto de reparacion" : "Pago y garantía",
     date: kind === "estimate" ? quote!.createdAt : kind === "delivery" ? deliveryDate! : order.intakeDate,
     dateLabel: kind === "estimate" ? "Fecha del presupuesto" : kind === "delivery" ? "Fecha de entrega" : "Fecha de ingreso",
     intakeDate: order.intakeDate, budgetRevision: kind === "estimate" ? quote!.revision : null,
-    budgetSnapshotId: kind === "estimate" ? quote!.id : null, amount: kind === "estimate" ? quote!.amount : null, sections,
+    budgetSnapshotId: kind === "estimate" ? quote!.id : null, amount: kind === "estimate" ? quote!.amount : kind === "delivery" ? client!.budget : null, sections, client,
     notice: kind === "estimate"
       ? "El presupuesto informa el trabajo e importe propuestos; no acredita un pago. Su aceptacion se registra por separado. La firma de recepcion no autoriza el trabajo."
       : kind === "intake"
         ? "Comprobante de recepcion. Conserva el numero de orden para consultar el trabajo y retirar el equipo. No acredita un pago ni la entrega del equipo al cliente."
-        : "Constancia de devolucion del equipo. Los cobros y la factura fiscal se documentan por separado. Esta constancia no acredita un pago.",
-    signatureLabel: kind === "estimate" ? "Recepcion del presupuesto / firma" : kind === "intake" ? "Cliente / firma de ingreso" : "Persona que retira / firma"
+        : "Comprobante interno. No válido como factura fiscal.",
+    signatureLabel: kind === "estimate" ? "Recepcion del presupuesto / firma" : ""
   };
 }

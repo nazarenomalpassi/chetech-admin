@@ -33,14 +33,15 @@ describe("CHETECH repair PDF", () => {
       const pdf = await generateRepairDocumentPdf(data, { orderUrl: `https://example.test/reparaciones-access?order=${order.id}` });
       expect(pdf.subarray(0, 5).toString()).toBe("%PDF-");
       expect(pdf.toString("latin1")).toContain("%%EOF");
-      expect(pdf.toString("latin1").match(/\/FontFile[23]\b/g)?.length).toBe(2);
+      expect(pdf.toString("latin1").match(/\/FontFile[23]\b/g)?.length).toBe(kind === "estimate" ? 2 : 3);
       expect(pdf.toString("latin1")).toContain("InputSans-Regular");
       expect(pdf.toString("latin1")).toContain("MONTECHV02-Bold");
       const doc = new PDFDocument({ size: "A4", margin: 42, bufferPages: true });
       const layout = renderRepairDocumentPdf(doc, data);
       expect(doc.bufferedPageRange().count).toBe(1);
       expect(layout.pages).toBe(1);
-      expect(layout.signature.endY).toBeLessThanOrEqual(layout.bodyBottom);
+      if (kind === "estimate") expect(layout.signature?.endY).toBeLessThanOrEqual(layout.bodyBottom);
+      else expect(layout.signature).toBeNull();
       doc.end();
       if (process.env.CHETECH_REPAIR_PDF_QA === "1") writeFileSync(`src/features/repairs-access/repair-document-qa-${kind}.pdf`, pdf);
     }
@@ -61,13 +62,32 @@ describe("CHETECH repair PDF", () => {
     for (const segment of layout.sectionSegments) {
       expect(segment.startY).toBeGreaterThanOrEqual(layout.bodyTop);
       expect(segment.endY).toBeLessThanOrEqual(layout.bodyBottom);
-      if (segment.page === layout.signature.page) expect(segment.endY).toBeLessThan(layout.signature.startY);
+      if (segment.page === layout.signature?.page) expect(segment.endY).toBeLessThan(layout.signature.startY);
     }
-    expect(layout.signature.endY).toBeLessThanOrEqual(layout.bodyBottom);
+    expect(layout.signature?.endY).toBeLessThanOrEqual(layout.bodyBottom);
     expect(layout.footerY).toBeGreaterThan(layout.bodyBottom);
     doc.end();
     const pdf = await generateRepairDocumentPdf(data);
     expect(pdf.toString("latin1")).toContain("%%EOF");
     if (process.env.CHETECH_REPAIR_PDF_QA === "1") writeFileSync("src/features/repairs-access/repair-document-qa-long.pdf", pdf);
+  });
+
+  it("renders the approved compact titles, original logo and long verbatim budgets without signatures", () => {
+    const detail = "Presupuesto exacto con saltos de linea.\n".repeat(240);
+    const data = buildRepairDocumentData({ ...order, budgetDetail: detail }, "delivery");
+    const doc = new PDFDocument({ size: "A4", margin: 42, bufferPages: true });
+    const text = vi.spyOn(doc, "text");
+    const image = vi.spyOn(doc, "image");
+    const layout = renderRepairDocumentPdf(doc, data);
+    expect(layout.pages).toBeGreaterThan(1);
+    expect(layout.signature).toBeNull();
+    expect(image).toHaveBeenCalled();
+    expect(text.mock.calls.some(([value]) => value === "Pago y garantía")).toBe(true);
+    expect(text.mock.calls.map(([value]) => value).join(" ")).not.toMatch(/Aclaracion:|firma|MODELO CON DATOS FICTICIOS/);
+    const segments = layout.sectionSegments.filter((segment) => segment.label === "Detalle del presupuesto");
+    expect(segments.reduce((sum, segment) => sum + segment.characters, 0)).toBe(detail.length);
+    for (const segment of layout.sectionSegments) expect(segment.endY).toBeLessThanOrEqual(layout.bodyBottom);
+    expect(doc.bufferedPageRange().count).toBe(layout.pages);
+    doc.end();
   });
 });
