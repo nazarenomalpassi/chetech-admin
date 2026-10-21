@@ -16,9 +16,11 @@ import DashboardPage from "@/app/(admin)/dashboard/page";
 import ReportesPage from "@/app/(admin)/reportes/page";
 import { reportFixture } from "./test-fixture";
 Object.assign(globalThis, { React });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 beforeEach(() => {
   vi.resetAllMocks();
+  vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 600, height: 260 } as DOMRect);
   mocks.profile.mockResolvedValue({ user: { id: "tech-a" }, profile: { role: "admin", full_name: "Admin" } });
   mocks.permission.mockResolvedValue({ role: "admin" });
   mocks.dashboard.mockResolvedValue({}); mocks.technician.mockResolvedValue({}); mocks.reports.mockResolvedValue({});
@@ -45,6 +47,7 @@ describe("disjoint page integration", () => {
     render(await ReportesPage({ searchParams: Promise.resolve({ from: "2026-10-01", to: "2026-10-05" }) }));
     expect(screen.getByText("Original reports")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Negocio del taller" })).toBeTruthy();
+    expect(screen.getByText("Original reports").compareDocumentPosition(screen.getByRole("heading", { name: "Negocio del taller" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(mocks.workshopReport).toHaveBeenCalledWith("2026-10-01", "2026-10-05");
   });
 });

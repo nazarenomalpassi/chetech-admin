@@ -14,7 +14,7 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
   const alertLabel = `${products.length} ${products.length === 1 ? "alerta" : "alertas"}`;
 
   return (
-    <Card className="self-start overflow-hidden p-0">
+    <Card className="self-start overflow-hidden p-0 sm:p-0">
       <details className="group">
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-500 [&::-webkit-details-marker]:hidden">
           <div className="flex min-w-0 items-center gap-3">
@@ -31,7 +31,7 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
           <div className="flex shrink-0 items-center gap-2">
             <Badge variant="warning">{alertLabel}</Badge>
             <span className="inline-flex h-6 w-6 items-center justify-center text-slate-600">
-              <ChevronDown className="h-4 w-4 transition-transform duration-200 group-open:rotate-180" />
+              <ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" />
             </span>
           </div>
         </summary>

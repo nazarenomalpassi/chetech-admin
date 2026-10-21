@@ -28,7 +28,7 @@ export async function getTvBoards(filters?: Filters): Promise<TvBoardRow[]> {
   // Global totals and the claims queue must not depend on inventory filters or REST row caps.
   const [rows, events] = await Promise.all([
     readRecordPages<any>((from, to) => (supabase as any).from("tv_boards")
-      .select("id,brand,model,board_type,listed_price,acquisition_cost,is_active,sold_at,mercado_libre_net_amount,release_date,released_at,sale_notes,claim_status,claim_opened_at,claim_notes,claim_resolved_at,claim_resolution_notes,financial_version,created_at,updated_at", { count: "exact" })
+      .select("id,brand,model,board_type,listed_price,acquisition_cost,is_active,sold_at,mercado_libre_net_amount,release_date,released_at,sale_notes,claim_status,claim_opened_at,claim_notes,claim_resolved_at,claim_resolution_notes,financial_version,created_at,updated_at,sales(id,sale_number,sale_payments(method,amount))", { count: "exact" })
       .order("id").range(from, to), 500, row => row.id),
     readRecordPages<any>((from, to) => (supabase as any).from("tv_board_sale_events")
       .select("id,board_id,kind,notes,net_amount,created_at", { count: "exact" }).order("id").range(from, to), 500, row => row.id)
@@ -42,6 +42,9 @@ export async function getTvBoards(filters?: Filters): Promise<TvBoardRow[]> {
   }
   const boards: TvBoardRow[] = rows.map(board => {
     const state = { soldAt: board.sold_at, releaseDate: board.release_date, releasedAt: board.released_at, claimStatus: board.claim_status };
+    const sale = Array.isArray(board.sales) ? board.sales[0] : board.sales;
+    const payments = sale?.sale_payments;
+    const method = (Array.isArray(payments) ? payments[0] : payments)?.method;
     return {
       id: board.id, brand: board.brand, model: board.model, boardType: board.board_type,
       price: Number(board.listed_price ?? 0), acquisitionCost: board.acquisition_cost == null ? null : Number(board.acquisition_cost),
@@ -51,6 +54,7 @@ export async function getTvBoards(filters?: Filters): Promise<TvBoardRow[]> {
       claimOpenedAt: board.claim_opened_at ?? null, claimNotes: board.claim_notes ?? null,
       claimResolvedAt: board.claim_resolved_at ?? null, claimResolutionNotes: board.claim_resolution_notes ?? null,
       version: board.financial_version, createdAt: board.created_at, updatedAt: board.updated_at,
+      linkedSale: sale ? { id: sale.id, number: sale.sale_number, method: method === "nx" || method === "mp" ? method : null } : null,
       events: (byBoard.get(board.id) ?? []).sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.id.localeCompare(a.id))
     };
   });

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ProductTable } from "@/features/products/components/product-table";
 
@@ -13,6 +13,18 @@ const products = Array.from({ length: 60 }, (_, index) => ({
 }));
 
 describe("progressive inventory rendering", () => {
+  it("keeps the mobile row scannable with available stock and puts secondary numbers in native details", () => {
+    const edit = vi.fn();
+    render(<ProductTable canManage onEdit={edit} products={[{ ...products[0], reservedStock: 3, availableStock: 7 }]} />);
+    const row = screen.getByRole("article");
+    expect(within(row).getByText("Disponible 7").closest("details")).toBeNull();
+    expect(within(row).getByText("Fisico 10").closest("details")).toBeTruthy();
+    expect(within(row).getByText("Reservado 3").closest("details")).toBeTruthy();
+    expect(within(row).getByText(/Diferencia precio-costo/).closest("details")).toBeTruthy();
+    expect(within(row).getByText("Cables")).toBeTruthy();
+    fireEvent.click(within(row).getByRole("button", { name: /Editar/ }));
+    expect(edit).toHaveBeenCalledWith("0");
+  });
   it("shows reserved and available stock without replacing the physical quantity", () => {
     render(<ProductTable canManage={false} onEdit={vi.fn()} products={[{ ...products[0], stock: 7, reservedStock: 3, availableStock: 4 }]} />);
     expect(screen.getAllByText("Fisico 7")).toHaveLength(2);

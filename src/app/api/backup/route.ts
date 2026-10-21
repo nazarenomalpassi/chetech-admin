@@ -12,8 +12,8 @@ const MAX_HTTP_JSON_BYTES = 4 * 1024 * 1024;
 
 const excelTables = [
   { table: "products", sheet: "Productos", columns: "sku, name, cost, sale_price, stock, min_stock, is_active, created_at" },
-  { table: "sales", sheet: "Ventas", columns: "id, sale_number, subtotal, cost_total, profit_total, sold_at, notes, created_at, updated_at" },
-  { table: "sale_items", sheet: "Items venta", columns: "sale_id, product_id, quantity, unit_price, unit_cost, total" },
+  { table: "sales", sheet: "Ventas", columns: "id, sale_number, subtotal, cost_total, profit_total, sold_at, notes, tv_board_id, created_at, updated_at" },
+  { table: "sale_items", sheet: "Items venta", columns: "sale_id, product_id, description, quantity, unit_price, unit_cost, total" },
   { table: "expenses", sheet: "Gastos", columns: "id, expense_date, type, description, amount, payment_method, is_voided, observations, created_at, updated_at" },
   { table: "repairs", sheet: "Reparaciones", columns: "id, customer_name, customer_phone, device, order_number, final_price, status, entry_date, created_at, updated_at" },
   { table: "invoices", sheet: "Facturacion", columns: "invoice_number, customer_name, customer_phone, source_type, subtotal, discount, total, status, created_at" },

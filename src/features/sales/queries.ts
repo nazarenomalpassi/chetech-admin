@@ -11,6 +11,7 @@ export async function getSalesHistory(page = 1) {
     .select(
       `
         id,
+        tv_board_id,
         sale_number,
         subtotal,
         cost_total,
@@ -20,7 +21,7 @@ export async function getSalesHistory(page = 1) {
         created_at,
         updated_at,
         sale_payments(method, amount),
-        sale_items(product_id, quantity, unit_price, total, products(name, sku))
+        sale_items(product_id, description, quantity, unit_price, total, products(name, sku))
       `,
       { count: "exact" }
     );

@@ -9,6 +9,11 @@ const tech = IDENTITIES[1].id;
 const rpc = "select public.tv_board_sale_transition($1,$2,$3,$4,$5) result";
 
 async function asUser(db: Database, actor: string, sql: string, args: unknown[] = []) {
+  // New releases must choose an account and post the sale; claims retain the original RPC.
+  if (sql===rpc && args[3]==="confirm_release") {
+    sql="select public.release_tv_board_to_sale($1,$2,$3,$4) result";
+    args=[args[0],args[1],args[2],"nx"];
+  }
   await db.query("savepoint operation");
   try {
     await db.query("select set_config('request.jwt.claims',$1,true),set_config('request.jwt.claim.sub',$2,true)", [JSON.stringify({ sub: actor, role: "authenticated" }), actor]);
@@ -119,13 +124,16 @@ async function main() {
     const preserved = (await db.query("select jsonb_build_object('soldAt',sold_at,'net',mercado_libre_net_amount,'price',listed_price,'cost',acquisition_cost,'releaseDate',release_date,'notes',sale_notes) result from public.tv_boards where id=$1", [id])).rows[0].result;
     assert.deepEqual(preserved, original);
     assert.equal((await db.query("select is_active from public.tv_boards where id=$1", [id])).rows[0].is_active, false);
+    assert.deepEqual(await snapshot(db), before);
     const releasedId = await insertBoard(db);
     const release = [releasedId, 1, randomUUID(), "confirm_release", ""];
     assert.equal((await asUser(db, admin, rpc, release)).status, "released");
     assert.equal((await asUser(db, admin, rpc, release)).replayed, true);
     await assert.rejects(asUser(db, admin, rpc, [releasedId, 2, randomUUID(), "start_claim", ""]), isCode("23514"));
-    assert.deepEqual(await snapshot(db), before);
-    console.log("PASS restore/reopen/cancel preserves original sale; manual release; no cash/settings/stock/sales changes");
+    const afterRelease=await snapshot(db);
+    assert.equal(afterRelease.settings,before.settings); assert.equal(afterRelease.products,before.products);
+    assert.notEqual(afterRelease.sales,before.sales); assert.notEqual(afterRelease.cash,before.cash);
+    console.log("PASS restore/reopen/cancel preserves financial history; explicit release posts one linked sale and receipt");
 
     await db.query("create function pg_temp.reject_tv_event() returns trigger language plpgsql as $$ begin raise exception 'Synthetic event failure'; end $$");
     await db.query("create trigger claims_local_event_failure before insert on public.tv_board_sale_events for each row when(new.notes='SIMULATE-LOCAL-FAILURE') execute function pg_temp.reject_tv_event()");
@@ -133,7 +141,7 @@ async function main() {
     await assert.rejects(asUser(db, admin, rpc, [failedId, 1, randomUUID(), "start_claim", "SIMULATE-LOCAL-FAILURE"]), isCode("P0001"));
     const failed = (await db.query("select claim_status,financial_version from public.tv_boards where id=$1", [failedId])).rows[0];
     assert.deepEqual(failed, { claim_status: "none", financial_version: 1 });
-    assert.deepEqual(await snapshot(db), before);
+    assert.deepEqual(await snapshot(db), afterRelease);
     console.log("PASS event failure rolls back claim state/version atomically");
     await db.query("rollback");
     await race("start_claim");

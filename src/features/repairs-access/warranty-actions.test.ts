@@ -3,7 +3,7 @@ const mocks = vi.hoisted(() => ({ permission: vi.fn(), admin: vi.fn(), rpc: vi.f
 vi.mock("@/lib/auth", () => ({ requirePermission: mocks.permission, requireAdmin: mocks.admin }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: () => ({ rpc: mocks.rpc }) }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidate }));
-import { startWarrantyReturn, saveWarrantyReturn } from "./warranty-actions";
+import { startWarrantyReturn, saveWarrantyReturn, correctRepairWarranty } from "./warranty-actions";
 const id = "10000000-0000-4000-8000-000000000001";
 function form(fields: Record<string, string> = {}) {
   const f = new FormData();
@@ -15,6 +15,22 @@ beforeEach(() => {
   mocks.rpc.mockResolvedValue({ data: { id, version: 4, replayed: false }, error: null });
 });
 describe("reingresos por garantia", () => {
+  it("corrige garantia con version y motivo sin enviar entrega ni pagos", async () => {
+    const f = form({ expectedVersion: "3", hasWarranty: "on", warrantyDays: "90", warrantyConditions: "Fuente", reason: "Garantia omitida al entregar", confirmCorrection: "on", pickedUpAt: "2026-10-21", isPaid: "on" });
+    expect((await correctRepairWarranty(null, f)).success).toBe(true);
+    expect(mocks.admin).toHaveBeenCalledOnce();
+    expect(mocks.rpc).toHaveBeenCalledWith("workshop_warranty_correct", {
+      p_order_id: id, p_expected_version: 3, p_operation_id: f.get("operationId"),
+      p_has_warranty: true, p_warranty_days: 90, p_conditions: "Fuente", p_reason: "Garantia omitida al entregar", p_confirm: true
+    });
+  });
+  it("no corrige garantia sin confirmacion, motivo o dias validos", async () => {
+    const cases: Record<string, string>[] = [{ reason: "", confirmCorrection: "on", warrantyDays: "90" }, { reason: "Omitida", warrantyDays: "90" }, { reason: "Omitida", confirmCorrection: "on", warrantyDays: "0" }];
+    for (const fields of cases) {
+      expect((await correctRepairWarranty(null, form({ expectedVersion: "3", hasWarranty: "on", ...fields }))).success).toBe(false);
+    }
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   it("registra en la misma orden sin enviar campos financieros", async () => {
     const f = form({ receivedOn: "2026-10-19", issueReported: "Volvio a apagarse", accessories: "Control", acknowledgeCoverage: "on", budgetAmount: "999" });
     expect((await startWarrantyReturn(null, f)).success).toBe(true);

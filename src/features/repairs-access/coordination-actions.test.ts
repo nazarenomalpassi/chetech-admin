@@ -7,6 +7,30 @@ import { saveWorkshopForm, saveQuickWorkshopForm, claimRepairOrder, deliverRepai
 beforeEach(() => { vi.clearAllMocks(); mocks.permission.mockResolvedValue({ id: "tech", role: "tecnico" }); mocks.rpc.mockResolvedValue({ data: {}, error: null }); });
 function form() { const data = new FormData(); data.set("id", "10000000-0000-4000-8000-000000000001"); data.set("status", "en_revision"); data.set("expectedVersion", "3"); return data; }
 describe("guardado breve del taller", () => {
+  it("confirma con un solo checkbox sin inventar el canal de la conversacion", async () => {
+    mocks.permission.mockResolvedValue({ role: "admin" });
+    const data = form(); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    data.set("repairAmount", "100"); data.set("confirmCustomer", "on");
+    mocks.rpc.mockResolvedValue({ data: { id: data.get("id"), version: 4, status: "en_revision", replayed: false }, error: null });
+    expect((await saveQuickWorkshopForm(null, data)).success).toBe(true);
+    expect(mocks.rpc.mock.calls[0][1]).toMatchObject({ p_confirm_customer: true, p_channel: "registro" });
+  });
+  it("un estado aceptado antiguo sin checkbox no fabrica otra aprobacion", async () => {
+    mocks.permission.mockResolvedValue({ role: "admin" });
+    const data = form(); data.set("operationId", "10000000-0000-4000-8000-000000000002"); data.set("status", "presupuestado_aceptado");
+    await saveQuickWorkshopForm(null, data);
+    expect(mocks.rpc.mock.calls[0][1].p_confirm_customer).toBe(false);
+  });
+  it("envia garantia explicita y valida, sin asumir garantia en formularios antiguos", async () => {
+    mocks.permission.mockResolvedValue({ role: "admin" });
+    const data = form(); data.set("operationId", "10000000-0000-4000-8000-000000000002");
+    data.set("warrantyIncluded", "1"); data.set("hasWarranty", "on"); data.set("warrantyDays", "90"); data.set("warrantyConditions", "Solo fuente");
+    await saveQuickWorkshopForm(null, data);
+    expect(mocks.rpc.mock.calls[0][1].p_payload).toMatchObject({ has_warranty: true, warranty_days: 90, warranty_conditions: "Solo fuente" });
+    mocks.rpc.mockClear(); data.set("warrantyDays", "0");
+    expect((await saveQuickWorkshopForm(null, data)).success).toBe(false);
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
   it.each(["tecnico", "admin"])("guarda no presenta fallas como %s sin presupuesto ni confirmacion", async (role) => {
     mocks.permission.mockResolvedValue({ id: role, role });
     const data = form(); data.set("status", "no_presenta_fallas"); data.set("operationId", "10000000-0000-4000-8000-000000000002");
@@ -96,6 +120,7 @@ describe("guardado breve del taller", () => {
     mocks.rpc.mockResolvedValue({ data: { id: "10000000-0000-4000-8000-000000000001", version: 6, status, replayed: false }, error: null });
     const data = form(); data.set("status", status); data.set("operationId", "10000000-0000-4000-8000-000000000002");
     data.set("repairAmount", "100"); data.set("decisionChannel", "telefono"); data.set("decisionNotes", "Respuesta del cliente");
+    if (status === "presupuestado_aceptado") data.set("confirmCustomer", "on");
     const result = await saveQuickWorkshopForm(null, data);
     expect(result.success).toBe(true);
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_save_quick", expect.objectContaining({

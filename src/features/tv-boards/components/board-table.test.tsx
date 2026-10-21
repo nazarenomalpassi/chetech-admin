@@ -1,12 +1,13 @@
 // @vitest-environment jsdom
 import React from "react";
-import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BoardTable } from "./board-table";
 import type { TvBoardRow } from "../model";
 import { markTvBoardReleasedAction } from "../actions";
 Object.assign(globalThis, { React });
 vi.mock("@/features/tv-boards/actions", () => ({ deleteTvBoardAction: vi.fn(), markTvBoardReleasedAction: vi.fn(), toggleTvBoardStatusAction: vi.fn() }));
+beforeEach(() => { vi.spyOn(window, "confirm").mockReturnValue(false); });
 afterEach(() => { cleanup(); vi.resetAllMocks(); vi.restoreAllMocks(); });
 
 const board: TvBoardRow = {
@@ -68,55 +69,37 @@ describe("board evidence labels", () => {
     expect(history.querySelector("time")?.dateTime).toBe("2026-10-19");
   });
 
-  it("confirms a release with the optimistic version and stable retry key", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    vi.spyOn(window, "alert").mockImplementation(() => {});
-    vi.mocked(markTvBoardReleasedAction).mockResolvedValue({ success: false, message: "No se pudo confirmar" });
+  it("opens an account confirmation dialog without submitting a release", () => {
     const pending: TvBoardRow = { ...board, isSold: true, soldAt: "2026-10-01", saleStatus: "pending_release", releaseEvidence: "pending", netAmount: 80 };
     const props = { canManage: true, onEdit: vi.fn(), onSell: vi.fn(), onStartClaim: vi.fn() };
-    const { rerender } = render(<BoardTable {...props} boards={[pending]} />);
+    render(<BoardTable {...props} boards={[pending]} />);
     fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("No se pudo confirmar"));
-    const first = vi.mocked(markTvBoardReleasedAction).mock.calls[0][0];
-    expect(first).toEqual({ id: "1", version: 3, operationId: expect.any(String) });
-    await waitFor(() => expect((screen.getAllByRole("button", { name: "Confirmar liberacion" })[0] as HTMLButtonElement).disabled).toBe(false));
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
-    await waitFor(() => expect(markTvBoardReleasedAction).toHaveBeenCalledTimes(2));
-    expect(vi.mocked(markTvBoardReleasedAction).mock.calls[1][0]).toEqual(first);
-    await waitFor(() => expect((screen.getAllByRole("button", { name: "Confirmar liberacion" })[0] as HTMLButtonElement).disabled).toBe(false));
-    rerender(<BoardTable {...props} boards={[{ ...pending, version: 4 }]} />);
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
-    await waitFor(() => expect(markTvBoardReleasedAction).toHaveBeenCalledTimes(3));
-    expect(vi.mocked(markTvBoardReleasedAction).mock.calls[2][0]).toEqual({ id: "1", version: 4, operationId: expect.not.stringContaining((first as { operationId: string }).operationId) });
-  });
-
-  it("catches a release transport failure and keeps an inline retry affordance", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    vi.mocked(markTvBoardReleasedAction).mockRejectedValue(new Error("Connection lost"));
-    render(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} boards={[{ ...board, isSold: true, soldAt: "2026-10-01", saleStatus: "pending_release", releaseEvidence: "pending" }]} />);
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
-    expect((await screen.findByRole("alert")).textContent).toMatch(/no se pudo confirmar/i);
-    await waitFor(() => expect((screen.getAllByRole("button", { name: "Confirmar liberacion" })[0] as HTMLButtonElement).disabled).toBe(false));
-  });
-
-  it("disables claim and edit while a release is pending", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    let finish!: (value: { success: boolean; message: string }) => void;
-    vi.mocked(markTvBoardReleasedAction).mockImplementation(() => new Promise((resolve) => { finish = resolve; }));
-    render(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} boards={[{ ...board, isSold: true, soldAt: "2026-10-01", saleStatus: "pending_release", releaseEvidence: "pending" }]} />);
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
+    expect(screen.getByRole("dialog", { name: "Confirmar liberacion" })).toBeTruthy();
+    expect(markTvBoardReleasedAction).not.toHaveBeenCalled();
     expect((screen.getAllByRole("button", { name: "Iniciar reclamo" })[0] as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getAllByRole("button", { name: "Editar" })[0] as HTMLButtonElement).disabled).toBe(true);
-    await act(async () => { finish({ success: true, message: "Confirmado" }); });
   });
 
   it("reports the actual release receipt version instead of guessing an increment", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     vi.mocked(markTvBoardReleasedAction).mockResolvedValue({ success: true, message: "Confirmado", recordVersion: 42 });
     const onSaleChanged = vi.fn();
-    render(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} onSaleChanged={onSaleChanged} boards={[{ ...board, isSold: true, soldAt: "2026-10-01", saleStatus: "pending_release", releaseEvidence: "pending" }]} />);
+    render(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} onSaleChanged={onSaleChanged} boards={[{ ...board, isSold: true, soldAt: "2026-10-01", netAmount: 80, saleStatus: "pending_release", releaseEvidence: "pending" }]} />);
     fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
+    const dialog = screen.getByRole("dialog");
+    fireEvent.change(within(dialog).getByLabelText("Cuenta de destino"), { target: { value: "nx" } });
+    fireEvent.click(within(dialog).getByRole("checkbox"));
+    fireEvent.submit(dialog.querySelector("form")!);
     await waitFor(() => expect(onSaleChanged).toHaveBeenCalledWith("1", 42, "Confirmado"));
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("shows the generated sale and destination without assuming legacy releases were posted", () => {
+    const released: TvBoardRow = { ...board, isSold: true, soldAt: "2026-10-01", releasedAt: "2026-10-21", saleStatus: "released", releaseEvidence: "confirmed" };
+    const { rerender } = render(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} boards={[{ ...released, linkedSale: { id: "sale", number: "V-0123", method: "nx" } }]} />);
+    expect(screen.getAllByText(/V-0123.*NX SANTI/)).toHaveLength(2);
+    expect(screen.queryByRole("button", { name: "Confirmar liberacion" })).toBeNull();
+    rerender(<BoardTable canManage onEdit={vi.fn()} onSell={vi.fn()} onStartClaim={vi.fn()} boards={[released]} />);
+    expect(screen.getAllByText("Liberacion historica sin venta vinculada")).toHaveLength(2);
+    expect(screen.queryByText(/NX SANTI/)).toBeNull();
   });
 });

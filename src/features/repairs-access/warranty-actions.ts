@@ -6,6 +6,23 @@ import { requireAdmin, requirePermission } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/form-state";
 import { warrantyReturnSaveSchema, warrantyReturnStartSchema } from "./warranty-return";
+import { repairWarrantyFieldsSchema } from "./schemas";
+
+export async function correctRepairWarranty(_previous: ActionResult | null, form: FormData): Promise<ActionResult & { recordVersion?: number }> {
+  await requireAdmin();
+  const parsed = repairWarrantyFieldsSchema.and(z.object({
+    id: z.string().uuid(), expectedVersion: z.coerce.number().int().positive(), operationId: z.string().uuid(),
+    reason: z.string().trim().min(3, "Indica el motivo de la correccion de garantia.").max(2000),
+    confirmCorrection: z.literal(true, { errorMap: () => ({ message: "Confirma la correccion desde el retiro original." }) })
+  })).safeParse({ ...Object.fromEntries(form), hasWarranty: form.get("hasWarranty") === "on",
+    warrantyDays: form.get("hasWarranty") === "on" ? form.get("warrantyDays") : 0,
+    confirmCorrection: form.get("confirmCorrection") === "on" });
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
+  const p = parsed.data;
+  return execute("workshop_warranty_correct", { p_order_id: p.id, p_expected_version: p.expectedVersion, p_operation_id: p.operationId,
+    p_has_warranty: p.hasWarranty, p_warranty_days: p.warrantyDays, p_conditions: p.warrantyConditions,
+    p_reason: p.reason, p_confirm: p.confirmCorrection }, "Garantia corregida desde el retiro original. Se conservaron la entrega y los cobros.");
+}
 
 async function execute(rpc: string, args: Record<string, unknown>, message: string): Promise<ActionResult & { recordVersion?: number }> {
   const client = await createServerSupabaseClient();
@@ -15,7 +32,8 @@ async function execute(rpc: string, args: Record<string, unknown>, message: stri
     : ["23514", "42501", "P0002"].includes(error.code) ? error.message
     : "No se pudo guardar el reingreso. Conserva tus datos y reintenta." };
   const receipt = z.object({ id: z.string().uuid(), version: z.number().int().positive(), replayed: z.boolean() }).safeParse(data);
-  if (!receipt.success || (rpc === "workshop_warranty_save" && receipt.data.id !== args.p_return_id)) return { success: false, message: "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el guardado." };
+  if (!receipt.success || (rpc === "workshop_warranty_save" && receipt.data.id !== args.p_return_id)
+    || (rpc === "workshop_warranty_correct" && receipt.data.id !== args.p_order_id)) return { success: false, message: "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el guardado." };
   revalidatePath("/reparaciones-access");
   return { success: true, recordVersion: receipt.data.version, message: receipt.data.replayed ? "Este cambio ya estaba guardado. Ficha actualizada." : message };
 }

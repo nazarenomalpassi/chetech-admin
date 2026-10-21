@@ -56,10 +56,21 @@ async function main() {
     await dialog.waitFor({ state: "hidden" });
     await cardA.getByRole("button", { name: "Confirmar liberacion", exact: true }).waitFor();
     assert.equal((await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0].released_at, null);
-    page.once("dialog", async (d: any) => d.accept());
     await cardA.getByRole("button", { name: "Confirmar liberacion", exact: true }).click();
+    dialog = page.getByRole("dialog", { name: "Confirmar liberacion", exact: true });
+    assert.equal(await dialog.getByLabel("Cuenta de destino",{exact:true}).inputValue(), "");
+    await dialog.getByRole("button",{name:"Confirmar y registrar venta",exact:true}).click();
+    await dialog.getByRole("alert").waitFor();
+    await dialog.getByLabel("Cuenta de destino",{exact:true}).selectOption("mp");
+    await dialog.getByLabel("Confirmo que el dinero ya fue transferido a la cuenta seleccionada y quiero registrar la venta y el cobro.",{exact:true}).check();
+    await dialog.getByRole("button",{name:"Confirmar y registrar venta",exact:true}).click();
+    await dialog.waitFor({state:"hidden"});
     await cardA.waitFor({ state: "hidden" });
     assert.ok((await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0].released_at);
+    const linkedSale=(await db.query("select id,sale_number,subtotal from public.sales where tv_board_id=$1",[a])).rows[0];
+    assert.ok(linkedSale?.id); assert.equal(Number(linkedSale.subtotal),104000.25);
+    const linkedCash=(await db.query("select medio_pago,monto from public.movimientos_caja where referencia_tabla='sales' and referencia_id=$1",[linkedSale.id])).rows;
+    assert.equal(linkedCash.length,1); assert.equal(linkedCash[0].medio_pago,"mp");
 
     await page.setViewportSize({ width: 1366, height: 900 });
     const rowB = page.getByRole("row").filter({ hasText: `${prefix} Anular` });
@@ -127,10 +138,18 @@ async function main() {
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `root overflow at ${width}`);
     }
     await page.goto(base + "/dashboard", { waitUntil: "networkidle" });
+    const balances=page.locator("summary").filter({hasText:/Saldo (actual por medio|disponible por cuenta)/});
+    if (await balances.count()) await balances.click();
     await page.getByRole("link", { name: "MP retenido por reclamos", exact: true }).waitFor();
-    assert.equal((await db.query(cashSql)).rows[0].hash, cashBefore);
+    assert.equal((await db.query("select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) hash from public.movimientos_caja t where referencia_tabla is distinct from 'sales' or referencia_id is distinct from $1",[linkedSale.id])).rows[0].hash, cashBefore);
+    await page.setViewportSize({width:390,height:844});
+    await page.goto(base+"/ventas",{waitUntil:"networkidle"});
+    const saleCard=page.locator("article").filter({hasText:linkedSale.sale_number});
+    await saleCard.getByText(new RegExp(`${prefix}.*Restaurar`)).waitFor();
+    assert.equal(await saleCard.getByRole("button",{name:"Editar",exact:true}).count(),0);
+    assert.equal(await saleCard.getByRole("button",{name:"Eliminar",exact:true}).count(),0);
     assert.deepEqual(errors, []);
-    console.log("PASS authenticated mobile/desktop UI: claim, held KPI/global queue, resume without release, confirmed release, cancel with confirmation/draft preservation, cancelled filter/history, stale recovery preserving notes, pending keyboard focus, no cash mutations or runtime errors");
+    console.log("PASS authenticated mobile/desktop UI: claim/resume/cancel/stale recovery, explicit destination, one linked sale and net receipt, immutable sale UI, keyboard focus, no unrelated cash changes or runtime errors");
   } catch (error) {
     await page.screenshot({ path: `${output}/failure.png`, fullPage: true });
     console.error(await page.locator("main").innerText().catch(() => "No main")); throw error;

@@ -29,7 +29,9 @@ describe("dashboard headline and inbox placement", () => {
     expect(screen.getByRole("link", { name: "Abrir ordenes" }).compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(details.compareDocumentPosition(screen.getByRole("region", { name: "Resumen tecnico" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(details.open).toBe(false);
-    expect(document.querySelectorAll("details")).toHaveLength(1);
+    expect(document.querySelectorAll("details")).toHaveLength(3);
+    expect(screen.getByText("Ordenes activas recientes").closest("summary")).not.toBeNull();
+    expect(screen.getByText("Visitas de hoy").closest("summary")?.textContent).toContain("0 agendadas");
   });
   it("puts the executive heading before the inbox without burying it after the long dashboard", () => {
     render(<DashboardOverview {...adminData} workshopInbox={<OperationalInboxSection inbox={inbox} />} />);

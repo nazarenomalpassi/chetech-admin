@@ -76,7 +76,7 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       {["accepted", "rejected", "revoked"].includes(modal) ? <>
         <input name="decision" value={modal} type="hidden" />
         <div className="border-y border-slate-200 py-3"><p className="text-sm text-slate-500">Presupuesto {context.budgetRevision ? `version ${context.budgetRevision}` : "actual"}</p><p className="mt-1 text-xl font-semibold">{formatCurrency(order.budgetAmount)}</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{order.budgetDetail || "Sin detalle cargado"}</p></div>
-        <DialogField label="Como confirmo el cliente"><Select name="channel" options={[{ value: "presencial", label: "En el local" }, { value: "telefono", label: "Por telefono" }, { value: "whatsapp", label: "WhatsApp del negocio" }, { value: "portal", label: "Portal del cliente" }]} /></DialogField>
+        {modal === "accepted" ? <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-700"><input name="confirmCustomer" type="checkbox" required className="h-5 w-5 shrink-0 accent-graphite" />El cliente confirmo este presupuesto</label> : null}
         <DialogField label={modal === "revoked" ? "Motivo de la correccion" : modal === "accepted" && zeroQuote ? "Motivo del trabajo sin cargo" : "Nota de la respuesta (opcional)"}><Textarea name="notes" required={modal === "revoked" || (modal === "accepted" && zeroQuote)} minLength={modal === "revoked" || (modal === "accepted" && zeroQuote) ? 3 : undefined} maxLength={2000} /></DialogField>
         <p className="text-xs text-slate-500">Se registra el usuario, la fecha y el presupuesto exacto. Esta accion no registra un cobro.</p>
       </> : null}

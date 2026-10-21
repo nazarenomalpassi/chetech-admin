@@ -32,6 +32,7 @@ describe("mapSalesHistoryRows", () => {
     expect(result).toEqual([
       {
         id: "sale-1",
+        tvBoardId: null,
         saleNumber: "V-0100",
         subtotal: 25000,
         costTotal: 12000,
@@ -80,5 +81,28 @@ describe("mapSalesHistoryRows", () => {
 
     expect(sale.payments).toEqual([]);
     expect(sale.items[0].productName).toBe("Cable");
+  });
+
+  it("preserves a board description and unknown acquisition cost without inventing profit", () => {
+    const [sale] = mapSalesHistoryRows([{
+      id: "board-sale", tv_board_id: "board-1", sale_number: "V-0102", subtotal: "104000.25",
+      cost_total: null, profit_total: null, sold_at: "2026-10-21", sale_items: [{
+        product_id: null, description: "Placa Main LG Smart", products: null,
+        quantity: 1, unit_price: "104000.25", total: "104000.25"
+      }]
+    }]);
+    expect(sale).toMatchObject({ tvBoardId: "board-1", costTotal: null, profitTotal: null });
+    expect(sale.items[0]).toMatchObject({ productId: null, productName: "Placa Main LG Smart", total: 104000.25 });
+  });
+
+  it("prefers the immutable description snapshot and preserves a known zero cost", () => {
+    const [sale] = mapSalesHistoryRows([{
+      id: "sale", cost_total: 0, profit_total: "100", sale_items: [{
+        product_id: "product", description: "Original description", products: { name: "Renamed product" }
+      }]
+    }]);
+    expect(sale.costTotal).toBe(0);
+    expect(sale.profitTotal).toBe(100);
+    expect(sale.items[0].productName).toBe("Original description");
   });
 });

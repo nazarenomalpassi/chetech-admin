@@ -6,10 +6,8 @@ import {
   ArrowUpRight,
   CalendarRange,
   CreditCard,
-  Package,
   ShoppingBag,
   Target,
-  Wallet,
   Wrench
 } from "lucide-react";
 
@@ -18,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { MetricCard } from "@/components/ui/metric-card";
 import { getDashboardAccountLabel } from "@/features/dashboard/financial-summary";
 import { LowStockDisclosure } from "@/features/dashboard/components/low-stock-disclosure";
+import { DashboardDisclosure } from "@/features/dashboard/components/dashboard-disclosure";
 import { getVisitTimeLabel } from "@/features/visits/model";
 import { Input } from "@/components/ui/input";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
@@ -202,18 +201,11 @@ export function DashboardOverview({
         <LowStockDisclosure products={lowStockProducts} />
 
         <div className="grid items-start gap-4 xl:grid-cols-2">
-          <Card className="p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
-                  Saldo disponible por cuenta
-                </h2>
-                <p className="mt-1 text-sm text-slate-600">Saldos actuales, no del periodo filtrado.</p>
-              </div>
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-graphite/8 bg-brand-100 text-graphite">
-                <Wallet className="h-5 w-5" />
-              </span>
-            </div>
+          <DashboardDisclosure
+            title="Saldo disponible por cuenta"
+            summary={<>{formatCurrency(accountBalances.reduce((total, account) => total + account.balance, 0))} disponibles en {accountBalances.length} cuentas. MP pendiente: {formatCurrency(pendingMercadoPagoReleaseAmount)}; retenido: {formatCurrency(heldMercadoPagoClaimAmount)}. Saldos actuales.</>}
+          >
+            <p className="text-sm text-slate-600">Saldos actuales, no del periodo filtrado.</p>
 
             <div className="mt-4 space-y-3">
               {accountBalances.map((account) => (
@@ -256,15 +248,10 @@ export function DashboardOverview({
                 </div>
               </div>
             </div>
-          </Card>
+          </DashboardDisclosure>
 
-          <Card className="p-4 sm:p-5">
+          <DashboardDisclosure title="Visitas de hoy" summary={`${visitsDashboard.todayCount} agendadas; ${visitsDashboard.pendingCount} pendientes hoy.`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
-                  Visitas de hoy
-                </h2>
-              </div>
               <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/visitas" as Route}>
                 Abrir visitas
               </Link>
@@ -290,15 +277,10 @@ export function DashboardOverview({
                 )}
               </div>
             </div>
-          </Card>
+          </DashboardDisclosure>
 
-          <Card className="p-4 sm:p-5">
+          <DashboardDisclosure title="Cuotas por cobrar" summary={`${installmentsDashboard.dueTodayCount} hoy: ${formatCurrency(installmentsDashboard.dueTodayTotal)}; ${installmentsDashboard.overdueCount} vencidas: ${formatCurrency(installmentsDashboard.overdueTotal)}.`}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
-                  Cuotas por cobrar
-                </h2>
-              </div>
               <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/cuotas" as Route}>
                 Ver cuotas
               </Link>
@@ -354,19 +336,9 @@ export function DashboardOverview({
                 )}
               </div>
             </div>
-          </Card>
+          </DashboardDisclosure>
 
-          <Card className="p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h2 className="text-xl font-semibold tabular-nums text-slate-950">
-                  Productos mas vendidos
-                </h2>
-              </div>
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-graphite/8 bg-brand-100 text-graphite">
-                <Package className="h-5 w-5" />
-              </span>
-            </div>
+          <DashboardDisclosure title="Productos mas vendidos" summary={topProducts.length ? `${topProducts.length} productos destacados; ${topProducts.reduce((total, product) => total + product.quantity, 0)} unidades en esta lista del periodo.` : "Sin ventas registradas en el periodo."}>
 
             <div className="mt-4 space-y-3">
               {topProducts.length ? (
@@ -391,7 +363,7 @@ export function DashboardOverview({
                 </div>
               )}
             </div>
-          </Card>
+          </DashboardDisclosure>
         </div>
       </div>
     </div>

@@ -6,11 +6,13 @@ import { CircleCheck, MessageSquareWarning, Pencil, Power, Trash2, WalletCards }
 import { Badge } from "@/components/ui/badge";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Button } from "@/components/ui/button";
-import { deleteTvBoardAction, markTvBoardReleasedAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
+import { deleteTvBoardAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
+import { BoardReleaseDialog } from "@/features/tv-boards/components/board-release-dialog";
 import { BoardSaleHistory } from "@/features/tv-boards/components/board-sale-history";
 import type { TvBoardRow } from "@/features/tv-boards/model";
 import { getTvBoardMargin } from "@/features/tv-boards/sales";
 import type { ActionResult } from "@/lib/form-state";
+import { formatCashMethod } from "@/lib/cash";
 import { formatCurrency, formatDate } from "@/lib/utils";
 
 type TvBoard = TvBoardRow;
@@ -43,6 +45,8 @@ export function BoardTable({
   const pendingRef = useRef(false);
   const operationIds = useRef(new Map<string, string>());
   const [feedback, setFeedback] = useState<ActionResult | null>(null);
+  const [releaseBoard, setReleaseBoard] = useState<TvBoard | null>(null);
+  const [releasedIds, setReleasedIds] = useState<ReadonlySet<string>>(new Set());
 
   function runMutation(operation: () => Promise<ActionResult & { recordVersion?: number }>, onSuccess?: (result: ActionResult & { recordVersion?: number }) => void) {
     if (pendingRef.current) return;
@@ -71,22 +75,6 @@ export function BoardTable({
     runMutation(() => deleteTvBoardAction(board.id));
   }
 
-  function handleRelease(board: TvBoard) {
-    if (pendingRef.current) return;
-    if (!window.confirm(`Confirmas que Mercado Pago ya libero ${formatCurrency(board.netAmount ?? 0)} por la placa ${board.brand} ${board.model}?`)) return;
-
-    const payload = { id: board.id, version: board.version };
-    const fingerprint = JSON.stringify(payload);
-    const operationId = operationIds.current.get(fingerprint) ?? crypto.randomUUID();
-    operationIds.current.set(fingerprint, operationId);
-    runMutation(() => markTvBoardReleasedAction({ ...payload, operationId }), (result) => {
-      if (onSaleChanged) {
-        setFeedback(null);
-        onSaleChanged(board.id, result.recordVersion, result.message);
-      }
-    });
-  }
-
   function renderSaleBadge(board: TvBoard) {
     if (board.claimStatus === "open") return <Badge variant="warning">Dinero retenido</Badge>;
     if (board.claimStatus === "cancelled") return <Badge variant="default">Venta anulada</Badge>;
@@ -99,8 +87,8 @@ export function BoardTable({
         <Badge className="border-slate-200 bg-slate-100 text-slate-700" variant="default">
           Vendida
         </Badge>
-        <Badge variant={board.releaseEvidence === "confirmed" ? "success" : "warning"}>
-          {board.releaseEvidence === "confirmed" ? "Liberacion confirmada" : board.releaseEvidence === "estimated_due" ? "Fecha prevista cumplida; sin confirmar" : "Liberacion sin confirmar"}
+        <Badge variant={board.releaseEvidence === "confirmed" || releasedIds.has(board.id) ? "success" : "warning"}>
+          {board.releaseEvidence === "confirmed" || releasedIds.has(board.id) ? "Liberacion confirmada" : board.releaseEvidence === "estimated_due" ? "Fecha prevista cumplida; sin confirmar" : "Liberacion sin confirmar"}
         </Badge>
       </div>
     );
@@ -108,10 +96,11 @@ export function BoardTable({
 
   function renderActions(board: TvBoard) {
     if (!canManage) return <p className="text-sm text-slate-500">Solo administracion</p>;
-    const disabled = isPending || (updatedVersions?.[board.id] ?? 0) > board.version;
+    const disabled = isPending || Boolean(releaseBoard) || (updatedVersions?.[board.id] ?? 0) > board.version;
+    const canRelease = board.isSold && board.claimStatus === "none" && !board.releasedAt && board.releaseEvidence !== "confirmed" && !board.linkedSale && !releasedIds.has(board.id);
     return (
       <div className="flex flex-wrap gap-2 xl:justify-end">
-        <Button disabled={disabled} onClick={() => onEdit(board.id)} size="sm" type="button" variant="secondary">
+        <Button disabled={disabled || Boolean(board.linkedSale)} onClick={() => onEdit(board.id)} size="sm" type="button" variant="secondary">
           <Pencil className="h-4 w-4" />
           Editar
         </Button>
@@ -121,14 +110,14 @@ export function BoardTable({
             Registrar venta
           </Button>
         ) : null}
-        {board.isSold && board.claimStatus === "none" && !board.releasedAt && board.releaseEvidence !== "confirmed" ? (
+        {canRelease ? (
           <Button disabled={disabled} onClick={() => onStartClaim(board.id)} size="sm" type="button" variant="secondary">
             <MessageSquareWarning aria-hidden="true" className="h-4 w-4" />
             Iniciar reclamo
           </Button>
         ) : null}
-        {board.isSold && board.claimStatus === "none" && !board.releasedAt && board.releaseEvidence !== "confirmed" ? (
-          <Button disabled={disabled} onClick={() => handleRelease(board)} size="sm" type="button" variant="secondary">
+        {canRelease ? (
+          <Button disabled={disabled} onClick={() => { if (!pendingRef.current) { setFeedback(null); setReleaseBoard(board); } }} size="sm" type="button" variant="secondary">
             <CircleCheck className="h-4 w-4" />
             Confirmar liberacion
           </Button>
@@ -156,6 +145,8 @@ export function BoardTable({
         {board.soldAt ? <p>Venta: {formatDate(board.soldAt)}</p> : null}
         {board.releaseDate ? <p>Prevista: {formatDate(board.releaseDate)}</p> : null}
         {board.releasedAt ? <p>Confirmada: {formatDate(board.releasedAt)}</p> : null}
+        {board.linkedSale ? <p className="break-words font-medium text-slate-800">Venta {board.linkedSale.number}{board.linkedSale.method ? ` - ${formatCashMethod(board.linkedSale.method)}` : ""}</p>
+          : board.releasedAt ? <p>Liberacion historica sin venta vinculada</p> : null}
         {board.saleNotes ? <p className="break-words">{board.saleNotes}</p> : null}
         <BoardSaleHistory events={board.events} />
       </div>
@@ -231,6 +222,12 @@ export function BoardTable({
         </table>
       </div>
       {!boards.length ? <div className="empty-panel">No hay placas con estos filtros. Proba otra busqueda o cambia el estado.</div> : null}
+      {releaseBoard ? <BoardReleaseDialog board={releaseBoard} onClose={() => setReleaseBoard(null)} onSaved={(result) => {
+        setReleasedIds((previous) => new Set([...previous, releaseBoard.id]));
+        setReleaseBoard(null);
+        if (onSaleChanged) onSaleChanged(releaseBoard.id, result.recordVersion, result.message);
+        else setFeedback(result);
+      }} operationIds={operationIds.current} /> : null}
     </div>
   );
 }

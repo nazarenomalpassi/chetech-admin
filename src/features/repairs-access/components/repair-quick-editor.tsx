@@ -10,9 +10,13 @@ import { getPartOutstandingQuantity, getQuickWorkshopState, hasWorkshopDeliveryB
 import { repairAccessStatusOptions } from "./repair-access-helpers";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { WorkshopForm } from "./workshop-form";
+import { RepairWarrantyFields } from "./repair-warranty-fields";
+import { RepairWarrantyCorrection } from "./repair-warranty-correction";
 
-export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrderRecord; canManage: boolean }) {
-  if (order.deliveredAt || order.status === "retirado") return <p className="p-4 text-sm text-slate-600">Esta orden ya fue entregada. Los ajustes se revisan en la ficha completa.</p>;
+export function RepairQuickEditor({ order, canManage, defaultWarrantyDays }: { order: RepairAccessOrderRecord; canManage: boolean; defaultWarrantyDays?: number }) {
+  if (order.deliveredAt || order.status === "retirado") return canManage
+    ? <RepairWarrantyCorrection order={order} defaultWarrantyDays={defaultWarrantyDays} />
+    : <p className="p-4 text-sm text-slate-600">Esta orden ya fue entregada. La garantia se corrige desde administracion.</p>;
   const pendingParts = order.workflow?.parts.filter((part) => getPartOutstandingQuantity(part) > 0).length ?? 0;
   const hasExplicitZero = (order.workflow?.approvalStatus === "accepted" && order.workflow.approvedAmount === 0)
     || (order.workflow?.approvalStatus === "rejected" && order.hasBudgetAmount && order.workflow.budgetRevision > 0);
@@ -27,6 +31,9 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
       const protectQuote = noFault || (retiring && order.status === "no_presenta_fallas");
       const canDeliver = ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status);
       const hasWorkChanges = state.quoteChanged
+        || ("hasWarranty" in fields && (fields.hasWarranty === "on") !== Boolean(order.hasWarranty))
+        || ("warrantyDays" in fields && Number(fields.warrantyDays) !== (order.warrantyDays || defaultWarrantyDays || 0) && fields.hasWarranty === "on")
+        || (fields.warrantyConditions ?? order.warrantyConditions ?? "") !== (order.warrantyConditions ?? "")
         || (fields.repairProgress ?? order.repairProgress ?? "") !== (order.repairProgress ?? "")
         || (fields.qualityNotes ?? order.workflow?.qualityNotes ?? "") !== (order.workflow?.qualityNotes ?? "");
       const hasBalance = hasWorkshopDeliveryBalance(order);
@@ -34,7 +41,7 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
       const quoteKey = JSON.stringify([fields.repairAmount ?? String(order.budgetAmount), fields.budgetDetail ?? order.budgetDetail ?? ""]);
       const needsQuality = !noFault && (["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality);
       const confirmSelected = fields.confirmCustomer === "on";
-      const decisionSelected = canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
+      const decisionSelected = canManage && state.status === "presupuestado_rechazado";
       const rejecting = state.status === "presupuestado_rechazado";
       const responseNeedsRecording = decisionSelected && (state.quoteChanged || order.workflow?.approvalStatus !== (rejecting ? "rejected" : "accepted"));
       const needsRejectionReason = rejecting && order.workflow?.approvalStatus === "accepted" && !state.quoteChanged;
@@ -63,6 +70,9 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           <Textarea id={`quick-${order.id}-progress`} name="repairProgress" defaultValue={order.repairProgress ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" placeholder="Que hiciste y que falta" />
         </label>
         {!retiring ? <p className="text-xs leading-5 text-slate-500">El presupuesto y el avance son visibles para el cliente con cuenta vinculada.</p> : null}
+        {canManage ? <div hidden={retiring || noFault}>
+          <RepairWarrantyFields order={order} fields={fields} defaultWarrantyDays={defaultWarrantyDays} disabled={retiring || noFault} />
+        </div> : null}
         {retiring ? <div className="grid gap-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3">
           <p className="text-sm font-semibold text-slate-900">Registrar retiro del equipo</p>
           <label className="grid gap-2 text-sm font-medium text-slate-700"><span>Persona que retira</span>
@@ -87,7 +97,6 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
             <p className="text-sm font-semibold text-slate-900">{responseNeedsRecording
               ? rejecting ? "Al guardar se registra que el cliente rechazo este presupuesto." : "Al guardar se registra que el cliente acepto este presupuesto."
               : rejecting ? "El rechazo de este presupuesto ya esta registrado." : "La aceptacion de este presupuesto ya esta registrada."}</p>
-            {!responseNeedsRecording ? <input name="decisionChannel" type="hidden" value="presencial" /> : null}
           </> : <>
           <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-900">
             <input key={`confirmation-${quoteKey}`} name="confirmCustomer" type="checkbox" defaultChecked={fields.confirmCustomer === "on"} className="h-5 w-5 shrink-0 accent-graphite" />
@@ -95,16 +104,13 @@ export function RepairQuickEditor({ order, canManage }: { order: RepairAccessOrd
           </label>
           <p className="mt-1 text-sm leading-5 text-slate-600">Solo si autorizo este importe y detalle.</p>
           </>}
-          {responseNeedsRecording || (!decisionSelected && confirmSelected) ? <div className="mt-3 grid gap-3">
-            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{decisionSelected ? "Como respondio el cliente" : "Como confirmo"}</span><Select id={`quick-${order.id}-channel`} name="decisionChannel" defaultValue={fields.decisionChannel || "presencial"} options={[
-              { value: "presencial", label: "En el local" }, { value: "telefono", label: "Por telefono" },
-              { value: "whatsapp", label: "WhatsApp del negocio" }, { value: "portal", label: "Portal del cliente" }
-            ]} /></label>
+          {responseNeedsRecording || (!decisionSelected && confirmSelected && needsFreeReason) ? <div className="mt-3 grid gap-3">
             <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{needsRejectionReason ? "Motivo del rechazo" : needsFreeReason ? "Motivo del trabajo sin cargo" : rejecting ? "Nota del rechazo (opcional)" : "Nota de confirmacion (opcional)"}</span>
               <Textarea id={`quick-${order.id}-decision-notes`} name="decisionNotes" defaultValue={fields.decisionNotes || ""} maxLength={2000} required={needsRejectionReason || needsFreeReason} minLength={needsRejectionReason || needsFreeReason ? 3 : undefined} className="min-h-20" />
             </label>
           </div> : null}
         </div> : null}
+        {canManage && !retiring && !noFault && !state.needsConfirmation && !decisionSelected ? <p className="text-sm text-slate-600">La aceptacion de este presupuesto ya esta registrada. Desmarcar un formulario no la revoca.</p> : null}
         {!canManage && !noFault ? <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={false} /> : null}
         {needsQuality ? <label className={retiring ? "hidden" : "flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm font-semibold text-slate-900"}>
           <input key={`quality-${quoteKey}`} name="qualityChecked" type="checkbox" defaultChecked={"qualityChecked" in fields ? fields.qualityChecked === "on" : state.hasCurrentQuality} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />

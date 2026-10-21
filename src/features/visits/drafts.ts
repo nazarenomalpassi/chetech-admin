@@ -4,7 +4,8 @@ const fields = z.object({
   customerName: z.string().max(300).optional(), customerPhone: z.string().max(100).optional(), address: z.string().max(1000).optional(),
   visitDate: z.string().max(10).optional(), timeFrom: z.string().max(5).optional(), timeTo: z.string().max(5).optional(),
   reason: z.string().max(1000).optional(), notes: z.string().max(2000).optional(), status: z.string().max(30).optional(),
-  technicianId: z.string().max(36).optional(), repairNumber: z.string().max(30).optional()
+  technicianId: z.string().max(36).optional(), repairNumber: z.string().max(30).optional(),
+  toolsRequired: z.string().max(3).optional(), toolsDetail: z.string().max(500).optional()
 });
 const envelope = z.object({ ownerId: z.string(), visitId: z.string(), sourceVersion: z.string(), token: z.string().max(100), savedAt: z.number().finite(), fields });
 export type VisitDraft = z.infer<typeof envelope>;

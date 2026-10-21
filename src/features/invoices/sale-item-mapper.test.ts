@@ -26,4 +26,22 @@ describe("mapInvoiceSaleItems", () => {
       }
     ]);
   });
+
+  it("uses a board sale snapshot without requiring a catalog product", () => {
+    expect(mapInvoiceSaleItems([{
+      id: "board-item", product_id: null, products: null, description: "Placa Fuente Samsung UN40",
+      quantity: 1, unit_price: "104000.25", total: "104000.25"
+    }])).toEqual([{
+      id: "board-item", productId: null, description: "Placa Fuente Samsung UN40",
+      quantity: 1, unitPrice: 104000.25, total: 104000.25
+    }]);
+  });
+
+  it("prefers the snapshot but falls back to catalog name and SKU for empty snapshots", () => {
+    const product = { name: "Cable USB", sku: "CAB-010" };
+    expect(mapInvoiceSaleItems([
+      { description: "  Original board description  ", products: product },
+      { description: "  ", products: product }
+    ]).map(item => item.description)).toEqual(["Original board description", "Cable USB (CAB-010)"]);
+  });
 });

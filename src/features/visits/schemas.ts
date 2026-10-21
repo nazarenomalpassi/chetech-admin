@@ -17,6 +17,30 @@ export const visitStatusValues = [
   "cancelada"
 ] as const;
 
+const visitToolsSchema = z.object({
+  toolsRequired: z.enum(["", "yes", "no"]).default(""),
+  toolsDetail: z.string().trim().max(500, "Detalla las herramientas en hasta 500 caracteres").default("")
+});
+const toolsMarker = "\n\n[chetech:visit-tools:v1]\n";
+const toolsEnd = "\n[/chetech:visit-tools]";
+
+export function parseVisitNotes(notes: string) {
+  const start = notes.lastIndexOf(toolsMarker);
+  const end = start >= 0 ? notes.indexOf(toolsEnd, start + toolsMarker.length) : -1;
+  if (end >= 0) {
+    try {
+      const result = visitToolsSchema.safeParse(JSON.parse(notes.slice(start + toolsMarker.length, end)));
+      if (result.success && result.data.toolsRequired) return { notes: notes.slice(0, start) + notes.slice(end + toolsEnd.length), ...result.data };
+    } catch { /* Unrecognized legacy notes stay intact. */ }
+  }
+  return { notes, toolsRequired: "" as const, toolsDetail: "" };
+}
+
+export function serializeVisitNotes(value: { notes: string; toolsRequired: "" | "yes" | "no"; toolsDetail: string }) {
+  if (!value.toolsRequired) return value.notes;
+  return `${value.notes}${toolsMarker}${JSON.stringify({ toolsRequired: value.toolsRequired, toolsDetail: value.toolsRequired === "yes" ? value.toolsDetail : "" })}${toolsEnd}`;
+}
+
 function timeToMinutes(value: string) {
   const [hours = "0", minutes = "0"] = value.split(":");
   return Number(hours) * 60 + Number(minutes);
@@ -36,9 +60,13 @@ export const visitFormSchema = z
     repairAccessOrderId: optionalId,
     reason: z.string().trim().min(1, "Selecciona o escribe el motivo"),
     notes: z.string().max(2000).optional(),
+    toolsRequired: visitToolsSchema.shape.toolsRequired,
+    toolsDetail: visitToolsSchema.shape.toolsDetail,
     status: z.enum(visitStatusValues).default("pendiente")
   })
   .superRefine((value, ctx) => {
+    if (value.toolsRequired === "yes" && !value.toolsDetail) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["toolsDetail"], message: "Indica cuales herramientas hay que llevar" });
+    if (serializeVisitNotes({ ...value, notes: value.notes ?? "" }).length > 2000) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["notes"], message: "Las observaciones y herramientas superan 2000 caracteres. Acorta el texto sin perder los datos importantes." });
     if (value.id && !value.expectedUpdatedAt) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["expectedUpdatedAt"], message: "Falta la version de la visita. Actualiza antes de editar." });
     if (timeToMinutes(value.timeTo) <= timeToMinutes(value.timeFrom)) {
       ctx.addIssue({

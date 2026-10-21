@@ -6,19 +6,19 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ from: mocks.from, rpc: mocks.rpc }) }));
 import { markTvBoardReleasedAction, markTvBoardSoldAction } from "./actions";
 const id = "11111111-1111-4111-8111-111111111111";
-const release = { id, version: 1, operationId: "22222222-2222-4222-8222-222222222222" };
+const release = { id, version: 1, operationId: "22222222-2222-4222-8222-222222222222", method: "nx" };
 beforeEach(() => {
   vi.resetAllMocks(); mocks.auth.mockResolvedValue({ id: "actor" });
   const query = { select: vi.fn(), eq: vi.fn(), is: mocks.is, not: vi.fn(), gt: mocks.gt, update: mocks.update, maybeSingle: mocks.read };
   for (const method of [query.select, query.eq, query.is, query.not, query.gt, query.update]) method.mockReturnValue(query);
   mocks.from.mockReturnValue(query);
   mocks.read.mockResolvedValueOnce({ data: { sold_at: "2026-01-01", release_date: "2026-01-02", released_at: null }, error: null }).mockResolvedValue({ data: { id }, error: null });
-  mocks.rpc.mockResolvedValue({ data: { id, version: 2, kind: "confirm_release", status: "released", replayed: false }, error: null });
+  mocks.rpc.mockResolvedValue({ data: { id, version: 2, kind: "confirm_release", status: "released", replayed: false, saleId: "33333333-3333-4333-8333-333333333333", saleNumber: "V-0100", method: "nx" }, error: null });
 });
 describe("board release confirmation", () => {
-  it("can confirm an overdue estimate and records the actor without creating cash movements", async () => {
+  it("confirms a release through the atomic sale-and-cash RPC with an explicit account", async () => {
     expect((await markTvBoardReleasedAction(release)).success).toBe(true);
-    expect(mocks.rpc).toHaveBeenCalledWith("tv_board_sale_transition", expect.objectContaining({ p_board_id: id, p_expected_version: 1, p_kind: "confirm_release" }));
+    expect(mocks.rpc).toHaveBeenCalledWith("release_tv_board_to_sale", expect.objectContaining({ p_board_id: id, p_expected_version: 1, p_method: "nx" }));
     expect(mocks.from).not.toHaveBeenCalled();
   });
   it("rejects duplicate confirmation", async () => {

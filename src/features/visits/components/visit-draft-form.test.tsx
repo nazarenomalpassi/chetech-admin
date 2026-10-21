@@ -40,4 +40,18 @@ describe("explicit draft recovery", () => {
     expect(sessionStorage.getItem(visitDraftStorageKey("other", "new"))).toBeNull();
     expect((screen.getByLabelText("Cliente") as HTMLInputElement).value).toBe("");
   });
+  it("restores the original token so a recovered submission remains idempotent", () => {
+    sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft(saved));
+    const { container } = render(form());
+    fireEvent.click(screen.getByRole("button", { name: "Recuperar borrador" }));
+    expect((container.querySelector('input[name="draftToken"]') as HTMLInputElement).value).toBe("saved-token");
+  });
+  it("keeps keyboard focus inside the recovery flow", () => {
+    sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft(saved));
+    render(form());
+    const recover = screen.getByRole("button", { name: "Recuperar borrador" });
+    expect(document.activeElement).toBe(recover);
+    fireEvent.click(recover);
+    expect(document.activeElement).toBe(screen.getByLabelText("Cliente"));
+  });
 });

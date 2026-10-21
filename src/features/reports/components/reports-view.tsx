@@ -19,6 +19,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { MetricCard } from "@/components/ui/metric-card";
+import { BusinessChart, type BusinessChartRow } from "@/features/reports/components/business-chart";
+import type { RankingRow, ReportPeriodMetrics } from "@/features/reports/performance-snapshot";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 type GoalProgress = {
@@ -38,15 +40,7 @@ type ReportsViewProps = {
       isToday: boolean;
       isCustomRange: boolean;
     };
-    metrics: {
-      salesTotal: number;
-      salesProfit: number;
-      repairsTotal: number;
-      expensesTotal: number;
-      invoicesTotal: number;
-      salariesTotal: number;
-      netCash: number;
-    };
+    metrics: ReportPeriodMetrics;
     monthlyComparison: {
       currentLabel: string;
       previousLabel: string;
@@ -72,18 +66,8 @@ type ReportsViewProps = {
       };
     };
     rankings: {
-      products: {
-        label: string;
-        quantity: number;
-        revenue: number;
-        profit: number;
-      }[];
-      categories: {
-        label: string;
-        quantity: number;
-        revenue: number;
-        profit: number;
-      }[];
+      products: RankingRow[];
+      categories: RankingRow[];
     };
     sellerSummary: {
       userId: string | null;
@@ -136,23 +120,27 @@ const EXPORT_MODULES = [
 function VariationBadge({
   difference,
   percentage,
-  trend
+  trend,
+  label,
+  lowerIsBetter = false
 }: {
   difference: number;
   percentage: number | null;
   trend: "up" | "down" | "flat";
+  label: string;
+  lowerIsBetter?: boolean;
 }) {
   const Icon = trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : ArrowRight;
   const tone =
-    trend === "up"
+    (lowerIsBetter ? trend === "down" : trend === "up")
       ? "bg-emerald-50 text-emerald-700"
-      : trend === "down"
+      : trend !== "flat"
         ? "bg-rose-50 text-rose-700"
         : "bg-slate-100 text-slate-600";
 
   return (
-    <span className={cn("inline-flex max-w-full flex-wrap items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", tone)}>
-      <Icon className="h-3.5 w-3.5" />
+    <span aria-label={`Variacion de ${label}`} className={cn("inline-flex max-w-full flex-wrap items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", tone)}>
+      <Icon aria-hidden="true" className="h-3.5 w-3.5" />
       {difference === 0
         ? "Sin cambio"
         : `${difference > 0 ? "+" : ""}${formatCurrency(difference)}${percentage !== null ? ` - ${difference > 0 ? "+" : ""}${percentage.toFixed(1)}%` : ""}`}
@@ -167,7 +155,7 @@ function GoalCard({
   title: string;
   progress: GoalProgress;
 }) {
-  const progressWidth = Math.min(progress.progress, 100);
+  const progressWidth = Math.max(0, Math.min(progress.progress, 100));
   const reached = progress.actual >= progress.target;
 
   return (
@@ -199,11 +187,16 @@ function GoalCard({
   );
 }
 
+function RankingMargin({ row }: { row: RankingRow }) {
+  if (row.unknownCostCount == null) return <p className="text-xs text-slate-600">Margen sin verificar; cobertura de costos no informada</p>;
+  return <p className="text-xs text-slate-600">{row.profit === null ? "Margen por determinar" : `Margen conocido ${formatCurrency(row.profit)}`}{row.unknownCostCount > 0 ? `; ${row.unknownCostCount} lineas sin costo, subtotal parcial` : ""}</p>;
+}
+
 export function ReportsView({ canExport, data }: ReportsViewProps) {
   const { metrics, range, monthlyComparison, monthlyGoals, rankings, sellerSummary, technicianSummary } = data;
   const metricCards = [
     { label: "Ventas del periodo", value: metrics.salesTotal, icon: TrendingUp, tone: "income", description: "Importe registrado en ventas" },
-    { label: "Ganancia bruta de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Ventas menos costo de productos" },
+    { label: "Margen registrado de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Subtotal con costo conocido; no es ganancia total ni utilidad neta." },
     { label: "Importe declarado en reparaciones", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Importes declarados; no equivale a cobros" },
     { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
     { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
@@ -211,6 +204,12 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
   ] as const;
 
   const exportQuery = `from=${range.from}&to=${range.to}`;
+  const monthlyChartRows: BusinessChartRow[] = monthlyComparison.rows.filter((row) => row.key !== "salesProfit").map((row) => ({
+    label: row.key === "repairsTotal" ? "REP declaradas" : row.key === "invoicesTotal" ? "Comprobantes" : row.label,
+    value: row.current,
+    previous: row.previous,
+    tone: row.key === "expensesTotal" ? "expense" : row.key === "repairsTotal" ? "service" : row.key === "netCash" ? "margin" : "income"
+  }));
 
   return (
     <div className="space-y-4">
@@ -257,10 +256,32 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         {metricCards.map((metric) => <MetricCard {...metric} format="currency" key={metric.label} />)}
       </section>
 
+      <details className="rounded-xl border border-slate-200 bg-white">
+        <summary className="min-h-14 cursor-pointer p-4 text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-600">
+          <span className="font-semibold">Cobertura de costos de ventas</span>
+          <span className="mt-1 block text-sm">{metrics.salesUnknownCostCount == null ? "Cobertura sin verificar: no se informo el conteo de ventas sin costo." : metrics.salesUnknownCostCount > 0 ? `${metrics.salesUnknownCostCount} ventas sin margen calculable. El margen mostrado es parcial.` : "Todas las ventas del periodo tienen margen calculable."}</span>
+        </summary>
+        <div className="space-y-2 border-t border-slate-200 p-4 text-sm leading-6 text-slate-600">
+          <p>Las ventas sin costo conocido, incluidas placas sin costo de adquisicion registrado, no se cuentan como ganancia. Un costo cero explicitamente registrado si es valido. El subtotal de margen excluye esas ventas; sus ingresos siguen incluidos en ventas y caja cuando corresponda.</p>
+          <p>Las liberaciones futuras de placas registradas como venta ya forman parte de estos importes: no se vuelve a sumar su neto ni su margen por separado. No se reconstruyen liberaciones historicas.</p>
+          <p>En rankings, los subtotales con costo conocido no equivalen a la ganancia total. Si el agregado no informa cobertura, no se presume que todos los costos esten completos.</p>
+        </div>
+      </details>
+
+      <BusinessChart title="Actividad registrada del periodo" description={`Del ${formatDate(range.from)} al ${formatDate(range.to)}. Ventas registradas, reparaciones declaradas y comprobantes emitidos no equivalen a cobros. No se suman entre si: pueden representar la misma operacion. Gastos y retiros se muestran separados; no es un calculo de utilidad.`} rows={[
+        { label: "Ventas registradas", value: metrics.salesTotal, tone: "income" },
+        { label: "REP declaradas", value: metrics.repairsTotal, tone: "service" },
+        { label: "Comprobantes", value: metrics.invoicesTotal, tone: "neutral" },
+        { label: "Gastos operativos", value: metrics.expensesTotal, tone: "expense" },
+        { label: "Retiros de sueldo", value: metrics.salariesTotal, tone: "pending" }
+      ]} />
+
+      <BusinessChart title="Comparacion mensual por actividad" description="Mes de cierre del rango contra el mes anterior completo. Comparacion mensual, independiente del rango seleccionado; no representa una tendencia diaria ni una comparacion entre periodos de igual duracion." valueLabel={monthlyComparison.currentLabel} previousLabel={monthlyComparison.previousLabel} rows={monthlyChartRows} />
+
       <Card>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Mes actual vs mes anterior</h2>
+            <h2 className="text-xl font-semibold text-slate-950">Detalle de la comparacion mensual</h2>
             <p className="mt-1 text-sm text-slate-500">
               {monthlyComparison.currentLabel} contra {monthlyComparison.previousLabel}.
             </p>
@@ -272,13 +293,15 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             <div key={row.key} className="min-w-0 border-t border-slate-200 py-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-500">{row.label}</p>
+                  <p className="text-sm text-slate-500">{row.key === "salesProfit" ? "Margen conocido de ventas (subtotal)" : row.label}</p>
                   <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(row.current)}</p>
                 </div>
                 <VariationBadge
                   difference={row.variation.difference}
                   percentage={row.variation.percentage}
                   trend={row.variation.trend}
+                  label={row.label}
+                  lowerIsBetter={row.key === "expensesTotal"}
                 />
               </div>
               <div className="mt-3 space-y-2 text-sm text-slate-600">
@@ -312,7 +335,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <GoalCard progress={monthlyGoals.goals.sales} title="Meta de ventas" />
-          <GoalCard progress={monthlyGoals.goals.profit} title="Meta de ganancia" />
+          <GoalCard progress={monthlyGoals.goals.profit} title="Meta de margen conocido" />
           <GoalCard progress={monthlyGoals.goals.repairs} title="Meta de reparaciones" />
           <GoalCard progress={monthlyGoals.goals.invoicing} title="Meta de facturacion" />
         </div>
@@ -388,7 +411,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           </div>
           <div className="space-y-3 border-t border-slate-200 pt-4">
             <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-              <span>Facturacion total</span>
+              <span>Comprobantes emitidos, no cobros</span>
               <span className="font-semibold text-slate-950">{formatCurrency(metrics.invoicesTotal)}</span>
             </div>
             <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
@@ -402,10 +425,11 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             <div className="border-t border-slate-200 pt-3">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm font-medium text-slate-700">Resultado de caja</span>
-                <span className="text-lg font-semibold text-slate-950">{formatCurrency(metrics.netCash)}</span>
+                <span className={cn("text-lg font-semibold", metrics.netCash < 0 ? "text-finance-expense" : "text-finance-profit")}>{formatCurrency(metrics.netCash)}</span>
               </div>
             </div>
           </div>
+          <p className="text-xs leading-5 text-slate-600">El resultado conserva el flujo de movimientos de caja registrado. Los comprobantes no se suman como cobros adicionales. No es utilidad neta ni saldo disponible de las cuentas.</p>
           {!canExport ? (
             <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
               Tu usuario puede consultar el tablero, pero las exportaciones quedan reservadas para admin.
@@ -418,7 +442,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Top productos del periodo</h2>
+              <h2 className="text-xl font-semibold text-slate-950">Productos y conceptos vendidos</h2>
             </div>
             <Badge variant="warning">
               <Trophy className="mr-1 h-3.5 w-3.5" />
@@ -436,7 +460,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                     </div>
                     <div className="sm:text-right">
                       <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
-                      <p className="text-xs text-slate-500">Ganancia {formatCurrency(row.profit)}</p>
+                      <RankingMargin row={row} />
                     </div>
                   </div>
                 </div>
@@ -447,7 +471,9 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           </div>
         </Card>
 
-        <Card>
+        <div className="space-y-3">
+          <BusinessChart title="Categorias con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
+          <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-slate-950">Ventas por categoria</h2>
@@ -465,7 +491,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                     </div>
                     <div className="sm:text-right">
                       <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
-                      <p className="text-xs text-slate-500">Ganancia {formatCurrency(row.profit)}</p>
+                      <RankingMargin row={row} />
                     </div>
                   </div>
                 </div>
@@ -474,7 +500,8 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
               <p className="text-sm text-slate-500">No hay categorias con ventas en este rango.</p>
             )}
           </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
       <Card>

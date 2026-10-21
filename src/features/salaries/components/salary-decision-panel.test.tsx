@@ -11,26 +11,23 @@ describe("salary simulation detail", () => {
   beforeEach(() => vi.stubGlobal("React", React));
   afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
-  it("keeps the simulation amount and member allocations when details are folded", () => {
+  it("always shows member allocations and accessible progress without a collapse control", () => {
     const members = ["Santi", "Nazar", "Ana", "Luis"].map((name, index) => ({
       id: String(index), name, targetAmount: 100, sortOrder: index, paidAmount: 0, profitSharePaid: 0
     }));
     const { container, getByLabelText, getByRole } = render(
       <SalaryDecisionPanel accounts={[]} members={members} monthKey="2026-10" monthLabel="Octubre 2026" suggestedAmount={200} />
     );
-    const details = container.querySelector("details")!;
-    expect(details).not.toBeNull();
-    expect(details.open).toBe(false);
+    expect(container.querySelector("details")).toBeNull();
+    const allocations = getByRole("region", { name: "Reparto por integrante" });
+    expect(within(allocations).getAllByRole("heading", { level: 3 })).toHaveLength(4);
     const amount = getByLabelText("Dinero a retirar en esta operacion") as HTMLInputElement;
     fireEvent.change(amount, { target: { value: "200" } });
-    fireEvent.click(details.querySelector("summary")!);
-    expect(details.open).toBe(true);
-    const allocations = details.textContent;
-    expect(allocations).toContain("Santi");
-    fireEvent.click(details.querySelector("summary")!);
-    fireEvent.click(details.querySelector("summary")!);
+    expect(allocations.textContent).toContain("Santi");
+    const progress = within(allocations).getByRole("progressbar", { name: "Cobertura de sueldo de Santi" });
+    expect(progress.getAttribute("aria-valuenow")).toBe("50");
+    expect(progress.querySelector("div")?.className).toContain("motion-reduce:transition-none");
     expect(amount.value).toBe("200");
-    expect(details.textContent).toBe(allocations);
     expect(getByRole("button", { name: "Revisar y confirmar retiro" }).hasAttribute("disabled")).toBe(false);
   });
 

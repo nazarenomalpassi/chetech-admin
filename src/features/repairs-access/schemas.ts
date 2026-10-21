@@ -103,6 +103,14 @@ export const repairAccessTechnicalSchema = z.object({
   }
 });
 
+export const repairWarrantyFieldsSchema = z.object({
+  hasWarranty: z.boolean(),
+  warrantyDays: z.coerce.number().int().min(0).max(3650),
+  warrantyConditions: z.string().max(2000).default("")
+}).refine((data) => !data.hasWarranty || data.warrantyDays > 0, {
+  message: "La duracion de la garantia debe ser mayor a cero.", path: ["warrantyDays"]
+});
+
 export const repairAccessWorkshopSchema = z.object({
   id: z.string().uuid("No se pudo identificar la orden."),
   status: z.enum(repairAccessStatusValues),

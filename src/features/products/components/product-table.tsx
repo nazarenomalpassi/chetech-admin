@@ -25,14 +25,14 @@ type Product = {
   isActive: boolean;
 };
 
-function ProductStockReadout({ product }: { product: Product }) {
+function ProductStockReadout({ product, secondaryOnly = false }: { product: Product; secondaryOnly?: boolean }) {
   const lowStock = (product.availableStock ?? product.stock) <= product.minStock;
   return (
-    <div className="space-y-1 text-sm">
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
       <p className="font-semibold text-slate-800">Fisico {product.stock}</p>
       <p className="text-slate-600">Reservado {product.reservedStock ?? "sin confirmar"}</p>
-      <p className="font-semibold text-slate-950">Disponible {product.availableStock ?? "sin confirmar"}</p>
-      {product.availableStock == null ? null : lowStock ? <Badge variant="warning">Disponible bajo</Badge> : <Badge variant="success">OK</Badge>}
+      {!secondaryOnly ? <p className="font-semibold text-slate-950">Disponible {product.availableStock ?? "sin confirmar"}</p> : null}
+      {!secondaryOnly && product.availableStock != null ? lowStock ? <Badge variant="warning">Disponible bajo</Badge> : <Badge variant="success">OK</Badge> : null}
     </div>
   );
 }
@@ -81,46 +81,30 @@ export function ProductTable({
       <div className="divide-y divide-slate-200 xl:hidden">
         {visibleProducts.map((product) => {
           return (
-            <article className="bg-white p-4" key={product.id}>
+            <article className="min-w-0 bg-white px-4 py-3" key={product.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="break-words font-semibold text-slate-950">{product.name}</p>
-                  <p className="mt-1 break-words text-sm text-slate-500">SKU {product.sku}</p>
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-sm text-slate-600"><p className="break-all">SKU {product.sku}</p><p className="break-words">{product.category ?? "Sin categoria"}</p></div>
                 </div>
-                <Badge variant={product.isActive ? "success" : "default"}>
-                  {product.isActive ? "Activo" : "Inactivo"}
-                </Badge>
+                <div className="shrink-0 text-right"><p className="font-semibold text-slate-950"><span className="sr-only">Precio de venta </span>{formatCurrency(product.salePrice)}</p><p className="mt-1 text-xs text-slate-600">{product.isActive ? "Activo" : "Inactivo"}</p></div>
               </div>
-
-              <div className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-                <div>
-                  <p className="text-sm text-slate-500">Categoria</p>
-                  <p className="mt-1 font-semibold text-slate-800">{product.category ?? "Sin categoria"}</p>
-                </div>
-                <div className="row-span-2 sm:order-last sm:row-span-1">
-                  <p className="text-sm text-slate-500">Stock</p>
-                  <div className="mt-1"><ProductStockReadout product={product} /></div>
-                </div>
-                {canManage ? <div>
-                  <p className="text-sm text-slate-500">Costo</p>
-                  <p className="mt-1 font-semibold text-slate-800">{formatCurrency(product.cost)}</p>
-                </div> : null}
-                <div>
-                  <p className="text-sm text-slate-500">Precio de venta</p>
-                  <p className="mt-1 font-semibold text-slate-950">{formatCurrency(product.salePrice)}</p>
-                </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                <p className="font-semibold text-slate-950">Disponible {product.availableStock ?? "sin confirmar"}</p>
+                {product.availableStock != null && product.availableStock <= product.minStock ? <Badge variant="warning">Disponible bajo</Badge> : null}
               </div>
-
+              <details className="mt-1">
+                <summary className="w-fit min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">{canManage ? "Stock y costo" : "Detalle de stock"}<span className="sr-only"> de {product.name}</span></summary>
+                <div className="space-y-2 pb-2 text-sm text-slate-600">
+                  <ProductStockReadout product={product} secondaryOnly />
+                  <p>Stock minimo {product.minStock}</p>
+                  {canManage ? <div className="flex flex-wrap gap-x-4 gap-y-1"><p>Costo {formatCurrency(product.cost)}</p><p>Diferencia precio-costo {formatCurrency(product.salePrice - product.cost)}</p></div> : null}
+                </div>
+              </details>
               {canManage ? (
-                <p className="mt-3 text-sm text-slate-500">
-                  Diferencia precio-costo {formatCurrency(product.salePrice - product.cost)}
-                </p>
-              ) : null}
-
-              {canManage ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Button onClick={() => onEdit(product.id)} variant="secondary">
-                    <Pencil className="h-4 w-4" />
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => onEdit(product.id)} type="button" variant="secondary">
+                    <Pencil aria-hidden="true" className="h-4 w-4" />
                     Editar
                   </Button>
                   <ActionMenu label="Mas acciones">
@@ -134,18 +118,16 @@ export function ProductTable({
                     type="button"
                     variant="ghost"
                   >
-                    <Power className="h-4 w-4" />
+                    <Power aria-hidden="true" className="h-4 w-4" />
                     {product.isActive ? "Desactivar" : "Reactivar"}
                   </Button>
                   <Button disabled={isPending} onClick={() => handleDelete(product)} variant="danger">
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 aria-hidden="true" className="h-4 w-4" />
                     Eliminar
                   </Button>
                   </ActionMenu>
                 </div>
-              ) : (
-                <p className="mt-3 text-sm text-slate-500">Solo administracion</p>
-              )}
+              ) : null}
             </article>
           );
         })}

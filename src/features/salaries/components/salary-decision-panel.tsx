@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { CheckCircle2, ChevronDown, ShieldCheck, TriangleAlert, X } from "lucide-react";
+import { CheckCircle2, ShieldCheck, TriangleAlert, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -97,19 +97,21 @@ export function SalaryDecisionPanel({
         <div className="border-t border-slate-200 py-3"><p className="text-sm text-slate-600">Total del retiro</p><p className="mt-2 text-xl font-semibold text-emerald-800">{formatCurrency(plan.batchTotal)}</p><p className="mt-1 text-xs text-slate-600">Salarios + excedente</p></div>
       </div>
 
-      <details className="group mt-4 border-t border-slate-200">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 [&::-webkit-details-marker]:hidden">Reparto por integrante<ChevronDown aria-hidden="true" className="h-4 w-4 transition-transform group-open:rotate-180" /></summary>
+      <section aria-labelledby="salary-member-allocation-heading" className="mt-4 border-t border-slate-200 pt-4">
+        <h2 className="mb-3 text-lg font-semibold" id="salary-member-allocation-heading">Reparto por integrante</h2>
       <div className="grid gap-3 pb-3 xl:grid-cols-2">
-        {plan.members.map((member) => (
-          <article className="border-t border-slate-200 py-3" key={member.id}>
+        {plan.members.map((member) => {
+          const coverage = Math.max(0, Math.min(100, member.targetAmount > 0 ? (member.paidAfterPayment / member.targetAmount) * 100 : 0));
+          return (
+          <article className="min-w-0 rounded-xl border border-slate-200 border-l-2 border-l-emerald-600 bg-emerald-50/20 p-4" key={member.id}>
             <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{member.name}</h3><p className="mt-1 text-xs text-slate-600">Objetivo {formatCurrency(member.targetAmount)}</p></div><div className="text-right"><p className="text-sm text-slate-600">Total simulado</p><p className="mt-1 text-xl font-semibold text-emerald-800">{formatCurrency(member.totalAmount)}</p></div></div>
             <div className="mt-4 grid grid-cols-2 gap-2 text-xs"><div className="py-2"><p className="text-slate-600">Sueldo simulado</p><p className="mt-1 font-semibold text-slate-950">{formatCurrency(member.salaryAmount)}</p></div><div className="py-2"><p className="text-slate-600">Participacion excedente</p><p className="mt-1 font-semibold text-amber-800">{formatCurrency(member.profitShareAmount)}</p></div></div>
-            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${Math.min(100, member.targetAmount ? (member.paidAfterPayment / member.targetAmount) * 100 : 0)}%` }} /></div>
+            <div aria-label={`Cobertura de sueldo de ${member.name}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={coverage} aria-valuetext={member.targetAmount > 0 ? `${coverage.toFixed(1)}% del objetivo, incluidos pagos anteriores y esta simulacion` : "Sin objetivo de sueldo"} className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-200" role="progressbar"><div className="h-full origin-left rounded-full bg-emerald-600 transition-transform duration-300 ease-out motion-reduce:transition-none" style={{ transform: `scaleX(${coverage / 100})` }} /></div>
             <div className="mt-3 flex justify-between gap-3 text-xs text-slate-600"><span>Pagado antes {formatCurrency(member.paidAmount)}</span><span>Pendiente simulado {formatCurrency(member.remainingAfterPayment)}</span></div>
           </article>
-        ))}
+        ); })}
       </div>
-      </details>
+      </section>
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><p className="flex items-center gap-2 text-sm text-slate-600"><ShieldCheck className="h-4 w-4 shrink-0" /> No modifica caja hasta confirmar el retiro.</p><Button disabled={plan.batchTotal <= 0} onClick={() => setDialogOpen(true)} type="button">Revisar y confirmar retiro</Button></div>
 

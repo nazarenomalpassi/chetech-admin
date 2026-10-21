@@ -2,6 +2,7 @@ import { VisitsView } from "@/features/visits/components/visits-view";
 import { getVisitsData } from "@/features/visits/queries";
 import { requirePermission } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
+import { hasPermission } from "@/lib/permissions";
 
 export default async function VisitasPage({
   searchParams
@@ -26,7 +27,6 @@ export default async function VisitasPage({
     status: params.visitStatus,
     date: params.date,
     view: ["day", "week"].includes(params.view ?? "") ? params.view : "all",
-    technicianId: params.technicianId,
     page: params.page
   });
   const message = params.error
@@ -39,6 +39,7 @@ export default async function VisitasPage({
     <VisitsView
       canDelete={profile.role === "admin"}
       canManage={profile.role === "admin"}
+      canUpdate={hasPermission(profile.role, "visits.update")}
       draftOwnerId={profile.id}
       savedDraftToken={params.savedDraftToken}
       savedDraftVisitId={params.savedDraftVisitId}

@@ -14,7 +14,7 @@ vi.mock("./repair-customer-link-card", () => ({ RepairCustomerLinkCard: () => nu
 vi.mock("./repair-customer-portal-form", () => ({ RepairCustomerPortalForm: () => null }));
 vi.mock("./repair-access-whatsapp-actions", () => ({ RepairAccessWhatsAppPanel: () => null }));
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); localStorage.clear(); });
+afterEach(() => { cleanup(); localStorage.clear(); vi.restoreAllMocks(); });
 
 it.each([true, false])("keeps original administrator corrections reachable separately from warranty (%s)", (hasWorkflow) => {
   const order = {
@@ -44,6 +44,10 @@ it("la ficha abre el editor diario y reserva el formulario administrativo para m
   const { container } = render(<RepairAccessOrderDetail order={order} onBack={vi.fn()} onEditIntake={vi.fn()} defaultWarrantyDays={90} />);
   expect(screen.getByLabelText("Estado de la orden")).toBeTruthy();
   expect(screen.getByLabelText("El cliente confirmo este presupuesto")).toBeTruthy();
+  expect((screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked).toBe(false);
+  fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
+  expect((screen.getByLabelText("Duracion de garantia en dias") as HTMLInputElement).value).toBe("90");
+  vi.spyOn(window, "confirm").mockReturnValue(true);
   expect(container.querySelector('[name="finalAmount"]')).toBeNull();
   expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
   fireEvent.click(screen.getByRole("button", { name: "Mas campos administrativos" }));

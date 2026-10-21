@@ -17,10 +17,7 @@ export default async function ReportesPage({
   ]);
 
   return <div className="space-y-8">
+    <ReportsView canExport={profile.role === "admin"} data={data} />
     <WorkshopBusinessReportView data={workshop} />
-    <div className="space-y-3">
-      <p className="text-sm text-slate-600">Otros reportes por fecha de movimiento. Sus resumenes historicos no equivalen a la cohorte REP de ingreso ni al responsable actual.</p>
-      <ReportsView canExport={profile.role === "admin"} data={data} />
-    </div>
   </div>;
 }

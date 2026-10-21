@@ -24,6 +24,7 @@ export type TvBoardRow = {
   claimResolvedAt: string | null;
   claimResolutionNotes: string | null;
   version: number;
+  linkedSale?: { id: string; number: string; method: "nx" | "mp" | null } | null;
   createdAt: string;
   updatedAt: string;
   events: Array<{ id: string; kind: TvBoardSaleEventKind; notes: string; netAmount: number; createdAt: string }>;
