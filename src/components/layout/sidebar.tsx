@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
+import { NavigationPending } from "@/components/layout/navigation-pending";
 import { getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -33,21 +34,22 @@ export function Sidebar({ role }: { role: AppRole }) {
                   href={item.href}
                   aria-current={active ? "page" : undefined}
                   className={cn(
-                    "group flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 focus-visible:outline-white",
+                    "nav-section-link group flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium",
                     active
                       ? "bg-white text-graphite"
-                      : "text-white/80 hover:bg-white/10 hover:text-white"
+                      : "text-white/80"
                   )}
                 >
                   <span
                     className={cn(
-                      "flex h-5 w-5 shrink-0 items-center justify-center",
+                      "nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center",
                       active ? "text-graphite" : "text-white/75"
                     )}
                   >
                     <Icon aria-hidden="true" className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 leading-5">{item.label}</span>
+                  <NavigationPending label={item.label} />
                 </Link>
               );
             })}</section>)}
