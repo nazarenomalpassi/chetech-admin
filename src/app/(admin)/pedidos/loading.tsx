@@ -1,10 +1,5 @@
-import { Card } from "@/components/ui/card";
+import { ModulePageLoading } from "@/components/ui/module-page-loading";
 
 export default function PedidosLoading() {
-  return (
-    <div className="space-y-4" aria-busy="true" aria-label="Cargando pedidos">
-      <Card className="h-48 animate-pulse bg-white/70" />
-      <Card className="h-96 animate-pulse bg-white/70" />
-    </div>
-  );
+  return <ModulePageLoading section="Pedidos" />;
 }

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { NavigationPending } from "@/components/layout/navigation-pending";
 import { getSidebarItemsForRole, getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -16,6 +17,10 @@ export function MobileNavigation({ role }: { role: AppRole }) {
   const sidebarItems = getSidebarItemsForRole(role);
   const groups = getSidebarGroupsForRole(role);
   const currentSection = sidebarItems.find((item) => item.href === pathname)?.label ?? "Panel";
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   return (
     <div className="no-print sticky top-0 z-40 -mx-1 px-1 pt-[env(safe-area-inset-top)] lg:hidden">
@@ -58,20 +63,24 @@ export function MobileNavigation({ role }: { role: AppRole }) {
                 return (
                   <Link
                     className={cn(
-                      "flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors duration-150",
+                      "nav-section-link flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
                       active
                         ? "bg-white text-graphite"
-                        : "text-white/80 hover:bg-white/10 hover:text-white"
+                        : "text-white/80"
                     )}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
                     key={item.href}
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      // Keep Link's pending feedback mounted until the new route arrives.
+                      if (active) setOpen(false);
+                    }}
                   >
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                    <span className="nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center">
                       <Icon aria-hidden="true" className="h-4 w-4" />
                     </span>
                     <span>{item.label}</span>
+                    <NavigationPending label={item.label} />
                   </Link>
                 );
               })}</div></section>)}
