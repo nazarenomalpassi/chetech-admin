@@ -42,6 +42,13 @@ const order: RepairAccessOrderRecord = {
 };
 
 describe("order collection shortcut", () => {
+  it("organiza ubicacion y revision sin pedir asignar un tecnico", () => {
+    render(<OrderCoordinationPanel order={order} canManage />);
+    fireEvent.click(screen.getByRole("button", { name: "Ubicacion y revision" }));
+    expect(screen.getByRole("textbox", { name: "Ubicacion del equipo" })).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Tecnico responsable" })).toBeNull();
+    expect(screen.getByText(/No cambia la fecha prometida/)).toBeTruthy();
+  });
   it("keeps manual receipt forms outside folded administration without nesting forms", () => {
     const { container } = render(<OrderCoordinationPanel order={{ ...order, status: "listo_para_retirar" }} canManage />);
     const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
