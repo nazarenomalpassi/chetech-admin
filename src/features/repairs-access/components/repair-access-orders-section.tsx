@@ -27,6 +27,9 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import type { WorkshopTechnician } from "./order-coordination-panel";
 import { normalizeRepairAccessLookup } from "../customer-search";
 import { RepairQuickEditor } from "./repair-quick-editor";
+import { WarrantyReturnCase } from "./warranty-return-panel";
+import { getWorkshopOrderSummary } from "../workshop-order-summary";
+import { WorkshopOrderNextStep } from "./workshop-order-next-step";
 
 export function RepairAccessOrdersSection({
   orders,
@@ -65,10 +68,12 @@ export function RepairAccessOrdersSection({
   const [presentation, setPresentation] = useState<"cards" | "table">("cards");
   const normalizedSearch = normalizeRepairAccessLookup(search);
   const filteredOrders = orders.filter((order) => {
-    const matchesStatus = statusFilter === "todos" || order.status === statusFilter;
+    const summary = getWorkshopOrderSummary(order);
+    const matchesStatus = statusFilter === "todos" || summary.status === statusFilter;
     if (!matchesStatus) return false;
     const matchesWarranty =
       warrantyFilter === "todos" ||
+      (warrantyFilter === "pending_delivery" && (Boolean(summary.activeReturn) || (!order.deliveredAt && !order.pickedUpAt && order.status !== "retirado"))) ||
       (warrantyFilter === "active" &&
         ["active", "expires_today"].includes(order.warranty.code)) ||
       order.warranty.code === warrantyFilter;
@@ -89,6 +94,11 @@ export function RepairAccessOrdersSection({
       order.issueReported,
       order.technicalDiagnosis,
       order.budgetDetail,
+      order.repairProgress,
+      summary.activeReturn?.issueReported,
+      summary.activeReturn?.progress,
+      summary.activeReturn?.resolution,
+      getRepairAccessStatusLabel(summary.status),
       getRepairAccessStatusLabel(order.status),
       order.status
     ].join(" "));
@@ -201,7 +211,7 @@ export function RepairAccessOrdersSection({
                 <th className="px-4 py-3 font-medium">Estado</th>
                 <th className="px-4 py-3 font-medium">Garantia</th>
                 <th className="px-4 py-3 font-medium">Importes</th>
-                <th className="px-4 py-3 font-medium">Tecnico</th>
+                <th className="px-4 py-3 font-medium">Proximo paso</th>
                 <th className="px-4 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -209,6 +219,8 @@ export function RepairAccessOrdersSection({
               {visibleOrders.length ? (
                 visibleOrders.map((order) => {
                   const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
+                  const summary = getWorkshopOrderSummary(order);
+                  const activeReturn = summary.activeReturn;
 
                   return (
                     <tr className="border-t border-slate-100 align-top" key={order.id}>
@@ -224,10 +236,14 @@ export function RepairAccessOrdersSection({
                       <td className="px-4 py-4 text-slate-600">
                         <p className="font-medium text-slate-800">{deviceLabel || "Equipo"}</p>
                         {order.device.serialNumber ? <p className="mt-1 text-xs text-slate-500">Serie: {order.device.serialNumber}</p> : null}
-                        <p className="mt-1 max-w-xs text-xs leading-5 text-slate-500">{order.issueReported}</p>
+                        {activeReturn ? <>
+                          <p className="mt-2 text-xs font-semibold text-amber-900">Reingreso por garantia activo</p>
+                          <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-sm font-medium leading-5 text-slate-900 [overflow-wrap:anywhere]">{activeReturn.issueReported}</p>
+                        </> : null}
+                        <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere]">{activeReturn ? `Falla original: ${order.issueReported}` : order.issueReported}</p>
                       </td>
-                      <td className="px-4 py-4 text-slate-600">{formatDate(order.intakeDate)}</td>
-                      <td className="px-4 py-4"><RepairAccessStatusBadge status={order.status} /></td>
+                      <td className="px-4 py-4 text-slate-600">{formatDate(activeReturn?.receivedOn ?? order.intakeDate)}{activeReturn ? <p className="mt-1 text-xs text-slate-500">Reingreso de garantia</p> : null}</td>
+                      <td className="px-4 py-4"><RepairAccessStatusBadge status={summary.status} /></td>
                       <td className="px-4 py-4">
                         <RepairAccessWarrantyBadge warranty={order.warranty} />
                         {order.warranty.expiresOn ? (
@@ -237,15 +253,17 @@ export function RepairAccessOrdersSection({
                         ) : null}
                       </td>
                       <td className="px-4 py-4 text-slate-600">
+                        {activeReturn ? <p className="mb-1 text-xs font-medium text-slate-500">Orden original</p> : null}
                         <p>Pres.: {formatCurrency(order.budgetAmount)}</p>
                         <p className="mt-1 text-xs text-slate-500">Final: {formatCurrency(order.finalAmount)}</p>
                         <p className="mt-1 text-xs text-slate-500">{order.isPaid ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}` : "Sin cobrar"}</p>
                       </td>
-                      <td className="px-4 py-4 text-slate-600">{order.technicianName || "-"}</td>
+                      <td className="min-w-52 px-4 py-4"><WorkshopOrderNextStep repairNumber={order.repairNumber} summary={summary} /></td>
                       <td className="px-4 py-4">
                         <div className="flex min-w-64 flex-wrap justify-end gap-2">
                           <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">Ficha completa</Button>
-                          {order.workflow ? <LazyDisclosure className="w-full rounded-lg border border-slate-200" summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40" summary="Actualizar trabajo">
+                          {activeReturn ? <div className="w-full min-w-0 rounded-lg border border-slate-200 p-3"><WarrantyReturnCase key={activeReturn.id} record={activeReturn} canManage={canManageIntake} /></div>
+                          : order.workflow ? <LazyDisclosure className="w-full rounded-lg border border-slate-200" summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40" summary={order.status === "retirado" || order.deliveredAt ? "Corregir garantia" : "Actualizar trabajo"}>
                             <RepairQuickEditor order={order} canManage={canManageIntake} defaultWarrantyDays={defaultWarrantyDays} />
                           </LazyDisclosure> : null}
                           <span className="hidden lg:inline-flex"><RepairAccessWhatsAppButton order={order} /></span>

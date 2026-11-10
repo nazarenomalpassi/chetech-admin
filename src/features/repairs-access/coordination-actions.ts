@@ -180,6 +180,15 @@ export async function assignRepairResponsibility(_previous: ActionResult | null,
   return execute("workshop_save", { p_order_id: p.id, p_expected_version: p.version, p_payload: { technician_id: p.technicianId || null, physical_location: p.location, next_action_date: p.nextActionDate } }, "Responsable y proxima revision guardados.");
 }
 
+export async function saveWorkshopLocation(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {
+  await requirePermission("repairs.update");
+  const date = z.string().refine((value) => value === "" || (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value), "Selecciona una fecha de revision valida.");
+  const parsed = z.object({ id: uuid, version, location: optionalText(200), nextActionDate: date }).safeParse(values(form));
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
+  const p = parsed.data;
+  return execute("workshop_save", { p_order_id: p.id, p_expected_version: p.version, p_payload: { physical_location: p.location, next_action_date: p.nextActionDate } }, "Ubicacion y proxima revision guardadas.");
+}
+
 export async function claimRepairOrder(_previous: ActionResult | null, form: FormData): Promise<ActionResult> {
   await requirePermission("repairs.update");
   const parsed = z.object({ id: uuid, version }).safeParse(values(form));

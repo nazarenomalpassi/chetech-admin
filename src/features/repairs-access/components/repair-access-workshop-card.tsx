@@ -39,6 +39,8 @@ import { RepairQuickEditor } from "./repair-quick-editor";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import { WarrantyReturnPanel } from "./warranty-return-panel";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
+import { getWorkshopOrderSummary } from "../workshop-order-summary";
+import { WorkshopOrderNextStep } from "./workshop-order-next-step";
 
 export function RepairAccessWorkshopCard({
   order,
@@ -60,6 +62,8 @@ export function RepairAccessWorkshopCard({
   const repairAmount = order.finalAmount || order.budgetAmount;
   const quoteAmount = order.budgetAmount || order.finalAmount;
   const delivered = order.status === "retirado" || Boolean(order.deliveredAt);
+  const summary = getWorkshopOrderSummary(order);
+  const activeReturn = summary.activeReturn;
 
   return (
     <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -81,18 +85,18 @@ export function RepairAccessWorkshopCard({
           )}
         </div>
         <div className="flex min-w-0 max-w-full flex-wrap items-start gap-2">
-          <RepairAccessStatusBadge status={order.status} />
+          <RepairAccessStatusBadge status={summary.status} />
           <RepairAccessWarrantyBadge warranty={order.warranty} />
         </div>
       </header>
 
       <div className="space-y-3 p-4">
-        <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManageIntake} />
+        <WorkshopOrderNextStep repairNumber={order.repairNumber} summary={summary} />
         <WarrantyReturnPanel order={order} canManage={canManageIntake} />
         <section>
           <div className="flex items-center gap-2 text-slate-500">
             <Wrench aria-hidden="true" className="h-4 w-4" />
-            <p className="text-sm font-medium">Falla reportada</p>
+            <p className="text-sm font-medium">{activeReturn ? "Falla original" : "Falla reportada"}</p>
           </div>
           <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
             {order.issueReported || "Sin falla declarada"}
@@ -105,17 +109,17 @@ export function RepairAccessWorkshopCard({
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-graphite/8 py-3 text-sm">
-          <WorkshopMeta icon={CircleDollarSign} label="Monto actual" value={repairAmount ? formatCurrency(repairAmount) : "Sin cargar"} />
-          <WorkshopMeta icon={CalendarDays} label="Ingreso" value={formatDate(order.intakeDate)} />
+          <WorkshopMeta icon={CircleDollarSign} label={activeReturn ? "Monto original" : "Monto actual"} value={repairAmount ? formatCurrency(repairAmount) : "Sin cargar"} />
+          <WorkshopMeta icon={CalendarDays} label={activeReturn ? "Ingreso original" : "Ingreso"} value={formatDate(order.intakeDate)} />
           {order.budgetDetail ? (
-            <WorkshopMeta className="col-span-2" icon={FileText} label="Presupuesto" value={order.budgetDetail} />
+            <WorkshopMeta className="col-span-2" icon={FileText} label={activeReturn ? "Presupuesto original" : "Presupuesto"} value={order.budgetDetail} />
           ) : null}
           {order.repairProgress ? (
-            <WorkshopMeta className="col-span-2" icon={ClipboardPenLine} label="Ultimo avance" value={order.repairProgress} />
+            <WorkshopMeta className="col-span-2" icon={ClipboardPenLine} label={activeReturn ? "Avance original" : "Ultimo avance"} value={order.repairProgress} />
           ) : null}
         </div>
 
-        {!delivered || (canManageIntake && order.workflow) ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
+        {!activeReturn && (!delivered || (canManageIntake && order.workflow)) ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
           summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
           summary={<>
             <span className="flex items-center gap-2">
@@ -188,6 +192,7 @@ export function RepairAccessWorkshopCard({
           </WorkshopCardForm>}
         </LazyDisclosure> : null}
 
+        <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManageIntake} />
         {canManageIntake ? <div className="flex flex-wrap gap-2">
           <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>
         </div> : null}

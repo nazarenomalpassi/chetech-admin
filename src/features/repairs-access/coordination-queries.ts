@@ -15,7 +15,7 @@ export async function getWorkshopInbox(): Promise<WorkshopInbox | null> {
   return result.data;
 }
 
-export type PartInboxItem = WorkshopPart & { repairNumber: string; customerName: string };
+export type PartInboxItem = WorkshopPart & { repairNumber: string; customerName: string; warrantyReturnId?: string | null; claimedQuantity?: number };
 
 export async function getRepairPartsInbox(): Promise<PartInboxItem[]> {
   const supabase = await createServerSupabaseClient();

@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { RepairAccessOrdersSection } from "./repair-access-orders-section";
 import { cancelRepairAccessOrderAction } from "../actions";
 import type { RepairAccessOrderRecord } from "../queries";
+import type { WarrantyReturnRecord } from "../warranty-return";
 
 Object.assign(globalThis, { React });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); document.documentElement.removeAttribute("data-unsaved-changes"); });
@@ -15,6 +16,9 @@ vi.mock("./repair-access-workshop-card", () => ({
 }));
 vi.mock("./repair-access-whatsapp-actions", () => ({ RepairAccessWhatsAppButton: () => <button>WhatsApp</button> }));
 vi.mock("./repair-quick-editor", () => ({ RepairQuickEditor: ({ order }: { order: RepairAccessOrderRecord }) => <form data-workshop-form><input aria-label="Avance rapido" defaultValue={order.repairProgress ?? ""} /></form> }));
+vi.mock("./warranty-return-panel", () => ({ WarrantyReturnCase: ({ record }: { record: WarrantyReturnRecord }) =>
+  <form aria-label="Actualizar visita de garantia"><input name="id" type="hidden" value={record.id} /><p>{record.issueReported}</p><button>Guardar reingreso</button></form>
+}));
 
 function makeOrder(index = 1): RepairAccessOrderRecord {
   return {
@@ -28,7 +32,75 @@ function makeOrder(index = 1): RepairAccessOrderRecord {
 const orders = [makeOrder()];
 const props = { orders, search: "", statusFilter: "todos", warrantyFilter: "todos", onSearchChange: vi.fn(), onStatusFilterChange: vi.fn(), onWarrantyFilterChange: vi.fn(), onEdit: vi.fn(), onOpenDetail: vi.fn(), canManageIntake: true };
 
+function warrantyOrder(): RepairAccessOrderRecord {
+  return { ...makeOrder(), status: "retirado", deliveredAt: "2026-10-01T12:00:00Z", warrantyReturns: [{
+    id: "return-1", orderId: "order-1", repairNumber: "REP-000001", customerName: "Ana Perez", deviceLabel: "Telefono Samsung A10",
+    receivedOn: "2026-11-10", issueReported: "La pantalla se apaga al calentarse", accessories: "Control", conditionNotes: "Sin golpes",
+    status: "en_revision", progress: "Revisando flex de pantalla", resolution: "", closedAt: null, recipient: null,
+    version: 2, createdAt: "2026-11-10T12:00:00Z"
+  }] };
+}
+
 describe("order workspace list", () => {
+  it("keeps active returns and original custody visible under pending collection", () => {
+    const record = warrantyOrder();
+    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} warrantyFilter="pending_delivery" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    rerender(<RepairAccessOrdersSection {...props} orders={[makeOrder()]} warrantyFilter="pending_delivery" />);
+    expect(screen.getByRole("article")).toBeTruthy();
+  });
+  it("finds original workshop progress with the same corpus as the server", () => {
+    const record = { ...makeOrder(), repairProgress: "Fuente recibida, pasar a pruebas" };
+    render(<RepairAccessOrdersSection {...props} orders={[record]} search="fuente recibida" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+  });
+  it("filters an active warranty visit by its current status rather than the original delivery", () => {
+    const record = warrantyOrder();
+    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} statusFilter="en_revision" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    rerender(<RepairAccessOrdersSection {...props} orders={[record]} statusFilter="retirado" />);
+    expect(screen.queryByRole("article")).toBeNull();
+  });
+
+  it("finds the actual warranty issue and progress without losing original-issue search", () => {
+    const record = warrantyOrder();
+    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} search="pantalla se apaga" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    rerender(<RepairAccessOrdersSection {...props} orders={[record]} search="flex de pantalla" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+    rerender(<RepairAccessOrdersSection {...props} orders={[record]} search="no enciende" />);
+    expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
+  });
+
+  it("keeps the same focused input and unmodified composition text through refreshed records", () => {
+    const onSearchChange = vi.fn();
+    const onSearchCompositionChange = vi.fn();
+    const { rerender } = render(<RepairAccessOrdersSection {...props} onSearchChange={onSearchChange} onSearchCompositionChange={onSearchCompositionChange} search="Bel" />);
+    const input = screen.getByRole("textbox", { name: "Buscar orden de service" }) as HTMLInputElement;
+    input.focus();
+    fireEvent.compositionStart(input);
+    fireEvent.change(input, { target: { value: "Belén " } });
+    expect(onSearchChange).toHaveBeenLastCalledWith("Belén ");
+    rerender(<RepairAccessOrdersSection {...props} onSearchChange={onSearchChange} onSearchCompositionChange={onSearchCompositionChange} search="Belén " orders={[makeOrder(2)]} />);
+    fireEvent.compositionEnd(input);
+    expect(screen.getByRole("textbox", { name: "Buscar orden de service" })).toBe(input);
+    expect(document.activeElement).toBe(input);
+    expect(input.value).toBe("Belén ");
+    expect(onSearchCompositionChange.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it("keeps warranty work separate from the original budget in table presentation", () => {
+    const record = { ...warrantyOrder(), workflow: { version: 8 } } as RepairAccessOrderRecord;
+    render(<RepairAccessOrdersSection {...props} orders={[record]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
+    expect(screen.getByText("Reingreso por garantia activo")).toBeTruthy();
+    expect(screen.getByText("Falla original: No enciende")).toBeTruthy();
+    expect(within(screen.getByRole("table")).getByText("En revision")).toBeTruthy();
+    expect(screen.queryByText("Actualizar trabajo")).toBeNull();
+    expect(screen.getByRole("form", { name: "Actualizar visita de garantia" }).querySelector('input[name="id"]')?.getAttribute("value")).toBe("return-1");
+    expect(screen.queryByLabelText("Avance rapido")).toBeNull();
+  });
+
   it("matches names with accents and repeated spaces without changing the actual search input", () => {
     const record = { ...makeOrder(), customer: { ...makeOrder().customer, fullName: "Belén Pérez" } };
     render(<RepairAccessOrdersSection {...props} orders={[record]} search="belen   perez " />);

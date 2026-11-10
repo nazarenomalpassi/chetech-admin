@@ -12,7 +12,10 @@ export type WorkshopLabelData = {
   accessories: string;
   intakeDate: string;
   orderUrl: string;
-};
+} & (
+  | { variant?: "equipment" | "warranty" }
+  | { variant: "accessory"; accessoryDescription: string; accessoryIndex: number }
+);
 
 const MM = 72 / 25.4;
 const PAGE = { width: 80 * MM, height: 50 * MM, margin: 3 * MM };
@@ -70,7 +73,7 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
   doc.registerFont("Medium", asset("InputSans-Medium.otf"));
 
   // Lay out measured single lines explicitly: PDFKit must never paginate a sticker.
-  function field(value: string, x: number, y: number, width: number, size: number, font = "Body", maxLines = 1) {
+  function field(value: string, x: number, y: number, width: number, size: number, font = "Body", maxLines = 1, suffix = TRUNCATION) {
     doc.font(font).fontSize(size).fillColor("#000000");
     const lineHeight = doc.currentLineHeight(true) + 0.5;
     let remaining = Array.from(value);
@@ -86,17 +89,18 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
     for (let line = 0; line < maxLines && remaining.length; line++) {
       let length = prefixLength();
       const truncated = length < remaining.length && line === maxLines - 1;
-      if (truncated) length = prefixLength(TRUNCATION);
+      if (truncated) length = prefixLength(suffix);
       else if (length < remaining.length) {
         const boundary = remaining.lastIndexOf(" ", length - 1);
         if (boundary > length / 2) length = boundary;
       }
-      const text = remaining.slice(0, length).join("").trimEnd() + (truncated ? TRUNCATION : "");
+      const text = remaining.slice(0, length).join("").trimEnd() + (truncated ? suffix : "");
       doc.text(text, x, y + line * lineHeight, { width, lineBreak: false });
-      if (truncated) break;
+      if (truncated) return true;
       remaining = remaining.slice(length);
       while (remaining[0] === " ") remaining.shift();
     }
+    return false;
   }
 
   const left = PAGE.margin, right = PAGE.width - PAGE.margin;
@@ -105,7 +109,10 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
   const number = compact(data.number) || "Sin número";
   let numberSize = 18;
   while (doc.font("Medium").fontSize(numberSize).widthOfString(number) > numberWidth && numberSize > 12) numberSize -= 0.5;
-  field("ORDEN DE SERVICIO", left, PAGE.margin, numberWidth, 5.6, "Medium");
+  const accessory = data.variant === "accessory";
+  const warranty = data.variant === "warranty";
+  const heading = accessory ? `ACCESORIO A${data.accessoryIndex}` : warranty ? "REINGRESO EN GARANTIA" : "ORDEN DE SERVICIO";
+  field(heading, left, PAGE.margin, numberWidth, 5.6, "Medium");
   field(number, left, 18.5, numberWidth, numberSize, "Medium");
   drawLogo(doc, asset("chetech-horizontal-black.svg").toString("utf8"), logoLeft, 22, logoWidth);
   doc.save().moveTo(left, 42).lineTo(right, 42).lineWidth(0.45).strokeColor("#000000").stroke().restore();
@@ -114,14 +121,20 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
   const textLeft = 33 * MM, width = right - textLeft;
   field(compact(data.customerName) || "Sin cliente informado", textLeft, 47, width, 8.5, "Medium");
   field(compact(data.device) || "Sin equipo informado", textLeft, 59, width, 6.8);
-  field("FALLA REPORTADA", textLeft, 72, width, 6.5, "Medium");
-  field(compact(data.issueReported) || "Sin falla informada", textLeft, 83, width, 9.3, "Medium", 2);
-  field(`Acc.: ${compact(data.accessories) || "Sin accesorios"}`, textLeft, 112, width, 6.8);
-  field(`INGRESO ${intakeDate(data.intakeDate)}`, left, 125, right - left, 6.2, "Medium");
+  field(accessory ? "ACCESORIO" : warranty ? "FALLA DEL REINGRESO" : "FALLA REPORTADA", textLeft, 72, width, 6.5, "Medium");
+  const descriptionTruncated = field(compact(accessory ? data.accessoryDescription : data.issueReported) || "Sin falla informada", textLeft, 83, width, 9.3, "Medium", 2, accessory ? "..." : TRUNCATION);
+  field(accessory ? descriptionTruncated ? "Descripcion recortada" : "Vinculado a esta orden" : `Acc.: ${compact(data.accessories) || "Sin accesorios"}`, textLeft, 112, width, 6.8);
+  field(`${warranty ? "REINGRESO" : "INGRESO"} ${intakeDate(data.intakeDate)}`, left, 125, right - left, 6.2, "Medium");
+  return accessory && descriptionTruncated;
 }
 
 /** Server-only, read-only PDF generation. The caller supplies the authenticated detail URL. */
 export async function generateWorkshopLabelPdf(data: WorkshopLabelData): Promise<Buffer> {
+  return (await generateWorkshopLabelPreview(data)).pdf;
+}
+
+/** Fit information uses the exact embedded-font measurements, not a character-count guess. */
+export async function generateWorkshopLabelPreview(data: WorkshopLabelData): Promise<{ pdf: Buffer; accessoryDescriptionTruncated: boolean }> {
   let url: URL;
   try { url = new URL(data.orderUrl); } catch { throw new Error("La URL de la orden debe ser absoluta HTTP(S)."); }
   if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("La URL de la orden debe ser absoluta HTTP(S).");
@@ -131,11 +144,12 @@ export async function generateWorkshopLabelPdf(data: WorkshopLabelData): Promise
     info: { Title: `CHETECH - ${data.number} - Etiqueta de taller`, Author: "CHETECH" }
   });
   const chunks: Buffer[] = [];
-  return new Promise<Buffer>((resolve, reject) => {
+  let accessoryDescriptionTruncated = false;
+  return new Promise((resolve, reject) => {
     doc.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("end", () => resolve({ pdf: Buffer.concat(chunks), accessoryDescriptionTruncated }));
     doc.on("error", reject);
-    try { renderLabel(doc, data, qr); doc.end(); }
+    try { accessoryDescriptionTruncated = renderLabel(doc, data, qr); doc.end(); }
     catch (error) { doc.destroy(); reject(error); }
   });
 }

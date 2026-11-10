@@ -1,17 +1,21 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { RepairAccessWorkshopCard } from "@/features/repairs-access/components/repair-access-workshop-card";
 import { RepairAccessOrderDetail } from "@/features/repairs-access/components/repair-access-order-detail";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+import type { WarrantyReturnRecord } from "../warranty-return";
 
-const mocks = vi.hoisted(() => ({ router: { refresh: vi.fn() }, save: vi.fn() }));
+const mocks = vi.hoisted(() => ({ router: { refresh: vi.fn() }, save: vi.fn(), saveReturn: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => mocks.router }));
 vi.mock("../coordination-actions", async (original) => ({
   ...await original<typeof import("../coordination-actions")>(), saveQuickWorkshopForm: mocks.save
+}));
+vi.mock("../warranty-actions", async (original) => ({
+  ...await original<typeof import("../warranty-actions")>(), saveWarrantyReturn: mocks.saveReturn
 }));
 
 Object.assign(globalThis, { React });
@@ -107,7 +111,82 @@ const waitingOrder: RepairAccessOrderRecord = {
     assignedTechnicianName: null, location: null, nextActionDate: null, qualityCheckedAt: null, qualityNotes: null, parts: [], events: [] }
 };
 
+const activeReturn: WarrantyReturnRecord = {
+  id: "20000000-0000-4000-8000-000000000001", orderId: order.id,
+  repairNumber: order.repairNumber, customerName: order.customer.fullName, deviceLabel: "Televisor Marca Modelo",
+  receivedOn: "2026-11-10", issueReported: "La pantalla vuelve a apagarse despues de diez minutos",
+  accessories: "Control remoto", conditionNotes: "Sin golpes", status: "en_revision", progress: "Verificando retroiluminacion",
+  resolution: "", closedAt: null, recipient: null, version: 3, createdAt: "2026-11-10T12:00:00Z"
+};
+
 describe("RepairAccessWorkshopCard", () => {
+  it("exposes authorization and the recorded location/review date without opening coordination", () => {
+    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{
+      ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "pending", location: "Estante 4 / banco TV", nextActionDate: "2026-11-12" }
+    }} />);
+    const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
+    expect(summary.closest("details")).toBeNull();
+    expect(within(summary).getByText("Esperando autorizacion del cliente")).toBeTruthy();
+    expect(within(summary).getByText("Estante 4 / banco TV")).toBeTruthy();
+    expect(summary.querySelector("time")?.dateTime).toBe("2026-11-12");
+    expect(screen.queryByText(/tecnico sin asignar/i)).toBeNull();
+  });
+
+  it("shows missing receipts but never calls received or cancelled parts a blockage", () => {
+    const part = { id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 1,
+      installedQuantity: 0, status: "ordered" as const, priority: "normal", supplier: null, expectedDate: null,
+      notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt };
+    const record = { ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" as const, parts: [part] } };
+    const { rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={record} />);
+    expect(within(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` })).getByText("Faltan repuestos por recibir")).toBeTruthy();
+    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...record,
+      workflow: { ...record.workflow, parts: [{ ...part, receivedQuantity: 2 }, { ...part, id: "cancelled", status: "cancelled" }] }
+    }} />);
+    const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
+    expect(summary.textContent).not.toContain("Faltan repuestos");
+    expect(summary.textContent).toContain("Continuar trabajo autorizado");
+  });
+
+  it.each([
+    ["en_pruebas", "Completar control de calidad"],
+    ["listo_para_retirar", "Avisar y coordinar retiro"],
+    ["no_presenta_fallas", "Coordinar devolucion del equipo"]
+  ])("explains the real next step for %s without choosing a new status", (status, next) => {
+    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder,
+      status, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" }
+    }} />);
+    expect(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` }).textContent).toContain(next);
+    expect(mocks.save).not.toHaveBeenCalled();
+  });
+
+  it.each([true, false])("updates the active warranty visit instead of the original budget (admin=%s)", async (canManageIntake) => {
+    mocks.saveReturn.mockResolvedValueOnce({ success: false, message: "Guardado de prueba sin cambios" });
+    const record = { ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z", warrantyReturns: [activeReturn] };
+    const { container } = render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={record} />);
+    const header = container.querySelector("article header")!;
+    expect(header.textContent).toContain("En revision");
+    expect(header.textContent).not.toContain("Retirado por cliente");
+    expect(screen.getByText(activeReturn.issueReported)).toBeTruthy();
+    expect(screen.getByText("Falla original")).toBeTruthy();
+    expect(screen.getByText(order.issueReported)).toBeTruthy();
+    expect(screen.queryByText("Corregir garantia")).toBeNull();
+    expect(screen.queryByText("Actualizar trabajo")).toBeNull();
+    const details = screen.getByText("Actualizar reingreso").closest("details")!;
+    details.open = true; fireEvent(details, new Event("toggle"));
+    expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+    const status = screen.getByLabelText("Estado del reingreso");
+    fireEvent.change(status, { target: { value: "en_reparacion" } });
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar reingreso" }).closest("form")!);
+    await waitFor(() => expect(mocks.saveReturn).toHaveBeenCalledOnce());
+    const form = mocks.saveReturn.mock.calls[0][1] as FormData;
+    expect(form.get("id")).toBe(activeReturn.id);
+    expect(form.get("version")).toBe("3");
+    expect(form.get("status")).toBe("en_reparacion");
+    expect(form.has("repairAmount")).toBe(false);
+    expect(mocks.save).not.toHaveBeenCalled();
+    expect(container.querySelector("form form")).toBeNull();
+  });
+
   it("shows payment sharing after quick pickup refresh even when the editor becomes warranty correction", async () => {
     mocks.save.mockResolvedValueOnce({ success: true, orderClosed: true, recordVersion: 2, message: "Retiro registrado" });
     const readyOrder: RepairAccessOrderRecord = { ...waitingOrder, status: "listo_para_retirar", isPaid: true };

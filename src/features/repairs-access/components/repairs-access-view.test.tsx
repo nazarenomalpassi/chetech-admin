@@ -9,6 +9,8 @@ import type { WorkshopPageInfo } from "@/features/repairs-access/page-queries";
 Object.assign(globalThis, { React });
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 const wizardEditing = vi.hoisted(() => vi.fn());
+vi.mock("./workshop-parts-workspace", () => ({ WorkshopPartsWorkspace: () => <h2>Bandeja de repuestos</h2> }));
+vi.mock("./workshop-operational-metrics", () => ({ WorkshopOperationalMetrics: () => <h2>Metricas de todas las ordenes</h2> }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 beforeEach(() => { vi.clearAllMocks(); window.history.replaceState(null, "", "/reparaciones-access"); window.localStorage.clear(); });
@@ -46,6 +48,15 @@ const order = { id: "repair-1", repairNumber: "REP-000357", customer: { phone: "
 const pageInfo: WorkshopPageInfo = { total: 1, pageSize: 30, cursor: "", nextCursor: null, search: "", status: "todos", warranty: "todos", scope: "all" };
 
 describe("workshop section navigation", () => {
+  it.each([["repuestos", "Bandeja de repuestos"], ["metricas", "Metricas de todas las ordenes"]])("admite acceso directo a %s", (view, heading) => {
+    render(<RepairsAccessView {...props} initialView={view} />);
+    expect(screen.getByRole("heading", { name: heading })).toBeTruthy();
+  });
+  it("permite consultar repuestos sin asignacion de tecnico y reserva metricas a administracion", () => {
+    render(<RepairsAccessView {...props} canManageIntake={false} initialView="repuestos" />);
+    expect(screen.getByRole("heading", { name: "Bandeja de repuestos" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Metricas" })).toBeNull();
+  });
   it("offers the newly saved order's receipt beside success while retaining the default listing", () => {
     const other = { ...order, id: "other-order", repairNumber: "REP-999999" };
     const { container } = render(<RepairsAccessView {...props} orders={[other, order]} initialOrderId={order.id} actionStatus="repair_access_created" message={{ success: true, message: "Orden creada" }} />);
@@ -168,7 +179,7 @@ describe("workshop section navigation", () => {
     expect(more).not.toBeNull();
     expect(more?.open).toBe(false);
     // jsdom does not remove closed details contents from the accessibility tree.
-    expect(within(nav).getAllByRole("button").filter((button) => !button.closest("details")).map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)", "Nueva orden", "Clientes"]);
+    expect(within(nav).getAllByRole("button").filter((button) => !button.closest("details")).map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)", "Repuestos", "Metricas", "Nueva orden", "Clientes"]);
     fireEvent.click(within(nav).getByText("Mas opciones"));
     expect(more?.open).toBe(true);
     expect(within(nav).getByRole("button", { name: "Resumen" })).toBeTruthy();
@@ -356,7 +367,7 @@ describe("workshop section navigation", () => {
     render(<RepairsAccessView {...props} canManageIntake={false} initialView={initialView} initialOrderId={order.id} orders={[order]} />);
     expect(screen.getByRole("heading", { name: "Mesa de trabajo" })).toBeTruthy();
     const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
-    expect(within(nav).getAllByRole("button").map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)"]);
+    expect(within(nav).getAllByRole("button").map((button) => button.textContent)).toEqual(["Ordenes", "Garantias (0)", "Repuestos"]);
     expect(screen.queryByRole("button", { name: "Crear desde listado" })).toBeNull();
   });
 });

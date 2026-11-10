@@ -33,12 +33,21 @@ import { WarrantyReturnsSection } from "./warranty-returns-section";
 import type { WarrantyReturnsPage } from "../warranty-queries";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
 import { RepairLabelPrintLink } from "./repair-label-print";
+import { WorkshopPartsWorkspace } from "./workshop-parts-workspace";
+import { WorkshopOperationalMetrics } from "./workshop-operational-metrics";
+import type { WorkshopPartsPage } from "../supplier-claims";
+import type { SupplierClaimsPage } from "../parts-queries";
+import type { WorkshopOperationalMetricsSnapshot } from "../operational-metrics";
+import { Input } from "@/components/ui/input";
+import { WarrantyObservationControl } from "./warranty-observation-control";
 
-type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "detalle" | "consultas" | "importar";
+type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "repuestos" | "metricas" | "detalle" | "consultas" | "importar";
 
 const primarySections: { key: RepairAccessSection; label: string }[] = [
   { key: "ordenes", label: "Ordenes" },
   { key: "garantias", label: "Garantias" },
+  { key: "repuestos", label: "Repuestos" },
+  { key: "metricas", label: "Metricas" },
   { key: "nueva", label: "Nueva orden" },
   { key: "clientes", label: "Clientes" }
 ];
@@ -65,7 +74,9 @@ export function RepairsAccessView({
   warrantyReturnsPage = null,
   warrantyReturnsCount = 0,
   warrantyReturnsSearch = "",
-  warrantyReturnsClosed = false
+  warrantyReturnsClosed = false,
+  partsPage = null, supplierClaimsPage = null, partsSearch = "", partsStatus = "all", supplierClaimsClosed = false,
+  operationalMetrics = null, metricsRange
 }: {
   orders: RepairAccessOrderRecord[];
   technicians?: WorkshopTechnician[];
@@ -84,6 +95,9 @@ export function RepairsAccessView({
   warrantyReturnsCount?: number;
   warrantyReturnsSearch?: string;
   warrantyReturnsClosed?: boolean;
+  partsPage?: WorkshopPartsPage | null; supplierClaimsPage?: SupplierClaimsPage | null;
+  partsSearch?: string; partsStatus?: string; supplierClaimsClosed?: boolean;
+  operationalMetrics?: WorkshopOperationalMetricsSnapshot | null; metricsRange?: { from: string; to: string };
 }) {
   const router = useRouter();
   const initialSelectedOrder = orders.find((order) => order.id === initialOrderId) ?? null;
@@ -93,6 +107,7 @@ export function RepairsAccessView({
   const intakeSaved = actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
   let entrySection: RepairAccessSection = "ordenes";
   if (initialView === "garantias") entrySection = "garantias";
+  if (initialView === "repuestos") entrySection = "repuestos";
   if (canManageIntake) {
     if (initialView === "detalle" && initialSelectedOrder) entrySection = "detalle";
     else if (requestedSection && requestedSection !== "nueva") entrySection = requestedSection;
@@ -206,7 +221,7 @@ export function RepairsAccessView({
 
   function navigate(section: string) {
     if (![...primarySections, ...secondarySections].some((item) => item.key === section)) return;
-    if (!canManageIntake && section !== "ordenes" && section !== "garantias") return;
+    if (!canManageIntake && section !== "ordenes" && section !== "garantias" && section !== "repuestos") return;
     if (activeSection === "nueva" && section === "nueva" && !editing) return;
     if (
       activeSection === "nueva" &&
@@ -303,7 +318,7 @@ export function RepairsAccessView({
       ) : null}
 
       <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">
-        {primarySections.filter((section) => canManageIntake || section.key === "ordenes" || section.key === "garantias").map((section) => (
+        {primarySections.filter((section) => canManageIntake || section.key === "ordenes" || section.key === "garantias" || section.key === "repuestos").map((section) => (
           <button
             aria-current={activeSection === section.key ? "page" : undefined}
             className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
@@ -329,6 +344,17 @@ export function RepairsAccessView({
       {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
       {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} isComposing={isSearchComposing} /> : null}
       {activeSection === "garantias" ? <WarrantyReturnsSection data={warrantyReturnsPage} search={warrantyReturnsSearch} closed={warrantyReturnsClosed} canManage={canManageIntake} /> : null}
+      {activeSection === "repuestos" ? <WorkshopPartsWorkspace data={partsPage} claims={supplierClaimsPage} canManage={canManageIntake} search={partsSearch} status={partsStatus} closed={supplierClaimsClosed} /> : null}
+      {canManageIntake && activeSection === "metricas" ? <div className="space-y-4">
+        <form action="/reparaciones-access" method="get" className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
+          <input name="view" type="hidden" value="metricas" />
+          <label className="grid gap-2 text-sm font-medium">Desde<Input key={metricsRange?.from} name="from" type="date" required defaultValue={metricsRange?.from} /></label>
+          <label className="grid gap-2 text-sm font-medium">Hasta<Input key={metricsRange?.to} name="to" type="date" required defaultValue={metricsRange?.to} /></label>
+          <Button type="submit" className="min-h-11">Aplicar periodo</Button>
+        </form>
+        <WorkshopOperationalMetrics metrics={operationalMetrics} />
+        {operationalMetrics ? <WarrantyObservationControl startedOn={operationalMetrics.methodology.warrantyObservationFrom} /> : null}
+      </div> : null}
 
       {activeSection === "nueva" ? (
         <RepairAccessNewOrderWizard
