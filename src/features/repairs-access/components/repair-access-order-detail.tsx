@@ -36,6 +36,7 @@ import { RepairAttachments } from "./repair-attachments";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { RepairQuickEditor } from "./repair-quick-editor";
 import { WarrantyReturnPanel } from "./warranty-return-panel";
+import { RepairLabelPrintLink } from "./repair-label-print";
 
 export function RepairAccessOrderDetail({
   order,
@@ -192,6 +193,7 @@ export function RepairAccessOrderDetail({
             </p>
           </div>
           <div className="grid gap-2 sm:flex sm:flex-wrap">
+            <RepairLabelPrintLink orderId={order.id} reprint />
             <Button className="w-full sm:w-auto" onClick={() => confirmSectionChange(onBack)} type="button" variant="secondary">Volver a ordenes</Button>
             <Button className="w-full sm:w-auto" onClick={() => confirmSectionChange(() => onEditIntake(order))} type="button" variant="secondary">Editar ingreso</Button>
           </div>

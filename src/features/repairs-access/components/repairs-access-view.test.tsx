@@ -51,6 +51,9 @@ describe("workshop section navigation", () => {
     const { container } = render(<RepairsAccessView {...props} orders={[other, order]} initialOrderId={order.id} actionStatus="repair_access_created" message={{ success: true, message: "Orden creada" }} />);
     expect(screen.getByRole("heading", { name: "Mesa de trabajo" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: `Ingreso guardado: ${order.repairNumber}` })).toBeTruthy();
+    const print = screen.getByRole("link", { name: "Imprimir etiqueta" });
+    expect(print.getAttribute("href")).toBe(`/reparaciones-access/etiqueta/${order.id}`);
+    expect(print.closest("details")).toBeNull();
     const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
     expect(new FormData(send.closest("form")!).get("orderId")).toBe(order.id);
     expect(send.closest("details")).toBeNull();
