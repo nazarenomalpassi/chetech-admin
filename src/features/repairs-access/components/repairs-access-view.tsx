@@ -32,6 +32,7 @@ import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
 import { WarrantyReturnsSection } from "./warranty-returns-section";
 import type { WarrantyReturnsPage } from "../warranty-queries";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
+import { RepairLabelPrintLink } from "./repair-label-print";
 
 type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "detalle" | "consultas" | "importar";
 
@@ -296,6 +297,7 @@ export function RepairsAccessView({
       {canManageIntake && message?.success && actionStatus === "repair_access_created" && initialSelectedOrder && activeSection === "ordenes" ? (
         <Card className="space-y-3">
           <h2 className="break-words text-base font-semibold text-slate-950">Ingreso guardado: {initialSelectedOrder.repairNumber}</h2>
+          <RepairLabelPrintLink orderId={initialSelectedOrder.id} />
           <RepairDocumentShareActions key={initialSelectedOrder.id} order={initialSelectedOrder} canManageIntake />
         </Card>
       ) : null}

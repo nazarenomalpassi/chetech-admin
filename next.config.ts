@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   serverExternalPackages: ["pdfkit"],
   outputFileTracingIncludes: {
+    "/api/repair-access/labels/*": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf", "./public/brand/*.png", "./public/brand/*.svg"],
     "/api/invoices/[id]/pdf": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf"],
     "/api/repair-access/documents/*": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf", "./public/brand/document-*.png"],
     "/api/whatsapp/worker": ["./node_modules/pdfkit/js/data/**/*", "./public/brand/*.otf", "./public/brand/document-*.png"],
