@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin, requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getRepairFinancialRecordByNativeId, normalizeRepairCollectionNumber } from "@/features/repairs/queries";
 import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper";
+import { deriveDocumentSettlement } from "@/features/invoices/document-model";
 
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ repairNumber: string }> }
 ) {
+  let draftOwnerId: string;
   try {
     await requireAdmin();
+    draftOwnerId = (await requireUser()).id;
   } catch {
     return NextResponse.json({ error: "Necesitas iniciar sesion para consultar la orden." }, { status: 401 });
   }
@@ -30,6 +33,9 @@ export async function GET(
         repair_number,
         issue_reported,
         status,
+        is_paid,
+        workflow_version,
+        delivered_at,
         intake_date,
         budget_amount,
         approved_amount,
@@ -41,6 +47,7 @@ export async function GET(
         warranty_start,
         warranty_until,
         warranty_conditions,
+        repair_access_payments (method, amount, voided_at),
         repair_access_customers (
           full_name,
           phone,
@@ -81,12 +88,21 @@ export async function GET(
   try { financialRecord = await getRepairFinancialRecordByNativeId(data.id, supabase); }
   catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Revisa el registro financiero vinculado." }, { status: 409, headers: { "Cache-Control": "private, no-store" } }); }
 
+  const amount = financialRecord ? financialRecord.finalPrice : mapPrimaryOrderOption(data).amount;
+  const settlement = financialRecord ?? deriveDocumentSettlement(amount, (data.repair_access_payments ?? [])
+    .filter((payment: { voided_at?: string | null }) => !payment.voided_at)
+    .map((payment: { method: string; amount: number | string }) => ({ method: payment.method, amount: Number(payment.amount) })));
+
   return NextResponse.json({
+    draftOwnerId,
     financialRecord,
     order: {
       id: data.id,
       repairNumber: data.repair_number,
       status: data.status,
+      isPaid: Boolean(data.is_paid),
+      workflowVersion: data.workflow_version,
+      deliveredAt: data.delivered_at ?? null,
       intakeDate: data.intake_date,
       customerName: customer?.full_name ?? "",
       customerPhone: customer?.phone ?? "",
@@ -96,7 +112,9 @@ export async function GET(
       customerAddress: customer?.address ?? "",
       device: [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - "),
       issueDescription: data.budget_detail || data.issue_reported || "",
-      amount: mapPrimaryOrderOption(data).amount,
+      amount,
+      paidTotal: settlement.paidTotal,
+      balance: settlement.balance,
       paymentMethod: data.payment_method ?? "",
       paymentNotes: data.payment_notes ?? "",
       warrantyDays: Number(data.warranty_days ?? 0),

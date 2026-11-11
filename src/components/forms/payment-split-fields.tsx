@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { WalletCards } from "lucide-react";
+import { WalletCards, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -15,6 +15,7 @@ type PaymentSplitFieldsProps = {
   title?: string;
   totalAmount: number;
   syncAmountWithTotal?: boolean;
+  compact?: boolean;
   onChange: (payments: PaymentSplit[]) => void;
 };
 
@@ -28,6 +29,7 @@ export function PaymentSplitFields({
   title = "Medios de pago",
   totalAmount,
   syncAmountWithTotal = true,
+  compact = false,
   onChange
 }: PaymentSplitFieldsProps) {
   const previousTotalRef = useRef(totalAmount);
@@ -64,7 +66,7 @@ export function PaymentSplitFields({
   }
 
   function addPaymentRow() {
-    const remaining = Math.max(roundPaymentAmount(totalAmount - assignedTotal), 0);
+    const remaining = syncAmountWithTotal ? Math.max(roundPaymentAmount(totalAmount - assignedTotal), 0) : 0;
     onChange([...payments, { ...EMPTY_PAYMENT, amount: remaining }]);
   }
 
@@ -78,15 +80,15 @@ export function PaymentSplitFields({
   }
 
   return (
-    <div className="min-w-0 rounded-xl border border-line bg-white p-4">
+    <div className={`min-w-0 rounded-xl border border-line bg-white ${compact ? "p-3" : "p-4"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
         <div className="flex items-start gap-2">
           <WalletCards aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
           <div>
             <p className="text-sm font-semibold text-slate-950">{title}</p>
-            <p className="mt-1 text-sm text-slate-600">
+            {!compact ? <p className="mt-1 text-sm text-slate-600">
               Indicá cuánto recibe cada cuenta.
-            </p>
+            </p> : null}
           </div>
         </div>
         <Button onClick={addPaymentRow} size="sm" type="button" variant="secondary">
@@ -97,7 +99,7 @@ export function PaymentSplitFields({
       <div className="mt-4 space-y-3">
         {payments.map((payment, index) => (
           <div
-            className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,180px)_auto] sm:items-end"
+            className={compact ? "grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2" : "grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,180px)_auto] sm:items-end"}
             key={index}
           >
             <div className="space-y-2">
@@ -124,14 +126,17 @@ export function PaymentSplitFields({
                 value={Number.isFinite(payment.amount) ? payment.amount : 0}
               />
             </div>
-            <Button className="md:mb-[1px]" onClick={() => removePaymentRow(index)} size="sm" type="button" variant="ghost">
-              Quitar
+            <Button aria-label={compact ? `Quitar medio ${index + 1}` : undefined} className={compact ? "min-h-11 w-11 px-0" : "md:mb-[1px]"} onClick={() => removePaymentRow(index)} size="sm" type="button" variant="ghost">
+              {compact ? <X aria-hidden="true" className="h-4 w-4" /> : "Quitar"}
             </Button>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
+      {compact ? <dl aria-live="polite" className="mt-3 grid min-w-0 grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
+        <div className="min-w-0"><dt className="text-slate-600">Dinero recibido</dt><dd className="mt-1 break-words font-semibold tabular-nums">{formatCurrency(assignedTotal)}</dd></div>
+        <div className="min-w-0"><dt className="text-slate-600">{difference < 0 ? "Excede el saldo" : "Saldo luego del cobro"}</dt><dd className={`mt-1 break-words font-semibold tabular-nums ${difference < 0 ? "text-finance-expense" : "text-slate-950"}`}>{formatCurrency(Math.abs(difference))}</dd></div>
+      </dl> : <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
         <div className="min-w-0">
           <p className="text-sm text-slate-600">Total a cobrar</p>
           <p className="mt-1 font-semibold tabular-nums text-slate-950">{formatCurrency(totalAmount)}</p>
@@ -158,7 +163,7 @@ export function PaymentSplitFields({
                 : "Hay mas dinero asignado que el declarado."}
           </p>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

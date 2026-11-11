@@ -2,12 +2,12 @@
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RepairAccessOrderRecord } from "../queries";
 import { CoordinationDialog, OrderCoordinationPanel, PartManagementDialog } from "./order-coordination-panel";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
+afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("./repair-order-activity", () => ({ RepairOrderActivity: () => null }));
 
@@ -41,6 +41,16 @@ const order: RepairAccessOrderRecord = {
   }
 };
 
+function mockLookup(record = order) {
+  const total = record.finalAmount || record.budgetAmount;
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ draftOwnerId: "owner", financialRecord: null,
+    order: { id: record.id, repairNumber: record.repairNumber, workflowVersion: 1, status: record.status,
+      intakeDate: record.intakeDate, customerName: record.customer.fullName, customerPhone: "", device: "TV", issueDescription: "Reparacion",
+      amount: total, paidTotal: record.isPaid ? total : 0, balance: record.isPaid ? 0 : total }
+  }) }));
+}
+beforeEach(() => mockLookup());
+
 describe("order collection shortcut", () => {
   it("organiza ubicacion y revision sin pedir asignar un tecnico", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
@@ -49,12 +59,14 @@ describe("order collection shortcut", () => {
     expect(screen.queryByRole("combobox", { name: "Tecnico responsable" })).toBeNull();
     expect(screen.getByText(/No cambia la fecha prometida/)).toBeTruthy();
   });
-  it("keeps manual receipt forms outside folded administration without nesting forms", () => {
+  it("keeps manual receipt forms outside folded administration without nesting forms", async () => {
+    mockLookup({ ...order, status: "listo_para_retirar" });
     const { container } = render(<OrderCoordinationPanel order={{ ...order, status: "listo_para_retirar" }} canManage />);
     const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
     expect(send.closest("details")).toBeNull();
     expect(send.closest("form")?.parentElement?.closest("form")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Registrar entrega" }));
+    await screen.findByLabelText("Persona que retira");
     expect(container.querySelector("form form")).toBeNull();
   });
 
@@ -68,6 +80,16 @@ describe("order collection shortcut", () => {
   it("does not duplicate the card's receipt row in compact coordination", () => {
     render(<OrderCoordinationPanel order={order} canManage compact />);
     expect(screen.queryByRole("button", { name: "Enviar comprobante de ingreso" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cobrar" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Registrar entrega" })).toBeNull();
+  });
+
+  it("keeps acceptance only in the quick editor and collection visible in full coordination", () => {
+    render(<OrderCoordinationPanel order={order} canManage />);
+    expect(screen.queryByRole("button", { name: "Cliente confirmo" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Autorizar trabajo sin cargo" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Cobrar" }).closest("details")).toBeNull();
+    expect(screen.getByRole("button", { name: "Cliente rechazo" })).toBeTruthy();
   });
 
   it("keeps receipt sharing available for a legacy detail without workflow context", () => {
@@ -89,13 +111,16 @@ describe("order collection shortcut", () => {
     { budgetAmount: 100, finalAmount: 0, hasFinalAmount: true, isPaid: false, debt: true },
     { budgetAmount: 0, finalAmount: 100, isPaid: false, debt: true },
     { budgetAmount: 100, finalAmount: 100, isPaid: true, debt: false }
-  ])("coordina la devolucion sin fallas con autorizacion solo ante deuda: %j", (amounts) => {
-    render(<OrderCoordinationPanel order={{ ...order, status: "no_presenta_fallas", ...amounts }} canManage />);
+  ])("coordina la devolucion sin fallas con autorizacion solo ante deuda: %j", async (amounts) => {
+    const record = { ...order, status: "no_presenta_fallas", ...amounts };
+    mockLookup(record);
+    render(<OrderCoordinationPanel order={record} canManage />);
     expect(screen.getByText("Coordinar devolucion del equipo")).toBeTruthy();
     expect(screen.queryByText("Sin confirmacion vigente")).toBeNull();
     expect(screen.queryByRole("button", { name: "Cliente confirmo" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Cliente rechazo" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Registrar entrega" }));
+    await screen.findByLabelText("Persona que retira");
     expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).required).toBe(true);
     expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).required).toBe(true);
     const authorization = screen.queryByLabelText(/Autorizo entrega con saldo pendiente/);
@@ -109,7 +134,7 @@ describe("order collection shortcut", () => {
 
   it("keeps workshop actions visible and documents in a separate disclosure", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
-    expect(screen.getByRole("button", { name: "Cliente confirmo" }).closest("details")).toBeNull();
+    expect(screen.queryByRole("button", { name: "Cliente confirmo" })).toBeNull();
     expect(screen.getByRole("button", { name: "Solicitar repuesto" }).closest("details")).toBeNull();
     const documents = screen.getByText("Documentos y cobros").closest("details")!;
     expect(documents.open).toBe(false);

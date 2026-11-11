@@ -212,14 +212,68 @@ describe("editor unico de reparaciones", () => {
     expect(Array.from(select.options).map((option) => option.value)).toContain(status);
     fireEvent.change(select, { target: { value: status } });
     expect(select.value).toBe(status);
-    if (status === "presupuestado_aceptado") fireEvent.click(screen.getByLabelText("El cliente confirmo este presupuesto"));
-    else expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.getByText(status === "presupuestado_aceptado"
+      ? "Al guardar se registra que el cliente acepto este presupuesto."
+      : "Al guardar se registra que el cliente rechazo este presupuesto.")).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(status === "presupuestado_aceptado" ? "Nota de confirmacion (opcional)" : "Nota del rechazo (opcional)"), { target: { value: "Respuesta del cliente" } });
     expect(screen.queryByLabelText("Como respondio el cliente")).toBeNull();
     fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
     await waitFor(() => expect(mocks.save).toHaveBeenCalledTimes(1));
     const data = mocks.save.mock.calls[0][1] as FormData;
     expect(data.get("status")).toBe(status);
+    expect(data.has("confirmCustomer")).toBe(false);
+    expect(data.get("decisionNotes")).toBe("Respuesta del cliente");
+    expect(data.get("expectedVersion")).toBe("1");
+    expect(data.get("operationId")).toBeTruthy();
     expect(data.has("decisionChannel")).toBe(false);
+  });
+  it("mantiene el checkbox como unica confirmacion junto al presupuesto ordinario", async () => {
+    mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.click(screen.getByLabelText("El cliente confirmo este presupuesto"));
+    expect(screen.getAllByRole("checkbox", { name: "El cliente confirmo este presupuesto" })).toHaveLength(1);
+    expect(screen.getByText("Al guardar se registra que el cliente acepto este presupuesto.")).toBeTruthy();
+    fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
+    await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
+    const data = mocks.save.mock.calls[0][1] as FormData;
+    expect(data.get("status")).toBe("presupuestado");
+    expect(data.get("confirmCustomer")).toBe("on");
+  });
+  it.each(["presupuestado_aceptado", "presupuestado_rechazado"])("recupera %s sin una segunda confirmacion aunque el borrador tenga el checkbox", async (status) => {
+    localStorage.setItem(getFormDraftStorageKey(`repair-access:workshop:${order.id}`), JSON.stringify(createFormDraftEnvelope({
+      expectedVersion: "1", status, repairAmount: "150", budgetDetail: "Nueva fuente", confirmCustomer: "on"
+    })));
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.click(await screen.findByRole("button", { name: "Recuperar" }));
+    expect((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).value).toBe(status);
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(new FormData(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!).has("confirmCustomer")).toBe(false);
+  });
+  it("exige motivo sin cargo al aceptar desde el estado explicito sin checkbox", () => {
+    render(<RepairQuickEditor order={order} canManage />);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "presupuestado_aceptado" } });
+    fireEvent.change(screen.getByLabelText("Presupuesto"), { target: { value: "0" } });
+    expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(false);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "presupuestado_aceptado" } });
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    const reason = screen.getByLabelText("Motivo del trabajo sin cargo") as HTMLTextAreaElement;
+    expect(reason.required).toBe(true);
+    expect(reason.minLength).toBe(3);
+  });
+  it("un presupuesto revisado requiere volver a elegir aceptado y reinicia las pruebas", () => {
+    render(<RepairQuickEditor order={{ ...order, status: "presupuestado_aceptado", workflow: { ...order.workflow!, approvalStatus: "accepted", qualityCheckedAt: "2026-10-06" } }} canManage />);
+    fireEvent.change(screen.getByLabelText("Detalle del presupuesto"), { target: { value: "Nuevo alcance autorizado" } });
+    expect((screen.getByLabelText("Estado de la orden") as HTMLSelectElement).value).toBe("presupuestado");
+    expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(false);
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "presupuestado_aceptado" } });
+    expect(screen.getByText("Al guardar se registra que el cliente acepto este presupuesto.")).toBeTruthy();
+    expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
+    expect(screen.getByLabelText("Nota de confirmacion (opcional)")).toBeTruthy();
+    expect(screen.queryByLabelText("Equipo probado y funcionando")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "listo_para_retirar" } });
+    expect((screen.getByLabelText("El cliente confirmo este presupuesto") as HTMLInputElement).checked).toBe(false);
+    expect((screen.getByLabelText("Equipo probado y funcionando") as HTMLInputElement).checked).toBe(false);
   });
   it("no ofrece decisiones del cliente como nuevos estados a la cuenta tecnica", () => {
     render(<RepairQuickEditor order={order} canManage={false} />);

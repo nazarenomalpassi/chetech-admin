@@ -111,6 +111,19 @@ const waitingOrder: RepairAccessOrderRecord = {
     assignedTechnicianName: null, location: null, nextActionDate: null, qualityCheckedAt: null, qualityNotes: null, parts: [], events: [] }
 };
 
+describe("visible collection and pickup row", () => {
+  it("shows exactly one payment and delivery row outside collapsed coordination", () => {
+    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "listo_para_retirar" }} />);
+    expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Cobrar" }).closest("details")).toBeNull();
+    expect(screen.getByRole("button", { name: "Registrar entrega" }).closest("details")).toBeNull();
+    const coordination = screen.getByText("Coordinacion y repuestos").closest("details")!;
+    coordination.open = true; fireEvent(coordination, new Event("toggle"));
+    expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
+    expect(screen.getAllByRole("button", { name: "Registrar entrega" })).toHaveLength(1);
+  });
+});
+
 const activeReturn: WarrantyReturnRecord = {
   id: "20000000-0000-4000-8000-000000000001", orderId: order.id,
   repairNumber: order.repairNumber, customerName: order.customer.fullName, deviceLabel: "Televisor Marca Modelo",
@@ -273,7 +286,7 @@ describe("RepairAccessWorkshopCard", () => {
     const html = renderToStaticMarkup(<RepairAccessOrderDetail order={waitingOrder} onBack={() => undefined} onEditIntake={() => undefined} defaultWarrantyDays={30} />);
     expect(html).toContain("Presupuesto, avance y estado en un solo guardado");
     expect(html).toContain("El cliente confirmo este presupuesto");
-    expect(html).toContain('Cliente confirmo');
+    expect(html).toContain('Cobrar');
   });
 
   it("no presenta la utilizacion pendiente como un bloqueo de recepcion", () => {

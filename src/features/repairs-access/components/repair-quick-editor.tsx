@@ -41,7 +41,7 @@ export function RepairQuickEditor({ order, canManage, defaultWarrantyDays }: { o
       const quoteKey = JSON.stringify([fields.repairAmount ?? String(order.budgetAmount), fields.budgetDetail ?? order.budgetDetail ?? ""]);
       const needsQuality = !noFault && (["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality);
       const confirmSelected = fields.confirmCustomer === "on";
-      const decisionSelected = canManage && state.status === "presupuestado_rechazado";
+      const decisionSelected = canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
       const rejecting = state.status === "presupuestado_rechazado";
       const responseNeedsRecording = decisionSelected && (state.quoteChanged || order.workflow?.approvalStatus !== (rejecting ? "rejected" : "accepted"));
       const needsRejectionReason = rejecting && order.workflow?.approvalStatus === "accepted" && !state.quoteChanged;
@@ -102,7 +102,7 @@ export function RepairQuickEditor({ order, canManage, defaultWarrantyDays }: { o
             <input key={`confirmation-${quoteKey}`} name="confirmCustomer" type="checkbox" defaultChecked={fields.confirmCustomer === "on"} className="h-5 w-5 shrink-0 accent-graphite" />
             El cliente confirmo este presupuesto
           </label>
-          <p className="mt-1 text-sm leading-5 text-slate-600">Solo si autorizo este importe y detalle.</p>
+          <p className="mt-1 text-sm leading-5 text-slate-600">{confirmSelected ? "Al guardar se registra que el cliente acepto este presupuesto." : "Solo si autorizo este importe y detalle."}</p>
           </>}
           {responseNeedsRecording || (!decisionSelected && confirmSelected && needsFreeReason) ? <div className="mt-3 grid gap-3">
             <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{needsRejectionReason ? "Motivo del rechazo" : needsFreeReason ? "Motivo del trabajo sin cargo" : rejecting ? "Nota del rechazo (opcional)" : "Nota de confirmacion (opcional)"}</span>

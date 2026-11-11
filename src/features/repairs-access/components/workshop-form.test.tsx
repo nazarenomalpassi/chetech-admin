@@ -10,6 +10,35 @@ Object.assign(globalThis, { React });
 afterEach(() => { cleanup(); localStorage.clear(); vi.clearAllMocks(); });
 
 describe("borrador del taller", () => {
+  it.each([
+    ["repairAmount", "200", "input"],
+    ["repairAmount", "200", "change"],
+    ["budgetDetail", "Nuevo alcance", "input"],
+    ["budgetDetail", "Nuevo alcance", "change"]
+  ] as const)("al editar %s por %s (%s) borra la aceptacion heredada en el selector y borrador", (field, value, event) => {
+    render(<WorkshopForm orderId="accepted-order" orderVersion={1}>{(fields) => <>
+      <select aria-label="Estado" name="status" defaultValue="presupuestado_aceptado">
+        <option value="presupuestado">Presupuestado</option>
+        <option value="presupuestado_aceptado">Aceptado</option>
+      </select>
+      <input aria-label="Importe" name="repairAmount" defaultValue="100" />
+      <textarea aria-label="Detalle" name="budgetDetail" defaultValue="Fuente" />
+      <input aria-label="Confirmacion" name="confirmCustomer" type="checkbox" defaultChecked />
+      <input aria-label="Pruebas" name="qualityChecked" type="checkbox" defaultChecked />
+      <textarea aria-label="Avance" name="repairProgress" />
+      <output aria-label="Borrador">{JSON.stringify(fields)}</output>
+    </>}</WorkshopForm>);
+    const control = screen.getByLabelText(field === "repairAmount" ? "Importe" : "Detalle");
+    fireEvent[event](control, { target: { value } });
+    expect(JSON.parse(screen.getByLabelText("Borrador").textContent!)).toMatchObject({
+      status: "presupuestado", [field]: value, confirmCustomer: "", qualityChecked: ""
+    });
+    expect((screen.getByLabelText("Estado") as HTMLSelectElement).value).toBe("presupuestado");
+    fireEvent.change(screen.getByLabelText("Avance"), { target: { value: "Trabajo pendiente" } });
+    expect(JSON.parse(screen.getByLabelText("Borrador").textContent!).status).toBe("presupuestado");
+    fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "presupuestado_aceptado" } });
+    expect(JSON.parse(screen.getByLabelText("Borrador").textContent!).status).toBe("presupuestado_aceptado");
+  });
   it("expone el borrador al editor sin perder el dato escrito", async () => {
     render(<WorkshopForm orderId="quick-order" orderVersion={1}>{(fields) => <><input name="expectedVersion" type="hidden" value={1} /><input aria-label="Presupuesto" name="repairAmount" defaultValue="100" /><p>{fields.repairAmount || "100"}</p></>}</WorkshopForm>);
     fireEvent.change(screen.getByLabelText("Presupuesto"), { target: { value: "200" } });

@@ -65,6 +65,12 @@ export function WorkshopForm({ orderId, orderVersion, children, action = saveWor
     const changed = event?.target;
     if ((changed instanceof HTMLInputElement || changed instanceof HTMLTextAreaElement) && ["repairAmount", "budgetDetail"].includes(changed.name)) {
       next.confirmCustomer = ""; next.qualityChecked = "";
+      const status = formRef.current.elements.namedItem("status");
+      if (status instanceof HTMLSelectElement && status.value === "presupuestado_aceptado") {
+        // A revised quote needs a fresh decision, not the previously selected acceptance.
+        status.value = "presupuestado";
+        next.status = "presupuestado";
+      }
     }
     if (operation.current) { next.operationId = operation.current.id; next._requestFingerprint = operation.current.fingerprint; }
     // Keep inactive conditional fields in the draft; only mounted controls are submitted.

@@ -2,38 +2,36 @@
 
 import { startTransition, useActionState, useEffect, useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, PackagePlus, UserRound, Truck, ClipboardCheck } from "lucide-react";
+import { PackagePlus, UserRound, ClipboardCheck } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DialogShell } from "@/components/ui/dialog-shell";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { confirmRepairCustomerDecision, requestRepairPart, assignRepairResponsibility, saveWorkshopLocation, deliverRepairOrder, manageRepairPart, claimRepairOrder } from "../coordination-actions";
-import { getPartOutstandingQuantity, getWorkshopNextAction, hasWorkshopDeliveryBalance, PART_STATUS_LABELS, type WorkshopPart } from "../workflow";
+import { confirmRepairCustomerDecision, requestRepairPart, assignRepairResponsibility, saveWorkshopLocation, manageRepairPart, claimRepairOrder } from "../coordination-actions";
+import { getPartOutstandingQuantity, getWorkshopNextAction, PART_STATUS_LABELS, type WorkshopPart } from "../workflow";
 import type { RepairAccessOrderRecord } from "../queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { RepairOrderActivity } from "./repair-order-activity";
 import { DocumentDeliveryStatus } from "@/features/whatsapp/components/document-delivery-status";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
+import { RepairOrderCollectionActions } from "./repair-order-collection-actions";
 
-type Modal = "accepted" | "rejected" | "revoked" | "part" | "assignment" | "responsibility" | "delivery" | "claim";
+type Modal = "rejected" | "revoked" | "part" | "assignment" | "responsibility" | "claim";
 export type WorkshopTechnician = { id: string; name: string };
 
 export function OrderCoordinationPanel({ order, canManage, technicians = [], compact = false }: { order: RepairAccessOrderRecord; canManage: boolean; technicians?: WorkshopTechnician[]; compact?: boolean }) {
   const [modal, setModal] = useState<Modal | null>(null);
   const [partToManage, setPartToManage] = useState<WorkshopPart | null>(null);
-  const [deliveryWithBalance, setDeliveryWithBalance] = useState(false);
   const context = order.workflow;
-  if (!context) return compact ? null : <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManage} />;
+  if (!context) return compact ? null : <div className="space-y-3"><RepairOrderCollectionActions order={order} canManage={canManage} /><RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManage} /></div>;
   const pendingParts = context.parts.filter((p) => getPartOutstandingQuantity(p) > 0).length;
   const nextAction = getWorkshopNextAction({ status: order.status, deliveredAt: order.deliveredAt, approvalStatus: context.approvalStatus, pendingParts });
   const accepted = context.approvalStatus === "accepted";
-  const zeroQuote = order.budgetAmount === 0 && order.finalAmount === 0 && (order.budgetDetail ?? "").trim().length >= 3;
   const delivered = Boolean(order.deliveredAt || order.status === "retirado");
   const deliveryRecorded = Boolean(order.pickedUpAt || order.deliveredAt);
   const noFault = order.status === "no_presenta_fallas";
-  const hasBalance = hasWorkshopDeliveryBalance(order);
 
   return <section className={`min-w-0 bg-white ${compact ? "border-t border-slate-200 p-3" : "rounded-xl border border-slate-200 p-4"}`} aria-label="Coordinacion de la orden">
     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -47,14 +45,13 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       </span>
     </div>
     <div className="mt-4 flex flex-wrap gap-2">
-      {canManage && !delivered && !noFault && !accepted && (order.budgetAmount > 0 || zeroQuote) ? <Button className="min-h-11" type="button" onClick={() => setModal("accepted")}><CheckCircle2 className="h-4 w-4" aria-hidden="true" />{zeroQuote ? "Autorizar trabajo sin cargo" : "Cliente confirmo"}</Button> : null}
       {canManage && !delivered && !noFault && !accepted ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("rejected")}>Cliente rechazo</Button> : null}
       {canManage && accepted && !delivered && !noFault ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("revoked")}>Corregir aceptacion</Button> : null}
       {!delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("part")}><PackagePlus className="h-4 w-4" aria-hidden="true" />Solicitar repuesto</Button> : null}
       {!canManage && !delivered && !context.assignedTechnicianId ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("claim")}><UserRound className="h-4 w-4" aria-hidden="true" />Tomar esta orden</Button> : null}
       {!delivered ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => setModal("assignment")}><UserRound className="h-4 w-4" aria-hidden="true" />Ubicacion y revision</Button> : null}
-      {canManage && !delivered && ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status) ? <Button type="button" variant="secondary" className="min-h-11" onClick={() => { setDeliveryWithBalance(false); setModal("delivery"); }}><Truck className="h-4 w-4" aria-hidden="true" />Registrar entrega</Button> : null}
     </div>
+    {!compact ? <div className="mt-4"><RepairOrderCollectionActions order={order} canManage={canManage} /></div> : null}
     {!compact ? <div className="mt-3"><RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManage} /></div> : null}
     {canManage ? <details className="mt-3 border-t border-slate-200 pt-2">
       <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Documentos y cobros</summary>
@@ -76,15 +73,14 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
       </div>)}
     </div> : null}
     <RepairOrderActivity orderId={order.id} />
-    {modal ? <CoordinationDialog key={modal} title={modal === "claim" ? "Tomar responsabilidad de la orden" : modal === "part" ? "Solicitar repuesto" : modal === "assignment" ? "Ubicacion y proxima revision" : modal === "responsibility" ? "Asignacion opcional" : modal === "delivery" ? "Entrega del equipo" : modal === "accepted" ? "El cliente confirmo la reparacion" : modal === "rejected" ? "Registrar rechazo del cliente" : "Revocar aceptacion"} action={modal === "claim" ? claimRepairOrder : modal === "part" ? requestRepairPart : modal === "assignment" ? saveWorkshopLocation : modal === "responsibility" ? assignRepairResponsibility : modal === "delivery" ? deliverRepairOrder : confirmRepairCustomerDecision} onClose={() => setModal(null)}>
+    {modal ? <CoordinationDialog key={modal} title={modal === "claim" ? "Tomar responsabilidad de la orden" : modal === "part" ? "Solicitar repuesto" : modal === "assignment" ? "Ubicacion y proxima revision" : modal === "responsibility" ? "Asignacion opcional" : modal === "rejected" ? "Registrar rechazo del cliente" : "Revocar aceptacion"} action={modal === "claim" ? claimRepairOrder : modal === "part" ? requestRepairPart : modal === "assignment" ? saveWorkshopLocation : modal === "responsibility" ? assignRepairResponsibility : confirmRepairCustomerDecision} onClose={() => setModal(null)}>
       <input name="id" value={order.id} type="hidden" /><input name="version" value={context.version} type="hidden" />
       <p className="rounded-xl bg-slate-50 p-3 text-sm">{order.repairNumber} · {order.customer.fullName}</p>
       {modal === "claim" ? <p className="text-sm leading-6 text-slate-600">La orden quedara a tu cargo. Mostrador puede reasignarla si ya tiene responsable.</p> : null}
-      {["accepted", "rejected", "revoked"].includes(modal) ? <>
+      {["rejected", "revoked"].includes(modal) ? <>
         <input name="decision" value={modal} type="hidden" />
         <div className="border-y border-slate-200 py-3"><p className="text-sm text-slate-500">Presupuesto {context.budgetRevision ? `version ${context.budgetRevision}` : "actual"}</p><p className="mt-1 text-xl font-semibold">{formatCurrency(order.budgetAmount)}</p><p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">{order.budgetDetail || "Sin detalle cargado"}</p></div>
-        {modal === "accepted" ? <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-700"><input name="confirmCustomer" type="checkbox" required className="h-5 w-5 shrink-0 accent-graphite" />El cliente confirmo este presupuesto</label> : null}
-        <DialogField label={modal === "revoked" ? "Motivo de la correccion" : modal === "accepted" && zeroQuote ? "Motivo del trabajo sin cargo" : "Nota de la respuesta (opcional)"}><Textarea name="notes" required={modal === "revoked" || (modal === "accepted" && zeroQuote)} minLength={modal === "revoked" || (modal === "accepted" && zeroQuote) ? 3 : undefined} maxLength={2000} /></DialogField>
+        <DialogField label={modal === "revoked" ? "Motivo de la correccion" : "Nota de la respuesta (opcional)"}><Textarea name="notes" required={modal === "revoked"} minLength={modal === "revoked" ? 3 : undefined} maxLength={2000} /></DialogField>
         <p className="text-xs text-slate-500">Se registra el usuario, la fecha y el presupuesto exacto. Esta accion no registra un cobro.</p>
       </> : null}
       {modal === "part" ? <>
@@ -99,13 +95,6 @@ export function OrderCoordinationPanel({ order, canManage, technicians = [], com
         <DialogField label="Ubicacion del equipo"><Input name="location" maxLength={200} defaultValue={context.location || ""} placeholder="Ej: Taller, estante 2" /></DialogField>
         <DialogField label="Fecha de proxima revision"><Input name="nextActionDate" type="date" defaultValue={context.nextActionDate || ""} /></DialogField>
         <p className="text-xs text-slate-500">No cambia la fecha prometida al cliente. Es un recordatorio interno del taller.</p>
-      </> : null}
-      {modal === "delivery" ? <>
-        <div className="rounded-xl bg-slate-50 p-3 text-sm"><p className="font-medium">Comprobar equipo y accesorios antes de entregar</p><p className="mt-1 whitespace-pre-wrap text-slate-600">Accesorios de ingreso: {order.device.accessoryDetails || "Sin accesorios declarados"}</p><p className="mt-1 text-xs text-slate-500">{context.qualityCheckedAt ? "Control de calidad registrado." : noFault ? "Equipo revisado sin reproducir la falla." : "Verifica el resultado tecnico y los accesorios."}</p></div>
-        <DialogField label="Persona que retira"><Input name="recipient" required minLength={2} defaultValue={order.customer.fullName} /></DialogField>
-        <DialogField label="Accesorios devueltos y observaciones"><Textarea name="notes" maxLength={2000} required={hasBalance && deliveryWithBalance} minLength={hasBalance && deliveryWithBalance ? 3 : undefined} /></DialogField>
-        {hasBalance ? <label className="flex items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900"><input className="mt-1" name="allowBalance" type="checkbox" checked={deliveryWithBalance} onChange={(event) => setDeliveryWithBalance(event.target.checked)} />Autorizo entrega con saldo pendiente. El motivo debe constar en las observaciones.</label> : null}
-        <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-slate-900"><input className="mt-1" name="confirmDelivery" type="checkbox" required />Confirmo que el cliente retiro el equipo</label>
       </> : null}
     </CoordinationDialog> : null}
     {partToManage ? <PartManagementDialog part={partToManage} canManage={canManage} onClose={() => setPartToManage(null)} /> : null}

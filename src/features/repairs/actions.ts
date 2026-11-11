@@ -37,11 +37,13 @@ function refreshRepairs() {
   for (const path of ["/reparaciones", "/reparaciones-access", "/dashboard", "/caja", "/facturacion", "/reportes", "/sueldos"]) revalidatePath(path);
 }
 
-export async function saveRepairAction(formData: FormData) {
+export type RepairPaymentSaveResult = { success: boolean; message: string; repairId?: string };
+
+export async function saveRepairFormAction(formData: FormData): Promise<RepairPaymentSaveResult> {
   await requireAdmin();
   const timing = readRepairPaymentTiming(formData.get("paymentDate") || formData.get("entryDate"), formData.get("paymentTimestamp"));
   const parsed = repairSchema.safeParse({
-    id: formData.get("id") || undefined, requestId: formData.get("requestId") || randomUUID(),
+    id: formData.get("id") || undefined, requestId: formData.get("requestId"),
     expectedVersion: formData.get("expectedVersion") || undefined,
     repairAccessOrderId: formData.get("repairAccessOrderId") || undefined,
     customerName: formData.get("customerName"), customerPhone: formData.get("customerPhone") || "",
@@ -50,32 +52,45 @@ export async function saveRepairAction(formData: FormData) {
     entryDate: String(formData.get("entryDate") ?? "").slice(0, 10), ...timing,
     amount: formData.get("amount"), payments: parsePaymentSplits(formData.get("paymentsJson")).filter((payment) => Number(payment.amount) !== 0)
   });
-  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa la reparacion.", formData.get("id"));
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message ?? "Revisa la reparacion." };
   if (!parsed.data.id) {
     const message = getRepairValidationError(parsed.data);
-    if (message) redirectWithError(message);
+    if (message) return { success: false, message };
   }
   const supabase = await createServerSupabaseClient();
   const { data, error } = await (supabase as any).rpc("save_repair_financial_atomic", { p_input: parsed.data });
-  if (error) redirectWithError(error.message, parsed.data.id);
-  refreshRepairs();
-  const params = new URLSearchParams({ status: parsed.data.id ? "repair_updated" : "repair_created" });
+  if (error) return { success: false, message: error.message || "No se pudo confirmar el cobro. Reintenta sin cambiar los datos." };
   const savedId = z.string().uuid().safeParse(data?.id);
-  if (savedId.success) params.set("edit", savedId.data);
-  else if (parsed.data.id) params.set("edit", parsed.data.id);
-  redirect(`/reparaciones?${params.toString()}`);
+  if (!savedId.success) return { success: false, message: "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el mismo guardado." };
+  refreshRepairs();
+  return { success: true, message: parsed.data.id ? "Datos actualizados." : "Registro y cobro guardados.", repairId: savedId.data };
 }
 
-export async function addRepairPaymentAction(formData: FormData) {
+export async function saveRepairAction(formData: FormData) {
+  if (!formData.get("requestId")) formData.set("requestId", randomUUID());
+  const result = await saveRepairFormAction(formData);
+  if (!result.success) redirectWithError(result.message, formData.get("id"));
+  redirect(`/reparaciones?status=${formData.get("id") ? "repair_updated" : "repair_created"}&edit=${result.repairId}`);
+}
+
+export async function addRepairPaymentFormAction(formData: FormData): Promise<RepairPaymentSaveResult> {
   await requireAdmin();
   const parsed = z.object({ repairId: z.string().uuid(), requestId: z.string().uuid(), paymentDate: dateSchema, paymentTimestamp: z.string().datetime({ offset: true }).optional(), payments: z.array(paymentSchema).min(1, "Ingresa el importe recibido y elegi su medio de pago.").max(20) }).safeParse({
     repairId: formData.get("repairId"), requestId: formData.get("requestId"), ...readRepairPaymentTiming(formData.get("paymentDate"), formData.get("paymentTimestamp")), payments: parsePaymentSplits(formData.get("paymentsJson")).filter((payment) => Number(payment.amount) !== 0)
   });
-  if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Revisa el cobro.", formData.get("repairId"));
+  if (!parsed.success) return { success: false, message: parsed.error.issues[0]?.message ?? "Revisa el cobro." };
   const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).rpc("add_repair_payment_atomic", { p_input: parsed.data });
-  if (error) redirectWithError(error.message, parsed.data.repairId);
-  refreshRepairs(); redirect(`/reparaciones?status=repair_payment_added&edit=${parsed.data.repairId}`);
+  const { data, error } = await (supabase as any).rpc("add_repair_payment_atomic", { p_input: parsed.data });
+  if (error) return { success: false, message: error.message || "No se pudo confirmar el cobro. Reintenta sin cambiar los datos." };
+  if (data?.id !== parsed.data.repairId) return { success: false, message: "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el mismo cobro." };
+  refreshRepairs();
+  return { success: true, message: "Cobro registrado.", repairId: parsed.data.repairId };
+}
+
+export async function addRepairPaymentAction(formData: FormData) {
+  const result = await addRepairPaymentFormAction(formData);
+  if (!result.success) redirectWithError(result.message, formData.get("repairId"));
+  redirect(`/reparaciones?status=repair_payment_added&edit=${result.repairId}`);
 }
 
 export async function reverseRepairPaymentAction(formData: FormData) {

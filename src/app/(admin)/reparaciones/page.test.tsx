@@ -8,7 +8,7 @@ vi.mock("@/lib/auth", () => ({ requirePermission: mocks.permission }));
 import ReparacionesPage from "./page";
 
 describe("Cobrar REP navigation contract", () => {
-  beforeEach(() => { vi.stubGlobal("React", React); vi.clearAllMocks(); mocks.permission.mockResolvedValue({ role: "admin" }); });
+  beforeEach(() => { vi.stubGlobal("React", React); vi.clearAllMocks(); mocks.permission.mockResolvedValue({ id: "current-admin", role: "admin" }); });
   afterEach(() => vi.unstubAllGlobals());
   it("passes the REP link to the bounded loader and keeps selection separate from the current history page", async () => {
     const target = { order: { id: "native" }, repair: { id: "outside-page", financialVersion: 4 }, error: null };
@@ -16,17 +16,35 @@ describe("Cobrar REP navigation contract", () => {
     mocks.repairs.mockResolvedValue({ items: history, pagination: createPaginationMeta(151, 3, 25), collectionTarget: target });
     const page = await ReparacionesPage({ searchParams: Promise.resolve({ rep: "REP-000123", page: "3" }) });
     expect(mocks.permission).toHaveBeenCalledWith("repairs.manage");
-    expect(mocks.repairs).toHaveBeenCalledExactlyOnceWith(3, "REP-000123", undefined);
+    expect(mocks.repairs).toHaveBeenCalledExactlyOnceWith(3, "REP-000123", undefined, "");
     expect(page.props.collectionTarget).toBe(target);
     expect(page.props.repairs).toBe(history);
+    expect(page.props.searchQuery).toBe("");
+    expect(page.props.draftOwnerId).toBe("current-admin");
     expect(page.key).toContain("outside-page:4");
   });
   it("forwards the payment record selected by a correction redirect", async () => {
     const id = "00000000-0000-4000-8000-000000000001";
     mocks.repairs.mockResolvedValue({ items: [], pagination: createPaginationMeta(0, 1, 25), collectionTarget: { order: null, repair: { id, financialVersion: 5 }, error: null } });
     const page = await ReparacionesPage({ searchParams: Promise.resolve({ edit: id, status: "repair_payment_reversed" }) });
-    expect(mocks.repairs).toHaveBeenCalledExactlyOnceWith(1, undefined, id);
+    expect(mocks.repairs).toHaveBeenCalledExactlyOnceWith(1, undefined, id, "");
     expect(page.props.message).toMatchObject({ success: true, message: expect.stringContaining("Pago eliminado") });
     expect(page.key).toContain(`${id}:5`);
+  });
+  it("forwards search and page without changing exact targets or the authenticated draft owner", async () => {
+    mocks.permission.mockResolvedValue({ id: "current-technician", role: "tecnico" });
+    mocks.repairs.mockResolvedValue({ items: [], pagination: createPaginationMeta(51, 2, 25), collectionTarget: null });
+    const search = '  Sony, "55"  ';
+    const page = await ReparacionesPage({ searchParams: Promise.resolve({ search, page: "2", rep: "REP-000123", edit: "selected-id" }) });
+    expect(mocks.repairs).toHaveBeenCalledExactlyOnceWith(2, "REP-000123", "selected-id", search);
+    expect(page.props.searchQuery).toBe(search);
+    expect(page.props.draftOwnerId).toBe("current-technician");
+    expect(page.props.canDelete).toBe(false);
+  });
+  it("resets a confirmed replay form even when its financial version did not change", async () => {
+    mocks.repairs.mockResolvedValue({ items: [], pagination: createPaginationMeta(0, 1, 25), collectionTarget: { repair: { id: "selected", financialVersion: 5 }, order: null, error: null } });
+    const first = await ReparacionesPage({ searchParams: Promise.resolve({ edit: "selected", receipt: "00000000-0000-4000-8000-000000000001" }) });
+    const second = await ReparacionesPage({ searchParams: Promise.resolve({ edit: "selected", receipt: "00000000-0000-4000-8000-000000000002" }) });
+    expect(first.key).not.toBe(second.key);
   });
 });

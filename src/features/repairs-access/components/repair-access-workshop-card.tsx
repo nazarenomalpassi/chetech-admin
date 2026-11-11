@@ -41,6 +41,7 @@ import { WarrantyReturnPanel } from "./warranty-return-panel";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
 import { getWorkshopOrderSummary } from "../workshop-order-summary";
 import { WorkshopOrderNextStep } from "./workshop-order-next-step";
+import { RepairOrderCollectionActions } from "./repair-order-collection-actions";
 
 export function RepairAccessWorkshopCard({
   order,
@@ -192,6 +193,7 @@ export function RepairAccessWorkshopCard({
           </WorkshopCardForm>}
         </LazyDisclosure> : null}
 
+        <RepairOrderCollectionActions order={order} canManage={canManageIntake} />
         <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManageIntake} />
         {canManageIntake ? <div className="flex flex-wrap gap-2">
           <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>

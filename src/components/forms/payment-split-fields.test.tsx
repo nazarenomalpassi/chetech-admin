@@ -23,8 +23,22 @@ describe("payment amount synchronization", () => {
   });
   it("fills a remaining split with exactly two decimal places", () => {
     const onChange = vi.fn();
-    render(<PaymentSplitFields payments={[{ method: "nx", amount: 30.10 }]} totalAmount={100.30} onChange={onChange} syncAmountWithTotal={false} />);
+    render(<PaymentSplitFields payments={[{ method: "nx", amount: 30.10 }]} totalAmount={100.30} onChange={onChange} />);
     fireEvent.click(screen.getByRole("button", { name: "Agregar medio" }));
     expect(onChange).toHaveBeenCalledExactlyOnceWith([{ method: "nx", amount: 30.10 }, { method: "efectivo", amount: 70.20 }]);
+  });
+  it("does not assume the remaining debt was received when adding a partial payment account", () => {
+    const onChange = vi.fn();
+    render(<PaymentSplitFields payments={[{ method: "nx", amount: 20 }]} totalAmount={60} onChange={onChange} syncAmountWithTotal={false} />);
+    fireEvent.click(screen.getByRole("button", { name: "Agregar medio" }));
+    expect(onChange).toHaveBeenCalledExactlyOnceWith([{ method: "nx", amount: 20 }, { method: "efectivo", amount: 0 }]);
+  });
+  it("keeps partial repair collections compact without suggesting the full balance must be assigned", () => {
+    const onChange = vi.fn();
+    render(<PaymentSplitFields compact payments={[{ method: "nx", amount: 30 }]} totalAmount={100} onChange={onChange} syncAmountWithTotal={false} />);
+    expect(screen.getByText("Saldo luego del cobro")).toBeTruthy();
+    expect(screen.queryByText("Todavia falta asignar parte del cobro.")).toBeNull();
+    expect(screen.getByRole("button", { name: "Quitar medio 1" })).toBeTruthy();
+    expect(onChange).not.toHaveBeenCalled();
   });
 });
