@@ -6,6 +6,7 @@ import { mapOrder } from "@/features/repairs-access/queries";
 import { generateWorkshopLabelPdf, generateWorkshopLabelPreview } from "@/features/repairs-access/workshop-label-pdf";
 import type { WorkshopLabelData } from "@/features/repairs-access/workshop-label-pdf";
 import { getOrderWarrantyReturns } from "@/features/repairs-access/warranty-queries";
+import { buildRepairQrUrl } from "@/features/repairs-access/repair-qr-links";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -56,9 +57,7 @@ async function renderSavedLabel(id: string, variant: Selection) {
     if (!result.data) return error("No se encontro la orden.", 404);
 
     const order = mapOrder(result.data);
-    const orderUrl = new URL("/reparaciones-access", process.env.NEXT_PUBLIC_APP_URL || "https://chetech-admin.vercel.app");
-    orderUrl.searchParams.set("view", "detalle");
-    orderUrl.searchParams.set("order", id);
+    const orderUrl = buildRepairQrUrl(id, process.env.NEXT_PUBLIC_APP_URL || "https://chetech-admin.vercel.app");
     let data: WorkshopLabelData = {
       number: order.repairNumber,
       customerName: order.customer.fullName,
@@ -66,7 +65,7 @@ async function renderSavedLabel(id: string, variant: Selection) {
       issueReported: order.issueReported,
       accessories: order.device.accessoryDetails,
       intakeDate: order.intakeDate,
-      orderUrl: orderUrl.toString()
+      orderUrl
     };
     let suffix = "etiqueta";
     if (variant.variant === "accessory") {

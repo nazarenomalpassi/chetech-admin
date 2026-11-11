@@ -5,6 +5,7 @@ import type { CookieOptions } from "@supabase/ssr";
 import type { Database } from "@/lib/db/types";
 import { getSupabasePublicKey, hasSupabaseEnv } from "@/lib/supabase/config";
 import { isSupabaseAuthRateLimitError } from "@/lib/supabase/auth-errors";
+import { getLegacyRepairQrId } from "@/features/repairs-access/repair-qr-links";
 
 function hasSupabaseAuthCookie(request: NextRequest) {
   return request.cookies
@@ -42,6 +43,9 @@ export async function updateSession(request: NextRequest) {
   const isAccessDeniedRoute = pathname.startsWith("/acceso-denegado");
   const isPublicRoute =
     pathname === "/" ||
+    pathname === "/q" || pathname.startsWith("/q/") ||
+    pathname === "/brand/qr-landing.css" || pathname === "/brand/document-logo-white.png" ||
+    getLegacyRepairQrId(request.method, request.nextUrl, request.headers) !== null ||
     isAccessDeniedRoute ||
     (!hasSupabaseEnv() && pathname.startsWith("/admin"));
   const isProtectedRoute = !isAuthRoute && !isPublicRoute;
