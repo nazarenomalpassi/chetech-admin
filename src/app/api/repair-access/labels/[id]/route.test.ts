@@ -34,7 +34,7 @@ describe("private, read-only workshop labels", () => {
     expect(mocks.permission).toHaveBeenCalledWith("repairs.view");
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_order_payload", { p_order_id: id });
     expect(mocks.returns).not.toHaveBeenCalled();
-    expect(mocks.preview).toHaveBeenCalledWith(expect.objectContaining({ number: order.repairNumber, variant: "accessory", accessoryDescription: "Control remoto negro", accessoryIndex: 2, orderUrl: `https://chetech-admin.vercel.app/reparaciones-access?view=detalle&order=${id}` }));
+    expect(mocks.preview).toHaveBeenCalledWith(expect.objectContaining({ number: order.repairNumber, variant: "accessory", accessoryDescription: "Control remoto negro", accessoryIndex: 2, orderUrl: `https://chetech-admin.vercel.app/q/${id}` }));
     expect(result.headers.get("Cache-Control")).toBe("private, no-store");
     expect(result.headers.get("Content-Disposition")).toContain("accesorio-A2-80x50.pdf");
     expect(result.headers.get("X-CHETECH-Accessory-Truncated")).toBe("0");
@@ -81,7 +81,7 @@ describe("private, read-only workshop labels", () => {
     mocks.returns.mockResolvedValue([{ ...activeReturn, closedAt: "2026-11-16", status: "retirado", issueReported: "Closed" }, { ...activeReturn, orderId: "another-order", issueReported: "Other order" }, activeReturn]);
     expect((await post({ variant: "warranty" })).status).toBe(200);
     expect(mocks.returns).toHaveBeenCalledExactlyOnceWith([id]);
-    expect(mocks.pdf).toHaveBeenCalledWith(expect.objectContaining({ number: order.repairNumber, variant: "warranty", issueReported: activeReturn.issueReported, intakeDate: activeReturn.receivedOn, accessories: activeReturn.accessories, orderUrl: `https://chetech-admin.vercel.app/reparaciones-access?view=detalle&order=${id}` }));
+    expect(mocks.pdf).toHaveBeenCalledWith(expect.objectContaining({ number: order.repairNumber, variant: "warranty", issueReported: activeReturn.issueReported, intakeDate: activeReturn.receivedOn, accessories: activeReturn.accessories, orderUrl: `https://chetech-admin.vercel.app/q/${id}` }));
   });
   it("does not print the old order as a warranty return when none is active", async () => {
     mocks.returns.mockResolvedValue([{ ...activeReturn, closedAt: "2026-11-16", status: "retirado" }]);
@@ -111,7 +111,7 @@ describe("private, read-only workshop labels", () => {
     expect(response.status).toBe(200);
     expect(mocks.permission).toHaveBeenCalledWith("repairs.view");
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("workshop_order_payload", { p_order_id: id });
-    expect(mocks.pdf).toHaveBeenCalledWith({ number: order.repairNumber, customerName: order.customer.fullName, device: "TV - Samsung - 43", issueReported: order.issueReported, accessories: "Control", intakeDate: order.intakeDate, orderUrl: `https://chetech-admin.vercel.app/reparaciones-access?view=detalle&order=${id}` });
+    expect(mocks.pdf).toHaveBeenCalledWith({ number: order.repairNumber, customerName: order.customer.fullName, device: "TV - Samsung - 43", issueReported: order.issueReported, accessories: "Control", intakeDate: order.intakeDate, orderUrl: `https://chetech-admin.vercel.app/q/${id}` });
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
     expect(response.headers.get("Content-Disposition")).toContain("REP-000742-etiqueta-80x50.pdf");
     expect(response.headers.get("Cache-Control")).toBe("private, no-store");
@@ -146,6 +146,6 @@ describe("private, read-only workshop labels", () => {
   it("uses the configured management domain, never an untrusted request host", async () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://gestion.example.com/base");
     await request();
-    expect(mocks.pdf.mock.calls[0][0].orderUrl).toBe(`https://gestion.example.com/reparaciones-access?view=detalle&order=${id}`);
+    expect(mocks.pdf.mock.calls[0][0].orderUrl).toBe(`https://gestion.example.com/q/${id}`);
   });
 });

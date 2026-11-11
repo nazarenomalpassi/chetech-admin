@@ -1,0 +1,28 @@
+:root {
+  color-scheme: dark;
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  min-height: 100%;
+  margin: 0;
+}
+body {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top))
+    max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom))
+    max(24px, env(safe-area-inset-left));
+  background: #1d1d1b;
+}
+main {
+  width: min(100%, 380px);
+}
+img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
