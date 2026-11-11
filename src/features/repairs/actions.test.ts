@@ -4,13 +4,31 @@ vi.mock("@/lib/auth", () => ({ requireAdmin: mocks.admin }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () => ({ rpc: mocks.rpc }) }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.refresh }));
 vi.mock("next/navigation", () => ({ redirect: (url: string) => { throw new Error(url); } }));
-import { addRepairPaymentAction, reverseRepairPaymentAction, saveRepairAction } from "./actions";
+import { addRepairPaymentAction, reverseRepairPaymentAction, saveRepairAction, saveRepairFormAction, addRepairPaymentFormAction } from "./actions";
 
 const repairId = "00000000-0000-4000-8000-000000000001";
 const paymentId = "00000000-0000-4000-8000-000000000002";
 function form(values: Record<string, string>) { const data = new FormData(); for (const [key, value] of Object.entries(values)) data.set(key, value); return data; }
 describe("repair payment actions", () => {
   beforeEach(() => { vi.resetAllMocks(); mocks.rpc.mockResolvedValue({ data: { id: repairId }, error: null }); });
+  it("returns a confirmed saved record without redirecting, preserving the supplied operation ID", async () => {
+    const data = form({ requestId: paymentId, customerName: "Cliente", device: "TV", amount: "100", entryDate: "2026-11-11", paymentDate: "2026-11-11", paymentsJson: '[{"method":"mp","amount":40}]' });
+    await expect(saveRepairFormAction(data)).resolves.toMatchObject({ success: true, repairId });
+    expect(mocks.rpc.mock.calls[0][1].p_input).toMatchObject({ requestId: paymentId, payments: [{ method: "mp", amount: 40 }] });
+  });
+  it("returns validation and database errors without resetting the draft or revalidating", async () => {
+    await expect(addRepairPaymentFormAction(form({ repairId, requestId: paymentId, paymentDate: "2026-11-11", paymentsJson: '[]' }))).resolves.toMatchObject({ success: false });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+    mocks.rpc.mockResolvedValue({ error: { message: "El cobro supera el saldo pendiente." } });
+    await expect(addRepairPaymentFormAction(form({ repairId, requestId: paymentId, paymentDate: "2026-11-11", paymentsJson: '[{"method":"nx","amount":40}]' }))).resolves.toMatchObject({ success: false, message: "El cobro supera el saldo pendiente." });
+    expect(mocks.refresh).not.toHaveBeenCalled();
+  });
+  it("fails closed without a durable result ID and still enforces admin authorization", async () => {
+    mocks.rpc.mockResolvedValue({ data: null, error: null });
+    await expect(addRepairPaymentFormAction(form({ repairId, requestId: paymentId, paymentDate: "2026-11-11", paymentsJson: '[{"method":"nx","amount":40}]' }))).resolves.toMatchObject({ success: false });
+    mocks.admin.mockRejectedValue(new Error("Acceso denegado"));
+    await expect(saveRepairFormAction(new FormData())).rejects.toThrow("Acceso denegado");
+  });
   it("removes only the identified payment with a reason through the atomic correction RPC and returns to its ledger", async () => {
     await expect(reverseRepairPaymentAction(form({ repairId, paymentId, reason: "Pago de prueba" }))).rejects.toThrow(`/reparaciones?status=repair_payment_reversed&edit=${repairId}`);
     expect(mocks.rpc).toHaveBeenCalledExactlyOnceWith("reverse_repair_payment_atomic", { p_repair_id: repairId, p_payment_id: paymentId, p_reason: "Pago de prueba" });

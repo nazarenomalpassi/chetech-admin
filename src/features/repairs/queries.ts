@@ -6,6 +6,34 @@ import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper"
 import { z } from "zod";
 
 const financialRepairColumns = "id, repair_access_order_id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, financial_version, status, observations, entry_date, created_at, updated_at, repair_access_orders(repair_number, repair_access_payments(id, method, amount, payment_date, created_at, legacy_repair_payment_id, voided_at)), repair_payments(id, method, amount, payment_date, created_at)";
+const historySearchRelations = "history_search:repair_access_orders(id,search_customer:repair_access_customers(),search_device:repair_access_devices())";
+
+function getHistorySearchPattern(searchQuery: string) {
+  const term = searchQuery.replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, 200);
+  if (!term) return null;
+  // Literal regex avoids PostgREST's LIKE '*' alias; quote again for its OR grammar.
+  return JSON.stringify(term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+}
+
+function applyHistorySearch(query: any, pattern: string | null, schema: "linked" | "legacy" | "minimal") {
+  if (!pattern) return query;
+  const matches = (fields: string[]) => fields.map((field) => `${field}.imatch.${pattern}`).join(",");
+  const fields = ["customer_name", "device", "issue_description"];
+  if (schema !== "minimal") fields.push("customer_phone", "order_number", "observations");
+  let filters = matches(fields);
+
+  if (schema === "linked") {
+    // Keep these filters off the financial embeds so every payment is still mapped.
+    query = query
+      .or(matches(["full_name", "phone", "alternate_phone", "phone_normalized", "alternate_phone_normalized", "dni", "email", "address"]), { referencedTable: "history_search.search_customer" })
+      .or(matches(["device_type", "brand", "model", "serial_number"]), { referencedTable: "history_search.search_device" })
+      .or(`${matches(["repair_number", "legacy_order_number", "issue_reported", "technical_diagnosis", "budget_detail", "work_performed", "notes"])},search_customer.not.is.null,search_device.not.is.null`, { referencedTable: "history_search" });
+    filters += ",history_search.not.is.null";
+  }
+
+  return query.or(filters);
+}
+
 export type RepairCollectionOrder = {
   id: string; repairNumber: string; intakeDate: string; customerName: string; customerPhone: string; device: string;
   issueDescription: string; amount: number; paymentMethod: string; observations: string;
@@ -56,24 +84,25 @@ async function getRepairEditTarget(id: string, items: ReturnType<typeof mapRepai
   return { order: null, repair: mapRepairsHistoryRows([result.data])[0], error: null };
 }
 
-export async function getRepairs(page = 1, repairNumber?: string, editId?: string) {
+export async function getRepairs(page = 1, repairNumber?: string, editId?: string, searchQuery = "") {
   const supabase = await createServerSupabaseClient();
   const { from, to } = getPaginationRange(page);
+  const searchPattern = getHistorySearchPattern(searchQuery);
 
   const historyQuery = (supabase as any)
     .from("repairs")
     .select(
-      financialRepairColumns,
+      searchPattern ? `${financialRepairColumns},${historySearchRelations}` : financialRepairColumns,
       { count: "exact" }
     );
-  let { data, error, count } = await applyStableCreationOrder(historyQuery)
+  let { data, error, count } = await applyStableCreationOrder(applyHistorySearch(historyQuery, searchPattern, "linked"))
     .range(from, to);
 
   if (error?.message?.includes("repair_access_order_id") || error?.message?.includes("repair_access_orders")) {
     const fallbackQuery = (supabase as any)
       .from("repairs")
       .select("id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, status, observations, entry_date, created_at, updated_at, repair_payments(method, amount, created_at)", { count: "exact" });
-    const fallback = await applyStableCreationOrder(fallbackQuery)
+    const fallback = await applyStableCreationOrder(applyHistorySearch(fallbackQuery, searchPattern, "legacy"))
       .range(from, to);
 
     data = fallback.data;
@@ -85,7 +114,7 @@ export async function getRepairs(page = 1, repairNumber?: string, editId?: strin
     const fallbackQuery = (supabase as any)
       .from("repairs")
       .select("id, customer_name, device, issue_description, final_price, estimated_price, status, entry_date, created_at, updated_at, repair_payments(method, amount, created_at)", { count: "exact" });
-    const fallback = await applyStableCreationOrder(fallbackQuery)
+    const fallback = await applyStableCreationOrder(applyHistorySearch(fallbackQuery, searchPattern, "minimal"))
       .range(from, to);
 
     data = fallback.data;

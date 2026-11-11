@@ -6,12 +6,19 @@ import { requireAdmin, requirePermission } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getFriendlyDatabaseError } from "@/lib/supabase/rpc-errors";
 import type { ActionResult } from "@/lib/form-state";
+import { deriveDocumentSettlement } from "@/features/invoices/document-model";
+import { getRepairFinancialRecordByNativeId } from "@/features/repairs/queries";
 import { repairAccessWorkshopSchema, repairWarrantyFieldsSchema } from "./schemas";
 import type { WorkshopSaveResult } from "./workflow";
 
 const uuid = z.string().uuid("No se pudo identificar el registro.");
 const version = z.coerce.number().int().positive("Actualiza la orden antes de guardar.");
 const optionalText = (max = 2000) => z.string().max(max).default("");
+const deliveryMoney = z.union([z.number(), z.string().regex(/^\d+(?:\.\d{1,2})?$/)]).pipe(z.coerce.number().finite().nonnegative());
+const nativeDeliveryBalanceSchema = z.object({
+  final_amount: deliveryMoney.nullable(), approved_amount: deliveryMoney.nullable(), budget_amount: deliveryMoney.nullable(),
+  repair_access_payments: z.array(z.object({ id: z.string().min(1), amount: deliveryMoney, voided_at: z.string().nullable() }))
+});
 const decisionSchema = z.object({ id: uuid, version, operationId: uuid, decision: z.enum(["accepted", "rejected", "revoked"]), channel: z.enum(["registro", "presencial", "telefono", "whatsapp", "portal"]).default("registro"), notes: optionalText() });
 const partSchema = z.object({ id: uuid, operationId: uuid, description: z.string().trim().min(3, "Describe el repuesto.").max(500), quantity: z.coerce.number().int().min(1).max(10000), priority: z.enum(["normal", "alta", "urgente"]), notes: optionalText(), productId: uuid.or(z.literal("")).default(""), productSku: optionalText(100) });
 const managePartSchema = z.object({ id: uuid, version, action: z.enum(["order", "receive", "reserve", "install", "cancel"]), quantity: z.coerce.number().int().min(0).default(0), supplier: optionalText(200), unitCost: z.coerce.number().min(0).optional(), expectedDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).or(z.literal("")), notes: optionalText() });
@@ -28,6 +35,29 @@ function workshopValues(form: FormData) {
     delete input.budgetDetail;
   }
   return { ...input, repairAmount: input.repairAmount || 0 };
+}
+
+async function deliveryBalanceError(orderId: string, allowBalance: boolean): Promise<string | null> {
+  try {
+    const supabase = await createServerSupabaseClient();
+    const financial = await getRepairFinancialRecordByNativeId(orderId, supabase);
+    let balance: number;
+    if (financial) {
+      balance = z.number().finite().nonnegative().parse(financial.balance);
+    } else {
+      const result = await supabase.from("repair_access_orders")
+        .select("final_amount,approved_amount,budget_amount,repair_access_payments(id,amount,voided_at)")
+        .eq("id", orderId).maybeSingle();
+      if (result.error) throw result.error;
+      const native = nativeDeliveryBalanceSchema.parse(result.data);
+      // Legacy zero placeholders must not erase an existing approved or quoted charge.
+      const amount = [native.final_amount, native.approved_amount, native.budget_amount].find((value) => value !== null && value > 0) ?? 0;
+      balance = deriveDocumentSettlement(amount, native.repair_access_payments.filter((payment) => !payment.voided_at)).balance;
+    }
+    return balance > 0 && !allowBalance ? "Hay un saldo pendiente. Cobra o autoriza expresamente la entrega con saldo." : null;
+  } catch {
+    return "No se pudo verificar el saldo de esta orden. Revisa los cobros y reintenta antes de registrar el retiro.";
+  }
 }
 
 async function execute(rpc: string, args: Record<string, unknown>, success: string): Promise<ActionResult> {
@@ -77,6 +107,8 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
     if (!delivery.success) return { success: false, message: delivery.error.issues[0].message };
     const p = delivery.data;
     if (p.allowBalance && p.notes.trim().length < 3) return { success: false, message: "Indica el motivo de entregar con saldo pendiente en las observaciones." };
+    const balanceError = await deliveryBalanceError(p.id, p.allowBalance);
+    if (balanceError) return { success: false, message: balanceError };
     // Use the existing custody action; a status-only update would skip delivery history.
     const result = await execute("workshop_deliver", { p_order_id: p.id, p_expected_version: p.version, p_recipient: p.recipient, p_notes: p.notes, p_allow_balance: p.allowBalance }, "Retiro registrado. Se conservaron los cobros y el historial.");
     return result.success ? { ...result, orderClosed: true } : result;
@@ -87,7 +119,8 @@ export async function saveQuickWorkshopForm(_previous: WorkshopSaveResult | null
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   if (!expectedVersion.success || !operationId.success) return { success: false, message: "No se pudo preparar el guardado. Recarga la ficha conservando el borrador." };
   const noFault = parsed.data.status === "no_presenta_fallas";
-  const confirmCustomer = !noFault && ((user.role === "admin" && parsed.data.status === "presupuestado_rechazado") || form.get("confirmCustomer") === "on");
+  const decisionSelected = user.role === "admin" && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(parsed.data.status);
+  const confirmCustomer = !noFault && (decisionSelected || form.get("confirmCustomer") === "on");
   const hasAmount = !noFault && form.has("repairAmount") && String(form.get("repairAmount") ?? "").trim() !== "";
   if (confirmCustomer && form.has("repairAmount") && !hasAmount) return { success: false, message: "Carga el importe del presupuesto antes de registrar la respuesta. Si es sin cargo, ingresa 0." };
   if (confirmCustomer && user.role !== "admin") return { success: false, message: "La confirmacion del cliente se registra desde la cuenta de administracion." };
@@ -203,5 +236,7 @@ export async function deliverRepairOrder(_previous: ActionResult | null, form: F
   if (!parsed.success) return { success: false, message: parsed.error.issues[0].message };
   const p = parsed.data;
   if (p.allowBalance && p.notes.trim().length < 3) return { success: false, message: "Indica el motivo de entregar con saldo pendiente en las observaciones." };
+  const balanceError = await deliveryBalanceError(p.id, p.allowBalance);
+  if (balanceError) return { success: false, message: balanceError };
   return execute("workshop_deliver", { p_order_id: p.id, p_expected_version: p.version, p_recipient: p.recipient, p_notes: p.notes, p_allow_balance: p.allowBalance }, "Entrega registrada. Se conservaron los cobros y el historial.");
 }

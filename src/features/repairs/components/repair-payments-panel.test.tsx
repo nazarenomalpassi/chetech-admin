@@ -1,15 +1,48 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const actions = vi.hoisted(() => ({ add: vi.fn(), reverse: vi.fn() }));
-vi.mock("../actions", () => ({ addRepairPaymentAction: actions.add, reverseRepairPaymentAction: actions.reverse }));
+vi.mock("../actions", () => ({ addRepairPaymentAction: actions.add, addRepairPaymentFormAction: actions.add, reverseRepairPaymentAction: actions.reverse }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), replace: vi.fn() }) }));
 import { RepairPaymentsPanel } from "./repair-payments-panel";
 
 const repair = { id: "00000000-0000-4000-8000-000000000001", paidTotal: 30, balance: 70, payments: [{ id: "00000000-0000-4000-8000-000000000002", method: "nx", amount: 30 }] };
 describe("repair collection and erroneous payment removal", () => {
   beforeEach(() => { vi.stubGlobal("React", React); vi.clearAllMocks(); });
-  afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+  afterEach(() => { cleanup(); localStorage.clear(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it("recovers a partial payment draft without submitting and retains its request on a failed save", async () => {
+    actions.add.mockResolvedValue({ success: false, message: "Sin conexion" });
+    const first = render(<RepairPaymentsPanel repair={repair} canReverse draftOwnerId="owner" />);
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "40" } });
+    first.unmount();
+    render(<RepairPaymentsPanel repair={repair} canReverse draftOwnerId="owner" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Recuperar" }));
+    expect((screen.getByLabelText("Monto") as HTMLInputElement).value).toBe("40");
+    expect(actions.add).not.toHaveBeenCalled();
+    const form = screen.getByRole("button", { name: "Registrar cobro adicional" }).closest("form")!;
+    fireEvent.submit(form);
+    await screen.findByText("Sin conexion");
+    fireEvent.submit(form);
+    await waitFor(() => expect(actions.add).toHaveBeenCalledTimes(2));
+    expect(actions.add.mock.calls[0][0].get("requestId")).toBe(actions.add.mock.calls[1][0].get("requestId"));
+  });
+  it.each([30, 0])("permits explicit replay of a recovered committed payment when current balance is %s", async (balance) => {
+    actions.add.mockResolvedValue({ success: true, repairId: repair.id, message: "Cobro recuperado" });
+    const first = render(<RepairPaymentsPanel repair={repair} canReverse draftOwnerId="owner" />);
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "40" } });
+    const operation = first.container.querySelector<HTMLInputElement>('input[name="requestId"]')!.value;
+    first.unmount();
+    const next = render(<RepairPaymentsPanel repair={{ ...repair, balance, paidTotal: 100 - balance }} canReverse draftOwnerId="owner" />);
+    fireEvent.click(await screen.findByRole("button", { name: "Recuperar" }));
+    const button = screen.getByRole("button", { name: "Registrar cobro adicional" }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    fireEvent.submit(button.closest("form")!);
+    await waitFor(() => expect(actions.add).toHaveBeenCalledOnce());
+    expect(actions.add.mock.calls[0][0].get("requestId")).toBe(operation);
+    next.unmount();
+  });
 
   it("supports visible account selection and split additional collections without assuming a full collection", () => {
     const { container } = render(<RepairPaymentsPanel repair={repair} canReverse />);
@@ -17,6 +50,7 @@ describe("repair collection and erroneous payment removal", () => {
     fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "40" } });
     fireEvent.click(screen.getByRole("button", { name: "Agregar medio" }));
     fireEvent.change(screen.getByRole("combobox", { name: "Medio 2" }), { target: { value: "mp" } });
+    fireEvent.change(screen.getAllByLabelText("Monto")[1], { target: { value: "30" } });
     const form = container.querySelector('input[name="paymentsJson"]')!.closest("form")!;
     expect(JSON.parse(String(new FormData(form).get("paymentsJson")))).toEqual([{ method: "efectivo", amount: 40 }, { method: "mp", amount: 30 }]);
     expect(actions.add).not.toHaveBeenCalled();
