@@ -5,11 +5,15 @@ import { getServerActionRequestMetadata } from "next/dist/server/lib/server-acti
 import config from "./next.config";
 
 const contextParameters = [
-  "status", "error", "q", "state", "warranty", "scope", "cursor", "wq", "wp",
-  "wh", "pp", "pq", "pf", "pc", "cp", "from", "to",
+  "status", "error", "q", "state", "warranty", "scope", "cursor", "from", "to",
 ];
 
 describe("legacy printed QR routing", () => {
+  it("stays within the deployment platform's 16-condition routing limit", async () => {
+    const result = await config.rewrites?.();
+    const rules = result && !Array.isArray(result) ? result.beforeFiles ?? [] : [];
+    expect(rules[0].missing?.length ?? 0).toBeLessThanOrEqual(16);
+  });
   it("rewrites old detail links before private layout for full document scans only", async () => {
     const result = await config.rewrites?.();
     const rules = result && !Array.isArray(result) ? result.beforeFiles : [];
