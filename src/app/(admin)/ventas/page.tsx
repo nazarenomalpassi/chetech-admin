@@ -11,7 +11,10 @@ export default async function VentasPage({
 }) {
   const params = await searchParams;
   const profile = await requirePermission("sales.manage");
-  const [salesResult, products] = await Promise.all([getSalesHistory(parsePage(params.page)), getSaleProductOptions()]);
+  const [salesResult, products] = await Promise.all([
+    getSalesHistory(parsePage(params.page)),
+    getSaleProductOptions()
+  ]);
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

@@ -1,6 +1,94 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Tipografía */
+  --font-sans: "Source Sans 3", "Input Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-brand: "Montech", "Input Sans", ui-sans-serif, system-ui, sans-serif;
+
+  /* Escala: el texto más chico de la interfaz es de 13 px. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+
+  /* Tokens semánticos: única fuente de color de la interfaz. Grafito cálido (tono 95). */
+  --color-background: oklch(0.968 0.004 95);
+  --color-foreground: oklch(0.225 0.008 95);
+  --color-body: oklch(0.34 0.009 95);
+  --color-muted-foreground: oklch(0.47 0.011 95);
+  --color-subtle-foreground: oklch(0.55 0.011 95);
+  --color-card: oklch(0.995 0.002 95);
+  --color-card-foreground: oklch(0.225 0.008 95);
+  --color-muted: oklch(0.972 0.004 95);
+  --color-accent: oklch(0.945 0.006 95);
+  --color-border: oklch(0.905 0.006 95);
+  --color-border-strong: oklch(0.82 0.008 95);
+  --color-input: oklch(0.64 0.01 95);
+  --color-ring: oklch(0.24 0.008 95);
+  --color-primary: oklch(0.24 0.008 95);
+  --color-primary-hover: oklch(0.15 0.006 95);
+  --color-primary-foreground: oklch(0.99 0.002 95);
+
+  /* Estados con significado: el color solo aparece cuando informa algo. */
+  --color-success: oklch(0.48 0.1 160);
+  --color-success-soft: oklch(0.965 0.025 160);
+  --color-success-border: oklch(0.86 0.06 160);
+  --color-warning: oklch(0.5 0.1 70);
+  --color-warning-soft: oklch(0.97 0.035 85);
+  --color-warning-border: oklch(0.86 0.08 85);
+  --color-danger: oklch(0.52 0.17 25);
+  --color-danger-soft: oklch(0.97 0.018 25);
+  --color-danger-border: oklch(0.86 0.06 25);
+  --color-info: oklch(0.48 0.1 245);
+  --color-info-soft: oklch(0.965 0.02 245);
+  --color-info-border: oklch(0.86 0.05 245);
+
+  /* Compatibilidad con nombres anteriores; se retiran a medida que se migran las pantallas. */
+  --color-brand-50: #f7f7f3;
+  --color-brand-100: #efefea;
+  --color-brand-200: #e0dfd8;
+  --color-brand-300: #c7c5bd;
+  --color-brand-400: #a6a39a;
+  --color-brand-500: #7d7a72;
+  --color-brand-600: #5f5c55;
+  --color-brand-700: #45433e;
+  --color-brand-800: #2f2d2a;
+  --color-brand-900: #1c1b19;
+  --color-graphite: var(--color-primary);
+  --color-fog: #7b7a74;
+  --color-ink: #141413;
+  --color-canvas: var(--color-background);
+  --color-line: var(--color-border);
+  --color-finance-profit: var(--color-success);
+  --color-finance-profitSoft: var(--color-success-soft);
+  --color-finance-expense: var(--color-danger);
+  --color-finance-expenseSoft: var(--color-danger-soft);
+  --color-finance-caution: var(--color-warning);
+  --color-finance-cautionSoft: var(--color-warning-soft);
+
+  --shadow-soft: 0 2px 8px rgba(20, 20, 19, 0.04);
+  --shadow-panel: 0 1px 2px rgba(20, 20, 19, 0.025);
+  --shadow-pop: 0 12px 36px rgba(20, 20, 19, 0.12);
+
+  --radius-control: 0.5rem;
+  --radius-panel: 0.875rem;
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border, currentcolor);
+  }
+}
 
 @font-face {
   font-family: "Montech";
@@ -24,34 +112,29 @@
 
 :root {
   color-scheme: light;
-  --font-brand: "Montech", "Input Sans", sans-serif;
-  --font-sans: "Source Sans 3", "Input Sans", sans-serif;
-  --canvas: #f5f6f5;
-  --canvas-strong: oklch(0.948 0.005 95);
-  --surface: oklch(0.99 0.002 95);
-  --surface-muted: oklch(0.975 0.004 95);
-  --surface-subtle: oklch(0.958 0.006 95);
-  --line: #dfe3e0;
-  --control-line: #8d9690;
-  --line-strong: oklch(0.78 0.01 95);
-  --text: oklch(0.225 0.008 95);
-  --text-soft: oklch(0.51 0.011 95);
-  --text-faint: oklch(0.63 0.012 95);
-  --graphite: oklch(0.24 0.008 95);
-  --graphite-strong: oklch(0.18 0.006 95);
-  --brand-accent: oklch(0.58 0.025 175);
-  --brand-accent-soft: oklch(0.94 0.012 175);
-  --success: oklch(0.63 0.11 150);
-  --success-soft: oklch(0.95 0.02 150);
-  --warning: oklch(0.8 0.08 85);
-  --warning-soft: oklch(0.96 0.02 85);
-  --danger: oklch(0.64 0.18 20);
-  --danger-soft: oklch(0.96 0.02 20);
+  /* Alias de los tokens para las clases propias de este archivo. */
+  --canvas: var(--color-background);
+  --canvas-strong: var(--color-accent);
+  --surface: var(--color-card);
+  --surface-muted: var(--color-muted);
+  --surface-subtle: var(--color-accent);
+  --line: var(--color-border);
+  --control-line: var(--color-input);
+  --line-strong: var(--color-border-strong);
+  --text: var(--color-foreground);
+  --text-soft: var(--color-muted-foreground);
+  --text-faint: var(--color-subtle-foreground);
+  --graphite: var(--color-primary);
+  --graphite-strong: var(--color-primary-hover);
+  --success: var(--color-success);
+  --success-soft: var(--color-success-soft);
+  --warning: var(--color-warning);
+  --warning-soft: var(--color-warning-soft);
+  --danger: var(--color-danger);
+  --danger-soft: var(--color-danger-soft);
   --shadow-soft: 0 2px 8px rgba(27, 27, 25, 0.04);
   --shadow-card: 0 1px 2px rgba(27, 27, 25, 0.025);
   --shadow-pop: 0 12px 36px rgba(27, 27, 25, 0.12);
-  --radius-control: 0.5rem;
-  --radius-panel: 0.875rem;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -264,17 +347,26 @@ textarea {
 }
 
 @keyframes brand-loading-travel {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(360%); }
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(360%);
+  }
 }
 
 .nav-section-link {
   position: relative;
-  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
 }
 
 .nav-section-icon {
-  transition: transform 160ms var(--ease-out), color 160ms var(--ease-out);
+  transition:
+    transform 160ms var(--ease-out),
+    color 160ms var(--ease-out);
 }
 
 .nav-section-link::before {
@@ -288,7 +380,9 @@ textarea {
   content: "";
   opacity: 0;
   transform: translateY(-50%) scaleY(0.5);
-  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
 }
 
 .nav-section-link:focus-visible {
@@ -377,15 +471,15 @@ textarea {
 }
 
 .panel-kicker {
-  @apply text-xs font-medium text-slate-600;
+  @apply text-xs font-medium text-muted-foreground;
 }
 
 .panel-heading {
-  @apply mt-1 text-2xl font-semibold leading-tight tracking-tight text-slate-950;
+  @apply mt-1 text-2xl leading-tight font-semibold tracking-tight text-foreground;
 }
 
 .panel-subheading {
-  @apply mt-1 max-w-[72ch] text-sm leading-6 text-slate-600;
+  @apply mt-1 max-w-[72ch] text-sm leading-6 text-muted-foreground;
 }
 
 .metric-tile {
@@ -409,11 +503,11 @@ textarea {
   background: #fff;
 }
 
-  .table-shell .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    max-width: 100%;
-  }
+.table-shell .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+}
 
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
@@ -483,10 +577,13 @@ a:focus-visible {
 }
 
 @media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
     font-size: 1rem;
   }
-  button, summary {
+  button,
+  summary {
     min-height: 2.75rem;
   }
 }
@@ -573,7 +670,6 @@ a:focus-visible {
   .empty-panel {
     padding: 1.25rem 1rem;
   }
-
 }
 
 @media (display-mode: standalone) {
@@ -675,5 +771,23 @@ a:focus-visible {
 
   .invoice-print-root img {
     max-width: 150px !important;
+  }
+}
+
+.nav-group-toggle {
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+
+.nav-group-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-group-toggle:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
   }
 }

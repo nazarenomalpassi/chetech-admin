@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRepairAccessCustomerSearchFilters, normalizeRepairAccessLookup } from "./customer-search";
+import {
+  buildRepairAccessCustomerSearchFilters,
+  normalizeRepairAccessLookup
+} from "./customer-search";
 
 describe("repair access customer search", () => {
   it("normalizes names so imported Access customers can be found while typing", () => {
-    expect(normalizeRepairAccessLookup("  Pérez, Juan 3571-573744 ")).toBe("perez juan 3571 573744");
+    expect(normalizeRepairAccessLookup("  Pérez, Juan 3571-573744 ")).toBe(
+      "perez juan 3571 573744"
+    );
     expect(normalizeRepairAccessLookup("  P\u00e9rez, Juan!! ")).toBe("perez juan");
   });
 

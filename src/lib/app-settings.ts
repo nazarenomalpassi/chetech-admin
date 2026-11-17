@@ -50,7 +50,9 @@ export const getCashSettings = cache(async () => {
 
   return {
     openingBalances: {
-      efectivo: Number(value.openingBalances?.efectivo ?? DEFAULT_CASH_SETTINGS.openingBalances.efectivo),
+      efectivo: Number(
+        value.openingBalances?.efectivo ?? DEFAULT_CASH_SETTINGS.openingBalances.efectivo
+      ),
       nx: Number(value.openingBalances?.nx ?? DEFAULT_CASH_SETTINGS.openingBalances.nx),
       mp: Number(value.openingBalances?.mp ?? DEFAULT_CASH_SETTINGS.openingBalances.mp)
     } satisfies Record<CashMethod, number>,

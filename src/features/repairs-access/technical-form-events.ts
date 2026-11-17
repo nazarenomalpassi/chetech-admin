@@ -5,8 +5,5 @@ export function shouldCaptureRepairDraftOnInput(tagName: string, inputType = "")
 
   if (normalizedTagName === "SELECT") return false;
 
-  return !(
-    normalizedTagName === "INPUT" &&
-    changeOnlyInputTypes.has(inputType.toLowerCase())
-  );
+  return !(normalizedTagName === "INPUT" && changeOnlyInputTypes.has(inputType.toLowerCase()));
 }

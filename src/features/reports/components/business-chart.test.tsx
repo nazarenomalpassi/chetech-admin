@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import React from "react";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { BusinessChart } from "./business-chart";
 
@@ -12,7 +12,7 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 describe("business chart evidence", () => {
-  it("keeps unknowns distinct from explicit zeros and negative margins in the data table", () => {
+  it("keeps unknowns distinct from explicit zeros and negative margins in the data table", async () => {
     render(<BusinessChart title="Importes de la cohorte" description="No sumar cobros y cargos." rows={[
       { label: "Cobrado", value: 520, tone: "income" },
       { label: "Costo", value: null, tone: "expense" },
@@ -25,11 +25,11 @@ describe("business chart evidence", () => {
     expect(within(table).getByRole("row", { name: /Gratuito/ }).textContent).not.toContain("Por determinar");
     expect(within(table).getByRole("row", { name: /Margen/ }).textContent).toMatch(/-.*20/);
     expect(screen.getByRole("figure", { name: "Importes de la cohorte" })).toBeTruthy();
-    expect(document.querySelector(".recharts-bar-rectangle")).not.toBeNull();
+    await waitFor(() => expect(document.querySelector(".recharts-bar-rectangle")).not.toBeNull());
   });
 
   it("shows an honest empty state without losing its accessible table", () => {
-    render(<BusinessChart title="Sin actividad" description="Periodo elegido" rows={[]} />);
+    render(<BusinessChart title="Sin actividad" description="Período elegido" rows={[]} />);
     expect(screen.getByRole("status").textContent).toContain("No hay registros para este grafico");
     fireEvent.click(screen.getByText("Ver tabla de datos"));
     expect(screen.getByRole("table", { name: "Datos de Sin actividad" })).toBeTruthy();

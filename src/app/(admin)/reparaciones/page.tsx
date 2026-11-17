@@ -8,12 +8,25 @@ import { z } from "zod";
 export default async function ReparacionesPage({
   searchParams
 }: {
-  searchParams: Promise<{ status?: string; error?: string; page?: string; rep?: string; edit?: string; search?: string; receipt?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    error?: string;
+    page?: string;
+    rep?: string;
+    edit?: string;
+    search?: string;
+    receipt?: string;
+  }>;
 }) {
   const params = await searchParams;
   const profile = await requirePermission("repairs.manage");
   const receipt = z.string().uuid().safeParse(params.receipt);
-  const repairsResult = await getRepairs(parsePage(params.page), params.rep, params.edit, params.search ?? "");
+  const repairsResult = await getRepairs(
+    parsePage(params.page),
+    params.rep,
+    params.edit,
+    params.search ?? ""
+  );
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);

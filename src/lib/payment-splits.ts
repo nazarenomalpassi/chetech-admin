@@ -19,7 +19,9 @@ export function roundPaymentAmount(amount: number) {
 }
 
 export function getPaymentTotal(payments: PaymentSplit[]) {
-  return roundPaymentAmount(payments.reduce((acc, payment) => acc + Number(payment.amount ?? 0), 0));
+  return roundPaymentAmount(
+    payments.reduce((acc, payment) => acc + Number(payment.amount ?? 0), 0)
+  );
 }
 
 export function paymentsMatchTotal(payments: PaymentSplit[], total: number) {

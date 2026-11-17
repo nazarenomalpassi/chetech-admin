@@ -27,20 +27,14 @@ export async function GET(request: Request) {
     return privateJson({ customers: [] });
   }
   if (query.length > 120) {
-    return privateJson(
-      { customers: [], error: "La búsqueda es demasiado larga." },
-      400
-    );
+    return privateJson({ customers: [], error: "La búsqueda es demasiado larga." }, 400);
   }
 
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await (supabase as any).rpc(
-    "search_storefront_customers_for_repair",
-    {
-      p_query: query,
-      p_limit: 20
-    }
-  );
+  const { data, error } = await (supabase as any).rpc("search_storefront_customers_for_repair", {
+    p_query: query,
+    p_limit: 20
+  });
 
   if (error) {
     return privateJson(

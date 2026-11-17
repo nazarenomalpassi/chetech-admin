@@ -6,7 +6,12 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: async () =
 function authClient(role: string, user: object | null = { id: "admin" }) {
   const getUser = vi.fn().mockResolvedValue({ data: { user }, error: null });
   const getSession = vi.fn();
-  mock.client = { auth: { getUser, getSession }, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role }, error: null }) }) }) }) };
+  mock.client = {
+    auth: { getUser, getSession },
+    from: () => ({
+      select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role }, error: null }) }) })
+    })
+  };
   return { getUser, getSession };
 }
 describe("fiscal authorization boundary", () => {

@@ -9,7 +9,12 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   return fiscalResponse(request, false, async ({ supabase }) => {
     const record = await getFiscalRecord(supabase, id);
     const pdf = await generateFiscalPdf(record);
-    return new NextResponse(new Uint8Array(pdf), { headers: { "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="factura-C-${record.snapshot.environment}-${record.snapshot.pointOfSale}-${record.number}.pdf"`, "Cache-Control": "private, no-store" } });
+    return new NextResponse(new Uint8Array(pdf), {
+      headers: {
+        "Content-Type": "application/pdf",
+        "Content-Disposition": `attachment; filename="factura-C-${record.snapshot.environment}-${record.snapshot.pointOfSale}-${record.number}.pdf"`,
+        "Cache-Control": "private, no-store"
+      }
+    });
   });
 }

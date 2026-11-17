@@ -160,7 +160,7 @@ describe("repair order number reconciliation", () => {
           knownLegacyGaps: []
         }
       )
-    ).toThrow("Numero historico repetido");
+    ).toThrow("Número historico repetido");
   });
 
   it("rejects orders whose origin cannot be determined safely", () => {

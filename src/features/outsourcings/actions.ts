@@ -23,8 +23,10 @@ function redirectWithError(message: string): never {
 function redirectWithStatus(status: string, formData: FormData): never {
   const value = formData.get("returnTo");
   const url = new URL(typeof value === "string" ? value : "/terciarizaciones", "http://localhost");
-  if (url.origin !== "http://localhost" || url.pathname !== "/terciarizaciones") redirect(`/terciarizaciones?status=${status}` as Route);
-  url.searchParams.delete("error"); url.searchParams.set("status", status);
+  if (url.origin !== "http://localhost" || url.pathname !== "/terciarizaciones")
+    redirect(`/terciarizaciones?status=${status}` as Route);
+  url.searchParams.delete("error");
+  url.searchParams.set("status", status);
   redirect(`${url.pathname}?${url.searchParams.toString()}` as Route);
 }
 
@@ -143,17 +145,28 @@ export async function markRepairOutsourcingRetrievedAction(formData: FormData) {
     redirectWithError(previous.error?.message ?? "No se encontro la terciarizacion.");
   }
 
-  if (previous.data.status !== "en_taller") redirectWithError("El equipo ya no esta en el taller externo.");
-  if (parsed.data.retrievedAt < previous.data.sent_at) redirectWithError("El retorno no puede ser anterior al envio.");
-  if (formData.get("expectedUpdatedAt") && formData.get("expectedUpdatedAt") !== previous.data.updated_at) {
-    redirectWithError("La terciarizacion cambio. Actualiza la pagina antes de registrar el retorno.");
+  if (previous.data.status !== "en_taller")
+    redirectWithError("El equipo ya no esta en el taller externo.");
+  if (parsed.data.retrievedAt < previous.data.sent_at)
+    redirectWithError("El retorno no puede ser anterior al envio.");
+  if (
+    formData.get("expectedUpdatedAt") &&
+    formData.get("expectedUpdatedAt") !== previous.data.updated_at
+  ) {
+    redirectWithError(
+      "La terciarizacion cambio. Actualiza la pagina antes de registrar el retorno."
+    );
   }
 
   const retrievedNote = [
     `Equipo buscado del taller externo el ${parsed.data.retrievedAt}.`,
     emptyToNull(parsed.data.notes),
-    parsed.data.qualityNotes ? `Control (${parsed.data.qualityStatus}): ${parsed.data.qualityNotes}` : null
-  ].filter(Boolean).join(" ");
+    parsed.data.qualityNotes
+      ? `Control (${parsed.data.qualityStatus}): ${parsed.data.qualityNotes}`
+      : null
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const payload = {
     status: "retirado",
@@ -171,10 +184,15 @@ export async function markRepairOutsourcingRetrievedAction(formData: FormData) {
   const { data: updated, error } = await (supabase as any)
     .from("repair_outsourcings")
     .update(payload)
-    .eq("id", parsed.data.id).eq("status", "en_taller").eq("updated_at", previous.data.updated_at).select("id").maybeSingle();
+    .eq("id", parsed.data.id)
+    .eq("status", "en_taller")
+    .eq("updated_at", previous.data.updated_at)
+    .select("id")
+    .maybeSingle();
 
   if (error) redirectWithError(error.message);
-  if (!updated) redirectWithError("El registro cambio. Actualiza la pagina; no se sobrescribio el historial.");
+  if (!updated)
+    redirectWithError("El registro cambio. Actualiza la pagina; no se sobrescribio el historial.");
 
   await createAuditLog({
     entityType: "repair_outsourcings",
@@ -212,16 +230,24 @@ export async function cancelRepairOutsourcingAction(formData: FormData) {
 
   const payload = {
     status: "cancelado",
-    notes: appendNote(previous.data.notes, emptyToNull(parsed.data.notes) ?? "Terciarizacion anulada."),
+    notes: appendNote(
+      previous.data.notes,
+      emptyToNull(parsed.data.notes) ?? "Terciarización anulada."
+    ),
     updated_by: user.id,
     updated_at: new Date().toISOString()
   };
 
-  if (previous.data.status !== "en_taller") redirectWithError("Solo se puede anular una salida activa.");
+  if (previous.data.status !== "en_taller")
+    redirectWithError("Solo se puede anular una salida activa.");
   const { data: updated, error } = await (supabase as any)
     .from("repair_outsourcings")
     .update(payload)
-    .eq("id", parsed.data.id).eq("status", "en_taller").eq("updated_at", previous.data.updated_at).select("id").maybeSingle();
+    .eq("id", parsed.data.id)
+    .eq("status", "en_taller")
+    .eq("updated_at", previous.data.updated_at)
+    .select("id")
+    .maybeSingle();
 
   if (error) redirectWithError(error.message);
   if (!updated) redirectWithError("El registro cambio. Actualiza la pagina.");
@@ -243,22 +269,46 @@ export async function updateRepairOutsourcingFollowupAction(formData: FormData) 
   const parsed = repairOutsourcingFollowupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Seguimiento invalido");
   const supabase = await createServerSupabaseClient();
-  const { data: previous, error: readError } = await (supabase as any).from("repair_outsourcings")
-    .select("id, status, notes, sent_at, updated_at").eq("id", parsed.data.id).maybeSingle();
+  const { data: previous, error: readError } = await (supabase as any)
+    .from("repair_outsourcings")
+    .select("id, status, notes, sent_at, updated_at")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
   if (readError || !previous) redirectWithError(readError?.message ?? "No se encontro la salida");
-  if (previous.status !== "en_taller") redirectWithError("El seguimiento de compromisos requiere una salida activa");
-  if (parsed.data.promisedAt && parsed.data.promisedAt < previous.sent_at) redirectWithError("La promesa no puede ser anterior al envio");
-  if (formData.get("expectedUpdatedAt") !== previous.updated_at) redirectWithError("El registro cambio. Actualiza la pagina");
+  if (previous.status !== "en_taller")
+    redirectWithError("El seguimiento de compromisos requiere una salida activa");
+  if (parsed.data.promisedAt && parsed.data.promisedAt < previous.sent_at)
+    redirectWithError("La promesa no puede ser anterior al envio");
+  if (formData.get("expectedUpdatedAt") !== previous.updated_at)
+    redirectWithError("El registro cambio. Actualiza la pagina");
   const payload = {
-    responsible_name: parsed.data.responsibleName, promised_at: parsed.data.promisedAt,
+    responsible_name: parsed.data.responsibleName,
+    promised_at: parsed.data.promisedAt,
     expected_cost: parsed.data.expectedCost,
-    notes: appendNote(previous.notes, `Seguimiento ${new Date().toISOString()}: ${parsed.data.notes || "Compromisos actualizados."}`),
-    updated_by: user.id, updated_at: new Date().toISOString()
+    notes: appendNote(
+      previous.notes,
+      `Seguimiento ${new Date().toISOString()}: ${parsed.data.notes || "Compromisos actualizados."}`
+    ),
+    updated_by: user.id,
+    updated_at: new Date().toISOString()
   };
-  const { data, error } = await (supabase as any).from("repair_outsourcings").update(payload)
-    .eq("id", parsed.data.id).eq("updated_at", previous.updated_at).eq("status", "en_taller").select("id").maybeSingle();
-  if (error || !data) redirectWithError(error?.message ?? "El registro cambio; no se guardo el seguimiento");
-  await createAuditLog({ entityType: "repair_outsourcings", entityId: parsed.data.id, action: "update", userId: user.id, changes: payload });
+  const { data, error } = await (supabase as any)
+    .from("repair_outsourcings")
+    .update(payload)
+    .eq("id", parsed.data.id)
+    .eq("updated_at", previous.updated_at)
+    .eq("status", "en_taller")
+    .select("id")
+    .maybeSingle();
+  if (error || !data)
+    redirectWithError(error?.message ?? "El registro cambio; no se guardo el seguimiento");
+  await createAuditLog({
+    entityType: "repair_outsourcings",
+    entityId: parsed.data.id,
+    action: "update",
+    userId: user.id,
+    changes: payload
+  });
   revalidatePath("/terciarizaciones");
   redirectWithStatus("outsourcing_updated", formData);
 }
@@ -268,19 +318,45 @@ export async function recordRepairOutsourcingQualityAction(formData: FormData) {
   const parsed = repairOutsourcingQualitySchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) redirectWithError(parsed.error.issues[0]?.message ?? "Control invalido");
   const supabase = await createServerSupabaseClient();
-  const { data: previous, error: readError } = await (supabase as any).from("repair_outsourcings")
-    .select("id, status, notes, updated_at").eq("id", parsed.data.id).maybeSingle();
+  const { data: previous, error: readError } = await (supabase as any)
+    .from("repair_outsourcings")
+    .select("id, status, notes, updated_at")
+    .eq("id", parsed.data.id)
+    .maybeSingle();
   if (readError || !previous) redirectWithError(readError?.message ?? "No se encontro la salida");
   if (previous.status !== "retirado") redirectWithError("Registra primero el retorno del equipo");
-  if (formData.get("expectedUpdatedAt") !== previous.updated_at) redirectWithError("El registro cambio. Actualiza la pagina");
+  if (formData.get("expectedUpdatedAt") !== previous.updated_at)
+    redirectWithError("El registro cambio. Actualiza la pagina");
   const now = new Date().toISOString();
-  const payload = { quality_status: parsed.data.qualityStatus, quality_notes: parsed.data.qualityNotes,
-    quality_checked_at: now, quality_checked_by: user.id, updated_by: user.id, updated_at: now,
-    notes: appendNote(previous.notes, `Control ${now} (${parsed.data.qualityStatus}): ${parsed.data.qualityNotes}`) };
-  const { data, error } = await (supabase as any).from("repair_outsourcings").update(payload)
-    .eq("id", parsed.data.id).eq("updated_at", previous.updated_at).eq("status", "retirado").select("id").maybeSingle();
-  if (error || !data) redirectWithError(error?.message ?? "El registro cambio; no se guardo el control");
-  await createAuditLog({ entityType: "repair_outsourcings", entityId: parsed.data.id, action: "update", userId: user.id, changes: payload });
+  const payload = {
+    quality_status: parsed.data.qualityStatus,
+    quality_notes: parsed.data.qualityNotes,
+    quality_checked_at: now,
+    quality_checked_by: user.id,
+    updated_by: user.id,
+    updated_at: now,
+    notes: appendNote(
+      previous.notes,
+      `Control ${now} (${parsed.data.qualityStatus}): ${parsed.data.qualityNotes}`
+    )
+  };
+  const { data, error } = await (supabase as any)
+    .from("repair_outsourcings")
+    .update(payload)
+    .eq("id", parsed.data.id)
+    .eq("updated_at", previous.updated_at)
+    .eq("status", "retirado")
+    .select("id")
+    .maybeSingle();
+  if (error || !data)
+    redirectWithError(error?.message ?? "El registro cambio; no se guardo el control");
+  await createAuditLog({
+    entityType: "repair_outsourcings",
+    entityId: parsed.data.id,
+    action: "update",
+    userId: user.id,
+    changes: payload
+  });
   revalidatePath("/terciarizaciones");
   redirectWithStatus("outsourcing_quality_saved", formData);
 }

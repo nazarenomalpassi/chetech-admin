@@ -102,7 +102,7 @@ const EXPORT_MODULES = [
   },
   {
     slug: "facturacion",
-    title: "Facturacion",
+    title: "Facturación",
     description: "Comprobantes internos, origen, cliente, total, saldo y estado."
   },
   {
@@ -133,10 +133,10 @@ function VariationBadge({
   const Icon = trend === "up" ? ArrowUpRight : trend === "down" ? ArrowDownRight : ArrowRight;
   const tone =
     (lowerIsBetter ? trend === "down" : trend === "up")
-      ? "bg-emerald-50 text-emerald-700"
+      ? "bg-success-soft text-success"
       : trend !== "flat"
-        ? "bg-rose-50 text-rose-700"
-        : "bg-slate-100 text-slate-600";
+        ? "bg-danger-soft text-danger"
+        : "bg-accent text-muted-foreground";
 
   return (
     <span aria-label={`Variacion de ${label}`} className={cn("inline-flex max-w-full flex-wrap items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold", tone)}>
@@ -159,28 +159,28 @@ function GoalCard({
   const reached = progress.actual >= progress.target;
 
   return (
-    <div className="min-w-0 border-t border-slate-200 py-4">
+    <div className="min-w-0 border-t border-border py-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <p className="text-sm text-slate-500">{title}</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(progress.actual)}</p>
+          <p className="text-sm text-muted-foreground">{title}</p>
+          <p className="mt-2 text-2xl font-semibold text-foreground">{formatCurrency(progress.actual)}</p>
         </div>
         <Badge variant={reached ? "success" : "warning"}>{reached ? "Meta cumplida" : `${progress.progress.toFixed(0)}%`}</Badge>
       </div>
-      <div aria-label={`Avance de ${title}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.max(0, progressWidth)} aria-valuetext={`${progress.progress.toFixed(0)}% del objetivo`} className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar">
+      <div aria-label={`Avance de ${title}`} aria-valuemax={100} aria-valuemin={0} aria-valuenow={Math.max(0, progressWidth)} aria-valuetext={`${progress.progress.toFixed(0)}% del objetivo`} className="mt-3 h-1.5 overflow-hidden rounded-full bg-accent" role="progressbar">
         <div
-          className={cn("h-full rounded-full", reached ? "bg-emerald-500" : "bg-graphite")}
+          className={cn("h-full rounded-full", reached ? "bg-success" : "bg-primary")}
           style={{ width: `${progressWidth}%` }}
         />
       </div>
-      <div className="mt-3 space-y-1 text-sm text-slate-600">
+      <div className="mt-3 space-y-1 text-sm text-muted-foreground">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <span>Objetivo</span>
-          <span className="font-semibold text-slate-950">{formatCurrency(progress.target)}</span>
+          <span className="font-semibold text-foreground">{formatCurrency(progress.target)}</span>
         </div>
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <span>{reached ? "Superavit" : "Pendiente"}</span>
-          <span className="font-semibold text-slate-950">{formatCurrency(Math.abs(progress.difference))}</span>
+          <span className="font-semibold text-foreground">{formatCurrency(Math.abs(progress.difference))}</span>
         </div>
       </div>
     </div>
@@ -188,8 +188,8 @@ function GoalCard({
 }
 
 function RankingMargin({ row }: { row: RankingRow }) {
-  if (row.unknownCostCount == null) return <p className="text-xs text-slate-600">Margen sin verificar; cobertura de costos no informada</p>;
-  return <p className="text-xs text-slate-600">{row.profit === null ? "Margen por determinar" : `Margen conocido ${formatCurrency(row.profit)}`}{row.unknownCostCount > 0 ? `; ${row.unknownCostCount} lineas sin costo, subtotal parcial` : ""}</p>;
+  if (row.unknownCostCount == null) return <p className="text-xs text-muted-foreground">Margen sin verificar; cobertura de costos no informada</p>;
+  return <p className="text-xs text-muted-foreground">{row.profit === null ? "Margen por determinar" : `Margen conocido ${formatCurrency(row.profit)}`}{row.unknownCostCount > 0 ? `; ${row.unknownCostCount} lineas sin costo, subtotal parcial` : ""}</p>;
 }
 
 export function ReportsView({ canExport, data }: ReportsViewProps) {
@@ -199,7 +199,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
     { label: "Margen registrado de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Subtotal con costo conocido; no es ganancia total ni utilidad neta." },
     { label: "Importe declarado en reparaciones", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Importes declarados; no equivale a cobros" },
     { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
-    { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
+    { label: "Facturación emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
     { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del periodo" }
   ] as const;
 
@@ -216,18 +216,18 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Reportes</h1>
-            <p className="mt-2 max-w-2xl text-sm text-slate-500">
+            <h1 className="text-2xl font-semibold text-foreground">Reportes</h1>
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Compara resultados y exporta los movimientos del periodo.
             </p>
           </div>
           <form className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto]">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="from">Desde</label>
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="from">Desde</label>
               <Input defaultValue={range.from} id="from" name="from" type="date" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="to">Hasta</label>
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="to">Hasta</label>
               <Input defaultValue={range.to} id="to" name="to" type="date" />
             </div>
             <div className="flex items-end">
@@ -245,23 +245,23 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             </div>
           </form>
         </div>
-        <div className="mt-3 text-sm text-slate-600">
+        <div className="mt-3 text-sm text-muted-foreground">
           {range.isToday
-            ? `Periodo: ${formatDate(range.today)}.`
-            : `Periodo: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
+            ? `Período: ${formatDate(range.today)}.`
+            : `Período: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
         </div>
       </Card>
 
-      <section aria-label="Metricas del reporte" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section aria-label="Métricas del reporte" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {metricCards.map((metric) => <MetricCard {...metric} format="currency" key={metric.label} />)}
       </section>
 
-      <details className="rounded-xl border border-slate-200 bg-white">
-        <summary className="min-h-14 cursor-pointer p-4 text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-600">
+      <details className="rounded-xl border border-border bg-card">
+        <summary className="min-h-14 cursor-pointer p-4 text-body focus-visible:outline-solid focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring">
           <span className="font-semibold">Cobertura de costos de ventas</span>
           <span className="mt-1 block text-sm">{metrics.salesUnknownCostCount == null ? "Cobertura sin verificar: no se informo el conteo de ventas sin costo." : metrics.salesUnknownCostCount > 0 ? `${metrics.salesUnknownCostCount} ventas sin margen calculable. El margen mostrado es parcial.` : "Todas las ventas del periodo tienen margen calculable."}</span>
         </summary>
-        <div className="space-y-2 border-t border-slate-200 p-4 text-sm leading-6 text-slate-600">
+        <div className="space-y-2 border-t border-border p-4 text-sm leading-6 text-muted-foreground">
           <p>Las ventas sin costo conocido, incluidas placas sin costo de adquisicion registrado, no se cuentan como ganancia. Un costo cero explicitamente registrado si es valido. El subtotal de margen excluye esas ventas; sus ingresos siguen incluidos en ventas y caja cuando corresponda.</p>
           <p>Las liberaciones futuras de placas registradas como venta ya forman parte de estos importes: no se vuelve a sumar su neto ni su margen por separado. No se reconstruyen liberaciones historicas.</p>
           <p>En rankings, los subtotales con costo conocido no equivalen a la ganancia total. Si el agregado no informa cobertura, no se presume que todos los costos esten completos.</p>
@@ -281,20 +281,20 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Detalle de la comparacion mensual</h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <h2 className="text-xl font-semibold text-foreground">Detalle de la comparacion mensual</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               {monthlyComparison.currentLabel} contra {monthlyComparison.previousLabel}.
             </p>
           </div>
-          <p className="text-sm text-slate-500">Comparacion mensual, independiente del rango.</p>
+          <p className="text-sm text-muted-foreground">Comparacion mensual, independiente del rango.</p>
         </div>
         <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {monthlyComparison.rows.map((row) => (
-            <div key={row.key} className="min-w-0 border-t border-slate-200 py-4">
+            <div key={row.key} className="min-w-0 border-t border-border py-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-500">{row.key === "salesProfit" ? "Margen conocido de ventas (subtotal)" : row.label}</p>
-                  <p className="mt-2 text-2xl font-semibold text-slate-950">{formatCurrency(row.current)}</p>
+                  <p className="text-sm text-muted-foreground">{row.key === "salesProfit" ? "Margen conocido de ventas (subtotal)" : row.label}</p>
+                  <p className="mt-2 text-2xl font-semibold text-foreground">{formatCurrency(row.current)}</p>
                 </div>
                 <VariationBadge
                   difference={row.variation.difference}
@@ -304,14 +304,14 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                   lowerIsBetter={row.key === "expensesTotal"}
                 />
               </div>
-              <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>{monthlyComparison.currentLabel}</span>
-                  <span className="font-semibold text-slate-950">{formatCurrency(row.current)}</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(row.current)}</span>
                 </div>
                 <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                   <span>{monthlyComparison.previousLabel}</span>
-                  <span className="font-semibold text-slate-950">{formatCurrency(row.previous)}</span>
+                  <span className="font-semibold text-foreground">{formatCurrency(row.previous)}</span>
                 </div>
               </div>
             </div>
@@ -322,10 +322,10 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm text-slate-500">Objetivos mensuales</p>
-            <h2 className="text-xl font-semibold text-slate-950">Avance contra meta</h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Objetivos tomados desde Configuracion para {monthlyGoals.label}.
+            <p className="text-sm text-muted-foreground">Objetivos mensuales</p>
+            <h2 className="text-xl font-semibold text-foreground">Avance contra meta</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Objetivos tomados desde Configuración para {monthlyGoals.label}.
             </p>
           </div>
           <Badge variant="default">
@@ -345,30 +345,30 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Ventas por vendedor</h2>
+              <h2 className="text-xl font-semibold text-foreground">Ventas por vendedor</h2>
             </div>
             <Badge>{sellerSummary.length} perfiles</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {sellerSummary.length ? (
               sellerSummary.map((row) => (
-                <div key={row.label} className="border-b border-slate-200 py-3">
+                <div key={row.label} className="border-b border-border py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="text-slate-500">
+                      <div className="text-muted-foreground">
                         <UserRound className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900">{row.label}</p>
-                        <p className="text-xs text-slate-500">{row.count} ventas registradas</p>
+                        <p className="font-medium text-foreground">{row.label}</p>
+                        <p className="text-xs text-muted-foreground">{row.count} ventas registradas</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-slate-950 sm:text-right">{formatCurrency(row.total)}</p>
+                    <p className="text-sm font-semibold text-foreground sm:text-right">{formatCurrency(row.total)}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No hay ventas en este rango todavia.</p>
+              <p className="text-sm text-muted-foreground">No hay ventas en este rango todavia.</p>
             )}
           </div>
         </Card>
@@ -376,62 +376,62 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Reparaciones por quien las registro</h2>
-              <p className="mt-2 text-xs text-slate-500">Muestra importes declarados, no dinero cobrado. El responsable tecnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
+              <h2 className="text-xl font-semibold text-foreground">Reparaciones por quien las registro</h2>
+              <p className="mt-2 text-xs text-muted-foreground">Muestra importes declarados, no dinero cobrado. El responsable tecnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
             </div>
             <Badge>{technicianSummary.length} perfiles</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {technicianSummary.length ? (
               technicianSummary.map((row) => (
-                <div key={row.label} className="border-b border-slate-200 py-3">
+                <div key={row.label} className="border-b border-border py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="text-slate-500">
+                      <div className="text-muted-foreground">
                         <Wrench className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-slate-900">{row.label}</p>
-                        <p className="text-xs text-slate-500">{row.count} reparaciones registradas</p>
+                        <p className="font-medium text-foreground">{row.label}</p>
+                        <p className="text-xs text-muted-foreground">{row.count} reparaciones registradas</p>
                       </div>
                     </div>
-                    <p className="text-sm font-semibold text-slate-950 sm:text-right">{formatCurrency(row.total)}</p>
+                    <p className="text-sm font-semibold text-foreground sm:text-right">{formatCurrency(row.total)}</p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No hay reparaciones en este rango todavia.</p>
+              <p className="text-sm text-muted-foreground">No hay reparaciones en este rango todavia.</p>
             )}
           </div>
         </Card>
 
         <Card className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Resultado de caja del periodo</h2>
+            <h2 className="text-xl font-semibold text-foreground">Resultado de caja del periodo</h2>
           </div>
-          <div className="space-y-3 border-t border-slate-200 pt-4">
-            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>Comprobantes emitidos, no cobros</span>
-              <span className="font-semibold text-slate-950">{formatCurrency(metrics.invoicesTotal)}</span>
+              <span className="font-semibold text-foreground">{formatCurrency(metrics.invoicesTotal)}</span>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>Gastos operativos</span>
-              <span className="font-semibold text-slate-950">{formatCurrency(metrics.expensesTotal)}</span>
+              <span className="font-semibold text-foreground">{formatCurrency(metrics.expensesTotal)}</span>
             </div>
-            <div className="flex flex-col gap-1 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>Retiros de sueldo</span>
-              <span className="font-semibold text-slate-950">{formatCurrency(metrics.salariesTotal)}</span>
+              <span className="font-semibold text-foreground">{formatCurrency(metrics.salariesTotal)}</span>
             </div>
-            <div className="border-t border-slate-200 pt-3">
+            <div className="border-t border-border pt-3">
               <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <span className="text-sm font-medium text-slate-700">Resultado de caja</span>
-                <span className={cn("text-lg font-semibold", metrics.netCash < 0 ? "text-finance-expense" : "text-finance-profit")}>{formatCurrency(metrics.netCash)}</span>
+                <span className="text-sm font-medium text-body">Resultado de caja</span>
+                <span className={cn("text-lg font-semibold", metrics.netCash < 0 ? "text-danger" : "text-success")}>{formatCurrency(metrics.netCash)}</span>
               </div>
             </div>
           </div>
-          <p className="text-xs leading-5 text-slate-600">El resultado conserva el flujo de movimientos de caja registrado. Los comprobantes no se suman como cobros adicionales. No es utilidad neta ni saldo disponible de las cuentas.</p>
+          <p className="text-xs leading-5 text-muted-foreground">El resultado conserva el flujo de movimientos de caja registrado. Los comprobantes no se suman como cobros adicionales. No es utilidad neta ni saldo disponible de las cuentas.</p>
           {!canExport ? (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-2xl border border-warning-border bg-warning-soft px-4 py-3 text-sm text-warning">
               Tu usuario puede consultar el tablero, pero las exportaciones quedan reservadas para admin.
             </div>
           ) : null}
@@ -442,7 +442,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Productos y conceptos vendidos</h2>
+              <h2 className="text-xl font-semibold text-foreground">Productos y conceptos vendidos</h2>
             </div>
             <Badge variant="warning">
               <Trophy className="mr-1 h-3.5 w-3.5" />
@@ -452,52 +452,52 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           <div className="mt-4 space-y-3">
             {rankings.products.length ? (
               rankings.products.map((row) => (
-                <div key={row.label} className="border-b border-slate-200 py-3">
+                <div key={row.label} className="border-b border-border py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{row.label}</p>
-                      <p className="text-xs text-slate-500">{row.quantity} unidades vendidas</p>
+                      <p className="font-medium text-foreground">{row.label}</p>
+                      <p className="text-xs text-muted-foreground">{row.quantity} unidades vendidas</p>
                     </div>
                     <div className="sm:text-right">
-                      <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
+                      <p className="text-sm font-semibold text-foreground">{formatCurrency(row.revenue)}</p>
                       <RankingMargin row={row} />
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">Todavia no hay productos vendidos en este rango.</p>
+              <p className="text-sm text-muted-foreground">Todavía no hay productos vendidos en este rango.</p>
             )}
           </div>
         </Card>
 
         <div className="space-y-3">
-          <BusinessChart title="Categorias con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
+          <BusinessChart title="Categorías con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
           <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Ventas por categoria</h2>
+              <h2 className="text-xl font-semibold text-foreground">Ventas por categoria</h2>
             </div>
             <Badge>Por facturacion</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {rankings.categories.length ? (
               rankings.categories.map((row) => (
-                <div key={row.label} className="border-b border-slate-200 py-3">
+                <div key={row.label} className="border-b border-border py-3">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="font-medium text-slate-900">{row.label}</p>
-                      <p className="text-xs text-slate-500">{row.quantity} unidades vendidas</p>
+                      <p className="font-medium text-foreground">{row.label}</p>
+                      <p className="text-xs text-muted-foreground">{row.quantity} unidades vendidas</p>
                     </div>
                     <div className="sm:text-right">
-                      <p className="text-sm font-semibold text-slate-950">{formatCurrency(row.revenue)}</p>
+                      <p className="text-sm font-semibold text-foreground">{formatCurrency(row.revenue)}</p>
                       <RankingMargin row={row} />
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No hay categorias con ventas en este rango.</p>
+              <p className="text-sm text-muted-foreground">No hay categorias con ventas en este rango.</p>
             )}
           </div>
           </Card>
@@ -507,7 +507,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Exportar movimientos del periodo</h2>
+            <h2 className="text-xl font-semibold text-foreground">Exportar movimientos del periodo</h2>
           </div>
           {canExport ? (
             <Badge variant="success">Admin habilitado</Badge>
@@ -519,11 +519,11 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           {EXPORT_MODULES.map((module) => (
             <div
               key={module.slug}
-              className="flex h-full flex-col justify-between min-w-0 border-t border-slate-200 py-4"
+              className="flex h-full flex-col justify-between min-w-0 border-t border-border py-4"
             >
               <div>
-                <p className="text-sm font-semibold text-slate-500">{module.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{module.description}</p>
+                <p className="text-sm font-semibold text-muted-foreground">{module.title}</p>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{module.description}</p>
               </div>
               {canExport ? (
                 <a
@@ -534,7 +534,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                   Exportar CSV
                 </a>
               ) : (
-                <div className="mt-5 rounded-2xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-500">
+                <div className="mt-5 rounded-2xl border border-dashed border-border px-4 py-3 text-sm text-muted-foreground">
                   Disponible cuando entres con usuario admin.
                 </div>
               )}

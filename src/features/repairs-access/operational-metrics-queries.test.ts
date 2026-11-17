@@ -6,25 +6,42 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: createClie
 import { getWorkshopOperationalMetrics } from "./operational-metrics-queries";
 import { workshopOperationalMetricsSchema } from "./operational-metrics";
 
-beforeEach(() => { vi.clearAllMocks(); createClient.mockResolvedValue({ rpc }); });
+beforeEach(() => {
+  vi.clearAllMocks();
+  createClient.mockResolvedValue({ rpc });
+});
 describe("workshop operational metrics server query", () => {
   it("calls one whole-database RPC, without fetching paginated orders", async () => {
     rpc.mockResolvedValue({ data: null, error: { code: "PGRST202" } });
-    expect(await getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })).toBeNull();
-    expect(rpc).toHaveBeenCalledExactlyOnceWith("get_workshop_operational_metrics", { p_from: "2026-11-01", p_to: "2026-11-10" });
+    expect(
+      await getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })
+    ).toBeNull();
+    expect(rpc).toHaveBeenCalledExactlyOnceWith("get_workshop_operational_metrics", {
+      p_from: "2026-11-01",
+      p_to: "2026-11-10"
+    });
   });
   it("rejects malformed periods before creating a client", async () => {
-    await expect(getWorkshopOperationalMetrics({ from: "2026-02-30", to: "2026-11-10" })).rejects.toThrow(/periodo/i);
+    await expect(
+      getWorkshopOperationalMetrics({ from: "2026-02-30", to: "2026-11-10" })
+    ).rejects.toThrow(/per[ií]odo/i);
     expect(createClient).not.toHaveBeenCalled();
   });
   it("does not hide authorization errors as zero counters or expose database details", async () => {
-    rpc.mockResolvedValue({ data: null, error: { code: "42501", message: "private secret detail" } });
-    await expect(getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })).rejects.toThrow("No se pudieron consultar las metricas del taller.");
+    rpc.mockResolvedValue({
+      data: null,
+      error: { code: "42501", message: "private secret detail" }
+    });
+    await expect(
+      getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })
+    ).rejects.toThrow("No se pudieron consultar las metricas del taller.");
   });
   it("does not convert malformed or null successful responses to empty metrics", async () => {
     for (const data of [null, {}, { current: { openOrders: -10 } }]) {
       rpc.mockResolvedValue({ data, error: null });
-      await expect(getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })).rejects.toThrow(/respuesta.*valida/i);
+      await expect(
+        getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })
+      ).rejects.toThrow(/respuesta.*v[aá]lida/i);
     }
   });
 });
@@ -33,16 +50,22 @@ describe("workshop operational metrics server query", () => {
 const isolatedContainer = "chetech-plan-validation-20261110";
 function metricsSqlSource() {
   const migrations = new URL("../../../supabase/migrations/", import.meta.url);
-  const name = readdirSync(migrations).find((file) => file.endsWith("_workshop_operational_metrics.sql"));
+  const name = readdirSync(migrations).find((file) =>
+    file.endsWith("_workshop_operational_metrics.sql")
+  );
   if (name) return readFileSync(new URL(name, migrations), "utf8");
   const draft = new URL("../../../tmp/qa/workshop-operational-metrics.sql", import.meta.url);
   if (existsSync(draft)) return readFileSync(draft, "utf8");
-  throw new Error("El principal debe integrar el borrador de metricas en una migracion antes de publicar.");
+  throw new Error(
+    "El principal debe integrar el borrador de metricas en una migracion antes de publicar."
+  );
 }
 function metricsSqlForRollback(source: string): string {
   const text = source.trim();
   const outer = text.match(/^begin\s*;([\s\S]*)commit\s*;$/i);
-  const body = (outer?.[1] ?? text).replace(/^\s*notify\s+pgrst\s*,\s*'reload schema'\s*;\s*$/gmi, "").trim();
+  const body = (outer?.[1] ?? text)
+    .replace(/^\s*notify\s+pgrst\s*,\s*'reload schema'\s*;\s*$/gim, "")
+    .trim();
   if (/^\s*(?:begin|commit|rollback)\s*;/im.test(body)) {
     throw new Error("Unsafe transaction boundary in metrics migration test.");
   }
@@ -50,37 +73,81 @@ function metricsSqlForRollback(source: string): string {
 }
 describe("metrics migration rollback envelope", () => {
   it("removes only the outer transaction and standalone PostgREST notification", () => {
-    const body = "create function example() returns void language plpgsql as $$ begin null; end; $$;";
-    expect(metricsSqlForRollback(`begin;\n${body}\nnotify pgrst,'reload schema';\ncommit;`)).toBe(body);
+    const body =
+      "create function example() returns void language plpgsql as $$ begin null; end; $$;";
+    expect(metricsSqlForRollback(`begin;\n${body}\nnotify pgrst,'reload schema';\ncommit;`)).toBe(
+      body
+    );
     expect(metricsSqlForRollback(body)).toBe(body);
   });
   it("rejects unbalanced or nested transaction boundaries instead of committing fixtures", () => {
     expect(() => metricsSqlForRollback("begin; select 1;")).toThrow(/transaction/i);
-    expect(() => metricsSqlForRollback("begin;\nselect 1;\ncommit;\ncommit;")).toThrow(/transaction/i);
+    expect(() => metricsSqlForRollback("begin;\nselect 1;\ncommit;\ncommit;")).toThrow(
+      /transaction/i
+    );
   });
 });
 function localSql(statements: string) {
-  const network = JSON.parse(execFileSync("docker", ["inspect", isolatedContainer, "--format", "{{json .HostConfig.NetworkMode}}"], { encoding: "utf8" }).trim());
-  if (network !== "none") throw new Error("Metrics SQL tests require the isolated no-network clone.");
-  return execFileSync("docker", ["exec", "-i", isolatedContainer, "psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", "chetech_staging"], {
-    encoding: "utf8", input: `begin;\n${metricsSqlForRollback(metricsSqlSource())}\n${statements}\nrollback;`, maxBuffer: 4 * 1024 * 1024
-  }).trim();
+  const network = JSON.parse(
+    execFileSync(
+      "docker",
+      ["inspect", isolatedContainer, "--format", "{{json .HostConfig.NetworkMode}}"],
+      { encoding: "utf8" }
+    ).trim()
+  );
+  if (network !== "none")
+    throw new Error("Metrics SQL tests require the isolated no-network clone.");
+  return execFileSync(
+    "docker",
+    [
+      "exec",
+      "-i",
+      isolatedContainer,
+      "psql",
+      "-X",
+      "-qAt",
+      "-v",
+      "ON_ERROR_STOP=1",
+      "-U",
+      "postgres",
+      "-d",
+      "chetech_staging"
+    ],
+    {
+      encoding: "utf8",
+      input: `begin;\n${metricsSqlForRollback(metricsSqlSource())}\n${statements}\nrollback;`,
+      maxBuffer: 4 * 1024 * 1024
+    }
+  ).trim();
 }
 const asAdmin = `select set_config('request.jwt.claim.sub',(select id::text from public.profiles where role='admin' order by id limit 1),true); set local role authenticated;`;
-function lastJson(output: string): unknown { return JSON.parse(output.split(/\r?\n/).at(-1)!); }
+function lastJson(output: string): unknown {
+  return JSON.parse(output.split(/\r?\n/).at(-1)!);
+}
 
-describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer)("isolated Postgres operational metrics (transaction rollback)", () => {
-  it("returns a schema-valid full-database snapshot through the server query", async () => {
-    const payload = workshopOperationalMetricsSchema.parse(lastJson(localSql(`${asAdmin} select public.get_workshop_operational_metrics();`)));
-    expect(payload.period.from).toBe(`${payload.asOf.slice(0, 7)}-01`);
-    expect(payload.period.to).toBe(payload.asOf);
-    expect(payload.current.openOrders).toBeGreaterThan(0);
-    expect(payload.current.age.days0to7 + payload.current.age.days8to14 + payload.current.age.days15to30 + payload.current.age.days31plus + payload.current.age.unknownIntakeOrders).toBe(payload.current.openOrders);
-    rpc.mockResolvedValue({ data: payload, error: null });
-    expect(await getWorkshopOperationalMetrics(payload.period)).toEqual(payload);
-  });
-  it("allows an active technician, denies missing identity and customer, leaves anonymous without EXECUTE", () => {
-    const output = lastJson(localSql(`
+describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer)(
+  "isolated Postgres operational metrics (transaction rollback)",
+  () => {
+    it("returns a schema-valid full-database snapshot through the server query", async () => {
+      const payload = workshopOperationalMetricsSchema.parse(
+        lastJson(localSql(`${asAdmin} select public.get_workshop_operational_metrics();`))
+      );
+      expect(payload.period.from).toBe(`${payload.asOf.slice(0, 7)}-01`);
+      expect(payload.period.to).toBe(payload.asOf);
+      expect(payload.current.openOrders).toBeGreaterThan(0);
+      expect(
+        payload.current.age.days0to7 +
+          payload.current.age.days8to14 +
+          payload.current.age.days15to30 +
+          payload.current.age.days31plus +
+          payload.current.age.unknownIntakeOrders
+      ).toBe(payload.current.openOrders);
+      rpc.mockResolvedValue({ data: payload, error: null });
+      expect(await getWorkshopOperationalMetrics(payload.period)).toEqual(payload);
+    });
+    it("allows an active technician, denies missing identity and customer, leaves anonymous without EXECUTE", () => {
+      const output = lastJson(
+        localSql(`
       set local session_replication_role=replica;
       insert into public.profiles(id,role) values('ee070000-0000-4000-8000-000000000001','customer');
       set local session_replication_role=origin;
@@ -95,19 +162,26 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       end $check$;
       select jsonb_agg(jsonb_build_object('schema',n.nspname,'definer',p.prosecdef,'anon',has_function_privilege('anon',p.oid,'execute'),'config',p.proconfig) order by n.nspname)
       from pg_proc p join pg_namespace n on n.oid=p.pronamespace where p.proname='get_workshop_operational_metrics';
-    `)) as { schema: string; definer: boolean; anon: boolean; config: string[] }[];
-    expect(output.map(({ schema, definer, anon }) => ({ schema, definer, anon }))).toEqual([{ schema: "private", definer: true, anon: false }, { schema: "public", definer: false, anon: false }]);
-    expect(output.every((entry) => entry.config.includes('search_path=""'))).toBe(true);
-  });
-  it("rejects inverted, infinite and excessive periods in Postgres", () => {
-    expect(localSql(`${asAdmin} do $check$ begin
+    `)
+      ) as { schema: string; definer: boolean; anon: boolean; config: string[] }[];
+      expect(output.map(({ schema, definer, anon }) => ({ schema, definer, anon }))).toEqual([
+        { schema: "private", definer: true, anon: false },
+        { schema: "public", definer: false, anon: false }
+      ]);
+      expect(output.every((entry) => entry.config.includes('search_path=""'))).toBe(true);
+    });
+    it("rejects inverted, infinite and excessive periods in Postgres", () => {
+      expect(
+        localSql(`${asAdmin} do $check$ begin
       begin perform public.get_workshop_operational_metrics('2026-11-10','2026-11-01'); raise exception 'Inverted range accepted'; exception when invalid_parameter_value then null; end;
       begin perform public.get_workshop_operational_metrics('2026-11-01','infinity'); raise exception 'Infinite range accepted'; exception when invalid_parameter_value then null; end;
       begin perform public.get_workshop_operational_metrics('2000-01-01','2026-11-01'); raise exception 'Unbounded range accepted'; exception when invalid_parameter_value then null; end;
-    end $check$; select 'ok';`)).toMatch(/ok$/);
-  });
-  it("starts observation today once, denies technicians and cannot accept a backdated argument", () => {
-    const gate = lastJson(localSql(`${asAdmin}
+    end $check$; select 'ok';`)
+      ).toMatch(/ok$/);
+    });
+    it("starts observation today once, denies technicians and cannot accept a backdated argument", () => {
+      const gate = lastJson(
+        localSql(`${asAdmin}
       create temp table observation_first as select public.start_workshop_warranty_observation() as payload;
       select public.start_workshop_warranty_observation();
       reset role;
@@ -126,29 +200,36 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
         'anonExecute',has_function_privilege('anon','public.start_workshop_warranty_observation()','execute'),
         'authenticatedTableRead',has_table_privilege('authenticated','private.workshop_warranty_observation','select'),
         'authenticatedTableWrite',has_table_privilege('authenticated','private.workshop_warranty_observation','insert'));
-    `)) as any;
-    expect(gate.count).toBe(1);
-    expect(gate.startedOn).toBe(gate.today);
-    expect(gate.first.startedOn).toBe(gate.startedOn);
-    expect(gate.first.startedBy).toBe(gate.startedBy);
-    expect(gate.backdateCallable).toBe(false);
-    expect(gate.anonExecute).toBe(false);
-    expect(gate.authenticatedTableRead).toBe(false);
-    expect(gate.authenticatedTableWrite).toBe(false);
-    const afterStart = workshopOperationalMetricsSchema.parse(gate.metrics);
-    expect(afterStart.warranty.matureCohort.comparableOrders).toBe(0);
-    expect(afterStart.warranty.matureCohort.returnRate).toBeNull();
-    expect(afterStart.warranty.matureCohort.reason).toMatch(/Todavia no hay/);
-  });
-  it("rates only complete mature observed warranties, using distinct orders and matching immutable snapshots", () => {
-    const readDefinition = metricsSqlSource().match(/create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i)![0];
-    // Test-only clock advance inside the rolled-back clone. Never execute this
-    // altered definition outside this opt-in no-network container.
-    const advancedDefinition = readDefinition
-      .replace("v_now timestamptz := now();", "v_now timestamptz := now() + interval '20 days';")
-      .replace("v_today date := (now() at time zone", "v_today date := ((now() + interval '20 days') at time zone");
-    expect(advancedDefinition).not.toBe(readDefinition);
-    const result = lastJson(localSql(`
+    `)
+      ) as any;
+      expect(gate.count).toBe(1);
+      expect(gate.startedOn).toBe(gate.today);
+      expect(gate.first.startedOn).toBe(gate.startedOn);
+      expect(gate.first.startedBy).toBe(gate.startedBy);
+      expect(gate.backdateCallable).toBe(false);
+      expect(gate.anonExecute).toBe(false);
+      expect(gate.authenticatedTableRead).toBe(false);
+      expect(gate.authenticatedTableWrite).toBe(false);
+      const afterStart = workshopOperationalMetricsSchema.parse(gate.metrics);
+      expect(afterStart.warranty.matureCohort.comparableOrders).toBe(0);
+      expect(afterStart.warranty.matureCohort.returnRate).toBeNull();
+      expect(afterStart.warranty.matureCohort.reason).toMatch(/Todav[ií]a no hay/);
+    });
+    it("rates only complete mature observed warranties, using distinct orders and matching immutable snapshots", () => {
+      const readDefinition = metricsSqlSource().match(
+        /create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i
+      )![0];
+      // Test-only clock advance inside the rolled-back clone. Never execute this
+      // altered definition outside this opt-in no-network container.
+      const advancedDefinition = readDefinition
+        .replace("v_now timestamptz := now();", "v_now timestamptz := now() + interval '20 days';")
+        .replace(
+          "v_today date := (now() at time zone",
+          "v_today date := ((now() + interval '20 days') at time zone"
+        );
+      expect(advancedDefinition).not.toBe(readDefinition);
+      const result = lastJson(
+        localSql(`
       ${asAdmin} select public.start_workshop_warranty_observation(); reset role;
       set local session_replication_role=replica;
       insert into public.repair_access_orders(id,customer_id,device_id,order_number,repair_number,intake_date,issue_reported,status,
@@ -176,18 +257,45 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       select public.get_workshop_operational_metrics(
         (now() at time zone 'America/Argentina/Buenos_Aires')::date-1,
         (now() at time zone 'America/Argentina/Buenos_Aires')::date+25);
-    `));
-    const payload = workshopOperationalMetricsSchema.parse(result);
-    expect(payload.methodology.warrantyObservationFrom).not.toBeNull();
-    expect(payload.warranty.matureCohort).toEqual({ maturedOrders: 2, returnedOrders: 1, comparableOrders: 2, returnRate: 50, reason: null });
-    expect(workshopOperationalMetricsSchema.safeParse({ ...payload, methodology: { warrantyObservationFrom: null } }).success).toBe(false);
-    expect(workshopOperationalMetricsSchema.safeParse({ ...payload, warranty: { ...payload.warranty, matureCohort: { ...payload.warranty.matureCohort, returnRate: 100 } } }).success).toBe(false);
-  });
-  it("excludes an actual post-return warranty correction instead of reporting a false zero rate", () => {
-    const definition = metricsSqlSource().match(/create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i)![0]
-      .replace("v_now timestamptz := now();", "v_now timestamptz := now() + interval '20 days';")
-      .replace("v_today date := (now() at time zone", "v_today date := ((now() + interval '20 days') at time zone");
-    const result = lastJson(localSql(`
+    `)
+      );
+      const payload = workshopOperationalMetricsSchema.parse(result);
+      expect(payload.methodology.warrantyObservationFrom).not.toBeNull();
+      expect(payload.warranty.matureCohort).toEqual({
+        maturedOrders: 2,
+        returnedOrders: 1,
+        comparableOrders: 2,
+        returnRate: 50,
+        reason: null
+      });
+      expect(
+        workshopOperationalMetricsSchema.safeParse({
+          ...payload,
+          methodology: { warrantyObservationFrom: null }
+        }).success
+      ).toBe(false);
+      expect(
+        workshopOperationalMetricsSchema.safeParse({
+          ...payload,
+          warranty: {
+            ...payload.warranty,
+            matureCohort: { ...payload.warranty.matureCohort, returnRate: 100 }
+          }
+        }).success
+      ).toBe(false);
+    });
+    it("excludes an actual post-return warranty correction instead of reporting a false zero rate", () => {
+      const definition = metricsSqlSource()
+        .match(
+          /create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i
+        )![0]
+        .replace("v_now timestamptz := now();", "v_now timestamptz := now() + interval '20 days';")
+        .replace(
+          "v_today date := (now() at time zone",
+          "v_today date := ((now() + interval '20 days') at time zone"
+        );
+      const result = lastJson(
+        localSql(`
       ${asAdmin} select public.start_workshop_warranty_observation(); reset role;
       set local session_replication_role=replica;
       insert into public.repair_access_orders(id,customer_id,device_id,order_number,repair_number,intake_date,issue_reported,status,has_warranty,warranty_days,warranty_start,warranty_until,picked_up_at,delivered_at)
@@ -205,24 +313,40 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       select public.workshop_warranty_correct('ee070004-0000-4000-8000-000000000001',1,'ee070004-0000-4000-8000-000000000002',true,10,'Same repair','Correct recorded warranty duration',true);
       select jsonb_build_object('before',(select payload from metrics_before),'after',public.get_workshop_operational_metrics(
         (now() at time zone 'America/Argentina/Buenos_Aires')::date,(now() at time zone 'America/Argentina/Buenos_Aires')::date));
-    `)) as { before: unknown; after: unknown };
-    const before = workshopOperationalMetricsSchema.parse(result.before);
-    const after = workshopOperationalMetricsSchema.parse(result.after);
-    expect(before.warranty.matureCohort.returnRate).toBe(100);
-    expect(after.warranty.matureCohort.comparableOrders).toBe(0);
-    expect(after.warranty.matureCohort.returnedOrders).toBe(0);
-    expect(after.warranty.matureCohort.maturedOrders).toBe(1);
-    expect(after.warranty.matureCohort.returnRate).toBeNull();
-    expect(after.warranty.matureCohort.reason).toMatch(/1 ordenes excluidas por cobertura corregida/);
-    expect(after.warranty.activeReturns).toBe(before.warranty.activeReturns);
-    expect(after.warranty.openedInPeriod).toBe(before.warranty.openedInPeriod);
-    expect(after.warranty.uniqueOrdersInPeriod).toBe(before.warranty.uniqueOrdersInPeriod);
-  });
-  it.each(["null_start", "null_end", "mixed_snapshot"])("excludes the whole original-delivery cohort order for %s", (kind) => {
-    const definition = metricsSqlSource().match(/create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i)![0]
-      .replace("v_now timestamptz := now();", "v_now timestamptz := now() + interval '20 days';")
-      .replace("v_today date := (now() at time zone", "v_today date := ((now() + interval '20 days') at time zone");
-    const payload = workshopOperationalMetricsSchema.parse(lastJson(localSql(`
+    `)
+      ) as { before: unknown; after: unknown };
+      const before = workshopOperationalMetricsSchema.parse(result.before);
+      const after = workshopOperationalMetricsSchema.parse(result.after);
+      expect(before.warranty.matureCohort.returnRate).toBe(100);
+      expect(after.warranty.matureCohort.comparableOrders).toBe(0);
+      expect(after.warranty.matureCohort.returnedOrders).toBe(0);
+      expect(after.warranty.matureCohort.maturedOrders).toBe(1);
+      expect(after.warranty.matureCohort.returnRate).toBeNull();
+      expect(after.warranty.matureCohort.reason).toMatch(
+        /1 ordenes excluidas por cobertura corregida/
+      );
+      expect(after.warranty.activeReturns).toBe(before.warranty.activeReturns);
+      expect(after.warranty.openedInPeriod).toBe(before.warranty.openedInPeriod);
+      expect(after.warranty.uniqueOrdersInPeriod).toBe(before.warranty.uniqueOrdersInPeriod);
+    });
+    it.each(["null_start", "null_end", "mixed_snapshot"])(
+      "excludes the whole original-delivery cohort order for %s",
+      (kind) => {
+        const definition = metricsSqlSource()
+          .match(
+            /create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i
+          )![0]
+          .replace(
+            "v_now timestamptz := now();",
+            "v_now timestamptz := now() + interval '20 days';"
+          )
+          .replace(
+            "v_today date := (now() at time zone",
+            "v_today date := ((now() + interval '20 days') at time zone"
+          );
+        const payload = workshopOperationalMetricsSchema.parse(
+          lastJson(
+            localSql(`
       ${asAdmin} select public.start_workshop_warranty_observation(); reset role;
       set local session_replication_role=replica;
       insert into public.repair_access_orders(id,customer_id,device_id,order_number,repair_number,intake_date,issue_reported,status,has_warranty,warranty_days,warranty_start,warranty_until,picked_up_at,delivered_at)
@@ -234,21 +358,31 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       select o.id,o.warranty_start,'Incomplete coverage fixture','retirado','Test client',o.delivered_at+interval '1 day',o.delivered_at,
         ${kind === "null_start" ? "null" : "o.warranty_start"},${kind === "null_end" ? "null" : kind === "mixed_snapshot" ? "o.warranty_until+5" : "o.warranty_until"},p.id,p.id
       from public.repair_access_orders o cross join public.profiles p where o.id='ee070005-0000-4000-8000-000000000001' and p.role='admin';
-      ${kind === "mixed_snapshot" ? `insert into public.repair_warranty_returns(order_id,received_on,issue_reported,original_delivery_at,warranty_start_snapshot,warranty_until_snapshot,created_by,updated_by)
-        select o.id,o.warranty_start,'Matching return alongside inconsistent history',o.delivered_at,o.warranty_start,o.warranty_until,p.id,p.id from public.repair_access_orders o cross join public.profiles p where o.id='ee070005-0000-4000-8000-000000000001' and p.role='admin';` : ""}
+      ${
+        kind === "mixed_snapshot"
+          ? `insert into public.repair_warranty_returns(order_id,received_on,issue_reported,original_delivery_at,warranty_start_snapshot,warranty_until_snapshot,created_by,updated_by)
+        select o.id,o.warranty_start,'Matching return alongside inconsistent history',o.delivered_at,o.warranty_start,o.warranty_until,p.id,p.id from public.repair_access_orders o cross join public.profiles p where o.id='ee070005-0000-4000-8000-000000000001' and p.role='admin';`
+          : ""
+      }
       set local session_replication_role=origin;
       ${definition}
       select public.get_workshop_operational_metrics((now() at time zone 'America/Argentina/Buenos_Aires')::date,(now() at time zone 'America/Argentina/Buenos_Aires')::date);
-    `)));
-    expect(payload.warranty.matureCohort.comparableOrders).toBe(0);
-    expect(payload.warranty.matureCohort.returnedOrders).toBe(0);
-    expect(payload.warranty.matureCohort.returnRate).toBeNull();
-    expect(payload.warranty.matureCohort.reason).toMatch(/1 ordenes excluidas por cobertura corregida/);
-    expect(payload.warranty.uniqueOrdersInPeriod).toBeGreaterThan(0);
-    expect(payload.warranty.openedInPeriod).toBeGreaterThan(0);
-  });
-  it("aggregates more than 30 fixture orders, ignores generic edits and reconstructs no ready dates", () => {
-    const result = lastJson(localSql(`
+    `)
+          )
+        );
+        expect(payload.warranty.matureCohort.comparableOrders).toBe(0);
+        expect(payload.warranty.matureCohort.returnedOrders).toBe(0);
+        expect(payload.warranty.matureCohort.returnRate).toBeNull();
+        expect(payload.warranty.matureCohort.reason).toMatch(
+          /1 ordenes excluidas por cobertura corregida/
+        );
+        expect(payload.warranty.uniqueOrdersInPeriod).toBeGreaterThan(0);
+        expect(payload.warranty.openedInPeriod).toBeGreaterThan(0);
+      }
+    );
+    it("aggregates more than 30 fixture orders, ignores generic edits and reconstructs no ready dates", () => {
+      const result = lastJson(
+        localSql(`
       ${asAdmin}
       create temp table metrics_before as select public.get_workshop_operational_metrics() as payload;
       reset role;
@@ -264,7 +398,7 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
         ('ee070001-0000-4000-8000-000000000004','part_request','Repuesto solicitado',now()-interval '9 days'),
         ('ee070001-0000-4000-8000-000000000004','update','Ficha actualizada',now()),
         ('ee070001-0000-4000-8000-000000000005','part_update','Repuesto recibido',now()-interval '1 day'),
-        ('ee070001-0000-4000-8000-000000000006','warranty','Garantia corregida',now()),
+        ('ee070001-0000-4000-8000-000000000006','warranty','Garantía corregida',now()),
         ('ee070001-0000-4000-8000-000000000006','supplier_claim','Reclamo de proveedor registrado',now());
       insert into public.repair_access_status_history(repair_order_id,previous_status,next_status,changed_at,notes) values
         ('ee070001-0000-4000-8000-000000000001','pendiente_revision','en_revision',now()-interval '8 days','Real transition'),
@@ -283,31 +417,49 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       set local session_replication_role=origin;
       set local role authenticated;
       select jsonb_build_object('before',(select payload from metrics_before),'after',public.get_workshop_operational_metrics());
-    `)) as { before: unknown; after: unknown };
-    const before = workshopOperationalMetricsSchema.parse(result.before);
-    const after = workshopOperationalMetricsSchema.parse(result.after);
-    expect(after.current.openOrders - before.current.openOrders).toBe(45);
-    expect(after.current.age.days0to7 - before.current.age.days0to7).toBe(2);
-    expect(after.current.age.days8to14 - before.current.age.days8to14).toBe(2);
-    expect(after.current.age.days15to30 - before.current.age.days15to30).toBe(2);
-    expect(after.current.age.days31plus - before.current.age.days31plus).toBe(38);
-    expect(after.current.age.unknownIntakeOrders - before.current.age.unknownIntakeOrders).toBe(1);
-    expect(after.current.inactivity.staleOrders - before.current.inactivity.staleOrders).toBe(1);
-    expect(after.current.inactivity.knownActivityOrders - before.current.inactivity.knownActivityOrders).toBe(4);
-    expect(after.current.inactivity.unknownActivityOrders - before.current.inactivity.unknownActivityOrders).toBe(41);
-    expect(after.current.ready.orders - before.current.ready.orders).toBe(3);
-    expect(after.current.ready.datedOrders - before.current.ready.datedOrders).toBe(2);
-    expect(after.current.ready.unknownDateOrders - before.current.ready.unknownDateOrders).toBe(1);
-    expect(after.current.parts.orders - before.current.parts.orders).toBe(1);
-    expect(after.current.parts.requests - before.current.parts.requests).toBe(2);
-    expect(after.current.parts.unitsToPurchase - before.current.parts.unitsToPurchase).toBe(2);
-    expect(after.current.parts.unitsInTransit - before.current.parts.unitsInTransit).toBe(3);
-    expect(after.current.parts.unitsToReceive - before.current.parts.unitsToReceive).toBe(5);
-    expect(after.quality.reconstructedStatusEvents - before.quality.reconstructedStatusEvents).toBe(1);
-    expect(after.phaseDurations.find((phase) => phase.status === "en_revision")).toEqual({ status: "en_revision", samples: 2, orders: 2, medianDays: 6 });
-  });
-  it("uses Argentina date boundaries and separates warranty visits from original closures and mature cohorts", () => {
-    const result = lastJson(localSql(`
+    `)
+      ) as { before: unknown; after: unknown };
+      const before = workshopOperationalMetricsSchema.parse(result.before);
+      const after = workshopOperationalMetricsSchema.parse(result.after);
+      expect(after.current.openOrders - before.current.openOrders).toBe(45);
+      expect(after.current.age.days0to7 - before.current.age.days0to7).toBe(2);
+      expect(after.current.age.days8to14 - before.current.age.days8to14).toBe(2);
+      expect(after.current.age.days15to30 - before.current.age.days15to30).toBe(2);
+      expect(after.current.age.days31plus - before.current.age.days31plus).toBe(38);
+      expect(after.current.age.unknownIntakeOrders - before.current.age.unknownIntakeOrders).toBe(
+        1
+      );
+      expect(after.current.inactivity.staleOrders - before.current.inactivity.staleOrders).toBe(1);
+      expect(
+        after.current.inactivity.knownActivityOrders - before.current.inactivity.knownActivityOrders
+      ).toBe(4);
+      expect(
+        after.current.inactivity.unknownActivityOrders -
+          before.current.inactivity.unknownActivityOrders
+      ).toBe(41);
+      expect(after.current.ready.orders - before.current.ready.orders).toBe(3);
+      expect(after.current.ready.datedOrders - before.current.ready.datedOrders).toBe(2);
+      expect(after.current.ready.unknownDateOrders - before.current.ready.unknownDateOrders).toBe(
+        1
+      );
+      expect(after.current.parts.orders - before.current.parts.orders).toBe(1);
+      expect(after.current.parts.requests - before.current.parts.requests).toBe(2);
+      expect(after.current.parts.unitsToPurchase - before.current.parts.unitsToPurchase).toBe(2);
+      expect(after.current.parts.unitsInTransit - before.current.parts.unitsInTransit).toBe(3);
+      expect(after.current.parts.unitsToReceive - before.current.parts.unitsToReceive).toBe(5);
+      expect(
+        after.quality.reconstructedStatusEvents - before.quality.reconstructedStatusEvents
+      ).toBe(1);
+      expect(after.phaseDurations.find((phase) => phase.status === "en_revision")).toEqual({
+        status: "en_revision",
+        samples: 2,
+        orders: 2,
+        medianDays: 6
+      });
+    });
+    it("uses Argentina date boundaries and separates warranty visits from original closures and mature cohorts", () => {
+      const result = lastJson(
+        localSql(`
       ${asAdmin}
       create temp table metrics_before as select public.get_workshop_operational_metrics('2026-01-01','2026-01-31') as payload;
       reset role;
@@ -331,22 +483,28 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       select 'ee070002-0000-4000-8000-000000000002','2026-02-02','Exception outside warranty','pendiente_revision','2026-01-01T03:00:00Z',id,id from public.profiles where role='admin';
       set local session_replication_role=origin; set local role authenticated;
       select jsonb_build_object('before',(select payload from metrics_before),'after',public.get_workshop_operational_metrics('2026-01-01','2026-01-31'));
-    `)) as { before: unknown; after: unknown };
-    const before = workshopOperationalMetricsSchema.parse(result.before);
-    const after = workshopOperationalMetricsSchema.parse(result.after);
-    expect(after.periodFlow.closures - before.periodFlow.closures).toBe(2);
-    expect(after.periodFlow.intakes - before.periodFlow.intakes).toBe(0);
-    expect(after.warranty.openedInPeriod - before.warranty.openedInPeriod).toBe(2);
-    expect(after.warranty.closedInPeriod - before.warranty.closedInPeriod).toBe(2);
-    expect(after.warranty.uniqueOrdersInPeriod - before.warranty.uniqueOrdersInPeriod).toBe(1);
-    expect(after.warranty.activeReturns - before.warranty.activeReturns).toBe(1);
-    expect(after.warranty.matureCohort.maturedOrders - before.warranty.matureCohort.maturedOrders).toBe(2);
-    expect(after.warranty.matureCohort.returnedOrders - before.warranty.matureCohort.returnedOrders).toBe(1);
-    expect(after.warranty.matureCohort.comparableOrders).toBeNull();
-    expect(after.warranty.matureCohort.returnRate).toBeNull();
-    expect(after.warranty.matureCohort.reason).toMatch(/observacion continua/);
-  });
-});
+    `)
+      ) as { before: unknown; after: unknown };
+      const before = workshopOperationalMetricsSchema.parse(result.before);
+      const after = workshopOperationalMetricsSchema.parse(result.after);
+      expect(after.periodFlow.closures - before.periodFlow.closures).toBe(2);
+      expect(after.periodFlow.intakes - before.periodFlow.intakes).toBe(0);
+      expect(after.warranty.openedInPeriod - before.warranty.openedInPeriod).toBe(2);
+      expect(after.warranty.closedInPeriod - before.warranty.closedInPeriod).toBe(2);
+      expect(after.warranty.uniqueOrdersInPeriod - before.warranty.uniqueOrdersInPeriod).toBe(1);
+      expect(after.warranty.activeReturns - before.warranty.activeReturns).toBe(1);
+      expect(
+        after.warranty.matureCohort.maturedOrders - before.warranty.matureCohort.maturedOrders
+      ).toBe(2);
+      expect(
+        after.warranty.matureCohort.returnedOrders - before.warranty.matureCohort.returnedOrders
+      ).toBe(1);
+      expect(after.warranty.matureCohort.comparableOrders).toBeNull();
+      expect(after.warranty.matureCohort.returnRate).toBeNull();
+      expect(after.warranty.matureCohort.reason).toMatch(/observaci[oó]n continua/);
+    });
+  }
+);
 
 describe("operational metrics SQL static guardrails (not a live SQL test)", () => {
   function sql() {
@@ -354,20 +512,36 @@ describe("operational metrics SQL static guardrails (not a live SQL test)", () =
   }
   it("keeps privileged code private, public wrapper invoker and grants limited", () => {
     const draft = sql();
-    expect(draft).toMatch(/function private\.get_workshop_operational_metrics[\s\S]*?stable security definer set search_path\s*=\s*''/i);
-    expect(draft).toMatch(/function public\.get_workshop_operational_metrics[\s\S]*?stable security invoker set search_path\s*=\s*''/i);
+    expect(draft).toMatch(
+      /function private\.get_workshop_operational_metrics[\s\S]*?stable security definer set search_path\s*=\s*''/i
+    );
+    expect(draft).toMatch(
+      /function public\.get_workshop_operational_metrics[\s\S]*?stable security invoker set search_path\s*=\s*''/i
+    );
     expect(draft).toMatch(/auth\.uid\(\) is null/i);
     expect(draft).toMatch(/private\.can_access_operations\(\)/);
-    expect(draft).toMatch(/role in \('admin',\s*'tecnico'\)/);
-    expect(draft).toMatch(/revoke all on function[\s\S]*from public, anon, authenticated, service_role/i);
+    expect(draft).toMatch(/role in \('admin',\s*'t[eé]cnico'\)/);
+    expect(draft).toMatch(
+      /revoke all on function[\s\S]*from public, anon, authenticated, service_role/i
+    );
     expect(draft).not.toMatch(/grant[\s\S]*to\s+(?:public|anon|service_role)\s*;/i);
   });
   it("reads full tables without financial writes, page limits or generic edit timestamps", () => {
-    const source = sql().match(/create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i)?.[0] ?? "";
+    const source =
+      sql().match(
+        /create or replace function private\.get_workshop_operational_metrics[\s\S]*?end;\s*\$\$;/i
+      )?.[0] ?? "";
     expect(source).not.toBe("");
     const draft = source.replace(/--[^\n]*/g, "").replace(/'(?:[^']|'')*'/g, "''");
     expect(draft).not.toMatch(/\b(insert|update|delete|truncate|alter table|limit|updated_at)\b/i);
-    for (const table of ["repair_access_orders", "repair_access_status_history", "workshop_events", "repair_part_requests", "repair_warranty_returns"]) expect(draft).toContain(`public.${table}`);
+    for (const table of [
+      "repair_access_orders",
+      "repair_access_status_history",
+      "workshop_events",
+      "repair_part_requests",
+      "repair_warranty_returns"
+    ])
+      expect(draft).toContain(`public.${table}`);
     expect(draft).toContain("percentile_cont(0.5)");
     expect(draft).toMatch(/count\(distinct/);
   });
@@ -383,8 +557,12 @@ describe("operational metrics SQL static guardrails (not a live SQL test)", () =
   it("persists the observation gate privately and exposes only an admin-guarded no-argument starter", () => {
     const draft = sql();
     expect(draft).toMatch(/create table if not exists private\.workshop_warranty_observation/i);
-    expect(draft).toMatch(/function private\.start_workshop_warranty_observation\(\)[\s\S]*?private\.is_admin\(\)/i);
-    expect(draft).toMatch(/function public\.start_workshop_warranty_observation\(\)[\s\S]*?security invoker/i);
+    expect(draft).toMatch(
+      /function private\.start_workshop_warranty_observation\(\)[\s\S]*?private\.is_admin\(\)/i
+    );
+    expect(draft).toMatch(
+      /function public\.start_workshop_warranty_observation\(\)[\s\S]*?security invoker/i
+    );
     expect(draft).toMatch(/on conflict\s*\(singleton\) do nothing/i);
   });
 });

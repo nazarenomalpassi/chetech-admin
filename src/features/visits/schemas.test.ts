@@ -5,22 +5,46 @@ import { parseVisitNotes, serializeVisitNotes, visitFormSchema } from "@/feature
 describe("tools stored in existing visit notes", () => {
   it("round trips the checklist without changing a byte of legacy notes", () => {
     const notes = "  Tocar timbre\nNo retirar sin aviso  ";
-    const stored = serializeVisitNotes({ notes, toolsRequired: "yes", toolsDetail: "Escalera\nTester" });
-    expect(parseVisitNotes(stored)).toEqual({ notes, toolsRequired: "yes", toolsDetail: "Escalera\nTester" });
+    const stored = serializeVisitNotes({
+      notes,
+      toolsRequired: "yes",
+      toolsDetail: "Escalera\nTester"
+    });
+    expect(parseVisitNotes(stored)).toEqual({
+      notes,
+      toolsRequired: "yes",
+      toolsDetail: "Escalera\nTester"
+    });
     expect(serializeVisitNotes({ notes, toolsRequired: "", toolsDetail: "" })).toBe(notes);
   });
   it("does not interpret legacy prose or malformed metadata as a checklist", () => {
-    const notes = 'Herramientas: escalera\n[chetech:visit-tools:v1]\ninvalid';
+    const notes = "Herramientas: escalera\n[chetech:visit-tools:v1]\ninvalid";
     expect(parseVisitNotes(notes)).toEqual({ notes, toolsRequired: "", toolsDetail: "" });
   });
   it("recovers the checklist when a technician appended a normal note after its metadata", () => {
-    const stored = serializeVisitNotes({ notes: "Tocar timbre", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
-    expect(parseVisitNotes(`${stored}\nRevision realizada`)).toEqual({ notes: "Tocar timbre\nRevision realizada", toolsRequired: "yes", toolsDetail: "Escalera y tester" });
+    const stored = serializeVisitNotes({
+      notes: "Tocar timbre",
+      toolsRequired: "yes",
+      toolsDetail: "Escalera y tester"
+    });
+    expect(parseVisitNotes(`${stored}\nRevision realizada`)).toEqual({
+      notes: "Tocar timbre\nRevision realizada",
+      toolsRequired: "yes",
+      toolsDetail: "Escalera y tester"
+    });
   });
 });
 
 describe("visitFormSchema", () => {
-  const base = { customerName: "Juan", customerPhone: "341", address: "Local", visitDate: "2026-10-05", timeFrom: "09:00", timeTo: "10:00", reason: "Revision" };
+  const base = {
+    customerName: "Juan",
+    customerPhone: "341",
+    address: "Local",
+    visitDate: "2026-10-05",
+    timeFrom: "09:00",
+    timeTo: "10:00",
+    reason: "Revisión"
+  };
   it.each(["2026-02-30", "not-a-date"])("rejects invalid calendar date %s", (visitDate) => {
     expect(visitFormSchema.safeParse({ ...base, visitDate }).success).toBe(false);
   });
@@ -29,7 +53,11 @@ describe("visitFormSchema", () => {
   });
   it("validates and retains assignment and REP link", () => {
     const technicianId = "11111111-1111-4111-8111-111111111111";
-    const result = visitFormSchema.parse({ ...base, technicianId, repairAccessOrderId: technicianId });
+    const result = visitFormSchema.parse({
+      ...base,
+      technicianId,
+      repairAccessOrderId: technicianId
+    });
     expect(result).toMatchObject({ technicianId, repairAccessOrderId: technicianId });
     expect(visitFormSchema.safeParse({ ...base, technicianId: "wrong" }).success).toBe(false);
   });

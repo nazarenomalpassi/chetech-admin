@@ -4,64 +4,161 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { RepairAccessOrderRecord } from "../queries";
-import { CoordinationDialog, OrderCoordinationPanel, PartManagementDialog } from "./order-coordination-panel";
+import {
+  CoordinationDialog,
+  OrderCoordinationPanel,
+  PartManagementDialog
+} from "./order-coordination-panel";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock("./repair-order-activity", () => ({ RepairOrderActivity: () => null }));
 
 const order: RepairAccessOrderRecord = {
-  id: "order-1", repairNumber: "REP-000064", status: "presupuestado",
-  budgetAmount: 100, finalAmount: 0, deliveredAt: null,
-  intakeDate: "2026-10-05", issueReported: "No enciende", technicalDiagnosis: null,
-  repairProgress: null, budgetDetail: null, budgetResponseNotes: null, budgetResponseAt: null,
-  approvedAmount: 0, paymentMethod: "", paymentNotes: null, isPaid: false, paidAt: null,
-  pickedUpAt: null, hasWarranty: false, warrantyRequiresReview: false, warrantyStart: null,
-  warrantyUntil: null, warrantyDays: 0, warrantyConditions: null, warrantyActive: false,
-  historicalWarrantyExpired: null, legacyOrderNumber: null, importSource: null,
-  importFileName: null, importRowKey: null, importedAt: null, workPerformed: null,
-  usedParts: null, internalObservations: null, technicianName: null, customerUserId: null,
-  customerPublicId: null, publicProgress: null, publicNextStep: null,
-  budgetVisibleToCustomer: false, publicBudgetDescription: null, budgetValidUntil: null,
-  customerActionRequired: false, lastCustomerVisibleUpdateAt: null, customerPortalLinked: false,
-  storefrontCustomer: null, notes: null, priority: null, createdAt: "2026-10-05T12:00:00Z",
+  id: "order-1",
+  repairNumber: "REP-000064",
+  status: "presupuestado",
+  budgetAmount: 100,
+  finalAmount: 0,
+  deliveredAt: null,
+  intakeDate: "2026-10-05",
+  issueReported: "No enciende",
+  technicalDiagnosis: null,
+  repairProgress: null,
+  budgetDetail: null,
+  budgetResponseNotes: null,
+  budgetResponseAt: null,
+  approvedAmount: 0,
+  paymentMethod: "",
+  paymentNotes: null,
+  isPaid: false,
+  paidAt: null,
+  pickedUpAt: null,
+  hasWarranty: false,
+  warrantyRequiresReview: false,
+  warrantyStart: null,
+  warrantyUntil: null,
+  warrantyDays: 0,
+  warrantyConditions: null,
+  warrantyActive: false,
+  historicalWarrantyExpired: null,
+  legacyOrderNumber: null,
+  importSource: null,
+  importFileName: null,
+  importRowKey: null,
+  importedAt: null,
+  workPerformed: null,
+  usedParts: null,
+  internalObservations: null,
+  technicianName: null,
+  customerUserId: null,
+  customerPublicId: null,
+  publicProgress: null,
+  publicNextStep: null,
+  budgetVisibleToCustomer: false,
+  publicBudgetDescription: null,
+  budgetValidUntil: null,
+  customerActionRequired: false,
+  lastCustomerVisibleUpdateAt: null,
+  customerPortalLinked: false,
+  storefrontCustomer: null,
+  notes: null,
+  priority: null,
+  createdAt: "2026-10-05T12:00:00Z",
   warranty: {
-    code: "none", label: "Sin garantia", tone: "neutral", startsOn: null, expiresOn: null,
-    daysRemaining: null, daysElapsed: null, description: "Sin garantia"
+    code: "none",
+    label: "Sin garantia",
+    tone: "neutral",
+    startsOn: null,
+    expiresOn: null,
+    daysRemaining: null,
+    daysElapsed: null,
+    description: "Sin garantia"
   },
-  customer: { id: "customer-1", fullName: "Cliente prueba", phone: "", alternatePhone: "",
-    phoneNormalized: "", dni: "", email: "", address: "", notes: "" },
-  device: { id: "device-1", deviceType: "Televisor", brand: "Marca", model: "Modelo",
-    serialNumber: "", accessoryDetails: "", visualCondition: "", notes: "" },
+  customer: {
+    id: "customer-1",
+    fullName: "Cliente prueba",
+    phone: "",
+    alternatePhone: "",
+    phoneNormalized: "",
+    dni: "",
+    email: "",
+    address: "",
+    notes: ""
+  },
+  device: {
+    id: "device-1",
+    deviceType: "Televisor",
+    brand: "Marca",
+    model: "Modelo",
+    serialNumber: "",
+    accessoryDetails: "",
+    visualCondition: "",
+    notes: ""
+  },
   workflow: {
-    version: 1, budgetRevision: 1, approvalStatus: "pending", approvedAmount: null,
-    assignedTechnicianId: null, assignedTechnicianName: null, location: null,
-    nextActionDate: null, qualityCheckedAt: null, qualityNotes: null, parts: [], events: []
+    version: 1,
+    budgetRevision: 1,
+    approvalStatus: "pending",
+    approvedAmount: null,
+    assignedTechnicianId: null,
+    assignedTechnicianName: null,
+    location: null,
+    nextActionDate: null,
+    qualityCheckedAt: null,
+    qualityNotes: null,
+    parts: [],
+    events: []
   }
 };
 
 function mockLookup(record = order) {
   const total = record.finalAmount || record.budgetAmount;
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => ({ draftOwnerId: "owner", financialRecord: null,
-    order: { id: record.id, repairNumber: record.repairNumber, workflowVersion: 1, status: record.status,
-      intakeDate: record.intakeDate, customerName: record.customer.fullName, customerPhone: "", device: "TV", issueDescription: "Reparacion",
-      amount: total, paidTotal: record.isPaid ? total : 0, balance: record.isPaid ? 0 : total }
-  }) }));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        draftOwnerId: "owner",
+        financialRecord: null,
+        order: {
+          id: record.id,
+          repairNumber: record.repairNumber,
+          workflowVersion: 1,
+          status: record.status,
+          intakeDate: record.intakeDate,
+          customerName: record.customer.fullName,
+          customerPhone: "",
+          device: "TV",
+          issueDescription: "Reparación",
+          amount: total,
+          paidTotal: record.isPaid ? total : 0,
+          balance: record.isPaid ? 0 : total
+        }
+      })
+    })
+  );
 }
 beforeEach(() => mockLookup());
 
 describe("order collection shortcut", () => {
   it("organiza ubicacion y revision sin pedir asignar un tecnico", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
-    fireEvent.click(screen.getByRole("button", { name: "Ubicacion y revision" }));
-    expect(screen.getByRole("textbox", { name: "Ubicacion del equipo" })).toBeTruthy();
-    expect(screen.queryByRole("combobox", { name: "Tecnico responsable" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ubicación y revision" }));
+    expect(screen.getByRole("textbox", { name: "Ubicación del equipo" })).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Técnico responsable" })).toBeNull();
     expect(screen.getByText(/No cambia la fecha prometida/)).toBeTruthy();
   });
   it("keeps manual receipt forms outside folded administration without nesting forms", async () => {
     mockLookup({ ...order, status: "listo_para_retirar" });
-    const { container } = render(<OrderCoordinationPanel order={{ ...order, status: "listo_para_retirar" }} canManage />);
+    const { container } = render(
+      <OrderCoordinationPanel order={{ ...order, status: "listo_para_retirar" }} canManage />
+    );
     const send = screen.getByRole("button", { name: "Enviar comprobante de ingreso" });
     expect(send.closest("details")).toBeNull();
     expect(send.closest("form")?.parentElement?.closest("form")).toBeNull();
@@ -71,10 +168,19 @@ describe("order collection shortcut", () => {
   });
 
   it("reveals payment sharing only when refreshed order data contains a recorded pickup", () => {
-    const { rerender } = render(<OrderCoordinationPanel order={{ ...order, status: "retirado" }} canManage />);
+    const { rerender } = render(
+      <OrderCoordinationPanel order={{ ...order, status: "retirado" }} canManage />
+    );
     expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
-    rerender(<OrderCoordinationPanel order={{ ...order, status: "retirado", deliveredAt: "2026-10-21T12:00:00Z" }} canManage />);
-    expect(screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")).toBeNull();
+    rerender(
+      <OrderCoordinationPanel
+        order={{ ...order, status: "retirado", deliveredAt: "2026-10-21T12:00:00Z" }}
+        canManage
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")
+    ).toBeNull();
   });
 
   it("does not duplicate the card's receipt row in compact coordination", () => {
@@ -98,10 +204,20 @@ describe("order collection shortcut", () => {
   });
 
   it("offers Pago y garantía only with a recorded pickup and preserves legacy closed-order actions", () => {
-    const recorded = renderToStaticMarkup(<OrderCoordinationPanel order={{ ...order, status: "retirado", pickedUpAt: "2026-10-20T03:00:00Z" }} canManage />);
+    const recorded = renderToStaticMarkup(
+      <OrderCoordinationPanel
+        order={{ ...order, status: "retirado", pickedUpAt: "2026-10-20T03:00:00Z" }}
+        canManage
+      />
+    );
     expect(recorded).toContain("Pago y garantía PDF");
     expect(recorded).toContain("kind=delivery");
-    const legacy = renderToStaticMarkup(<OrderCoordinationPanel order={{ ...order, status: "retirado", pickedUpAt: null, deliveredAt: null }} canManage />);
+    const legacy = renderToStaticMarkup(
+      <OrderCoordinationPanel
+        order={{ ...order, status: "retirado", pickedUpAt: null, deliveredAt: null }}
+        canManage
+      />
+    );
     expect(legacy).not.toContain("kind=delivery");
     expect(legacy).not.toContain("Solicitar repuesto");
   });
@@ -122,26 +238,38 @@ describe("order collection shortcut", () => {
     fireEvent.click(screen.getByRole("button", { name: "Registrar entrega" }));
     await screen.findByLabelText("Persona que retira");
     expect((screen.getByLabelText("Persona que retira") as HTMLInputElement).required).toBe(true);
-    expect((screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement).required).toBe(true);
+    expect(
+      (screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement)
+        .required
+    ).toBe(true);
     const authorization = screen.queryByLabelText(/Autorizo entrega con saldo pendiente/);
     expect(Boolean(authorization)).toBe(amounts.debt);
     if (authorization) {
       expect((authorization as HTMLInputElement).checked).toBe(false);
       fireEvent.click(authorization);
-      expect((screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement).required).toBe(true);
+      expect(
+        (screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement)
+          .required
+      ).toBe(true);
     }
   });
 
   it("keeps workshop actions visible and documents in a separate disclosure", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
     expect(screen.queryByRole("button", { name: "Cliente confirmo" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Solicitar repuesto" }).closest("details")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Solicitar repuesto" }).closest("details")
+    ).toBeNull();
     const documents = screen.getByText("Documentos y cobros").closest("details")!;
     expect(documents.open).toBe(false);
     fireEvent.click(screen.getByText("Documentos y cobros"));
     expect(documents.open).toBe(true);
-    expect(screen.getByRole("link", { name: "Comprobante de ingreso" }).closest("details")).toBe(documents);
-    expect(screen.getByRole("link", { name: "Registrar cobro" }).getAttribute("href")).toBe("/reparaciones?rep=REP-000064");
+    expect(screen.getByRole("link", { name: "Comprobante de ingreso" }).closest("details")).toBe(
+      documents
+    );
+    expect(screen.getByRole("link", { name: "Registrar cobro" }).getAttribute("href")).toBe(
+      "/reparaciones?rep=REP-000064"
+    );
   });
   it("links mostrador to this REP without recording a payment", () => {
     const html = renderToStaticMarkup(<OrderCoordinationPanel order={order} canManage />);
@@ -159,22 +287,50 @@ describe("order collection shortcut", () => {
 
 describe("coordination dialog failed pickup", () => {
   it("preserves recipient, notes and confirmations after rejection and retries the same values", async () => {
-    const failure = { success: false, message: "La orden cambio. Revisa el estado antes de entregarla." };
-    const action = vi.fn().mockResolvedValueOnce(failure).mockResolvedValueOnce({ success: true, message: "Entrega registrada." });
-    render(<CoordinationDialog title="Entrega del equipo" action={action} onClose={vi.fn()}>
-      <input name="id" type="hidden" value={order.id} />
-      <input name="version" type="hidden" value={order.workflow!.version} />
-      <label>Persona que retira<input name="recipient" defaultValue={order.customer.fullName} required minLength={2} /></label>
-      <label>Accesorios devueltos y observaciones<textarea name="notes" /></label>
-      <label><input name="allowBalance" type="checkbox" />Autorizo entrega con saldo pendiente</label>
-      <label><input name="confirmDelivery" type="checkbox" required />Confirmo que el cliente retiro el equipo</label>
-    </CoordinationDialog>);
+    const failure = {
+      success: false,
+      message: "La orden cambio. Revisa el estado antes de entregarla."
+    };
+    const action = vi
+      .fn()
+      .mockResolvedValueOnce(failure)
+      .mockResolvedValueOnce({ success: true, message: "Entrega registrada." });
+    render(
+      <CoordinationDialog title="Entrega del equipo" action={action} onClose={vi.fn()}>
+        <input name="id" type="hidden" value={order.id} />
+        <input name="version" type="hidden" value={order.workflow!.version} />
+        <label>
+          Persona que retira
+          <input name="recipient" defaultValue={order.customer.fullName} required minLength={2} />
+        </label>
+        <label>
+          Accesorios devueltos y observaciones
+          <textarea name="notes" />
+        </label>
+        <label>
+          <input name="allowBalance" type="checkbox" />
+          Autorizo entrega con saldo pendiente
+        </label>
+        <label>
+          <input name="confirmDelivery" type="checkbox" required />
+          Confirmo que el cliente retiro el equipo
+        </label>
+      </CoordinationDialog>
+    );
     const recipient = screen.getByLabelText("Persona que retira") as HTMLInputElement;
-    const notes = screen.getByLabelText("Accesorios devueltos y observaciones") as HTMLTextAreaElement;
-    const allowBalance = screen.getByLabelText("Autorizo entrega con saldo pendiente") as HTMLInputElement;
-    const confirmDelivery = screen.getByLabelText("Confirmo que el cliente retiro el equipo") as HTMLInputElement;
+    const notes = screen.getByLabelText(
+      "Accesorios devueltos y observaciones"
+    ) as HTMLTextAreaElement;
+    const allowBalance = screen.getByLabelText(
+      "Autorizo entrega con saldo pendiente"
+    ) as HTMLInputElement;
+    const confirmDelivery = screen.getByLabelText(
+      "Confirmo que el cliente retiro el equipo"
+    ) as HTMLInputElement;
     fireEvent.change(recipient, { target: { value: "Familiar autorizado" } });
-    fireEvent.change(notes, { target: { value: "Cable y control. Saldo autorizado por mostrador." } });
+    fireEvent.change(notes, {
+      target: { value: "Cable y control. Saldo autorizado por mostrador." }
+    });
     fireEvent.click(allowBalance);
     fireEvent.click(confirmDelivery);
     const form = screen.getByRole("button", { name: "Confirmar y guardar" }).closest("form")!;
@@ -185,16 +341,22 @@ describe("coordination dialog failed pickup", () => {
     expect(notes.value).toBe("Cable y control. Saldo autorizado por mostrador.");
     expect(allowBalance.checked).toBe(true);
     expect(confirmDelivery.checked).toBe(true);
-    expect(screen.getByRole("button", { name: "Confirmar y guardar" }).hasAttribute("disabled")).toBe(false);
+    expect(
+      screen.getByRole("button", { name: "Confirmar y guardar" }).hasAttribute("disabled")
+    ).toBe(false);
 
     fireEvent.submit(form);
     await waitFor(() => expect(action).toHaveBeenCalledTimes(2));
     const first = action.mock.calls[0][1] as FormData;
     const retry = action.mock.calls[1][1] as FormData;
     expect(Object.fromEntries(first)).toEqual({
-      operationId: expect.stringMatching(/^[0-9a-f-]{36}$/), id: order.id, version: "1",
-      recipient: "Familiar autorizado", notes: "Cable y control. Saldo autorizado por mostrador.",
-      allowBalance: "on", confirmDelivery: "on"
+      operationId: expect.stringMatching(/^[0-9a-f-]{36}$/),
+      id: order.id,
+      version: "1",
+      recipient: "Familiar autorizado",
+      notes: "Cable y control. Saldo autorizado por mostrador.",
+      allowBalance: "on",
+      confirmDelivery: "on"
     });
     expect(Object.fromEntries(retry)).toEqual(Object.fromEntries(first));
     expect(action.mock.calls[1][0]).toEqual(failure);
@@ -203,31 +365,48 @@ describe("coordination dialog failed pickup", () => {
 });
 
 describe("coordination dialog close protection", () => {
-  it.each(["button", "escape", "backdrop"])("keeps changed fields when discarding via %s is declined", (method) => {
-    const onClose = vi.fn();
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
-      <label>Ubicacion<input name="location" defaultValue="Taller" /></label>
-    </CoordinationDialog>);
-    fireEvent.change(screen.getByRole("textbox", { name: "Ubicacion" }), { target: { value: "Estante 2" } });
-    if (method === "button") fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
-    else if (method === "escape") fireEvent.keyDown(document, { key: "Escape" });
-    else fireEvent.mouseDown(screen.getByRole("dialog").parentElement!);
-    expect(confirm).toHaveBeenCalledOnce();
-    expect(onClose).not.toHaveBeenCalled();
-    expect((screen.getByRole("textbox", { name: "Ubicacion" }) as HTMLInputElement).value).toBe("Estante 2");
-    confirm.mockReturnValue(true);
-    fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
-    expect(onClose).toHaveBeenCalledOnce();
-  });
+  it.each(["button", "escape", "backdrop"])(
+    "keeps changed fields when discarding via %s is declined",
+    (method) => {
+      const onClose = vi.fn();
+      const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+      render(
+        <CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
+          <label>
+            Ubicación
+            <input name="location" defaultValue="Taller" />
+          </label>
+        </CoordinationDialog>
+      );
+      fireEvent.change(screen.getByRole("textbox", { name: "Ubicación" }), {
+        target: { value: "Estante 2" }
+      });
+      if (method === "button") fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+      else if (method === "escape") fireEvent.keyDown(document, { key: "Escape" });
+      else fireEvent.mouseDown(screen.getByRole("dialog").parentElement!);
+      expect(confirm).toHaveBeenCalledOnce();
+      expect(onClose).not.toHaveBeenCalled();
+      expect((screen.getByRole("textbox", { name: "Ubicación" }) as HTMLInputElement).value).toBe(
+        "Estante 2"
+      );
+      confirm.mockReturnValue(true);
+      fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
+      expect(onClose).toHaveBeenCalledOnce();
+    }
+  );
 
   it("closes without confirmation when a change was undone", () => {
     const onClose = vi.fn();
     const confirm = vi.spyOn(window, "confirm");
-    render(<CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
-      <label>Ubicacion<input name="location" defaultValue="Taller" /></label>
-    </CoordinationDialog>);
-    const input = screen.getByRole("textbox", { name: "Ubicacion" });
+    render(
+      <CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
+        <label>
+          Ubicación
+          <input name="location" defaultValue="Taller" />
+        </label>
+      </CoordinationDialog>
+    );
+    const input = screen.getByRole("textbox", { name: "Ubicación" });
     fireEvent.change(input, { target: { value: "Estante 2" } });
     fireEvent.change(input, { target: { value: "Taller" } });
     fireEvent.keyDown(document, { key: "Escape" });
@@ -238,14 +417,28 @@ describe("coordination dialog close protection", () => {
   it("tracks conditional part fields without treating an unchanged form as dirty", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const onClose = vi.fn();
-    const part = { id: "part-1", status: "requested", description: "Fuente", quantity: 1,
-      receivedQuantity: 0, installedQuantity: 0, version: 2, supplier: "Proveedor", expectedDate: null, unitCost: 100 } as Parameters<typeof PartManagementDialog>[0]["part"];
+    const part = {
+      id: "part-1",
+      status: "requested",
+      description: "Fuente",
+      quantity: 1,
+      receivedQuantity: 0,
+      installedQuantity: 0,
+      version: 2,
+      supplier: "Proveedor",
+      expectedDate: null,
+      unitCost: 100
+    } as Parameters<typeof PartManagementDialog>[0]["part"];
     render(<PartManagementDialog part={part} canManage onClose={onClose} />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Accion" }), { target: { value: "cancel" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Acción" }), {
+      target: { value: "cancel" }
+    });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(confirm).toHaveBeenCalledOnce();
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByRole("combobox", { name: "Accion" }), { target: { value: "order" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Acción" }), {
+      target: { value: "order" }
+    });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(confirm).toHaveBeenCalledOnce();
     expect(onClose).toHaveBeenCalledOnce();

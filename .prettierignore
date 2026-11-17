@@ -1,0 +1,10 @@
+.next
+.next-staging
+node_modules
+package-lock.json
+public
+supabase
+docs
+reports
+tmp
+*.md

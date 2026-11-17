@@ -5,9 +5,9 @@ export function ExpensesPlaceholder() {
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-sm text-slate-500">Gastos</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Control de egresos</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">Gastos</p>
+        <h1 className="text-3xl font-semibold text-foreground">Control de egresos</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Quedó preparada la capa de validación y el modelo base para filtros por fecha/tipo,
           estadísticas simples y anulación lógica.
         </p>

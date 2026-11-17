@@ -18,12 +18,15 @@ const METHOD_ALIASES: Record<BalanceTransferMethod, CashMethod> = {
   nx_local: "mp"
 };
 
-export function normalizeBalanceTransferMethod(value: string | null | undefined): BalanceTransferMethod | null {
+export function normalizeBalanceTransferMethod(
+  value: string | null | undefined
+): BalanceTransferMethod | null {
   const normalized = (value ?? "").trim().toLowerCase().replaceAll("-", "_").replaceAll(" ", "_");
 
   if (!normalized) return null;
   if (normalized === "efectivo" || normalized.includes("cash")) return "efectivo";
-  if (normalized === "nx" || normalized === "nx_santi" || normalized.includes("santi")) return "nx_santi";
+  if (normalized === "nx" || normalized === "nx_santi" || normalized.includes("santi"))
+    return "nx_santi";
   if (normalized === "nx_local" || normalized.includes("local")) return "nx_local";
 
   return null;
@@ -66,7 +69,9 @@ export function getEmptyCashMethodBalances(): CashMethodBalances {
   );
 }
 
-export function calculateBalanceTransferDeltas(transfers: BalanceTransferDelta[]): CashMethodBalances {
+export function calculateBalanceTransferDeltas(
+  transfers: BalanceTransferDelta[]
+): CashMethodBalances {
   const deltas = getEmptyCashMethodBalances();
 
   for (const transfer of transfers) {

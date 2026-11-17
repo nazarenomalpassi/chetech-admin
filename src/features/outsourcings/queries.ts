@@ -88,7 +88,9 @@ function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
   const order = record.repair_access_orders;
   const customer = order?.repair_access_customers;
   const device = order?.repair_access_devices;
-  const deviceLabel = [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - ");
+  const deviceLabel = [device?.device_type, device?.brand, device?.model]
+    .filter(Boolean)
+    .join(" - ");
 
   return {
     id: record.id,
@@ -106,7 +108,9 @@ function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
     actualCost: record.actual_cost == null ? null : Number(record.actual_cost),
     qualityStatus: record.quality_status ?? "pendiente",
     qualityNotes: record.quality_notes ?? "",
-    overdue: record.status === "en_taller" && Boolean(record.promised_at && record.promised_at < getLocalDateInputValue()),
+    overdue:
+      record.status === "en_taller" &&
+      Boolean(record.promised_at && record.promised_at < getLocalDateInputValue()),
     order: {
       id: order?.id ?? record.repair_access_order_id,
       repairNumber: order?.repair_number ?? "Sin numero",
@@ -124,19 +128,37 @@ function mapOutsourcing(record: RawOutsourcing): RepairOutsourcingRecord {
   };
 }
 
-export async function getRepairOutsourcingDashboard(filters: { page?: string; search?: string; status?: string; date?: string; view?: string } = {}) {
+export async function getRepairOutsourcingDashboard(
+  filters: { page?: string; search?: string; status?: string; date?: string; view?: string } = {}
+) {
   const supabase = await createServerSupabaseClient();
   const today = getLocalDateInputValue();
-  const status = ["todos", "en_taller", "retirado", "cancelado", "vencidas"].includes(filters.status ?? "") ? filters.status! : "en_taller";
+  const status = ["todos", "en_taller", "retirado", "cancelado", "vencidas"].includes(
+    filters.status ?? ""
+  )
+    ? filters.status!
+    : "en_taller";
   const view = ["day", "week"].includes(filters.view ?? "") ? filters.view! : "all";
-  const range = filters.date || view !== "all" ? getVisitDateRange(filters.date || today, view) : null;
-  const { data, error } = await (supabase as any)
-    .rpc("get_operations_outsourcings_page", { p_search: filters.search?.trim() ?? "", p_status: status,
-      p_from: range?.from ?? null, p_to: range?.to ?? null, p_page: Math.min(parsePage(filters.page), 2147483647) });
+  const range =
+    filters.date || view !== "all" ? getVisitDateRange(filters.date || today, view) : null;
+  const { data, error } = await (supabase as any).rpc("get_operations_outsourcings_page", {
+    p_search: filters.search?.trim() ?? "",
+    p_status: status,
+    p_from: range?.from ?? null,
+    p_to: range?.to ?? null,
+    p_page: Math.min(parsePage(filters.page), 2147483647)
+  });
 
-  if (error) throw new Error(error.code === "PGRST202" || error.code === "42883" ? "Falta la migracion incremental de historial operativo." : error.message);
+  if (error)
+    throw new Error(
+      error.code === "PGRST202" || error.code === "42883"
+        ? "Falta la migracion incremental de historial operativo."
+        : error.message
+    );
 
-  const records: RepairOutsourcingRecord[] = (data?.records ?? []).map((record: RawOutsourcing) => mapOutsourcing(record));
+  const records: RepairOutsourcingRecord[] = (data?.records ?? []).map((record: RawOutsourcing) =>
+    mapOutsourcing(record)
+  );
 
   return {
     records,

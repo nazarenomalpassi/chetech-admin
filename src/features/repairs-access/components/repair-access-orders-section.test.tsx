@@ -8,45 +8,124 @@ import type { RepairAccessOrderRecord } from "../queries";
 import type { WarrantyReturnRecord } from "../warranty-return";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); document.documentElement.removeAttribute("data-unsaved-changes"); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  document.documentElement.removeAttribute("data-unsaved-changes");
+});
 vi.mock("../actions", () => ({ cancelRepairAccessOrderAction: vi.fn() }));
 vi.mock("./repair-access-workshop-card", () => ({
-  RepairAccessWorkshopCard: ({ order, canManageIntake, onOpenDetail }: { order: RepairAccessOrderRecord; canManageIntake: boolean; onOpenDetail: (order: RepairAccessOrderRecord) => void }) =>
-    <article aria-label={order.repairNumber}><form data-workshop-form><input aria-label={`Avance ${order.repairNumber}`} /></form>{canManageIntake ? <button onClick={() => onOpenDetail(order)}>Ficha {order.repairNumber}</button> : null}</article>
+  RepairAccessWorkshopCard: ({
+    order,
+    canManageIntake,
+    onOpenDetail
+  }: {
+    order: RepairAccessOrderRecord;
+    canManageIntake: boolean;
+    onOpenDetail: (order: RepairAccessOrderRecord) => void;
+  }) => (
+    <article aria-label={order.repairNumber}>
+      <form data-workshop-form>
+        <input aria-label={`Avance ${order.repairNumber}`} />
+      </form>
+      {canManageIntake ? (
+        <button onClick={() => onOpenDetail(order)}>Ficha {order.repairNumber}</button>
+      ) : null}
+    </article>
+  )
 }));
-vi.mock("./repair-access-whatsapp-actions", () => ({ RepairAccessWhatsAppButton: () => <button>WhatsApp</button> }));
-vi.mock("./repair-quick-editor", () => ({ RepairQuickEditor: ({ order }: { order: RepairAccessOrderRecord }) => <form data-workshop-form><input aria-label="Avance rapido" defaultValue={order.repairProgress ?? ""} /></form> }));
-vi.mock("./warranty-return-panel", () => ({ WarrantyReturnCase: ({ record }: { record: WarrantyReturnRecord }) =>
-  <form aria-label="Actualizar visita de garantia"><input name="id" type="hidden" value={record.id} /><p>{record.issueReported}</p><button>Guardar reingreso</button></form>
+vi.mock("./repair-access-whatsapp-actions", () => ({
+  RepairAccessWhatsAppButton: () => <button>WhatsApp</button>
+}));
+vi.mock("./repair-quick-editor", () => ({
+  RepairQuickEditor: ({ order }: { order: RepairAccessOrderRecord }) => (
+    <form data-workshop-form>
+      <input aria-label="Avance rapido" defaultValue={order.repairProgress ?? ""} />
+    </form>
+  )
+}));
+vi.mock("./warranty-return-panel", () => ({
+  WarrantyReturnCase: ({ record }: { record: WarrantyReturnRecord }) => (
+    <form aria-label="Actualizar visita de garantía">
+      <input name="id" type="hidden" value={record.id} />
+      <p>{record.issueReported}</p>
+      <button>Guardar reingreso</button>
+    </form>
+  )
 }));
 
 function makeOrder(index = 1): RepairAccessOrderRecord {
   return {
-    id: `order-${index}`, repairNumber: `REP-${String(index).padStart(6, "0")}`, status: "pendiente_revision",
-    intakeDate: "2026-10-06", budgetAmount: 100, finalAmount: 0, issueReported: "No enciende", isPaid: false,
+    id: `order-${index}`,
+    repairNumber: `REP-${String(index).padStart(6, "0")}`,
+    status: "pendiente_revision",
+    intakeDate: "2026-10-06",
+    budgetAmount: 100,
+    finalAmount: 0,
+    issueReported: "No enciende",
+    isPaid: false,
     customer: { fullName: "Ana Perez", phone: "1155555555", alternatePhone: "", dni: "1234" },
-    device: { deviceType: "Telefono", brand: "Samsung", model: "A10", serialNumber: "serie-1" },
+    device: { deviceType: "Teléfono", brand: "Samsung", model: "A10", serialNumber: "serie-1" },
     warranty: { code: "none", label: "Sin garantia", expiresOn: null }
   } as RepairAccessOrderRecord;
 }
 const orders = [makeOrder()];
-const props = { orders, search: "", statusFilter: "todos", warrantyFilter: "todos", onSearchChange: vi.fn(), onStatusFilterChange: vi.fn(), onWarrantyFilterChange: vi.fn(), onEdit: vi.fn(), onOpenDetail: vi.fn(), canManageIntake: true };
+const props = {
+  orders,
+  initialPresentation: "cards" as const,
+  search: "",
+  statusFilter: "todos",
+  warrantyFilter: "todos",
+  onSearchChange: vi.fn(),
+  onStatusFilterChange: vi.fn(),
+  onWarrantyFilterChange: vi.fn(),
+  onEdit: vi.fn(),
+  onOpenDetail: vi.fn(),
+  canManageIntake: true
+};
 
 function warrantyOrder(): RepairAccessOrderRecord {
-  return { ...makeOrder(), status: "retirado", deliveredAt: "2026-10-01T12:00:00Z", warrantyReturns: [{
-    id: "return-1", orderId: "order-1", repairNumber: "REP-000001", customerName: "Ana Perez", deviceLabel: "Telefono Samsung A10",
-    receivedOn: "2026-11-10", issueReported: "La pantalla se apaga al calentarse", accessories: "Control", conditionNotes: "Sin golpes",
-    status: "en_revision", progress: "Revisando flex de pantalla", resolution: "", closedAt: null, recipient: null,
-    version: 2, createdAt: "2026-11-10T12:00:00Z"
-  }] };
+  return {
+    ...makeOrder(),
+    status: "retirado",
+    deliveredAt: "2026-10-01T12:00:00Z",
+    warrantyReturns: [
+      {
+        id: "return-1",
+        orderId: "order-1",
+        repairNumber: "REP-000001",
+        customerName: "Ana Perez",
+        deviceLabel: "Teléfono Samsung A10",
+        receivedOn: "2026-11-10",
+        issueReported: "La pantalla se apaga al calentarse",
+        accessories: "Control",
+        conditionNotes: "Sin golpes",
+        status: "en_revision",
+        progress: "Revisando flex de pantalla",
+        resolution: "",
+        closedAt: null,
+        recipient: null,
+        version: 2,
+        createdAt: "2026-11-10T12:00:00Z"
+      }
+    ]
+  };
 }
 
 describe("order workspace list", () => {
   it("keeps active returns and original custody visible under pending collection", () => {
     const record = warrantyOrder();
-    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} warrantyFilter="pending_delivery" />);
+    const { rerender } = render(
+      <RepairAccessOrdersSection {...props} orders={[record]} warrantyFilter="pending_delivery" />
+    );
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
-    rerender(<RepairAccessOrdersSection {...props} orders={[makeOrder()]} warrantyFilter="pending_delivery" />);
+    rerender(
+      <RepairAccessOrdersSection
+        {...props}
+        orders={[makeOrder()]}
+        warrantyFilter="pending_delivery"
+      />
+    );
     expect(screen.getByRole("article")).toBeTruthy();
   });
   it("finds original workshop progress with the same corpus as the server", () => {
@@ -56,7 +135,9 @@ describe("order workspace list", () => {
   });
   it("filters an active warranty visit by its current status rather than the original delivery", () => {
     const record = warrantyOrder();
-    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} statusFilter="en_revision" />);
+    const { rerender } = render(
+      <RepairAccessOrdersSection {...props} orders={[record]} statusFilter="en_revision" />
+    );
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
     rerender(<RepairAccessOrdersSection {...props} orders={[record]} statusFilter="retirado" />);
     expect(screen.queryByRole("article")).toBeNull();
@@ -64,7 +145,9 @@ describe("order workspace list", () => {
 
   it("finds the actual warranty issue and progress without losing original-issue search", () => {
     const record = warrantyOrder();
-    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} search="pantalla se apaga" />);
+    const { rerender } = render(
+      <RepairAccessOrdersSection {...props} orders={[record]} search="pantalla se apaga" />
+    );
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
     rerender(<RepairAccessOrdersSection {...props} orders={[record]} search="flex de pantalla" />);
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
@@ -75,13 +158,30 @@ describe("order workspace list", () => {
   it("keeps the same focused input and unmodified composition text through refreshed records", () => {
     const onSearchChange = vi.fn();
     const onSearchCompositionChange = vi.fn();
-    const { rerender } = render(<RepairAccessOrdersSection {...props} onSearchChange={onSearchChange} onSearchCompositionChange={onSearchCompositionChange} search="Bel" />);
-    const input = screen.getByRole("textbox", { name: "Buscar orden de service" }) as HTMLInputElement;
+    const { rerender } = render(
+      <RepairAccessOrdersSection
+        {...props}
+        onSearchChange={onSearchChange}
+        onSearchCompositionChange={onSearchCompositionChange}
+        search="Bel"
+      />
+    );
+    const input = screen.getByRole("textbox", {
+      name: "Buscar orden de service"
+    }) as HTMLInputElement;
     input.focus();
     fireEvent.compositionStart(input);
     fireEvent.change(input, { target: { value: "Belén " } });
     expect(onSearchChange).toHaveBeenLastCalledWith("Belén ");
-    rerender(<RepairAccessOrdersSection {...props} onSearchChange={onSearchChange} onSearchCompositionChange={onSearchCompositionChange} search="Belén " orders={[makeOrder(2)]} />);
+    rerender(
+      <RepairAccessOrdersSection
+        {...props}
+        onSearchChange={onSearchChange}
+        onSearchCompositionChange={onSearchCompositionChange}
+        search="Belén "
+        orders={[makeOrder(2)]}
+      />
+    );
     fireEvent.compositionEnd(input);
     expect(screen.getByRole("textbox", { name: "Buscar orden de service" })).toBe(input);
     expect(document.activeElement).toBe(input);
@@ -93,37 +193,60 @@ describe("order workspace list", () => {
     const record = { ...warrantyOrder(), workflow: { version: 8 } } as RepairAccessOrderRecord;
     render(<RepairAccessOrdersSection {...props} orders={[record]} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
-    expect(screen.getByText("Reingreso por garantia activo")).toBeTruthy();
+    expect(screen.getByText("Reingreso por garantía activo")).toBeTruthy();
     expect(screen.getByText("Falla original: No enciende")).toBeTruthy();
-    expect(within(screen.getByRole("table")).getByText("En revision")).toBeTruthy();
+    expect(within(screen.getByRole("table")).getByText("En revisión")).toBeTruthy();
     expect(screen.queryByText("Actualizar trabajo")).toBeNull();
-    expect(screen.getByRole("form", { name: "Actualizar visita de garantia" }).querySelector('input[name="id"]')?.getAttribute("value")).toBe("return-1");
+    expect(
+      screen
+        .getByRole("form", { name: "Actualizar visita de garantía" })
+        .querySelector('input[name="id"]')
+        ?.getAttribute("value")
+    ).toBe("return-1");
     expect(screen.queryByLabelText("Avance rapido")).toBeNull();
   });
 
   it("matches names with accents and repeated spaces without changing the actual search input", () => {
-    const record = { ...makeOrder(), customer: { ...makeOrder().customer, fullName: "Belén Pérez" } };
+    const record = {
+      ...makeOrder(),
+      customer: { ...makeOrder().customer, fullName: "Belén Pérez" }
+    };
     render(<RepairAccessOrdersSection {...props} orders={[record]} search="belen   perez " />);
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
-    expect((screen.getByRole("textbox", { name: "Buscar orden de service" }) as HTMLInputElement).value).toBe("belen   perez ");
+    expect(
+      (screen.getByRole("textbox", { name: "Buscar orden de service" }) as HTMLInputElement).value
+    ).toBe("belen   perez ");
   });
 
   it("does not hide server matches on diagnosis or budget detail", () => {
-    const record = { ...makeOrder(), technicalDiagnosis: "Main defectuosa", budgetDetail: "Cambio de capacitores" };
-    const { rerender } = render(<RepairAccessOrdersSection {...props} orders={[record]} search="main defectuosa" />);
+    const record = {
+      ...makeOrder(),
+      technicalDiagnosis: "Main defectuosa",
+      budgetDetail: "Cambio de capacitores"
+    };
+    const { rerender } = render(
+      <RepairAccessOrdersSection {...props} orders={[record]} search="main defectuosa" />
+    );
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
-    rerender(<RepairAccessOrdersSection {...props} orders={[record]} search="cambio de capacitores" />);
+    rerender(
+      <RepairAccessOrdersSection {...props} orders={[record]} search="cambio de capacitores" />
+    );
     expect(screen.getByRole("article", { name: record.repairNumber })).toBeTruthy();
   });
 
-  it.each([true, false])("mounts one desktop/mobile card list and no table by default (admin=%s)", (canManageIntake) => {
-    const { container } = render(<RepairAccessOrdersSection {...props} canManageIntake={canManageIntake} />);
-    const card = screen.getByRole("article", { name: orders[0].repairNumber });
-    expect(card.parentElement?.className).toContain("md:grid-cols-2");
-    expect(card.parentElement?.className).not.toContain("lg:hidden");
-    expect(screen.queryByRole("table", { hidden: true })).toBeNull();
-    expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
-  });
+  it.each([true, false])(
+    "mounts one desktop/mobile card list and no table by default (admin=%s)",
+    (canManageIntake) => {
+      const { container } = render(
+        <RepairAccessOrdersSection {...props} canManageIntake={canManageIntake} />
+      );
+      const card = screen.getByRole("article", { name: orders[0].repairNumber });
+      expect(card.parentElement?.className).toContain("md:grid-cols-2");
+      expect(card.parentElement?.className).not.toContain("lg:hidden");
+      expect(screen.queryByRole("table", { hidden: true })).toBeNull();
+      expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
+    }
+  );
 
   it("offers the admin table as an exclusive secondary presentation with all row actions", () => {
     const { container } = render(<RepairAccessOrdersSection {...props} />);
@@ -131,17 +254,37 @@ describe("order workspace list", () => {
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.queryByRole("article", { hidden: true })).toBeNull();
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: `Ficha completa ${orders[0].repairNumber}` })
+    );
     expect(props.onOpenDetail).toHaveBeenCalledWith(orders[0]);
-    fireEvent.click(screen.getByText("Mas acciones"));
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
+    expect(props.onOpenDetail).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
     fireEvent.click(screen.getByRole("button", { name: "Editar ingreso" }));
     expect(props.onEdit).toHaveBeenCalledWith(orders[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Mas acciones" }));
-    expect(screen.getByRole("button", { name: "Anular" }).closest("form")?.querySelector('input[name="id"]')?.getAttribute("value")).toBe(orders[0].id);
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
+    expect(
+      screen
+        .getByRole("button", { name: "Anular" })
+        .closest("form")
+        ?.querySelector('input[name="id"]')
+        ?.getAttribute("value")
+    ).toBe(orders[0].id);
     expect(screen.getByRole("button", { name: "WhatsApp" })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Ver tarjetas" }));
     expect(screen.queryByRole("table", { hidden: true })).toBeNull();
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
+  });
+
+  it("opens the admin workspace in the compact table by default", () => {
+    const { initialPresentation: _cards, ...defaults } = props;
+    void _cards;
+    render(<RepairAccessOrdersSection {...defaults} />);
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver tarjetas" })).toBeTruthy();
+    expect(screen.getByText(/días?$/)).toBeTruthy();
   });
 
   it("does not offer the table or new intake to technicians", () => {
@@ -151,7 +294,11 @@ describe("order workspace list", () => {
   });
 
   it("keeps quick work available in the table without opening the complete record", () => {
-    const record = { ...makeOrder(), workflow: { version: 3 }, repairProgress: "En revision" } as RepairAccessOrderRecord;
+    const record = {
+      ...makeOrder(),
+      workflow: { version: 3 },
+      repairProgress: "En revision"
+    } as RepairAccessOrderRecord;
     render(<RepairAccessOrdersSection {...props} orders={[record]} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
     const quick = screen.getByText("Actualizar trabajo").closest("details")!;
@@ -163,14 +310,16 @@ describe("order workspace list", () => {
     fireEvent(quick, new Event("toggle"));
     quick.open = true;
     fireEvent(quick, new Event("toggle"));
-    expect((screen.getByRole("textbox", { name: "Avance rapido" }) as HTMLInputElement).value).toBe("Fuente reparada");
+    expect((screen.getByRole("textbox", { name: "Avance rapido" }) as HTMLInputElement).value).toBe(
+      "Fuente reparada"
+    );
   });
 
   it("requires confirmation before cancelling from the table", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<RepairAccessOrdersSection {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
-    fireEvent.click(screen.getByText("Mas acciones"));
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
     const form = screen.getByRole("button", { name: "Anular" }).closest("form")!;
     expect(fireEvent.submit(form)).toBe(false);
     expect(confirm).toHaveBeenCalledOnce();
@@ -201,12 +350,16 @@ describe("order workspace list", () => {
     render(<RepairAccessOrdersSection {...props} />);
     const search = screen.getByRole("textbox", { name: "Buscar orden de service" });
     const status = screen.getByRole("combobox", { name: "Filtrar ordenes por estado" });
-    const advanced = screen.getByRole("combobox", { name: "Filtrar ordenes por garantia" }).closest("details");
+    const advanced = screen
+      .getByRole("combobox", { name: "Filtrar ordenes por garantía" })
+      .closest("details");
     expect(advanced).not.toBeNull();
     expect(advanced?.open).toBe(false);
     fireEvent.click(screen.getByText("Filtros"));
     expect(advanced?.open).toBe(true);
-    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar ordenes por garantia" }), { target: { value: "active" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar ordenes por garantía" }), {
+      target: { value: "active" }
+    });
     expect(props.onWarrantyFilterChange).toHaveBeenCalledWith("active");
     expect(screen.getByRole("textbox", { name: "Buscar orden de service" })).toBe(search);
     expect(screen.getByRole("combobox", { name: "Filtrar ordenes por estado" })).toBe(status);
@@ -218,7 +371,10 @@ describe("order workspace list", () => {
 
   it("shows an applied warranty filter without making users discover why orders are missing", () => {
     render(<RepairAccessOrdersSection {...props} warrantyFilter="active" />);
-    expect((screen.getByRole("combobox", { name: "Filtrar ordenes por garantia" }) as HTMLSelectElement).value).toBe("active");
+    expect(
+      (screen.getByRole("combobox", { name: "Filtrar ordenes por garantía" }) as HTMLSelectElement)
+        .value
+    ).toBe("active");
   });
 
   it("preserves local filtering and load-more without mounting duplicate lists", () => {

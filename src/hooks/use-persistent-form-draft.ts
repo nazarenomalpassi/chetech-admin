@@ -136,7 +136,14 @@ export function usePersistentFormDraft<T>({
     }
 
     function handleDocumentClick(event: MouseEvent) {
-      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+      if (
+        event.defaultPrevented ||
+        event.button !== 0 ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.shiftKey ||
+        event.altKey
+      ) {
         return;
       }
 
@@ -147,7 +154,11 @@ export function usePersistentFormDraft<T>({
 
       const nextUrl = new URL(anchor.href, window.location.href);
       if (nextUrl.origin !== window.location.origin) return;
-      if (nextUrl.pathname === window.location.pathname && nextUrl.search === window.location.search) return;
+      if (
+        nextUrl.pathname === window.location.pathname &&
+        nextUrl.search === window.location.search
+      )
+        return;
 
       const shouldLeave = window.confirm(
         "Hay cambios sin guardar. Si salís ahora, el borrador queda guardado para recuperarlo después. ¿Querés continuar?"
@@ -165,7 +176,7 @@ export function usePersistentFormDraft<T>({
       }
 
       const shouldLeave = window.confirm(
-        "Hay cambios sin guardar. El borrador queda guardado para recuperarlo despues. Queres continuar?"
+        "Hay cambios sin guardar. El borrador queda guardado para recuperarlo despues. Querés continuar?"
       );
       if (!shouldLeave) {
         skipNextPopStateRef.current = true;

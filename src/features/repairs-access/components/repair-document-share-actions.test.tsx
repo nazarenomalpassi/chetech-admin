@@ -6,13 +6,19 @@ import type { RepairAccessOrderRecord } from "../queries";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 const intakeLabel = "Enviar comprobante de ingreso";
 const deliveryLabel = "Enviar pago y garant\u00eda";
 const order = {
-  id: "10000000-0000-4000-8000-000000000001", status: "pendiente_revision",
-  pickedUpAt: null, deliveredAt: null,
+  id: "10000000-0000-4000-8000-000000000001",
+  status: "pendiente_revision",
+  pickedUpAt: null,
+  deliveredAt: null,
   customer: { fullName: "Cliente Ejemplo", phone: "3571 573744", alternatePhone: "" }
 } as RepairAccessOrderRecord;
 
@@ -35,7 +41,11 @@ describe("manual repair receipt sharing", () => {
     expect(form.getAttribute("action")).toBe("/api/repair-access/document-shares");
     expect(form.getAttribute("target")).toBe("_blank");
     expect(form.getAttribute("rel")).toBe("noopener");
-    expect(Object.fromEntries(new FormData(form))).toEqual({ orderId: order.id, kind: "intake", intent: "send" });
+    expect(Object.fromEntries(new FormData(form))).toEqual({
+      orderId: order.id,
+      kind: "intake",
+      intent: "send"
+    });
     expect(form.parentElement?.closest("form")).toBeNull();
     expect(button.closest("details")).toBeNull();
     expect(container.querySelector('a[href*="whatsapp"]')).toBeNull();
@@ -49,7 +59,11 @@ describe("manual repair receipt sharing", () => {
   ])("offers the payment/warranty form only after a saved pickup timestamp: %j", (dates) => {
     render(<RepairDocumentShareActions order={{ ...order, ...dates }} canManageIntake />);
     const button = screen.getByRole("button", { name: deliveryLabel });
-    expect(Object.fromEntries(new FormData(button.closest("form")!))).toEqual({ orderId: order.id, kind: "delivery", intent: "send" });
+    expect(Object.fromEntries(new FormData(button.closest("form")!))).toEqual({
+      orderId: order.id,
+      kind: "delivery",
+      intent: "send"
+    });
     expect(button.closest("details")).toBeNull();
   });
 
@@ -62,22 +76,44 @@ describe("manual repair receipt sharing", () => {
   });
 
   it("hides all share and revoke controls from technicians", () => {
-    const { container } = render(<RepairDocumentShareActions order={order} canManageIntake={false} />);
+    const { container } = render(
+      <RepairDocumentShareActions order={order} canManageIntake={false} />
+    );
     expect(container.innerHTML).toBe("");
   });
 
-  it.each(["", "123", "549357157374455", "54357157374455"])("disables send and explains an invalid primary phone (%s)", (phone) => {
-    render(<RepairDocumentShareActions order={{ ...order, customer: { ...order.customer, phone } }} canManageIntake />);
-    const button = screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement;
-    expect(button.disabled).toBe(true);
-    const explanation = document.getElementById(button.getAttribute("aria-describedby")!.split(" ").at(-1)!)!;
-    expect(explanation.textContent).toMatch(/telefono principal valido/i);
-  });
+  it.each(["", "123", "549357157374455", "54357157374455"])(
+    "disables send and explains an invalid primary phone (%s)",
+    (phone) => {
+      render(
+        <RepairDocumentShareActions
+          order={{ ...order, customer: { ...order.customer, phone } }}
+          canManageIntake
+        />
+      );
+      const button = screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement;
+      expect(button.disabled).toBe(true);
+      const explanation = document.getElementById(
+        button.getAttribute("aria-describedby")!.split(" ").at(-1)!
+      )!;
+      expect(explanation.textContent).toMatch(/tel[eé]fono principal v[aá]lido/i);
+    }
+  );
 
   it("does not substitute an alternate phone for the primary number used by the server", () => {
-    render(<RepairDocumentShareActions order={{ ...order, customer: { ...order.customer, phone: "", alternatePhone: "03571-573744" } }} canManageIntake />);
-    expect((screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/Sin telefono principal/)).toBeTruthy();
+    render(
+      <RepairDocumentShareActions
+        order={{
+          ...order,
+          customer: { ...order.customer, phone: "", alternatePhone: "03571-573744" }
+        }}
+        canManageIntake
+      />
+    );
+    expect((screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
+    expect(screen.getByText(/Sin tel[eé]fono principal/)).toBeTruthy();
   });
 
   it("shows the recipient name and stored primary number next to the send controls", () => {
@@ -86,12 +122,16 @@ describe("manual repair receipt sharing", () => {
     expect(recipient.textContent).toContain(order.customer.fullName);
     expect(recipient.textContent).toContain(order.customer.phone);
     expect(recipient.closest("details")).toBeNull();
-    expect(recipient.closest("section")).toBe(screen.getByRole("button", { name: intakeLabel }).closest("section"));
+    expect(recipient.closest("section")).toBe(
+      screen.getByRole("button", { name: intakeLabel }).closest("section")
+    );
   });
 
   it("discloses the sender session, manual confirmation, expiry and one-document forwarded access", () => {
     render(<RepairDocumentShareActions order={order} canManageIntake />);
-    const instruction = screen.getByText("Usa la sesi\u00f3n de WhatsApp Web del local. Revis\u00e1 el destinatario y confirm\u00e1 Enviar.");
+    const instruction = screen.getByText(
+      "Usa la sesi\u00f3n de WhatsApp Web del local. Revis\u00e1 el destinatario y confirm\u00e1 Enviar."
+    );
     expect(instruction.closest("details")).toBeNull();
     const details = screen.getByText("Enlaces compartidos").closest("details")!;
     expect(details.open).toBe(false);
@@ -112,32 +152,57 @@ describe("manual repair receipt sharing", () => {
     expect(fetch).not.toHaveBeenCalled();
   });
 
-  it.each(["intake", "delivery"] as const)("revokes only the confirmed %s type with JSON and reports the count", async (kind) => {
-    const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revoked: 2 }) });
-    vi.stubGlobal("fetch", fetch);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<RepairDocumentShareActions order={{ ...order, pickedUpAt: "2026-10-21" }} canManageIntake />);
-    openSharedLinks();
-    fireEvent.click(screen.getByRole("button", { name: kind === "intake" ? "Cancelar enlaces de ingreso" : "Cancelar enlaces de pago y garant\u00eda" }));
-    await waitFor(() => expect(screen.getByRole("status").textContent).toContain("2"));
-    expect(fetch).toHaveBeenCalledOnce();
-    expect(fetch).toHaveBeenCalledWith("/api/repair-access/document-shares", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id, kind, intent: "revoke" })
-    });
-  });
+  it.each(["intake", "delivery"] as const)(
+    "revokes only the confirmed %s type with JSON and reports the count",
+    async (kind) => {
+      const fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revoked: 2 }) });
+      vi.stubGlobal("fetch", fetch);
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+      render(
+        <RepairDocumentShareActions
+          order={{ ...order, pickedUpAt: "2026-10-21" }}
+          canManageIntake
+        />
+      );
+      openSharedLinks();
+      fireEvent.click(
+        screen.getByRole("button", {
+          name:
+            kind === "intake"
+              ? "Cancelar enlaces de ingreso"
+              : "Cancelar enlaces de pago y garant\u00eda"
+        })
+      );
+      await waitFor(() => expect(screen.getByRole("status").textContent).toContain("2"));
+      expect(fetch).toHaveBeenCalledOnce();
+      expect(fetch).toHaveBeenCalledWith("/api/repair-access/document-shares", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, kind, intent: "revoke" })
+      });
+    }
+  );
 
   it("blocks duplicate revocations and sends while cancellation is pending", async () => {
     let resolve!: (response: unknown) => void;
-    const fetch = vi.fn(() => new Promise((done) => { resolve = done; }));
+    const fetch = vi.fn(
+      () =>
+        new Promise((done) => {
+          resolve = done;
+        })
+    );
     vi.stubGlobal("fetch", fetch);
     vi.spyOn(window, "confirm").mockReturnValue(true);
     render(<RepairDocumentShareActions order={order} canManageIntake />);
     openSharedLinks();
-    const cancel = screen.getByRole("button", { name: "Cancelar enlaces de ingreso" }) as HTMLButtonElement;
+    const cancel = screen.getByRole("button", {
+      name: "Cancelar enlaces de ingreso"
+    }) as HTMLButtonElement;
     fireEvent.click(cancel);
     expect(cancel.disabled).toBe(true);
-    expect((screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
     fireEvent.click(cancel);
     expect(fetch).toHaveBeenCalledOnce();
     resolve({ ok: true, json: async () => ({ revoked: 0 }) });
@@ -145,18 +210,29 @@ describe("manual repair receipt sharing", () => {
     expect(screen.getByRole("status").textContent).toMatch(/No habia enlaces activos/);
   });
 
-  it.each(["http", "network", "invalid"])("shows a safe retryable error after a %s revocation failure", async (failure) => {
-    const fetch = vi.fn();
-    if (failure === "network") fetch.mockRejectedValue(new Error("INTERNAL SECRET"));
-    else fetch.mockResolvedValue({ ok: failure !== "http", json: async () => ({ revoked: failure === "invalid" ? -1 : 2, error: "INTERNAL SECRET" }) });
-    vi.stubGlobal("fetch", fetch);
-    vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<RepairDocumentShareActions order={order} canManageIntake />);
-    openSharedLinks();
-    const cancel = screen.getByRole("button", { name: "Cancelar enlaces de ingreso" }) as HTMLButtonElement;
-    fireEvent.click(cancel);
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toMatch(/No se pudieron cancelar/));
-    expect(screen.getByRole("alert").textContent).not.toContain("INTERNAL SECRET");
-    expect(cancel.disabled).toBe(false);
-  });
+  it.each(["http", "network", "invalid"])(
+    "shows a safe retryable error after a %s revocation failure",
+    async (failure) => {
+      const fetch = vi.fn();
+      if (failure === "network") fetch.mockRejectedValue(new Error("INTERNAL SECRET"));
+      else
+        fetch.mockResolvedValue({
+          ok: failure !== "http",
+          json: async () => ({ revoked: failure === "invalid" ? -1 : 2, error: "INTERNAL SECRET" })
+        });
+      vi.stubGlobal("fetch", fetch);
+      vi.spyOn(window, "confirm").mockReturnValue(true);
+      render(<RepairDocumentShareActions order={order} canManageIntake />);
+      openSharedLinks();
+      const cancel = screen.getByRole("button", {
+        name: "Cancelar enlaces de ingreso"
+      }) as HTMLButtonElement;
+      fireEvent.click(cancel);
+      await waitFor(() =>
+        expect(screen.getByRole("alert").textContent).toMatch(/No se pudieron cancelar/)
+      );
+      expect(screen.getByRole("alert").textContent).not.toContain("INTERNAL SECRET");
+      expect(cancel.disabled).toBe(false);
+    }
+  );
 });

@@ -39,82 +39,84 @@ export const repairAccessIntakeSchema = z.object({
   status: z.enum(repairAccessStatusValues).default("pendiente_revision")
 });
 
-export const repairAccessTechnicalSchema = z.object({
-  id: z.string().uuid("No se pudo identificar la orden."),
-  technicianName: z.string().optional(),
-  technicalDiagnosis: z.string().optional(),
-  repairProgress: z
-    .string()
-    .max(2000, "El avance de reparación es demasiado largo.")
-    .optional(),
-  internalObservations: z.string().optional(),
-  usedParts: z.string().optional(),
-  workPerformed: z.string().optional(),
-  budgetAmount: z.coerce.number().min(0, "El presupuesto no puede ser negativo.").optional(),
-  budgetDetail: z
-    .string()
-    .max(2000, "El detalle del presupuesto es demasiado largo.")
-    .optional(),
-  budgetResponseNotes: z.string().optional(),
-  finalAmount: z.coerce.number().min(0, "El monto final no puede ser negativo.").optional(),
-  paymentMethod: z.string().optional(),
-  paymentNotes: z.string().optional(),
-  hasWarranty: z.boolean().default(false),
-  warrantyDays: z.coerce.number().int().min(0, "La garantia no puede ser negativa.").default(0),
-  pickedUpAt: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Ingresa una fecha de retiro valida.")
-    .optional()
-    .or(z.literal("")),
-  warrantyConditions: z.string().optional(),
-  status: z.enum(repairAccessStatusValues),
-  isPaid: z.coerce.boolean().default(false)
-}).superRefine((data, ctx) => {
-  if (data.hasWarranty && data.warrantyDays <= 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Ingresa una duracion mayor a cero para la garantia.",
-      path: ["warrantyDays"]
-    });
-  }
+export const repairAccessTechnicalSchema = z
+  .object({
+    id: z.string().uuid("No se pudo identificar la orden."),
+    technicianName: z.string().optional(),
+    technicalDiagnosis: z.string().optional(),
+    repairProgress: z.string().max(2000, "El avance de reparación es demasiado largo.").optional(),
+    internalObservations: z.string().optional(),
+    usedParts: z.string().optional(),
+    workPerformed: z.string().optional(),
+    budgetAmount: z.coerce.number().min(0, "El presupuesto no puede ser negativo.").optional(),
+    budgetDetail: z.string().max(2000, "El detalle del presupuesto es demasiado largo.").optional(),
+    budgetResponseNotes: z.string().optional(),
+    finalAmount: z.coerce.number().min(0, "El monto final no puede ser negativo.").optional(),
+    paymentMethod: z.string().optional(),
+    paymentNotes: z.string().optional(),
+    hasWarranty: z.boolean().default(false),
+    warrantyDays: z.coerce.number().int().min(0, "La garantia no puede ser negativa.").default(0),
+    pickedUpAt: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Ingresa una fecha de retiro valida.")
+      .optional()
+      .or(z.literal("")),
+    warrantyConditions: z.string().optional(),
+    status: z.enum(repairAccessStatusValues),
+    isPaid: z.coerce.boolean().default(false)
+  })
+  .superRefine((data, ctx) => {
+    if (data.hasWarranty && data.warrantyDays <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresa una duracion mayor a cero para la garantia.",
+        path: ["warrantyDays"]
+      });
+    }
 
-  if (data.status === "retirado" && !data.pickedUpAt) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Ingresa la fecha efectiva en que el cliente retiro el equipo.",
-      path: ["pickedUpAt"]
-    });
-  }
+    if (data.status === "retirado" && !data.pickedUpAt) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresa la fecha efectiva en que el cliente retiro el equipo.",
+        path: ["pickedUpAt"]
+      });
+    }
 
-  if (data.isPaid && !data.paymentMethod) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Selecciona un medio de pago para marcar la orden como cobrada.",
-      path: ["paymentMethod"]
-    });
-  }
+    if (data.isPaid && !data.paymentMethod) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Selecciona un medio de pago para marcar la orden como cobrada.",
+        path: ["paymentMethod"]
+      });
+    }
 
-  if (data.isPaid && !data.finalAmount) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Ingresa el total final antes de marcar la orden como cobrada.",
-      path: ["finalAmount"]
-    });
-  }
-});
+    if (data.isPaid && !data.finalAmount) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Ingresa el total final antes de marcar la orden como cobrada.",
+        path: ["finalAmount"]
+      });
+    }
+  });
 
-export const repairWarrantyFieldsSchema = z.object({
-  hasWarranty: z.boolean(),
-  warrantyDays: z.coerce.number().int().min(0).max(3650),
-  warrantyConditions: z.string().max(2000).default("")
-}).refine((data) => !data.hasWarranty || data.warrantyDays > 0, {
-  message: "La duracion de la garantia debe ser mayor a cero.", path: ["warrantyDays"]
-});
+export const repairWarrantyFieldsSchema = z
+  .object({
+    hasWarranty: z.boolean(),
+    warrantyDays: z.coerce.number().int().min(0).max(3650),
+    warrantyConditions: z.string().max(2000).default("")
+  })
+  .refine((data) => !data.hasWarranty || data.warrantyDays > 0, {
+    message: "La duracion de la garantia debe ser mayor a cero.",
+    path: ["warrantyDays"]
+  });
 
 export const repairAccessWorkshopSchema = z.object({
   id: z.string().uuid("No se pudo identificar la orden."),
   status: z.enum(repairAccessStatusValues),
-  repairAmount: z.coerce.number().min(0, "El monto de la reparacion no puede ser negativo.").default(0),
+  repairAmount: z.coerce
+    .number()
+    .min(0, "El monto de la reparacion no puede ser negativo.")
+    .default(0),
   budgetDetail: z.string().max(2000, "El detalle del presupuesto es demasiado largo.").optional(),
   repairProgress: z.string().max(2000, "El avance tecnico es demasiado largo.").optional()
 });

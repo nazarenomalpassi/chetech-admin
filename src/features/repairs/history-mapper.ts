@@ -32,14 +32,20 @@ export function mapRepairsHistoryRows(rows: any[]) {
     const nativePayments = ((accessOrder?.repair_access_payments ?? []) as RawRepairPayment[])
       .filter((payment) => !payment.legacy_repair_payment_id && !payment.voided_at)
       .map((payment) => ({ ...payment, source: "repair_access" as const }));
-    const payments = [...(repair.repair_payments ?? []) as RawRepairPayment[], ...nativePayments].map((payment) => ({
+    const payments = [
+      ...((repair.repair_payments ?? []) as RawRepairPayment[]),
+      ...nativePayments
+    ].map((payment) => ({
       method: normalizeCashMethodValue(payment.method) ?? payment.method ?? "",
       amount: Number(payment.amount),
       created_at: payment.created_at,
       ...(payment.id ? { id: payment.id, paymentDate: payment.payment_date ?? "" } : {}),
       ...(payment.source ? { source: payment.source } : {})
     }));
-    const settlement = deriveDocumentSettlement(Number(repair.final_price ?? repair.estimated_price ?? 0), payments);
+    const settlement = deriveDocumentSettlement(
+      Number(repair.final_price ?? repair.estimated_price ?? 0),
+      payments
+    );
 
     return {
       id: repair.id,

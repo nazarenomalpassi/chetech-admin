@@ -5,8 +5,7 @@ import { loadEnvConfig } from "@next/env";
 import { createClient } from "@supabase/supabase-js";
 import xlsx from "xlsx";
 
-const workbookPath =
-  process.argv[2] ?? "C:\\Users\\nazar\\Downloads\\Inventario Chetech (3).xlsx";
+const workbookPath = process.argv[2] ?? "C:\\Users\\nazar\\Downloads\\Inventario Chetech (3).xlsx";
 
 loadEnvConfig(process.cwd());
 
@@ -210,7 +209,9 @@ async function fetchProductMap() {
   );
 }
 
-async function importSales(productMap: Map<string, { id: string; cost: number; sale_price: number }>) {
+async function importSales(
+  productMap: Map<string, { id: string; cost: number; sale_price: number }>
+) {
   const rows = getSheet("REG. VENTAS").map(remapRow);
   const normalizedRows = rows
     .map((row) => {
@@ -231,7 +232,9 @@ async function importSales(productMap: Map<string, { id: string; cost: number; s
     })
     .filter((row) => row.saleNumber);
 
-  const { data: existingSales, error: salesError } = await supabase.from("sales").select("id, sale_number");
+  const { data: existingSales, error: salesError } = await supabase
+    .from("sales")
+    .select("id, sale_number");
   if (salesError) throw salesError;
   const saleMap = new Map((existingSales ?? []).map((sale) => [sale.sale_number, sale.id]));
 
@@ -250,15 +253,21 @@ async function importSales(productMap: Map<string, { id: string; cost: number; s
     if (error) throw error;
   }
 
-  const { data: allSales, error: refetchSalesError } = await supabase.from("sales").select("id, sale_number");
+  const { data: allSales, error: refetchSalesError } = await supabase
+    .from("sales")
+    .select("id, sale_number");
   if (refetchSalesError) throw refetchSalesError;
   const fullSaleMap = new Map((allSales ?? []).map((sale) => [sale.sale_number, sale.id]));
 
-  const { data: existingSaleItems, error: itemsError } = await supabase.from("sale_items").select("sale_id");
+  const { data: existingSaleItems, error: itemsError } = await supabase
+    .from("sale_items")
+    .select("sale_id");
   if (itemsError) throw itemsError;
   const saleIdsWithItems = new Set((existingSaleItems ?? []).map((item) => item.sale_id));
 
-  const { data: existingPayments, error: paymentsError } = await supabase.from("sale_payments").select("sale_id");
+  const { data: existingPayments, error: paymentsError } = await supabase
+    .from("sale_payments")
+    .select("sale_id");
   if (paymentsError) throw paymentsError;
   const saleIdsWithPayments = new Set((existingPayments ?? []).map((payment) => payment.sale_id));
 
@@ -355,7 +364,8 @@ async function importExpenses() {
   );
 
   const toInsert = normalized.filter(
-    (item) => !existingKeys.has(`${item.expense_date}|${item.type}|${item.description}|${item.amount}`)
+    (item) =>
+      !existingKeys.has(`${item.expense_date}|${item.type}|${item.description}|${item.amount}`)
   );
 
   if (toInsert.length) {
@@ -374,7 +384,9 @@ async function importRepairs() {
       const amount = normalizeNumber(row["monto_ingreso"]);
       const observation = normalizeText(row["observacion"]) || null;
       const signature = `${paymentDate}|${amount}|${observation ?? ""}`;
-      const importObservation = observation ? `${observation} [import:${signature}]` : `[import:${signature}]`;
+      const importObservation = observation
+        ? `${observation} [import:${signature}]`
+        : `[import:${signature}]`;
 
       return {
         paymentDate,
@@ -451,10 +463,14 @@ async function importRepairs() {
       notes: row.observation
     }))
     .filter((row) => row.repair_id)
-    .filter((row) => !existingPaymentKeys.has(`${row.repair_id}|${row.payment_date}|${row.amount}`));
+    .filter(
+      (row) => !existingPaymentKeys.has(`${row.repair_id}|${row.payment_date}|${row.amount}`)
+    );
 
   if (paymentsToInsert.length) {
-    const { error: insertPaymentsError } = await supabase.from("repair_payments").insert(paymentsToInsert);
+    const { error: insertPaymentsError } = await supabase
+      .from("repair_payments")
+      .insert(paymentsToInsert);
     if (insertPaymentsError) throw insertPaymentsError;
   }
 

@@ -40,6 +40,10 @@ describe("getCashMethodOptions", () => {
   });
 
   it("expone las mismas tres cuentas operativas para formularios de dinero", () => {
-    expect(getCashMethodOptions().map((option) => option.label)).toEqual(["EFECTIVO", "NX SANTI", "NX LOCAL"]);
+    expect(getCashMethodOptions().map((option) => option.label)).toEqual([
+      "EFECTIVO",
+      "NX SANTI",
+      "NX LOCAL"
+    ]);
   });
 });

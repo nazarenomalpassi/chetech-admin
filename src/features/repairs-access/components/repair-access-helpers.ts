@@ -14,18 +14,66 @@ export type RepairAccessStatus = (typeof repairAccessStatusValues)[number];
 
 type StatusTone = "default" | "success" | "warning" | "danger";
 
-export const repairAccessStatusMeta: Record<RepairAccessStatus, { label: string; shortLabel: string; tone: StatusTone; lane: string }> = {
-  pendiente_revision: { label: "Pendiente de revision", shortLabel: "Pendiente", tone: "warning", lane: "Recepcion" },
-  en_revision: { label: "En revision", shortLabel: "Revision", tone: "warning", lane: "Tecnica" },
-  presupuestado: { label: "Presupuestado", shortLabel: "Presupuesto", tone: "default", lane: "Presupuesto" },
-  presupuestado_aceptado: { label: "Presupuestado y aceptado", shortLabel: "Aceptado", tone: "success", lane: "Presupuesto" },
-  presupuestado_rechazado: { label: "Presupuestado y rechazado", shortLabel: "Rechazado", tone: "danger", lane: "Presupuesto" },
-  en_reparacion: { label: "En reparacion", shortLabel: "Reparacion", tone: "default", lane: "Tecnica" },
-  en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Tecnica" },
-  listo_para_retirar: { label: "Listo para retirar", shortLabel: "Retirar", tone: "success", lane: "Entrega" },
-  no_presenta_fallas: { label: "No presenta fallas", shortLabel: "No presenta fallas", tone: "success", lane: "Entrega" },
-  retirado: { label: "Retirado por cliente", shortLabel: "Retirado", tone: "success", lane: "Cierre" },
-  sin_solucion: { label: "Sin solucion", shortLabel: "Sin solucion", tone: "danger", lane: "Cierre" }
+export const repairAccessStatusMeta: Record<
+  RepairAccessStatus,
+  { label: string; shortLabel: string; tone: StatusTone; lane: string }
+> = {
+  pendiente_revision: {
+    label: "Pendiente de revisión",
+    shortLabel: "Pendiente",
+    tone: "warning",
+    lane: "Recepción"
+  },
+  en_revision: { label: "En revisión", shortLabel: "Revisión", tone: "warning", lane: "Técnica" },
+  presupuestado: {
+    label: "Presupuestado",
+    shortLabel: "Presupuesto",
+    tone: "default",
+    lane: "Presupuesto"
+  },
+  presupuestado_aceptado: {
+    label: "Presupuestado y aceptado",
+    shortLabel: "Aceptado",
+    tone: "success",
+    lane: "Presupuesto"
+  },
+  presupuestado_rechazado: {
+    label: "Presupuestado y rechazado",
+    shortLabel: "Rechazado",
+    tone: "danger",
+    lane: "Presupuesto"
+  },
+  en_reparacion: {
+    label: "En reparación",
+    shortLabel: "Reparación",
+    tone: "default",
+    lane: "Técnica"
+  },
+  en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Técnica" },
+  listo_para_retirar: {
+    label: "Listo para retirar",
+    shortLabel: "Retirar",
+    tone: "success",
+    lane: "Entrega"
+  },
+  no_presenta_fallas: {
+    label: "No presenta fallas",
+    shortLabel: "No presenta fallas",
+    tone: "success",
+    lane: "Entrega"
+  },
+  retirado: {
+    label: "Retirado por cliente",
+    shortLabel: "Retirado",
+    tone: "success",
+    lane: "Cierre"
+  },
+  sin_solucion: {
+    label: "Sin solución",
+    shortLabel: "Sin solucion",
+    tone: "danger",
+    lane: "Cierre"
+  }
 };
 
 export const repairAccessStatusOptions = repairAccessStatusValues.map((status) => ({
@@ -40,14 +88,14 @@ export const repairAccessClosedStatuses = ["retirado"] as const;
 export const repairAccessLanes = [
   {
     key: "recepcion",
-    title: "Recepcion",
+    title: "Recepción",
     description: "Ingreso del equipo, falla declarada y prioridad del mostrador.",
     statuses: ["pendiente_revision"]
   },
   {
     key: "tecnica",
     title: "Mesa tecnica",
-    description: "Revision, diagnostico, avance y decisiones del tecnico.",
+    description: "Revisión, diagnostico, avance y decisiones del tecnico.",
     statuses: ["en_revision", "en_reparacion", "en_pruebas"]
   },
   {
@@ -59,7 +107,8 @@ export const repairAccessLanes = [
   {
     key: "salida",
     title: "Salida",
-    description: "Equipos listos, sin fallas, entregados o sin solucion. Los no entregados siguen pendientes de retiro.",
+    description:
+      "Equipos listos, sin fallas, entregados o sin solución. Los no entregados siguen pendientes de retiro.",
     statuses: ["listo_para_retirar", "no_presenta_fallas", "retirado", "sin_solucion"]
   }
 ] as const;
@@ -73,5 +122,9 @@ export function getRepairAccessStatusTone(status: string): StatusTone {
 }
 
 export function getRepairAccessPaymentLabel(value?: string | null) {
-  return repairAccessPaymentOptions.find((method) => method.value === value)?.label ?? value ?? "Sin medio";
+  return (
+    repairAccessPaymentOptions.find((method) => method.value === value)?.label ??
+    value ??
+    "Sin medio"
+  );
 }

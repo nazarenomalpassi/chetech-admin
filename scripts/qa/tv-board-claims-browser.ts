@@ -8,24 +8,39 @@ const base = "http://127.0.0.1:3001";
 const output = "tmp/qa/tv-board-claims-20261020";
 
 async function main() {
-  const health = await fetch("http://127.0.0.1:54341/health").then(r => r.json());
-  assert.equal(health.staging, true); assert.equal(health.database, "chetech_staging");
+  const health = await fetch("http://127.0.0.1:54341/health").then((r) => r.json());
+  assert.equal(health.staging, true);
+  assert.equal(health.database, "chetech_staging");
   const db = await connectDatabase();
   const browser = await chromium.launch({ headless: true, channel: "chrome" });
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true
+  });
   const page = await context.newPage();
   page.setDefaultTimeout(45000);
   page.setDefaultNavigationTimeout(90000);
   const prefix = `CLAIM-UI-${randomUUID().slice(0, 8)}`;
-  const a = randomUUID(), b = randomUUID(), c = randomUUID();
+  const a = randomUUID(),
+    b = randomUUID(),
+    c = randomUUID();
   const errors: string[] = [];
   page.on("pageerror", (error: Error) => errors.push(error.message));
   await mkdir(output, { recursive: true });
-  const cashSql = "select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) hash from public.movimientos_caja t";
+  const cashSql =
+    "select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) hash from public.movimientos_caja t";
   try {
     const cashBefore = (await db.query(cashSql)).rows[0].hash;
-    for (const [id, model, amount] of [[a, "Restaurar", 104000.25], [b, "Anular", 50000.33], [c, "Conflicto", 25000.25]]) {
-      await db.query("insert into public.tv_boards(id,brand,model,board_type,listed_price,is_active,sold_at,mercado_libre_net_amount,release_date,acquisition_cost,sale_notes) values($1,$2,$3,'main',500000,false,now(),$4,current_date-3,10000,'Original browser sale')", [id, prefix, model, amount]);
+    for (const [id, model, amount] of [
+      [a, "Restaurar", 104000.25],
+      [b, "Anular", 50000.33],
+      [c, "Conflicto", 25000.25]
+    ]) {
+      await db.query(
+        "insert into public.tv_boards(id,brand,model,board_type,listed_price,is_active,sold_at,mercado_libre_net_amount,release_date,acquisition_cost,sale_notes) values($1,$2,$3,'main',500000,false,now(),$4,current_date-3,10000,'Original browser sale')",
+        [id, prefix, model, amount]
+      );
     }
     await page.goto(base + "/login", { waitUntil: "networkidle" });
     await page.getByLabel("Email", { exact: true }).fill("admin@staging.invalid");
@@ -38,121 +53,245 @@ async function main() {
     const cardA = page.locator("article").filter({ hasText: `${prefix} Restaurar` });
     await cardA.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     let dialog = page.getByRole("dialog", { name: "Iniciar reclamo", exact: true });
-    await dialog.getByLabel("Notas del reclamo (opcional)", { exact: true }).fill("Llego danada. Reclamo registrado en ML.");
+    await dialog
+      .getByLabel("Notas del reclamo (opcional)", { exact: true })
+      .fill("Llego danada. Reclamo registrado en ML.");
     await dialog.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     const queue = page.getByRole("region", { name: "Reclamos / dinero retenido", exact: true });
     await queue.getByText(`${prefix} Restaurar`, { exact: true }).waitFor();
     assert.equal(await cardA.count(), 0, "held sale must leave pending inventory results");
-    assert.equal((await db.query("select claim_status,released_at from public.tv_boards where id=$1", [a])).rows[0].claim_status, "open");
-    const heldMetric = page.locator("dl > div").filter({ has: page.locator("dt", { hasText: /^Dinero retenido$/ }) });
+    assert.equal(
+      (await db.query("select claim_status,released_at from public.tv_boards where id=$1", [a]))
+        .rows[0].claim_status,
+      "open"
+    );
+    const heldMetric = page
+      .locator("dl > div")
+      .filter({ has: page.locator("dt", { hasText: /^Dinero retenido$/ }) });
     assert.match(await heldMetric.innerText(), /104\.000,25/);
     await page.screenshot({ path: `${output}/held-mobile.png`, fullPage: true });
 
-    await queue.locator("li").filter({ hasText: `${prefix} Restaurar` }).getByRole("button", { name: "Resolver reclamo", exact: true }).click();
+    await queue
+      .locator("li")
+      .filter({ hasText: `${prefix} Restaurar` })
+      .getByRole("button", { name: "Resolver reclamo", exact: true })
+      .click();
     dialog = page.getByRole("dialog", { name: "Resolver reclamo", exact: true });
-    await dialog.getByLabel("Notas de resolucion (opcional)", { exact: true }).fill("Contrarreclamo favorable");
+    await dialog
+      .getByLabel("Notas de resolucion (opcional)", { exact: true })
+      .fill("Contrarreclamo favorable");
     await dialog.getByRole("button", { name: "Volver a pendiente", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
     await cardA.getByRole("button", { name: "Confirmar liberacion", exact: true }).waitFor();
-    assert.equal((await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0].released_at, null);
+    assert.equal(
+      (await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0]
+        .released_at,
+      null
+    );
     await cardA.getByRole("button", { name: "Confirmar liberacion", exact: true }).click();
     dialog = page.getByRole("dialog", { name: "Confirmar liberacion", exact: true });
-    assert.equal(await dialog.getByLabel("Cuenta de destino",{exact:true}).inputValue(), "");
-    await dialog.getByRole("button",{name:"Confirmar y registrar venta",exact:true}).click();
+    assert.equal(await dialog.getByLabel("Cuenta de destino", { exact: true }).inputValue(), "");
+    await dialog.getByRole("button", { name: "Confirmar y registrar venta", exact: true }).click();
     await dialog.getByRole("alert").waitFor();
-    await dialog.getByLabel("Cuenta de destino",{exact:true}).selectOption("mp");
-    await dialog.getByLabel("Confirmo que el dinero ya fue transferido a la cuenta seleccionada y quiero registrar la venta y el cobro.",{exact:true}).check();
-    await dialog.getByRole("button",{name:"Confirmar y registrar venta",exact:true}).click();
-    await dialog.waitFor({state:"hidden"});
+    await dialog.getByLabel("Cuenta de destino", { exact: true }).selectOption("mp");
+    await dialog
+      .getByLabel(
+        "Confirmo que el dinero ya fue transferido a la cuenta seleccionada y quiero registrar la venta y el cobro.",
+        { exact: true }
+      )
+      .check();
+    await dialog.getByRole("button", { name: "Confirmar y registrar venta", exact: true }).click();
+    await dialog.waitFor({ state: "hidden" });
     await cardA.waitFor({ state: "hidden" });
-    assert.ok((await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0].released_at);
-    const linkedSale=(await db.query("select id,sale_number,subtotal from public.sales where tv_board_id=$1",[a])).rows[0];
-    assert.ok(linkedSale?.id); assert.equal(Number(linkedSale.subtotal),104000.25);
-    const linkedCash=(await db.query("select medio_pago,monto from public.movimientos_caja where referencia_tabla='sales' and referencia_id=$1",[linkedSale.id])).rows;
-    assert.equal(linkedCash.length,1); assert.equal(linkedCash[0].medio_pago,"mp");
+    assert.ok(
+      (await db.query("select released_at from public.tv_boards where id=$1", [a])).rows[0]
+        .released_at
+    );
+    const linkedSale = (
+      await db.query("select id,sale_number,subtotal from public.sales where tv_board_id=$1", [a])
+    ).rows[0];
+    assert.ok(linkedSale?.id);
+    assert.equal(Number(linkedSale.subtotal), 104000.25);
+    const linkedCash = (
+      await db.query(
+        "select medio_pago,monto from public.movimientos_caja where referencia_tabla='sales' and referencia_id=$1",
+        [linkedSale.id]
+      )
+    ).rows;
+    assert.equal(linkedCash.length, 1);
+    assert.equal(linkedCash[0].medio_pago, "mp");
 
     await page.setViewportSize({ width: 1366, height: 900 });
     const rowB = page.getByRole("row").filter({ hasText: `${prefix} Anular` });
     await rowB.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     dialog = page.getByRole("dialog", { name: "Iniciar reclamo", exact: true });
-    await dialog.getByLabel("Notas del reclamo (opcional)", { exact: true }).fill("Cliente compro otra placa");
+    await dialog
+      .getByLabel("Notas del reclamo (opcional)", { exact: true })
+      .fill("Cliente compro otra placa");
     await dialog.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
-    await queue.locator("li").filter({ hasText: `${prefix} Anular` }).getByRole("button", { name: "Resolver reclamo", exact: true }).click();
+    await queue
+      .locator("li")
+      .filter({ hasText: `${prefix} Anular` })
+      .getByRole("button", { name: "Resolver reclamo", exact: true })
+      .click();
     dialog = page.getByRole("dialog", { name: "Resolver reclamo", exact: true });
     await dialog.getByLabel("Resolucion", { exact: true }).selectOption("cancel_sale");
-    await dialog.getByLabel("Notas de resolucion (opcional)", { exact: true }).fill("Devolucion confirmada, venta anulada");
+    await dialog
+      .getByLabel("Notas de resolucion (opcional)", { exact: true })
+      .fill("Devolucion confirmada, venta anulada");
     await dialog.getByRole("button", { name: "Anular venta", exact: true }).click();
     await dialog.getByRole("alert").waitFor();
-    assert.equal(await dialog.getByLabel("Notas de resolucion (opcional)", { exact: true }).inputValue(), "Devolucion confirmada, venta anulada");
-    await dialog.getByLabel("Confirmo anular esta venta sin reponer stock", { exact: true }).check();
+    assert.equal(
+      await dialog.getByLabel("Notas de resolucion (opcional)", { exact: true }).inputValue(),
+      "Devolucion confirmada, venta anulada"
+    );
+    await dialog
+      .getByLabel("Confirmo anular esta venta sin reponer stock", { exact: true })
+      .check();
     await dialog.getByRole("button", { name: "Anular venta", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
-    await page.getByRole("combobox", { name: "Filtrar placas por estado", exact: true }).selectOption("cancelled");
+    await page
+      .getByRole("combobox", { name: "Filtrar placas por estado", exact: true })
+      .selectOption("cancelled");
     await page.waitForURL("**status=cancelled*");
-    await rowB.locator("span").filter({ hasText: /^Venta anulada$/ }).waitFor();
-    assert.equal(await rowB.getByRole("button", { name: "Confirmar liberacion", exact: true }).count(), 0);
-    assert.equal(await rowB.getByRole("button", { name: "Registrar venta", exact: true }).count(), 0);
+    await rowB
+      .locator("span")
+      .filter({ hasText: /^Venta anulada$/ })
+      .waitFor();
+    assert.equal(
+      await rowB.getByRole("button", { name: "Confirmar liberacion", exact: true }).count(),
+      0
+    );
+    assert.equal(
+      await rowB.getByRole("button", { name: "Registrar venta", exact: true }).count(),
+      0
+    );
     await rowB.getByText(/^Ver historial \(/).click();
     await page.screenshot({ path: `${output}/cancelled-desktop.png`, fullPage: true });
-    const cancelled = (await db.query("select claim_status,sold_at,mercado_libre_net_amount,is_active,released_at from public.tv_boards where id=$1", [b])).rows[0];
-    assert.equal(cancelled.claim_status, "cancelled"); assert.equal(cancelled.is_active, false);
-    assert.equal(Number(cancelled.mercado_libre_net_amount), 50000.33); assert.ok(cancelled.sold_at); assert.equal(cancelled.released_at, null);
+    const cancelled = (
+      await db.query(
+        "select claim_status,sold_at,mercado_libre_net_amount,is_active,released_at from public.tv_boards where id=$1",
+        [b]
+      )
+    ).rows[0];
+    assert.equal(cancelled.claim_status, "cancelled");
+    assert.equal(cancelled.is_active, false);
+    assert.equal(Number(cancelled.mercado_libre_net_amount), 50000.33);
+    assert.ok(cancelled.sold_at);
+    assert.equal(cancelled.released_at, null);
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(url, { waitUntil: "networkidle" });
     const cardC = page.locator("article").filter({ hasText: `${prefix} Conflicto` });
     await cardC.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     dialog = page.getByRole("dialog", { name: "Iniciar reclamo", exact: true });
-    await dialog.getByLabel("Notas del reclamo (opcional)", { exact: true }).fill("Conservar esta nota despues del conflicto");
+    await dialog
+      .getByLabel("Notas del reclamo (opcional)", { exact: true })
+      .fill("Conservar esta nota despues del conflicto");
     await db.query("update public.tv_boards set model=model where id=$1", [c]);
     let releaseRequest: (() => void) | undefined;
-    const heldRequest = new Promise<void>(resolve => { releaseRequest = resolve; });
+    const heldRequest = new Promise<void>((resolve) => {
+      releaseRequest = resolve;
+    });
     let blockNext = true;
     await page.route("**/placas-tv?**", async (route: any) => {
-      if (blockNext && route.request().method() === "POST") { blockNext = false; await heldRequest; }
+      if (blockNext && route.request().method() === "POST") {
+        blockNext = false;
+        await heldRequest;
+      }
       await route.continue();
     });
     try {
       await dialog.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
       await dialog.getByRole("button", { name: "Guardando...", exact: true }).waitFor();
-      await page.keyboard.press("Tab"); await page.keyboard.press("Tab");
-      assert.ok(await dialog.evaluate((node: HTMLElement) => node.contains(document.activeElement)), "keyboard focus escaped the pending modal");
-    } finally { releaseRequest?.(); }
-    await dialog.getByRole("button", { name: "Actualizar estado sin perder notas", exact: true }).click();
-    await dialog.getByRole("button", { name: "Iniciar reclamo", exact: true }).waitFor({ state: "visible" });
-    assert.equal(await dialog.getByLabel("Notas del reclamo (opcional)", { exact: true }).inputValue(), "Conservar esta nota despues del conflicto");
+      await page.keyboard.press("Tab");
+      await page.keyboard.press("Tab");
+      assert.ok(
+        await dialog.evaluate((node: HTMLElement) => node.contains(document.activeElement)),
+        "keyboard focus escaped the pending modal"
+      );
+    } finally {
+      releaseRequest?.();
+    }
+    await dialog
+      .getByRole("button", { name: "Actualizar estado sin perder notas", exact: true })
+      .click();
+    await dialog
+      .getByRole("button", { name: "Iniciar reclamo", exact: true })
+      .waitFor({ state: "visible" });
+    assert.equal(
+      await dialog.getByLabel("Notas del reclamo (opcional)", { exact: true }).inputValue(),
+      "Conservar esta nota despues del conflicto"
+    );
     await dialog.getByRole("button", { name: "Iniciar reclamo", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
-    assert.equal((await db.query("select claim_notes from public.tv_boards where id=$1", [c])).rows[0].claim_notes, "Conservar esta nota despues del conflicto");
-    await queue.locator("li").filter({ hasText: `${prefix} Conflicto` }).getByRole("button", { name: "Resolver reclamo", exact: true }).click();
+    assert.equal(
+      (await db.query("select claim_notes from public.tv_boards where id=$1", [c])).rows[0]
+        .claim_notes,
+      "Conservar esta nota despues del conflicto"
+    );
+    await queue
+      .locator("li")
+      .filter({ hasText: `${prefix} Conflicto` })
+      .getByRole("button", { name: "Resolver reclamo", exact: true })
+      .click();
     dialog = page.getByRole("dialog", { name: "Resolver reclamo", exact: true });
     await dialog.getByLabel("Resolucion", { exact: true }).selectOption("cancel_sale");
-    await dialog.getByLabel("Confirmo anular esta venta sin reponer stock", { exact: true }).check();
+    await dialog
+      .getByLabel("Confirmo anular esta venta sin reponer stock", { exact: true })
+      .check();
     await dialog.getByRole("button", { name: "Anular venta", exact: true }).click();
     await dialog.waitFor({ state: "hidden" });
 
     for (const width of [360, 390, 768, 1024, 1366]) {
       await page.setViewportSize({ width, height: 900 });
-      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), `root overflow at ${width}`);
+      assert.ok(
+        await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1),
+        `root overflow at ${width}`
+      );
     }
     await page.goto(base + "/dashboard", { waitUntil: "networkidle" });
-    const balances=page.locator("summary").filter({hasText:/Saldo (actual por medio|disponible por cuenta)/});
+    const balances = page
+      .locator("summary")
+      .filter({ hasText: /Saldo (actual por medio|disponible por cuenta)/ });
     if (await balances.count()) await balances.click();
     await page.getByRole("link", { name: "MP retenido por reclamos", exact: true }).waitFor();
-    assert.equal((await db.query("select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) hash from public.movimientos_caja t where referencia_tabla is distinct from 'sales' or referencia_id is distinct from $1",[linkedSale.id])).rows[0].hash, cashBefore);
-    await page.setViewportSize({width:390,height:844});
-    await page.goto(base+"/ventas",{waitUntil:"networkidle"});
-    const saleCard=page.locator("article").filter({hasText:linkedSale.sale_number});
+    assert.equal(
+      (
+        await db.query(
+          "select md5(coalesce(jsonb_agg(to_jsonb(t) order by id)::text,'')) hash from public.movimientos_caja t where referencia_tabla is distinct from 'sales' or referencia_id is distinct from $1",
+          [linkedSale.id]
+        )
+      ).rows[0].hash,
+      cashBefore
+    );
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(base + "/ventas", { waitUntil: "networkidle" });
+    const saleCard = page.locator("article").filter({ hasText: linkedSale.sale_number });
     await saleCard.getByText(new RegExp(`${prefix}.*Restaurar`)).waitFor();
-    assert.equal(await saleCard.getByRole("button",{name:"Editar",exact:true}).count(),0);
-    assert.equal(await saleCard.getByRole("button",{name:"Eliminar",exact:true}).count(),0);
+    assert.equal(await saleCard.getByRole("button", { name: "Editar", exact: true }).count(), 0);
+    assert.equal(await saleCard.getByRole("button", { name: "Eliminar", exact: true }).count(), 0);
     assert.deepEqual(errors, []);
-    console.log("PASS authenticated mobile/desktop UI: claim/resume/cancel/stale recovery, explicit destination, one linked sale and net receipt, immutable sale UI, keyboard focus, no unrelated cash changes or runtime errors");
+    console.log(
+      "PASS authenticated mobile/desktop UI: claim/resume/cancel/stale recovery, explicit destination, one linked sale and net receipt, immutable sale UI, keyboard focus, no unrelated cash changes or runtime errors"
+    );
   } catch (error) {
     await page.screenshot({ path: `${output}/failure.png`, fullPage: true });
-    console.error(await page.locator("main").innerText().catch(() => "No main")); throw error;
-  } finally { await browser.close(); await db.end(); }
+    console.error(
+      await page
+        .locator("main")
+        .innerText()
+        .catch(() => "No main")
+    );
+    throw error;
+  } finally {
+    await browser.close();
+    await db.end();
+  }
 }
-void main().catch(error => { console.error(error); process.exitCode = 1; });
+void main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

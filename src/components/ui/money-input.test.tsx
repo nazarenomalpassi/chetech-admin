@@ -6,11 +6,19 @@ import { MoneyInput } from "./money-input";
 
 function Field({ initial = 0 }: { initial?: number }) {
   const [value, setValue] = useState(initial);
-  return <><MoneyInput aria-label="Monto" value={value} onValueChange={setValue} /><output>{value}</output></>;
+  return (
+    <>
+      <MoneyInput aria-label="Monto" value={value} onValueChange={setValue} />
+      <output>{value}</output>
+    </>
+  );
 }
 describe("currency entry", () => {
   beforeEach(() => vi.stubGlobal("React", React));
-  afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
   it("keeps a decimal separator while typing and accepts Argentine commas", () => {
     render(<Field />);
     const input = screen.getByRole("textbox", { name: "Monto" }) as HTMLInputElement;
@@ -25,7 +33,9 @@ describe("currency entry", () => {
     expect(screen.getByRole("status").textContent).toBe("0");
   });
   it("reflects a new external total instead of retaining an old draft", () => {
-    const { rerender } = render(<MoneyInput aria-label="Monto" value={10} onValueChange={() => {}} />);
+    const { rerender } = render(
+      <MoneyInput aria-label="Monto" value={10} onValueChange={() => {}} />
+    );
     rerender(<MoneyInput aria-label="Monto" value={200} onValueChange={() => {}} />);
     expect((screen.getByRole("textbox") as HTMLInputElement).value).toBe("200");
   });

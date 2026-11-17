@@ -9,7 +9,13 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
   const { id } = await context.params;
   return fiscalResponse(request, false, async ({ supabase }) => {
     const record = await getFiscalRecord(supabase, id);
-    const png = await QRCode.toBuffer(buildFiscalQrUrl(record), { type: "png", width: 280, margin: 1 });
-    return new NextResponse(new Uint8Array(png), { headers: { "Content-Type": "image/png", "Cache-Control": "private, no-store" } });
+    const png = await QRCode.toBuffer(buildFiscalQrUrl(record), {
+      type: "png",
+      width: 280,
+      margin: 1
+    });
+    return new NextResponse(new Uint8Array(png), {
+      headers: { "Content-Type": "image/png", "Cache-Control": "private, no-store" }
+    });
   });
 }

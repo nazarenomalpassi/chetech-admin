@@ -33,14 +33,16 @@ type RepairOrderNumberPlanOptions = {
 };
 
 export function parseRepairOrderNumber(value: string | null | undefined) {
-  const match = String(value ?? "").trim().match(/^(?:REP-)?(\d+)$/i);
+  const match = String(value ?? "")
+    .trim()
+    .match(/^(?:REP-)?(\d+)$/i);
   if (!match) {
-    throw new Error(`Numero de orden invalido: ${String(value ?? "") || "(vacio)"}.`);
+    throw new Error(`Número de orden invalido: ${String(value ?? "") || "(vacio)"}.`);
   }
 
   const number = Number(match[1]);
   if (!Number.isSafeInteger(number) || number <= 0) {
-    throw new Error(`Numero de orden fuera de rango: ${String(value)}.`);
+    throw new Error(`Número de orden fuera de rango: ${String(value)}.`);
   }
   return number;
 }
@@ -68,9 +70,7 @@ export function buildRepairOrderRenumberPlan(
     ...order,
     currentNumber: parseRepairOrderNumber(order.repairNumber)
   }));
-  const legacyOrders = snapshots.filter(
-    (order) => order.importSource === options.legacySource
-  );
+  const legacyOrders = snapshots.filter((order) => order.importSource === options.legacySource);
   const currentOrders = snapshots.filter(
     (order) =>
       !order.importSource &&
@@ -78,9 +78,7 @@ export function buildRepairOrderRenumberPlan(
       order.currentNumber <= options.currentSystemEnd
   );
   const postImportOrders = snapshots
-    .filter(
-      (order) => !order.importSource && order.currentNumber > options.currentSystemEnd
-    )
+    .filter((order) => !order.importSource && order.currentNumber > options.currentSystemEnd)
     .sort(comparePostImportOrders);
 
   const classifiedIds = new Set([
@@ -102,9 +100,7 @@ export function buildRepairOrderRenumberPlan(
     const legacyNumber = parseRepairOrderNumber(order.legacyOrderNumber);
     const previousId = legacyByNumber.get(legacyNumber);
     if (previousId) {
-      throw new Error(
-        `Numero historico repetido ${legacyNumber} en ${previousId} y ${order.id}.`
-      );
+      throw new Error(`Número historico repetido ${legacyNumber} en ${previousId} y ${order.id}.`);
     }
     legacyByNumber.set(legacyNumber, order.id);
     return { ...order, legacyNumber };
@@ -134,9 +130,7 @@ export function buildRepairOrderRenumberPlan(
 
   const entries: RepairOrderNumberPlanEntry[] = [
     ...parsedLegacyOrders.map((order) => {
-      const appliedGapCount = closedLegacyGaps.filter(
-        (gap) => gap < order.legacyNumber
-      ).length;
+      const appliedGapCount = closedLegacyGaps.filter((gap) => gap < order.legacyNumber).length;
       return {
         ...order,
         newNumber: order.legacyNumber - appliedGapCount,
@@ -164,7 +158,7 @@ export function buildRepairOrderRenumberPlan(
   const targetNumbers = new Map<number, string>();
   for (const entry of entries) {
     if (entry.newNumber <= 0 || !Number.isSafeInteger(entry.newNumber)) {
-      throw new Error(`Numero final invalido para la orden ${entry.id}.`);
+      throw new Error(`Número final invalido para la orden ${entry.id}.`);
     }
     const previousId = targetNumbers.get(entry.newNumber);
     if (previousId) {
@@ -175,10 +169,7 @@ export function buildRepairOrderRenumberPlan(
     targetNumbers.set(entry.newNumber, entry.id);
   }
 
-  const maximumNumber = entries.reduce(
-    (maximum, entry) => Math.max(maximum, entry.newNumber),
-    0
-  );
+  const maximumNumber = entries.reduce((maximum, entry) => Math.max(maximum, entry.newNumber), 0);
 
   return {
     entries,

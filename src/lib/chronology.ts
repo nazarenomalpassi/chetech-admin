@@ -3,9 +3,7 @@ type OrderableQuery = {
 };
 
 export function applyStableCreationOrder<T extends OrderableQuery>(query: T): T {
-  return query
-    .order("created_at", { ascending: false })
-    .order("id", { ascending: false }) as T;
+  return query.order("created_at", { ascending: false }).order("id", { ascending: false }) as T;
 }
 
 export function getRepairWriteDates(entryDate: string) {

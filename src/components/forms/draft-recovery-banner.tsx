@@ -21,16 +21,19 @@ export function DraftRecoveryBanner({
   return (
     <section
       aria-labelledby="draft-recovery-title"
-      className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950"
+      className="rounded-xl border border-warning-border bg-warning-soft p-4 text-warning"
       role="status"
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-start gap-3">
           <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
-            <h2 className="font-semibold" id="draft-recovery-title">Encontramos datos sin guardar</h2>
-            <p className="mt-1 text-sm leading-5 text-amber-900">
-              El borrador se guardó en este dispositivo el {timestamp}. Podés recuperarlo o descartarlo.
+            <h2 className="font-semibold" id="draft-recovery-title">
+              Encontramos datos sin guardar
+            </h2>
+            <p className="mt-1 text-sm leading-5 text-warning">
+              El borrador se guardó en este dispositivo el {timestamp}. Podés recuperarlo o
+              descartarlo.
             </p>
           </div>
         </div>

@@ -1,16 +1,36 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ admin: vi.fn(), client: vi.fn(), service: vi.fn(), export: vi.fn(), read: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  admin: vi.fn(),
+  client: vi.fn(),
+  service: vi.fn(),
+  export: vi.fn(),
+  read: vi.fn()
+}));
 vi.mock("@/lib/auth", () => ({ requireAdmin: mocks.admin }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: mocks.client }));
-vi.mock("./operational-export", () => ({ createOperationalExport: mocks.export, readExportTable: mocks.read }));
+vi.mock("./operational-export", () => ({
+  createOperationalExport: mocks.export,
+  readExportTable: mocks.read
+}));
 vi.mock("@supabase/supabase-js", () => ({ createClient: mocks.service }));
 import { GET } from "./route";
 import * as XLSX from "xlsx";
-beforeEach(() => { vi.resetAllMocks(); mocks.admin.mockResolvedValue({ role: "admin" }); mocks.client.mockResolvedValue({}); mocks.service.mockReturnValue({ private: true }); mocks.read.mockResolvedValue([]); vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://unit.supabase.co"); vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-secret"); });
+beforeEach(() => {
+  vi.resetAllMocks();
+  mocks.admin.mockResolvedValue({ role: "admin" });
+  mocks.client.mockResolvedValue({});
+  mocks.service.mockReturnValue({ private: true });
+  mocks.read.mockResolvedValue([]);
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://unit.supabase.co");
+  vi.stubEnv("SUPABASE_SERVICE_ROLE_KEY", "test-secret");
+});
 afterEach(() => vi.unstubAllEnvs());
 describe("backup export route", () => {
   it("exports private JSON only for admins with an explicit format", async () => {
-    mocks.export.mockResolvedValue({ format: "chetech-operational-export", manifest: { fullDatabaseBackup: false } });
+    mocks.export.mockResolvedValue({
+      format: "chetech-operational-export",
+      manifest: { fullDatabaseBackup: false }
+    });
     const response = await GET(new Request("https://test/api/backup?format=json"));
     expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(response.headers.get("content-type")).toContain("application/json");
@@ -65,7 +85,16 @@ describe("backup export route", () => {
   it("keeps the seven legacy Excel sheets and identifies their limited scope", async () => {
     const response = await GET(new Request("https://test/api/backup"));
     const workbook = XLSX.read(await response.arrayBuffer());
-    expect(workbook.SheetNames).toEqual(["Productos", "Ventas", "Items venta", "Gastos", "Reparaciones", "Facturacion", "Caja", "Alcance"]);
+    expect(workbook.SheetNames).toEqual([
+      "Productos",
+      "Ventas",
+      "Items venta",
+      "Gastos",
+      "Reparaciones",
+      "Facturación",
+      "Caja",
+      "Alcance"
+    ]);
     expect(mocks.read).toHaveBeenCalledTimes(7);
     expect(response.headers.get("cache-control")).toBe("private, no-store");
   });
@@ -77,8 +106,18 @@ describe("backup export route", () => {
   });
   it("keeps board sale origins and item descriptions in the Excel extract", async () => {
     await GET(new Request("https://test/api/backup"));
-    expect(mocks.read).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ table: "sales" }), 500, expect.stringContaining("tv_board_id"));
-    expect(mocks.read).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ table: "sale_items" }), 500, expect.stringContaining("description"));
+    expect(mocks.read).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ table: "sales" }),
+      500,
+      expect.stringContaining("tv_board_id")
+    );
+    expect(mocks.read).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ table: "sale_items" }),
+      500,
+      expect.stringContaining("description")
+    );
   });
   it("rejects unknown formats before reading any operational data", async () => {
     const response = await GET(new Request("https://test/api/backup?format=sql"));
@@ -88,7 +127,9 @@ describe("backup export route", () => {
   });
   it("does not access data when authorization fails", async () => {
     mocks.admin.mockRejectedValue(new Error("forbidden"));
-    await expect(GET(new Request("https://test/api/backup?format=json"))).rejects.toThrow("forbidden");
+    await expect(GET(new Request("https://test/api/backup?format=json"))).rejects.toThrow(
+      "forbidden"
+    );
     expect(mocks.client).not.toHaveBeenCalled();
   });
 });

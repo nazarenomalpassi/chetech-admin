@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { applyBalanceTransferDeltas, normalizeBalanceTransferMethod, toCashMethod } from "@/features/balance-transfers/model";
+import {
+  applyBalanceTransferDeltas,
+  normalizeBalanceTransferMethod,
+  toCashMethod
+} from "@/features/balance-transfers/model";
 
 describe("balance transfer model", () => {
   it("moves money from the origin account to the destination account without changing the total", () => {

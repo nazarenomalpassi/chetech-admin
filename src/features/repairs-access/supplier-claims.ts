@@ -2,7 +2,7 @@ export const SUPPLIER_CLAIM_LABELS = {
   open: "Reclamo abierto",
   sent: "Enviado al proveedor",
   resolved: "Resuelto",
-  cancelled: "Cancelado",
+  cancelled: "Cancelado"
 } as const;
 export type SupplierClaim = {
   id: string;

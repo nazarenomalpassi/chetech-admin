@@ -13,7 +13,9 @@ function toWhatsAppOrder(order: RepairAccessOrderRecord): RepairAccessWhatsAppOr
     repairNumber: order.repairNumber,
     customerName: order.customer.fullName,
     phone: order.customer.phone || order.customer.alternatePhone,
-    deviceLabel: [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - "),
+    deviceLabel: [order.device.deviceType, order.device.brand, order.device.model]
+      .filter(Boolean)
+      .join(" - "),
     budgetAmount: order.budgetAmount,
     finalAmount: order.finalAmount,
     status: order.status,
@@ -44,7 +46,10 @@ export function RepairAccessWhatsAppButton({
   if (!href) {
     return (
       <span
-        className={cn(buttonVariants({ size, variant, className }), "cursor-not-allowed opacity-50")}
+        className={cn(
+          buttonVariants({ size, variant, className }),
+          "cursor-not-allowed opacity-50"
+        )}
         title="El cliente no tiene un telefono valido para WhatsApp"
       >
         Sin WhatsApp
@@ -69,19 +74,39 @@ export function RepairAccessWhatsAppPanel({ order }: { order: RepairAccessOrderR
   const phone = order.customer.phone || order.customer.alternatePhone;
 
   return (
-    <div className="mt-4 hidden border-t border-slate-200 pt-3 lg:block">
+    <div className="mt-4 hidden border-t border-border pt-3 lg:block">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-700">WhatsApp del cliente</p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm font-medium text-body">WhatsApp del cliente</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             {phone ? `Mensaje preparado para ${phone}.` : "Carga un telefono para enviar avisos."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <RepairAccessWhatsAppButton kind="budget" label="Presupuesto" order={order} variant="secondary" />
-          <RepairAccessWhatsAppButton kind="ready" label="Listo para retirar" order={order} variant="secondary" />
-          <RepairAccessWhatsAppButton kind="no_solution" label="Sin solucion" order={order} variant="secondary" />
-          <RepairAccessWhatsAppButton kind="general" label="Mensaje general" order={order} variant="ghost" />
+          <RepairAccessWhatsAppButton
+            kind="budget"
+            label="Presupuesto"
+            order={order}
+            variant="secondary"
+          />
+          <RepairAccessWhatsAppButton
+            kind="ready"
+            label="Listo para retirar"
+            order={order}
+            variant="secondary"
+          />
+          <RepairAccessWhatsAppButton
+            kind="no_solution"
+            label="Sin solución"
+            order={order}
+            variant="secondary"
+          />
+          <RepairAccessWhatsAppButton
+            kind="general"
+            label="Mensaje general"
+            order={order}
+            variant="ghost"
+          />
         </div>
       </div>
     </div>

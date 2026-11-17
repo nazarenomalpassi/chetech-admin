@@ -32,12 +32,15 @@ export function DialogShell({
   }, [onClose]);
 
   useEffect(() => {
-    const previousActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousActiveElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     const panel = panelRef.current;
     document.body.style.overflow = "hidden";
 
-    const focusableElements = panel ? Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector)) : [];
+    const focusableElements = panel
+      ? Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector))
+      : [];
     (focusableElements[0] ?? panel)?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {
@@ -87,7 +90,7 @@ export function DialogShell({
         aria-labelledby={labelledBy}
         aria-modal="true"
         className={cn(
-          "max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-y-auto overscroll-contain rounded-xl border border-line bg-white p-4 shadow-pop sm:rounded-2xl sm:p-6",
+          "max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-4 shadow-pop sm:rounded-2xl sm:p-6",
           panelClassName
         )}
         ref={panelRef}

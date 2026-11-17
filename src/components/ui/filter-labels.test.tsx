@@ -5,11 +5,18 @@ import { ProductFilters } from "@/features/products/components/product-filters";
 import { BoardFilters } from "@/features/tv-boards/components/board-filters";
 
 Object.assign(globalThis, { React });
-vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }), useSearchParams: () => new URLSearchParams() }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams()
+}));
 describe("filter accessible names", () => {
   it("names product search, category and status independently", () => {
     const html = renderToStaticMarkup(<ProductFilters categories={[]} />);
-    for (const label of ["Buscar productos", "Filtrar productos por categoria", "Filtrar productos por estado"]) {
+    for (const label of [
+      "Buscar productos",
+      "Filtrar productos por categoria",
+      "Filtrar productos por estado"
+    ]) {
       expect(html).toContain(`aria-label="${label}"`);
     }
   });

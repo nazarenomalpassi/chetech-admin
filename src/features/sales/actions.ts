@@ -5,10 +5,18 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
-import { deleteCashMovement, deleteStockMovement, replaceCashMovements, replaceStockMovements } from "@/lib/accounting";
+import {
+  deleteCashMovement,
+  deleteStockMovement,
+  replaceCashMovements,
+  replaceStockMovements
+} from "@/lib/accounting";
 import { requireAdmin } from "@/lib/auth";
 import { getPaymentTotal, parsePaymentSplits } from "@/lib/payment-splits";
-import { getFriendlyDatabaseError, isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
+import {
+  getFriendlyDatabaseError,
+  isMissingDatabaseFunctionError
+} from "@/lib/supabase/rpc-errors";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { toOperationalDateTime } from "@/lib/utils";
 import { getSaleValidationError } from "@/features/sales/validation";
@@ -65,7 +73,11 @@ function redirectWithError(message: string, id?: string): never {
 }
 
 async function getNextSaleNumber(supabase: any) {
-  const { data, error } = await supabase.from("sales").select("sale_number").like("sale_number", "V-%").limit(10000);
+  const { data, error } = await supabase
+    .from("sales")
+    .select("sale_number")
+    .like("sale_number", "V-%")
+    .limit(10000);
   if (error) throw error;
 
   const maxSaleNumber = Math.max(
@@ -116,16 +128,27 @@ export async function saveSaleAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar la venta", String(formData.get("id") ?? ""));
+    redirectWithError(
+      parsed.error.issues[0]?.message ?? "No se pudo validar la venta",
+      String(formData.get("id") ?? "")
+    );
   }
 
   const supabase = await createServerSupabaseClient();
   const input = parsed.data;
   const user = await requireAdmin();
   if (input.id) {
-    const { data: origin, error } = await (supabase as any).from("sales").select("tv_board_id").eq("id", input.id).maybeSingle();
-    if (error) redirectWithError("No se pudo verificar el origen de la venta. Reintenta.", input.id);
-    if (origin?.tv_board_id) redirectWithError("Esta venta proviene de una liberacion de placa y no se modifica por separado.");
+    const { data: origin, error } = await (supabase as any)
+      .from("sales")
+      .select("tv_board_id")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error)
+      redirectWithError("No se pudo verificar el origen de la venta. Reintenta.", input.id);
+    if (origin?.tv_board_id)
+      redirectWithError(
+        "Esta venta proviene de una liberacion de placa y no se modifica por separado."
+      );
   }
   const subtotal = input.items.reduce((acc, item) => acc + item.quantity * item.unitPrice, 0);
   const paymentTotal = getPaymentTotal(input.payments);
@@ -154,7 +177,10 @@ export async function saveSaleAction(formData: FormData) {
 
   if (!isMissingDatabaseFunctionError(atomicResult.error, "save_sale_atomic")) {
     redirectWithError(
-      getFriendlyDatabaseError(atomicResult.error, "No se pudo guardar la venta. Intenta nuevamente."),
+      getFriendlyDatabaseError(
+        atomicResult.error,
+        "No se pudo guardar la venta. Intenta nuevamente."
+      ),
       input.id
     );
   }
@@ -170,7 +196,9 @@ export async function saveSaleAction(formData: FormData) {
     redirectWithError("No se encontraron todos los productos seleccionados.", input.id);
   }
 
-  const productsById = new Map<string, any>((products ?? []).map((product: any) => [product.id, product]));
+  const productsById = new Map<string, any>(
+    (products ?? []).map((product: any) => [product.id, product])
+  );
 
   const oldItemsResult = input.id
     ? await (supabase as any)
@@ -198,7 +226,10 @@ export async function saveSaleAction(formData: FormData) {
     const availableStock = Number(product.stock) + (oldQuantitiesByProduct.get(productId) ?? 0);
 
     if (availableStock < quantity) {
-      redirectWithError(`Stock insuficiente para ${product.name}. Disponible: ${availableStock}.`, input.id);
+      redirectWithError(
+        `Stock insuficiente para ${product.name}. Disponible: ${availableStock}.`,
+        input.id
+      );
     }
   }
 
@@ -247,7 +278,11 @@ export async function saveSaleAction(formData: FormData) {
 
   await (supabase as any).from("sale_items").delete().eq("sale_id", saleId);
   await (supabase as any).from("sale_payments").delete().eq("sale_id", saleId);
-  await (supabase as any).from("stock_movements").delete().eq("reference_id", saleId).eq("movement_type", "sale");
+  await (supabase as any)
+    .from("stock_movements")
+    .delete()
+    .eq("reference_id", saleId)
+    .eq("movement_type", "sale");
 
   const saleItems = input.items.map((item) => {
     const product = productsById.get(item.productId);
@@ -284,12 +319,17 @@ export async function saveSaleAction(formData: FormData) {
     }))
   );
 
-  const stockProductIds = Array.from(new Set([...oldQuantitiesByProduct.keys(), ...newQuantitiesByProduct.keys()]));
+  const stockProductIds = Array.from(
+    new Set([...oldQuantitiesByProduct.keys(), ...newQuantitiesByProduct.keys()])
+  );
   for (const productId of stockProductIds) {
     const product = productsById.get(productId);
     const currentStock = product
       ? Number(product.stock)
-      : Number((await (supabase as any).from("products").select("stock").eq("id", productId).single()).data?.stock ?? 0);
+      : Number(
+          (await (supabase as any).from("products").select("stock").eq("id", productId).single())
+            .data?.stock ?? 0
+        );
     const restoredStock = currentStock + (oldQuantitiesByProduct.get(productId) ?? 0);
     const newStock = restoredStock - (newQuantitiesByProduct.get(productId) ?? 0);
     await (supabase as any).from("products").update({ stock: newStock }).eq("id", productId);
@@ -339,9 +379,16 @@ export async function deleteSaleAction(formData: FormData) {
   const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
 
-  const { data: origin, error: originError } = await (supabase as any).from("sales").select("tv_board_id").eq("id", id).maybeSingle();
+  const { data: origin, error: originError } = await (supabase as any)
+    .from("sales")
+    .select("tv_board_id")
+    .eq("id", id)
+    .maybeSingle();
   if (originError) redirectWithError("No se pudo verificar el origen de la venta. Reintenta.");
-  if (origin?.tv_board_id) redirectWithError("Esta venta proviene de una liberacion de placa y conserva su registro financiero.");
+  if (origin?.tv_board_id)
+    redirectWithError(
+      "Esta venta proviene de una liberacion de placa y conserva su registro financiero."
+    );
 
   const atomicResult = await (supabase as any).rpc("delete_sale_atomic", { p_sale_id: id });
   if (!atomicResult.error && atomicResult.data?.id) {
@@ -352,7 +399,9 @@ export async function deleteSaleAction(formData: FormData) {
   }
 
   if (!isMissingDatabaseFunctionError(atomicResult.error, "delete_sale_atomic")) {
-    redirectWithError(getFriendlyDatabaseError(atomicResult.error, "No se pudo eliminar la venta."));
+    redirectWithError(
+      getFriendlyDatabaseError(atomicResult.error, "No se pudo eliminar la venta.")
+    );
   }
 
   const { data: items } = await (supabase as any)
@@ -375,7 +424,11 @@ export async function deleteSaleAction(formData: FormData) {
     }
   }
 
-  await (supabase as any).from("stock_movements").delete().eq("reference_id", id).eq("movement_type", "sale");
+  await (supabase as any)
+    .from("stock_movements")
+    .delete()
+    .eq("reference_id", id)
+    .eq("movement_type", "sale");
   await deleteStockMovement(supabase as any, "sales", id);
   await deleteCashMovement(supabase as any, "sales", id);
   const { error } = await (supabase as any).from("sales").delete().eq("id", id);

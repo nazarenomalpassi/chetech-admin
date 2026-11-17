@@ -34,7 +34,7 @@ describe("sortVisitsForAgenda", () => {
         },
         {
           id: "1",
-          customerName: "Proxima",
+          customerName: "Próxima",
           customerPhone: "1",
           address: "Dir 1",
           visitDate: "2026-07-09",
@@ -64,7 +64,7 @@ describe("sortVisitsForAgenda", () => {
 
     expect(sorted.map((visit) => visit.customerName)).toEqual([
       "Hoy temprano",
-      "Proxima",
+      "Próxima",
       "Realizada",
       "Cancelado"
     ]);

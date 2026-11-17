@@ -9,10 +9,8 @@ import {
 } from "@/features/dashboard/financial-summary";
 import { getTvBoardFinancialSummary } from "@/features/tv-boards/sales";
 import { getDashboardRange } from "@/features/dashboard/range";
-import { getDashboardInstallmentsData } from "@/features/installments/queries";
 import { getVisitsTodayDashboardSummary } from "@/features/visits/queries";
 import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
-import { getLocalDateInputValue } from "@/lib/utils";
 import { readRecordPages } from "@/lib/read-record-pages";
 
 async function getDashboardCashSummary(
@@ -60,12 +58,18 @@ async function getDashboardCashSummary(
     const amount = Number(movement.monto);
     const isInRange = movement.fecha >= range.startIso && movement.fecha < range.endIso;
 
-    if (["venta", "reparacion", "facturacion"].includes(movement.tipo)) row.total_income = Number(row.total_income) + amount;
-    if (["gasto", "sueldo"].includes(movement.tipo)) row.total_outcome = Number(row.total_outcome) + amount;
-    if (isInRange && movement.tipo === "venta") row.period_sales = Number(row.period_sales) + amount;
-    if (isInRange && movement.tipo === "reparacion") row.period_repairs = Number(row.period_repairs) + amount;
-    if (isInRange && movement.tipo === "gasto") row.period_expenses = Number(row.period_expenses) + amount;
-    if (isInRange && movement.tipo === "facturacion") row.period_invoices = Number(row.period_invoices) + amount;
+    if (["venta", "reparacion", "facturacion"].includes(movement.tipo))
+      row.total_income = Number(row.total_income) + amount;
+    if (["gasto", "sueldo"].includes(movement.tipo))
+      row.total_outcome = Number(row.total_outcome) + amount;
+    if (isInRange && movement.tipo === "venta")
+      row.period_sales = Number(row.period_sales) + amount;
+    if (isInRange && movement.tipo === "reparacion")
+      row.period_repairs = Number(row.period_repairs) + amount;
+    if (isInRange && movement.tipo === "gasto")
+      row.period_expenses = Number(row.period_expenses) + amount;
+    if (isInRange && movement.tipo === "facturacion")
+      row.period_invoices = Number(row.period_invoices) + amount;
     summary.set(method, row);
   }
 
@@ -83,30 +87,31 @@ export async function getDashboardData({
   const cashSettingsPromise = getCashSettings();
   const range = getDashboardRange(dateFrom, dateTo);
 
-  const todayDate = getLocalDateInputValue();
   const [
     lowStockProductsRaw,
     topProducts,
     invoicesInRange,
     cashSummaryRows,
     tvBoardSales,
-    installmentsDashboard,
     balanceTransfers,
     visitsDashboard,
     cashSettings
   ] = await Promise.all([
     readRecordPages<{ id: string; name: string; stock: number; min_stock: number }>(
-      (from, to) => supabase
-        .from("products")
-        .select("id, name, stock, min_stock")
-        .order("stock", { ascending: true })
-        .order("id", { ascending: true })
-        .range(from, to),
+      (from, to) =>
+        supabase
+          .from("products")
+          .select("id, name, stock, min_stock")
+          .order("stock", { ascending: true })
+          .order("id", { ascending: true })
+          .range(from, to),
       500,
       (product) => product.id
-    ).then((data) => ({ data, error: null })).catch(() => {
-      throw new Error("No se pudieron cargar los datos de productos. Intenta nuevamente.");
-    }),
+    )
+      .then((data) => ({ data, error: null }))
+      .catch(() => {
+        throw new Error("No se pudieron cargar los datos de productos. Intenta nuevamente.");
+      }),
     (supabase as any).rpc("get_top_products", {
       date_from: range.startIso,
       date_to: range.endIso
@@ -118,12 +123,25 @@ export async function getDashboardData({
       .gte("created_at", range.startIso)
       .lt("created_at", range.endIso),
     getDashboardCashSummary(supabase as any, range, cashSettingsPromise),
-    readRecordPages<any>((from, to) => (supabase as any)
-      .from("tv_boards")
-      .select("id,sold_at,release_date,released_at,mercado_libre_net_amount,claim_status", { count: "exact" })
-      .not("sold_at", "is", null).order("id").range(from, to), 500, board => board.id)
-      .then(data => ({ data, error: null })).catch(() => { throw new Error("No se pudieron cargar las liberaciones y reclamos de placas. Intenta nuevamente."); }),
-    getDashboardInstallmentsData(supabase as any, todayDate),
+    readRecordPages<any>(
+      (from, to) =>
+        (supabase as any)
+          .from("tv_boards")
+          .select("id,sold_at,release_date,released_at,mercado_libre_net_amount,claim_status", {
+            count: "exact"
+          })
+          .not("sold_at", "is", null)
+          .order("id")
+          .range(from, to),
+      500,
+      (board) => board.id
+    )
+      .then((data) => ({ data, error: null }))
+      .catch(() => {
+        throw new Error(
+          "No se pudieron cargar las liberaciones y reclamos de placas. Intenta nuevamente."
+        );
+      }),
     getBalanceTransfers(supabase as any),
     getVisitsTodayDashboardSummary(),
     cashSettingsPromise
@@ -131,7 +149,7 @@ export async function getDashboardData({
 
   for (const [label, result] of [
     ["productos", lowStockProductsRaw],
-    ["productos mas vendidos", topProducts],
+    ["productos más vendidos", topProducts],
     ["facturacion", invoicesInRange],
     ["liberaciones de MercadoLibre", tvBoardSales]
   ] as const) {
@@ -154,14 +172,15 @@ export async function getDashboardData({
     }))
   );
   const boardSummary = getTvBoardFinancialSummary(
-        ((tvBoardSales.data ?? []) as any[]).map((board) => ({
-          soldAt: board.sold_at,
-          releaseDate: board.release_date,
-          releasedAt: board.released_at,
-          claimStatus: board.claim_status,
-          netAmount: board.mercado_libre_net_amount === null ? null : Number(board.mercado_libre_net_amount)
-        }))
-      );
+    ((tvBoardSales.data ?? []) as any[]).map((board) => ({
+      soldAt: board.sold_at,
+      releaseDate: board.release_date,
+      releasedAt: board.released_at,
+      claimStatus: board.claim_status,
+      netAmount:
+        board.mercado_libre_net_amount === null ? null : Number(board.mercado_libre_net_amount)
+    }))
+  );
 
   const accountBalances = CASH_METHODS.map((method) => {
     const summary = normalizedCashSummary.get(method);
@@ -201,7 +220,6 @@ export async function getDashboardData({
     topProducts: topProducts.data ?? [],
     invoiceIncomeToday,
     realProfitToday,
-    installmentsDashboard,
     visitsDashboard,
     range
   };

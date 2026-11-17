@@ -89,17 +89,20 @@ type RawOrder = {
     visual_condition: string | null;
     notes: string | null;
   } | null;
-  storefront_customer?: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    phone: string | null;
-  } | {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    phone: string | null;
-  }[] | null;
+  storefront_customer?:
+    | {
+        id: string;
+        full_name: string | null;
+        email: string | null;
+        phone: string | null;
+      }
+    | {
+        id: string;
+        full_name: string | null;
+        email: string | null;
+        phone: string | null;
+      }[]
+    | null;
 };
 
 export type StorefrontCustomerSummary = {
@@ -245,13 +248,13 @@ function getDaysOpen(intakeDate: string) {
 
 export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
   const storefrontCustomer = Array.isArray(order.storefront_customer)
-    ? order.storefront_customer[0] ?? null
-    : order.storefront_customer ?? null;
+    ? (order.storefront_customer[0] ?? null)
+    : (order.storefront_customer ?? null);
   const hasWarranty = Boolean(
     order.has_warranty ??
-      (Number(order.warranty_days ?? 0) > 0 ||
-        Boolean(order.warranty_start) ||
-        Boolean(order.warranty_until))
+    (Number(order.warranty_days ?? 0) > 0 ||
+      Boolean(order.warranty_start) ||
+      Boolean(order.warranty_until))
   );
   const warranty = getWarrantyState({
     hasWarranty,
@@ -265,8 +268,11 @@ export function mapOrder(order: RawOrder): RepairAccessOrderRecord {
 
   return {
     id: order.id,
-    whatsappDocumentConsent: order.whatsapp_document_consent === true && Boolean(order.whatsapp_consent_phone)
-      && order.whatsapp_consent_phone === normalizeWhatsAppPhone(order.repair_access_customers?.phone ?? ""),
+    whatsappDocumentConsent:
+      order.whatsapp_document_consent === true &&
+      Boolean(order.whatsapp_consent_phone) &&
+      order.whatsapp_consent_phone ===
+        normalizeWhatsAppPhone(order.repair_access_customers?.phone ?? ""),
     repairNumber: order.repair_number ?? "Sin numero",
     intakeDate: order.intake_date,
     issueReported: order.issue_reported,
@@ -418,32 +424,40 @@ export async function getRepairsAccessDashboard({
         id, full_name, email, phone
       )
     `;
-  const ordersPromise = readRecordPages<any>((from, to) => includeAdministration
-    ? applyStableCreationOrder(
-        (supabase as any)
-          .from("repair_access_orders")
-          .select(orderColumns)
-      )
-        .range(from, to)
-    : (supabase as any).rpc("get_technician_repair_orders", { p_order_id: null }).range(from, to),
+  const ordersPromise = readRecordPages<any>(
+    (from, to) =>
+      includeAdministration
+        ? applyStableCreationOrder(
+            (supabase as any).from("repair_access_orders").select(orderColumns)
+          ).range(from, to)
+        : (supabase as any)
+            .rpc("get_technician_repair_orders", { p_order_id: null })
+            .range(from, to),
     500,
-    (row) => includeAdministration ? row.id : row.payload.id);
+    (row) => (includeAdministration ? row.id : row.payload.id)
+  );
   const [ordersResult, customerCount, recentCustomers, latestImport] = await Promise.all([
     ordersPromise,
     includeAdministration
-      ? (supabase as any).from("repair_access_customers").select("id", { count: "exact", head: true })
+      ? (supabase as any)
+          .from("repair_access_customers")
+          .select("id", { count: "exact", head: true })
       : Promise.resolve({ count: 0, error: null }),
     includeAdministration
       ? (supabase as any)
           .from("repair_access_customers")
-          .select("id, full_name, phone, alternate_phone, dni, email, address, notes, source, created_at")
+          .select(
+            "id, full_name, phone, alternate_phone, dni, email, address, notes, source, created_at"
+          )
           .order("created_at", { ascending: false })
           .limit(40)
       : Promise.resolve({ data: [], error: null }),
     includeAdministration
       ? (supabase as any)
           .from("repair_access_import_batches")
-          .select("id, file_name, total_rows, imported_count, updated_count, duplicate_count, error_count, created_at")
+          .select(
+            "id, file_name, total_rows, imported_count, updated_count, duplicate_count, error_count, created_at"
+          )
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle()
@@ -459,15 +473,28 @@ export async function getRepairsAccessDashboard({
     : ordersResult.map((row: { payload: RawOrder }) => row.payload);
   const orders: RepairAccessOrderRecord[] = rawOrders.map((order: RawOrder) => mapOrder(order));
   for (let from = 0; from < orders.length; from += 100) {
-    const warrantyReturns = await getOrderWarrantyReturns(orders.slice(from, from + 100).map((order) => order.id));
-    orders.slice(from, from + 100).forEach((order) => { order.warrantyReturns = warrantyReturns.filter((r) => r.orderId === order.id); });
-    const contextResult = await (supabase as any).rpc("get_workshop_context", { p_order_ids: orders.slice(from, from + 100).map((order) => order.id) });
+    const warrantyReturns = await getOrderWarrantyReturns(
+      orders.slice(from, from + 100).map((order) => order.id)
+    );
+    orders.slice(from, from + 100).forEach((order) => {
+      order.warrantyReturns = warrantyReturns.filter((r) => r.orderId === order.id);
+    });
+    const contextResult = await (supabase as any).rpc("get_workshop_context", {
+      p_order_ids: orders.slice(from, from + 100).map((order) => order.id)
+    });
     if (contextResult.error) {
       if (contextResult.error.code === "PGRST202" || contextResult.error.code === "42883") break;
       throw new Error(contextResult.error.message);
     }
-    const contexts = new Map<string, WorkshopOrderContext>((contextResult.data ?? []).map((context: WorkshopOrderContext & { id: string }) => [context.id, context]));
-    orders.slice(from, from + 100).forEach((order) => { order.workflow = contexts.get(order.id); });
+    const contexts = new Map<string, WorkshopOrderContext>(
+      (contextResult.data ?? []).map((context: WorkshopOrderContext & { id: string }) => [
+        context.id,
+        context
+      ])
+    );
+    orders.slice(from, from + 100).forEach((order) => {
+      order.workflow = contexts.get(order.id);
+    });
   }
   const today = getOperationalDate();
   const statusCounts = repairAccessStatusValues.reduce<Record<string, number>>((acc, status) => {
@@ -479,12 +506,28 @@ export async function getRepairsAccessDashboard({
     statusCounts[order.status] = (statusCounts[order.status] ?? 0) + 1;
   });
 
-  const activeOrders = orders.filter((order: RepairAccessOrderRecord) => !repairAccessClosedStatuses.includes(order.status as any)).length;
+  const activeOrders = orders.filter(
+    (order: RepairAccessOrderRecord) => !repairAccessClosedStatuses.includes(order.status as any)
+  ).length;
   const paidOrders = orders.filter((order: RepairAccessOrderRecord) => order.isPaid).length;
-  const pendingBudget = orders.filter((order: RepairAccessOrderRecord) => ["pendiente_revision", "en_revision"].includes(order.status)).length;
-  const totalProjected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.finalAmount || order.budgetAmount || 0), 0);
-  const totalCollected = orders.reduce((acc: number, order: RepairAccessOrderRecord) => acc + (order.isPaid ? order.finalAmount || order.budgetAmount || 0 : 0), 0);
-  const delayedOrders = orders.filter((order: RepairAccessOrderRecord) => !repairAccessClosedStatuses.includes(order.status as any) && getDaysOpen(order.intakeDate) >= 7).length;
+  const pendingBudget = orders.filter((order: RepairAccessOrderRecord) =>
+    ["pendiente_revision", "en_revision"].includes(order.status)
+  ).length;
+  const totalProjected = orders.reduce(
+    (acc: number, order: RepairAccessOrderRecord) =>
+      acc + (order.finalAmount || order.budgetAmount || 0),
+    0
+  );
+  const totalCollected = orders.reduce(
+    (acc: number, order: RepairAccessOrderRecord) =>
+      acc + (order.isPaid ? order.finalAmount || order.budgetAmount || 0 : 0),
+    0
+  );
+  const delayedOrders = orders.filter(
+    (order: RepairAccessOrderRecord) =>
+      !repairAccessClosedStatuses.includes(order.status as any) &&
+      getDaysOpen(order.intakeDate) >= 7
+  ).length;
 
   return {
     orders,
@@ -520,11 +563,21 @@ export async function getRepairsAccessDashboard({
       pendingBudget,
       totalProjected,
       totalCollected,
-      intakeToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.intakeDate) === today).length,
-      deliveredToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.deliveredAt) === today).length,
-      collectedToday: orders.filter((order: RepairAccessOrderRecord) => toDateOnly(order.paidAt) === today).length,
-      readyToPickup: orders.filter((order: RepairAccessOrderRecord) => order.status === "listo_para_retirar").length,
-      waitingCustomer: orders.filter((order: RepairAccessOrderRecord) => order.status === "presupuestado").length,
+      intakeToday: orders.filter(
+        (order: RepairAccessOrderRecord) => toDateOnly(order.intakeDate) === today
+      ).length,
+      deliveredToday: orders.filter(
+        (order: RepairAccessOrderRecord) => toDateOnly(order.deliveredAt) === today
+      ).length,
+      collectedToday: orders.filter(
+        (order: RepairAccessOrderRecord) => toDateOnly(order.paidAt) === today
+      ).length,
+      readyToPickup: orders.filter(
+        (order: RepairAccessOrderRecord) => order.status === "listo_para_retirar"
+      ).length,
+      waitingCustomer: orders.filter(
+        (order: RepairAccessOrderRecord) => order.status === "presupuestado"
+      ).length,
       delayedOrders,
       activeWarranties: orders.filter((order: RepairAccessOrderRecord) =>
         ["active", "expires_today"].includes(order.warranty.code)

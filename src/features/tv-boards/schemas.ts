@@ -17,7 +17,15 @@ export const tvBoardSchema = z.object({
     message: "Selecciona un tipo de placa valido"
   }),
   price: z.coerce.number().min(0, "El precio no puede ser negativo"),
-  acquisitionCost: z.preprocess((value) => value === "" || value == null ? null : value, z.coerce.number().finite().min(0, "El costo no puede ser negativo").max(9999999999.99).nullable()),
+  acquisitionCost: z.preprocess(
+    (value) => (value === "" || value == null ? null : value),
+    z.coerce
+      .number()
+      .finite()
+      .min(0, "El costo no puede ser negativo")
+      .max(9999999999.99)
+      .nullable()
+  ),
   isActive: z.boolean().default(true)
 });
 
@@ -25,7 +33,16 @@ export const tvBoardFiltersSchema = z.object({
   search: z.string().optional(),
   boardType: z.enum(["all", "fuente", "main", "tcom", "placa_unica"]).default("all"),
   status: z
-    .enum(["all", "active", "inactive", "sold", "pending_release", "released", "claim_open", "cancelled"])
+    .enum([
+      "all",
+      "active",
+      "inactive",
+      "sold",
+      "pending_release",
+      "released",
+      "claim_open",
+      "cancelled"
+    ])
     .default("all")
 });
 
@@ -33,7 +50,11 @@ export const tvBoardSaleSchema = z.object({
   id: z.string().uuid("La placa seleccionada no es valida"),
   netAmount: z.coerce.number().positive("Ingresa el dinero real final de la venta"),
   releaseDate: z.string().regex(DATE_ONLY_PATTERN, "Selecciona una fecha de liberacion valida"),
-  notes: z.string().trim().max(500, "Las observaciones pueden tener hasta 500 caracteres").optional()
+  notes: z
+    .string()
+    .trim()
+    .max(500, "Las observaciones pueden tener hasta 500 caracteres")
+    .optional()
 });
 
 export type TvBoardFormValues = z.infer<typeof tvBoardSchema>;

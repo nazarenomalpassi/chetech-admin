@@ -5,9 +5,9 @@ export function RepairsPlaceholder() {
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-sm text-slate-500">Reparaciones</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Seguimiento técnico</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">Reparaciones</p>
+        <h1 className="text-3xl font-semibold text-foreground">Seguimiento técnico</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Estados, pagos parciales y contrato de datos tipado listos para construir el flujo de
           detalle y timeline.
         </p>

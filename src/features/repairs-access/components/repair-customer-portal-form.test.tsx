@@ -23,16 +23,14 @@ const order = {
     id: "22222222-2222-4222-8222-222222222222",
     fullName: "Carlos Selección",
     email: "carlos@example.com",
-    phone: "3571999999",
+    phone: "3571999999"
   },
-  lastCustomerVisibleUpdateAt: null,
+  lastCustomerVisibleUpdateAt: null
 } as RepairAccessOrderRecord;
 
 describe("RepairCustomerPortalForm", () => {
   it("muestra y conserva como autoritativos los datos del formulario de trabajo", () => {
-    const html = renderToStaticMarkup(
-      <RepairCustomerPortalForm order={order} />,
-    );
+    const html = renderToStaticMarkup(<RepairCustomerPortalForm order={order} />);
 
     expect(html).toContain("Publicación automática");
     expect(html).toContain("Tiras LED compradas.");
@@ -40,36 +38,30 @@ describe("RepairCustomerPortalForm", () => {
     expect(html).toContain("Cambio de retroiluminación.");
 
     expect(html).toMatch(
-      /<input(?=[^>]*name="publicProgress")(?=[^>]*type="hidden")(?=[^>]*value="Tiras LED compradas\.")[^>]*>/,
+      /<input(?=[^>]*name="publicProgress")(?=[^>]*type="hidden")(?=[^>]*value="Tiras LED compradas\.")[^>]*>/
     );
     expect(html).toMatch(
-      /<input(?=[^>]*name="publicBudgetDescription")(?=[^>]*type="hidden")(?=[^>]*value="Cambio de retroiluminación\.")[^>]*>/,
+      /<input(?=[^>]*name="publicBudgetDescription")(?=[^>]*type="hidden")(?=[^>]*value="Cambio de retroiluminación\.")[^>]*>/
     );
     expect(html).toMatch(
-      /<input(?=[^>]*name="budgetVisibleToCustomer")(?=[^>]*type="hidden")(?=[^>]*value="on")[^>]*>/,
+      /<input(?=[^>]*name="budgetVisibleToCustomer")(?=[^>]*type="hidden")(?=[^>]*value="on")[^>]*>/
     );
     expect(html).not.toContain("Texto público anterior.");
     expect(html).not.toContain("Descripción pública anterior.");
     expect(html).not.toMatch(/<textarea[^>]*name="publicProgress"/);
     expect(html).not.toMatch(
-      /<input(?=[^>]*name="budgetVisibleToCustomer")(?=[^>]*type="checkbox")[^>]*>/,
+      /<input(?=[^>]*name="budgetVisibleToCustomer")(?=[^>]*type="checkbox")[^>]*>/
     );
   });
 
   it("mantiene editables únicamente los datos complementarios del portal", () => {
-    const html = renderToStaticMarkup(
-      <RepairCustomerPortalForm order={order} />,
-    );
+    const html = renderToStaticMarkup(<RepairCustomerPortalForm order={order} />);
 
     expect(html).toMatch(/<textarea[^>]*name="publicNextStep"/);
     expect(html).toMatch(
-      /<input(?=[^>]*name="customerActionRequired")(?=[^>]*type="checkbox")[^>]*>/,
+      /<input(?=[^>]*name="customerActionRequired")(?=[^>]*type="checkbox")[^>]*>/
     );
-    expect(html).toMatch(
-      /<input(?=[^>]*name="budgetValidUntil")(?=[^>]*type="date")[^>]*>/,
-    );
-    expect(html).toMatch(
-      /<input(?=[^>]*name="publishUpdate")(?=[^>]*type="checkbox")[^>]*>/,
-    );
+    expect(html).toMatch(/<input(?=[^>]*name="budgetValidUntil")(?=[^>]*type="date")[^>]*>/);
+    expect(html).toMatch(/<input(?=[^>]*name="publishUpdate")(?=[^>]*type="checkbox")[^>]*>/);
   });
 });

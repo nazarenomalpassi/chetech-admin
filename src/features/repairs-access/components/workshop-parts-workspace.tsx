@@ -16,15 +16,11 @@ import type { SupplierClaimsPage } from "../parts-queries";
 import {
   SUPPLIER_CLAIM_LABELS,
   type SupplierClaim,
-  type WorkshopPartsPage,
+  type WorkshopPartsPage
 } from "../supplier-claims";
 import { PART_STATUS_LABELS } from "../workflow";
 import { saveSupplierClaim } from "../supplier-claim-actions";
-import {
-  CoordinationDialog,
-  DialogField,
-  PartManagementDialog,
-} from "./order-coordination-panel";
+import { CoordinationDialog, DialogField, PartManagementDialog } from "./order-coordination-panel";
 
 export function WorkshopPartsWorkspace({
   data,
@@ -32,7 +28,7 @@ export function WorkshopPartsWorkspace({
   canManage,
   search = "",
   status = "all",
-  closed = false,
+  closed = false
 }: {
   data: WorkshopPartsPage | null;
   claims: SupplierClaimsPage | null;
@@ -60,7 +56,7 @@ export function WorkshopPartsWorkspace({
           <PackageCheck className="h-5 w-5" aria-hidden="true" />
           Repuestos del taller
         </h2>
-        <p className="mt-1 text-sm text-slate-600">
+        <p className="mt-1 text-sm text-muted-foreground">
           Del pedido a la instalacion, siempre vinculado a su orden.
         </p>
       </header>
@@ -73,46 +69,42 @@ export function WorkshopPartsWorkspace({
             {
               key: "requested",
               label: "Sin comprar",
-              value: data.counts.requested,
+              value: data.counts.requested
             },
             {
               key: "ordered",
               label: "En camino / parcial",
-              value: data.counts.ordered,
+              value: data.counts.ordered
             },
             {
               key: "available",
               label: "Listos para usar",
-              value: data.counts.available,
+              value: data.counts.available
             },
             {
               key: "overdue",
               label: "Llegada vencida",
-              value: data.counts.overdue,
-            },
+              value: data.counts.overdue
+            }
           ] as const
         ).map((item) => (
           <Link
             key={item.key}
             href={href({ pf: item.key, pp: "1" })}
             aria-current={status === item.key ? "page" : undefined}
-            className={`min-h-20 rounded-xl border p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${status === item.key ? "border-graphite bg-graphite text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+            className={`min-h-20 rounded-xl border p-3 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${status === item.key ? "border-primary bg-primary text-white" : "border-border bg-card text-body hover:bg-muted"}`}
           >
             <span className="text-xs">{item.label}</span>
-            <strong className="mt-1 block text-xl tabular-nums">
-              {item.value}
-            </strong>
+            <strong className="mt-1 block text-xl tabular-nums">{item.value}</strong>
           </Link>
         ))}
         {canManage ? (
           <a
             href="#supplier-claims"
-            className="min-h-20 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+            className="min-h-20 rounded-xl border border-warning-border bg-warning-soft p-3 text-warning focus-visible:ring-2 focus-visible:ring-warning focus-visible:outline-hidden"
           >
             <span className="text-xs">Reclamos activos</span>
-            <strong className="mt-1 block text-xl tabular-nums">
-              {data.counts.claims}
-            </strong>
+            <strong className="mt-1 block text-xl tabular-nums">{data.counts.claims}</strong>
           </a>
         ) : null}
       </nav>
@@ -144,7 +136,7 @@ export function WorkshopPartsWorkspace({
                 { value: "received", label: "Recibidos" },
                 { value: "available", label: "Listos para usar" },
                 { value: "overdue", label: "Llegada vencida" },
-                { value: "installed", label: "Utilizados / reclamar" },
+                { value: "installed", label: "Utilizados / reclamar" }
               ]}
             />
           </DialogField>
@@ -152,16 +144,13 @@ export function WorkshopPartsWorkspace({
             Buscar
           </Button>
         </form>
-        <p className="text-xs text-slate-500">
-          {data.total} solicitudes en este filtro. Las compras no registran
-          egresos automaticos.
+        <p className="text-xs text-muted-foreground">
+          {data.total} solicitudes en este filtro. Las compras no registran egresos automaticos.
         </p>
         <div className="grid gap-3 xl:grid-cols-2">
           {data.items.map((part) => {
             const held = (part.claimedQuantity ?? 0) > 0;
-            const partial =
-              part.receivedQuantity > 0 &&
-              part.receivedQuantity < part.quantity;
+            const partial = part.receivedQuantity > 0 && part.receivedQuantity < part.quantity;
             const overdue =
               part.expectedDate &&
               part.expectedDate < today &&
@@ -171,40 +160,35 @@ export function WorkshopPartsWorkspace({
               !held &&
               (canManage || part.receivedQuantity > part.installedQuantity);
             return (
-              <article
-                key={part.id}
-                className="min-w-0 rounded-xl border border-slate-200 p-4"
-              >
+              <article key={part.id} className="min-w-0 rounded-xl border border-border p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
-                    className="inline-flex min-h-11 items-center rounded font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                    className="inline-flex min-h-11 items-center rounded-sm font-semibold underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
                     href={`/reparaciones-access?view=detalle&order=${part.orderId}`}
                   >
                     {part.repairNumber}
                   </Link>
                   <span
-                    className={`rounded-md px-2 py-1 text-xs ${overdue || held ? "bg-amber-50 text-amber-900" : "bg-slate-100 text-slate-700"}`}
+                    className={`rounded-md px-2 py-1 text-xs ${overdue || held ? "bg-warning-soft text-warning" : "bg-accent text-body"}`}
                   >
                     {held
                       ? "Con reclamo activo"
                       : overdue
                         ? "Llegada vencida"
                         : partial
-                          ? "Recepcion parcial"
+                          ? "Recepción parcial"
                           : PART_STATUS_LABELS[part.status]}
                   </span>
                 </div>
-                <h3 className="mt-2 break-words font-semibold">
-                  {part.description}
-                </h3>
-                <p className="mt-1 break-words text-sm text-slate-500">
+                <h3 className="mt-2 font-semibold wrap-break-word">{part.description}</h3>
+                <p className="mt-1 text-sm wrap-break-word text-muted-foreground">
                   {part.customerName}
                 </p>
                 <p className="mt-3 text-sm font-medium">
-                  {part.receivedQuantity} de {part.quantity} recibidos ·{" "}
-                  {part.installedQuantity} usados
+                  {part.receivedQuantity} de {part.quantity} recibidos · {part.installedQuantity}{" "}
+                  usados
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {part.expectedDate
                     ? `Llegada esperada: ${formatDate(part.expectedDate)}`
                     : "Sin fecha de llegada informada"}
@@ -212,25 +196,19 @@ export function WorkshopPartsWorkspace({
                 {canManage ? (
                   <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
-                      <dt className="text-xs text-slate-500">Proveedor</dt>
-                      <dd className="mt-1 break-words">
-                        {part.supplier || "Por definir"}
-                      </dd>
+                      <dt className="text-xs text-muted-foreground">Proveedor</dt>
+                      <dd className="mt-1 wrap-break-word">{part.supplier || "Por definir"}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-slate-500">
-                        Costo por unidad
-                      </dt>
+                      <dt className="text-xs text-muted-foreground">Costo por unidad</dt>
                       <dd className="mt-1">
-                        {part.unitCost === null
-                          ? "Sin informar"
-                          : formatCurrency(part.unitCost)}
+                        {part.unitCost === null ? "Sin informar" : formatCurrency(part.unitCost)}
                       </dd>
                     </div>
                   </dl>
                 ) : null}
                 {held ? (
-                  <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-amber-900">
+                  <p className="mt-3 rounded-lg bg-warning-soft p-3 text-xs text-warning">
                     Resolver reclamo antes de usar o cancelar este repuesto.
                   </p>
                 ) : null}
@@ -261,7 +239,7 @@ export function WorkshopPartsWorkspace({
           })}
         </div>
         {!data.items.length ? (
-          <p className="py-6 text-center text-sm text-slate-500">
+          <p className="py-6 text-center text-sm text-muted-foreground">
             No hay repuestos para este filtro.
           </p>
         ) : null}
@@ -274,16 +252,16 @@ export function WorkshopPartsWorkspace({
         />
       </Card>
       {canManage ? (
-        <Card id="supplier-claims" className="space-y-4 scroll-mt-4">
+        <Card id="supplier-claims" className="scroll-mt-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 text-lg font-semibold">
                 <ShieldAlert className="h-5 w-5" aria-hidden="true" />
                 Reclamos al proveedor
               </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Separados de la garantia del cliente. No generan devoluciones de
-                dinero ni movimientos de stock.
+              <p className="mt-1 text-sm text-muted-foreground">
+                Separados de la garantia del cliente. No generan devoluciones de dinero ni
+                movimientos de stock.
               </p>
             </div>
             <Link
@@ -294,10 +272,7 @@ export function WorkshopPartsWorkspace({
             </Link>
           </div>
           {claims?.items.map((item) => (
-            <article
-              key={item.id}
-              className="rounded-xl border border-slate-200 p-4"
-            >
+            <article key={item.id} className="rounded-xl border border-border p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Link
                   className="inline-flex min-h-11 items-center font-semibold underline"
@@ -306,32 +281,23 @@ export function WorkshopPartsWorkspace({
                   {item.repairNumber} · {item.description}
                 </Link>
                 <span
-                  className={`rounded-md px-2 py-1 text-xs ${item.closedAt ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}
+                  className={`rounded-md px-2 py-1 text-xs ${item.closedAt ? "bg-success-soft text-success" : "bg-warning-soft text-warning"}`}
                 >
                   {SUPPLIER_CLAIM_LABELS[item.status]}
                 </span>
               </div>
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm">
-                {item.reason}
-              </p>
-              <p className="mt-2 text-xs text-slate-500">
-                {item.quantity} unidad(es) ·{" "}
-                {item.supplier || "Proveedor sin informar"} ·{" "}
+              <p className="mt-2 text-sm wrap-break-word whitespace-pre-wrap">{item.reason}</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {item.quantity} unidad(es) · {item.supplier || "Proveedor sin informar"} ·{" "}
                 {formatDate(item.createdAt)}
-                {item.warrantyReturnId
-                  ? " · Vinculado a reingreso por garantia"
-                  : ""}
+                {item.warrantyReturnId ? " · Vinculado a reingreso por garantía" : ""}
               </p>
               {item.resolution ? (
-                <p className="mt-2 whitespace-pre-wrap text-sm">
-                  Resolucion: {item.resolution}
-                </p>
+                <p className="mt-2 text-sm whitespace-pre-wrap">Resolucion: {item.resolution}</p>
               ) : null}
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-muted-foreground">
                 Costo adicional:{" "}
-                {item.extraCost === null
-                  ? "Sin informar"
-                  : formatCurrency(item.extraCost)}
+                {item.extraCost === null ? "Sin informar" : formatCurrency(item.extraCost)}
               </p>
               {!item.closedAt ? (
                 <Button
@@ -346,7 +312,7 @@ export function WorkshopPartsWorkspace({
             </article>
           ))}
           {!claims?.items.length ? (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               No hay reclamos {closed ? "cerrados" : "activos"}.
             </p>
           ) : null}
@@ -388,9 +354,7 @@ export function WorkshopPartsWorkspace({
               name="quantity"
               type="number"
               min={1}
-              max={
-                claimPart.receivedQuantity - (claimPart.claimedQuantity ?? 0)
-              }
+              max={claimPart.receivedQuantity - (claimPart.claimedQuantity ?? 0)}
               step={1}
               defaultValue={1}
               required
@@ -404,15 +368,15 @@ export function WorkshopPartsWorkspace({
                 value={claimPart.warrantyReturnId}
                 className="h-5 w-5 accent-graphite"
               />
-              Vincular al reingreso por garantia activo de esta orden
+              Vincular al reingreso por garantía activo de esta orden
             </label>
           ) : null}
           <DialogField label="Costo adicional conocido (opcional)">
             <Input name="extraCost" type="number" min={0} step="0.01" />
           </DialogField>
-          <p className="text-xs text-slate-500">
-            Dejalo vacio si no se conoce. No registra un egreso en Caja; el
-            importe real se carga en Gastos cuando corresponda.
+          <p className="text-xs text-muted-foreground">
+            Dejalo vacio si no se conoce. No registra un egreso en Caja; el importe real se carga en
+            Gastos cuando corresponda.
           </p>
         </CoordinationDialog>
       ) : null}
@@ -432,17 +396,14 @@ export function WorkshopPartsWorkspace({
             <Select
               name="claimStatus"
               defaultValue={claim.status}
-              options={Object.entries(SUPPLIER_CLAIM_LABELS).map(
-                ([value, label]) => ({ value, label }),
-              )}
+              options={Object.entries(SUPPLIER_CLAIM_LABELS).map(([value, label]) => ({
+                value,
+                label
+              }))}
             />
           </DialogField>
           <DialogField label="Avance o resolucion">
-            <Textarea
-              name="resolution"
-              maxLength={2000}
-              defaultValue={claim.resolution ?? ""}
-            />
+            <Textarea name="resolution" maxLength={2000} defaultValue={claim.resolution ?? ""} />
           </DialogField>
           <DialogField label="Costo adicional conocido (opcional)">
             <Input
@@ -453,9 +414,9 @@ export function WorkshopPartsWorkspace({
               defaultValue={claim.extraCost ?? ""}
             />
           </DialogField>
-          <p className="text-xs text-slate-500">
-            Al resolver o cancelar se requiere un detalle. El historial se
-            conserva; no se modifica automaticamente el inventario ni el dinero.
+          <p className="text-xs text-muted-foreground">
+            Al resolver o cancelar se requiere un detalle. El historial se conserva; no se modifica
+            automaticamente el inventario ni el dinero.
           </p>
         </CoordinationDialog>
       ) : null}
@@ -468,7 +429,7 @@ function Pagination({
   total,
   size,
   name,
-  link,
+  link
 }: {
   page: number;
   total: number;
@@ -479,16 +440,16 @@ function Pagination({
   const pages = Math.max(1, Math.ceil(total / size));
   return (
     <nav
-      aria-label={`Paginas de ${name}`}
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3 text-sm"
+      aria-label={`Páginas de ${name}`}
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3 text-sm"
     >
       <span>
-        Pagina {page} de {pages} · {total} registros
+        Página {page} de {pages} · {total} registros
       </span>
       <div className="flex gap-4">
         {page > 1 ? (
           <Link
-            aria-label={`Pagina anterior de ${name}`}
+            aria-label={`Página anterior de ${name}`}
             className="inline-flex min-h-11 items-center underline"
             href={link(page - 1)}
           >

@@ -19,18 +19,25 @@ const now = new Date("2026-10-07T12:00:00.000Z");
 function renderDraft(initialProps: Partial<DraftOptions> = {}) {
   const value = { notes: "Unsaved notes" };
   const onRestore = vi.fn();
-  return renderHook((props: Partial<DraftOptions>) => usePersistentFormDraft<DraftValue>({
-    draftKey,
-    isDirty: true,
-    onRestore,
-    value,
-    ...props
-  }), { initialProps });
+  return renderHook(
+    (props: Partial<DraftOptions>) =>
+      usePersistentFormDraft<DraftValue>({
+        draftKey,
+        isDirty: true,
+        onRestore,
+        value,
+        ...props
+      }),
+    { initialProps }
+  );
 }
 
 function blockStorage(access: StorageFailure) {
   const fail = () => {
-    throw new DOMException("Draft storage unavailable", access === "setItem" ? "QuotaExceededError" : "SecurityError");
+    throw new DOMException(
+      "Draft storage unavailable",
+      access === "setItem" ? "QuotaExceededError" : "SecurityError"
+    );
   };
   return access === "getter"
     ? vi.spyOn(window, "localStorage", "get").mockImplementation(fail)
@@ -47,13 +54,19 @@ function DraftForm({ onSubmit }: { onSubmit: (value: DraftValue) => void }) {
   });
 
   return (
-    <form onSubmit={(event) => {
-      event.preventDefault();
-      draft.clearDraft();
-      onSubmit(value);
-      setValue({ notes: "" });
-    }}>
-      <input aria-label="Notes" onChange={(event) => setValue({ notes: event.target.value })} value={value.notes} />
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        draft.clearDraft();
+        onSubmit(value);
+        setValue({ notes: "" });
+      }}
+    >
+      <input
+        aria-label="Notes"
+        onChange={(event) => setValue({ notes: event.target.value })}
+        value={value.notes}
+      />
       <button type="submit">Save</button>
     </form>
   );
@@ -75,18 +88,21 @@ afterEach(() => {
 });
 
 describe("usePersistentFormDraft storage failures", () => {
-  it.each(["setItem", "getter"] as const)("contains a debounce failure from %s without reporting a save", (access) => {
-    const { result } = renderDraft();
-    blockStorage(access);
+  it.each(["setItem", "getter"] as const)(
+    "contains a debounce failure from %s without reporting a save",
+    (access) => {
+      const { result } = renderDraft();
+      blockStorage(access);
 
-    expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
+      expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
 
-    expect(result.current.lastSavedAt).toBeNull();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-    const beforeUnload = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(beforeUnload);
-    expect(beforeUnload.defaultPrevented).toBe(true);
-  });
+      expect(result.current.lastSavedAt).toBeNull();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+      const beforeUnload = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeUnload);
+      expect(beforeUnload.defaultPrevented).toBe(true);
+    }
+  );
 
   it("does not advance the last successful save time after a quota failure", () => {
     const { result, rerender } = renderDraft();
@@ -104,52 +120,70 @@ describe("usePersistentFormDraft storage failures", () => {
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
   });
 
-  it.each(["setItem", "getter"] as const)("contains an unmount failure from %s and clears global dirty state", (access) => {
-    const { unmount } = renderDraft();
-    const dispatch = vi.spyOn(window, "dispatchEvent");
-    blockStorage(access);
+  it.each(["setItem", "getter"] as const)(
+    "contains an unmount failure from %s and clears global dirty state",
+    (access) => {
+      const { unmount } = renderDraft();
+      const dispatch = vi.spyOn(window, "dispatchEvent");
+      blockStorage(access);
 
-    expect(unmount).not.toThrow();
+      expect(unmount).not.toThrow();
 
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-    expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: "chetech:draft-state",
-      detail: { hasUnsavedChanges: false }
-    }));
-    const beforeUnload = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(beforeUnload);
-    expect(beforeUnload.defaultPrevented).toBe(false);
-  });
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+      expect(dispatch).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          type: "chetech:draft-state",
+          detail: { hasUnsavedChanges: false }
+        })
+      );
+      const beforeUnload = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeUnload);
+      expect(beforeUnload.defaultPrevented).toBe(false);
+    }
+  );
 
-  it.each(["getItem", "getter"] as const)("starts without a recovery prompt when %s is unavailable", (access) => {
-    const failure = blockStorage(access);
-    const { result } = renderDraft();
+  it.each(["getItem", "getter"] as const)(
+    "starts without a recovery prompt when %s is unavailable",
+    (access) => {
+      const failure = blockStorage(access);
+      const { result } = renderDraft();
 
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-    failure.mockRestore();
-    act(() => vi.advanceTimersByTime(500));
-    expect(result.current.lastSavedAt).toBe(new Date().toISOString());
-  });
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+      failure.mockRestore();
+      act(() => vi.advanceTimersByTime(500));
+      expect(result.current.lastSavedAt).toBe(new Date().toISOString());
+    }
+  );
 
-  it.each(["removeItem", "getter"] as const)("continues after a clearOnMount failure from %s", (access) => {
-    window.localStorage.setItem(storageKey, JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" })));
-    const failure = blockStorage(access);
-    const { result } = renderDraft({ clearOnMount: true });
+  it.each(["removeItem", "getter"] as const)(
+    "continues after a clearOnMount failure from %s",
+    (access) => {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" }))
+      );
+      const failure = blockStorage(access);
+      const { result } = renderDraft({ clearOnMount: true });
 
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-    failure.mockRestore();
-    act(() => vi.advanceTimersByTime(500));
-    expect(JSON.parse(window.localStorage.getItem(storageKey)!).data).toEqual({ notes: "Unsaved notes" });
-    expect(result.current.lastSavedAt).toBe(new Date().toISOString());
-  });
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+      failure.mockRestore();
+      act(() => vi.advanceTimersByTime(500));
+      expect(JSON.parse(window.localStorage.getItem(storageKey)!).data).toEqual({
+        notes: "Unsaved notes"
+      });
+      expect(result.current.lastSavedAt).toBe(new Date().toISOString());
+    }
+  );
 
   it.each([
     "{",
     JSON.stringify(createFormDraftEnvelope({ notes: "  " }, now)),
-    JSON.stringify(createFormDraftEnvelope({ notes: "Expired draft" }, new Date("2026-08-01T12:00:00.000Z")))
+    JSON.stringify(
+      createFormDraftEnvelope({ notes: "Expired draft" }, new Date("2026-08-01T12:00:00.000Z"))
+    )
   ])("continues when removing an invalid or empty draft fails: %s", (raw) => {
     window.localStorage.setItem(storageKey, raw);
     blockStorage("removeItem");
@@ -163,9 +197,11 @@ describe("usePersistentFormDraft storage failures", () => {
   it("contains an unavailable storage getter while removing a malformed draft", () => {
     const storage = window.localStorage;
     storage.setItem(storageKey, "{");
-    vi.spyOn(window, "localStorage", "get").mockImplementation(() => {
-      throw new DOMException("Draft storage unavailable", "SecurityError");
-    }).mockReturnValueOnce(storage);
+    vi.spyOn(window, "localStorage", "get")
+      .mockImplementation(() => {
+        throw new DOMException("Draft storage unavailable", "SecurityError");
+      })
+      .mockReturnValueOnce(storage);
     const { result } = renderDraft();
 
     expect(result.current.pendingDraft).toBeNull();
@@ -173,36 +209,45 @@ describe("usePersistentFormDraft storage failures", () => {
     expect(result.current.lastSavedAt).toBeNull();
   });
 
-  it.each(["removeItem", "getter"] as const)("can become clean when removing storage via %s fails", (access) => {
-    const { result, rerender } = renderDraft();
-    act(() => vi.advanceTimersByTime(500));
-    blockStorage(access);
+  it.each(["removeItem", "getter"] as const)(
+    "can become clean when removing storage via %s fails",
+    (access) => {
+      const { result, rerender } = renderDraft();
+      act(() => vi.advanceTimersByTime(500));
+      blockStorage(access);
 
-    expect(() => rerender({ isDirty: false })).not.toThrow();
+      expect(() => rerender({ isDirty: false })).not.toThrow();
 
-    expect(result.current.lastSavedAt).toBeNull();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-    const beforeUnload = new Event("beforeunload", { cancelable: true });
-    window.dispatchEvent(beforeUnload);
-    expect(beforeUnload.defaultPrevented).toBe(false);
-  });
+      expect(result.current.lastSavedAt).toBeNull();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+      const beforeUnload = new Event("beforeunload", { cancelable: true });
+      window.dispatchEvent(beforeUnload);
+      expect(beforeUnload.defaultPrevented).toBe(false);
+    }
+  );
 
   describe.each(["discardDraft", "clearDraft"] as const)("%s", (action) => {
-    it.each(["removeItem", "getter"] as const)("dismisses recovery when %s fails without clearing unsaved changes", (access) => {
-      window.localStorage.setItem(storageKey, JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" })));
-      const { result } = renderDraft();
-      expect(result.current.pendingDraft).not.toBeNull();
-      const failure = blockStorage(access);
+    it.each(["removeItem", "getter"] as const)(
+      "dismisses recovery when %s fails without clearing unsaved changes",
+      (access) => {
+        window.localStorage.setItem(
+          storageKey,
+          JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" }))
+        );
+        const { result } = renderDraft();
+        expect(result.current.pendingDraft).not.toBeNull();
+        const failure = blockStorage(access);
 
-      expect(() => act(() => result.current[action]())).not.toThrow();
+        expect(() => act(() => result.current[action]())).not.toThrow();
 
-      expect(result.current.pendingDraft).toBeNull();
-      expect(result.current.lastSavedAt).toBeNull();
-      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-      failure.mockRestore();
-      act(() => vi.advanceTimersByTime(500));
-      expect(result.current.lastSavedAt).toBe(new Date().toISOString());
-    });
+        expect(result.current.pendingDraft).toBeNull();
+        expect(result.current.lastSavedAt).toBeNull();
+        expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+        failure.mockRestore();
+        act(() => vi.advanceTimersByTime(500));
+        expect(result.current.lastSavedAt).toBe(new Date().toISOString());
+      }
+    );
   });
 
   it("preserves other dirty drafts when an unmount write fails", () => {
@@ -213,7 +258,9 @@ describe("usePersistentFormDraft storage failures", () => {
 
     expect(first.unmount).not.toThrow();
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-    expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({ detail: { hasUnsavedChanges: true } }));
+    expect(dispatch).toHaveBeenLastCalledWith(
+      expect.objectContaining({ detail: { hasUnsavedChanges: true } })
+    );
     expect(second.unmount).not.toThrow();
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
   });
@@ -225,7 +272,11 @@ describe("usePersistentFormDraft storage failures", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const forward = vi.spyOn(window.history, "forward").mockImplementation(() => undefined);
     const navigate = vi.fn((event: React.MouseEvent) => event.preventDefault());
-    render(<a href="/next-page" onClick={navigate}>Next page</a>);
+    render(
+      <a href="/next-page" onClick={navigate}>
+        Next page
+      </a>
+    );
 
     fireEvent.click(screen.getByRole("link", { name: "Next page" }));
     expect(confirm).toHaveBeenCalledOnce();
@@ -246,20 +297,25 @@ describe("usePersistentFormDraft storage failures", () => {
     expect(navigate).toHaveBeenCalledTimes(2);
   });
 
-  it.each(["setItem", "getter"] as const)("keeps form submission operational when %s fails", (access) => {
-    const onSubmit = vi.fn();
-    render(<DraftForm onSubmit={onSubmit} />);
-    blockStorage(access);
-    blockStorage("removeItem");
-    fireEvent.change(screen.getByRole("textbox", { name: "Notes" }), { target: { value: "Submitted notes" } });
+  it.each(["setItem", "getter"] as const)(
+    "keeps form submission operational when %s fails",
+    (access) => {
+      const onSubmit = vi.fn();
+      render(<DraftForm onSubmit={onSubmit} />);
+      blockStorage(access);
+      blockStorage("removeItem");
+      fireEvent.change(screen.getByRole("textbox", { name: "Notes" }), {
+        target: { value: "Submitted notes" }
+      });
 
-    expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
-    expect(() => fireEvent.click(screen.getByRole("button", { name: "Save" }))).not.toThrow();
+      expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
+      expect(() => fireEvent.click(screen.getByRole("button", { name: "Save" }))).not.toThrow();
 
-    expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ notes: "Submitted notes" });
-    expect((screen.getByRole("textbox", { name: "Notes" }) as HTMLInputElement).value).toBe("");
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-  });
+      expect(onSubmit).toHaveBeenCalledExactlyOnceWith({ notes: "Submitted notes" });
+      expect((screen.getByRole("textbox", { name: "Notes" }) as HTMLInputElement).value).toBe("");
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+    }
+  );
 });
 
 describe("usePersistentFormDraft normal persistence", () => {
@@ -273,7 +329,9 @@ describe("usePersistentFormDraft normal persistence", () => {
 
     act(() => vi.advanceTimersByTime(1));
 
-    expect(JSON.parse(window.localStorage.getItem(storageKey)!)).toEqual(createFormDraftEnvelope({ notes: "Latest notes" }));
+    expect(JSON.parse(window.localStorage.getItem(storageKey)!)).toEqual(
+      createFormDraftEnvelope({ notes: "Latest notes" })
+    );
     expect(result.current.lastSavedAt).toBe(new Date().toISOString());
   });
 
@@ -283,7 +341,9 @@ describe("usePersistentFormDraft normal persistence", () => {
 
     unmount();
 
-    expect(JSON.parse(window.localStorage.getItem(storageKey)!)).toEqual(createFormDraftEnvelope({ notes: "Latest notes" }));
+    expect(JSON.parse(window.localStorage.getItem(storageKey)!)).toEqual(
+      createFormDraftEnvelope({ notes: "Latest notes" })
+    );
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
   });
 
@@ -307,17 +367,23 @@ describe("usePersistentFormDraft normal persistence", () => {
     expect(result.current.lastSavedAt).toBe(new Date().toISOString());
   });
 
-  it.each(["discardDraft", "clearDraft"] as const)("%s removes stored data and dismisses recovery", (action) => {
-    window.localStorage.setItem(storageKey, JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" })));
-    const { result, unmount } = renderDraft({ isDirty: false });
+  it.each(["discardDraft", "clearDraft"] as const)(
+    "%s removes stored data and dismisses recovery",
+    (action) => {
+      window.localStorage.setItem(
+        storageKey,
+        JSON.stringify(createFormDraftEnvelope({ notes: "Old draft" }))
+      );
+      const { result, unmount } = renderDraft({ isDirty: false });
 
-    act(() => result.current[action]());
-    unmount();
+      act(() => result.current[action]());
+      unmount();
 
-    expect(window.localStorage.getItem(storageKey)).toBeNull();
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-  });
+      expect(window.localStorage.getItem(storageKey)).toBeNull();
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+    }
+  );
 
   it("removes stored data when a saved form becomes clean", () => {
     const { result, rerender, unmount } = renderDraft();

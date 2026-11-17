@@ -29,7 +29,12 @@ describe("form drafts", () => {
     });
 
     expect(parseFormDraftEnvelope("{", { now })).toBeNull();
-    expect(parseFormDraftEnvelope(JSON.stringify({ version: 2, updatedAt: new Date(now).toISOString(), data: {} }), { now })).toBeNull();
+    expect(
+      parseFormDraftEnvelope(
+        JSON.stringify({ version: 2, updatedAt: new Date(now).toISOString(), data: {} }),
+        { now }
+      )
+    ).toBeNull();
     expect(parseFormDraftEnvelope(expired, { maxAgeMs: 7 * 86_400_000, now })).toBeNull();
   });
 
@@ -49,6 +54,8 @@ describe("form drafts", () => {
       total: 0
     });
     expect(hasMeaningfulDraftValue(parsed?.data)).toBe(true);
-    expect(hasMeaningfulDraftValue({ name: "   ", amount: 0, rows: [], active: false })).toBe(false);
+    expect(hasMeaningfulDraftValue({ name: "   ", amount: 0, rows: [], active: false })).toBe(
+      false
+    );
   });
 });

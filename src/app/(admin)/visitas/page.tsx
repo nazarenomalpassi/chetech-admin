@@ -31,9 +31,15 @@ export default async function VisitasPage({
   });
   const message = params.error
     ? { success: false, message: params.error }
-    : params.status === "visit_cancelled" ? { success: true, message: "Visita cancelada; historial conservado." }
-    : params.status === "visit_already_created" ? { success: true, message: "La visita ya se guardo en el primer intento. No se duplico: revisa el registro antes de editar sus datos." }
-    : getStatusMessage(params.status);
+    : params.status === "visit_cancelled"
+      ? { success: true, message: "Visita cancelada; historial conservado." }
+      : params.status === "visit_already_created"
+        ? {
+            success: true,
+            message:
+              "La visita ya se guardo en el primer intento. No se duplico: revisa el registro antes de editar sus datos."
+          }
+        : getStatusMessage(params.status);
 
   return (
     <VisitsView

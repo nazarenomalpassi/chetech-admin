@@ -84,7 +84,11 @@ export async function replaceCashMovements(
   }
 }
 
-export async function deleteCashMovement(supabase: any, referenciaTabla: string, referenciaId: string) {
+export async function deleteCashMovement(
+  supabase: any,
+  referenciaTabla: string,
+  referenciaId: string
+) {
   const { error } = await supabase
     .from("movimientos_caja")
     .delete()
@@ -134,7 +138,12 @@ export async function replaceStockMovement(
 export async function replaceStockMovements(
   supabase: any,
   payload: {
-    movimientos: { productoId: string; tipo: "entrada" | "salida"; cantidad: number; descripcion: string }[];
+    movimientos: {
+      productoId: string;
+      tipo: "entrada" | "salida";
+      cantidad: number;
+      descripcion: string;
+    }[];
     referenciaTabla: string;
     referenciaId: string;
     userId?: string | null;
@@ -166,7 +175,11 @@ export async function replaceStockMovements(
   }
 }
 
-export async function deleteStockMovement(supabase: any, referenciaTabla: string, referenciaId: string) {
+export async function deleteStockMovement(
+  supabase: any,
+  referenciaTabla: string,
+  referenciaId: string
+) {
   const { error } = await supabase
     .from("movimientos_stock")
     .delete()

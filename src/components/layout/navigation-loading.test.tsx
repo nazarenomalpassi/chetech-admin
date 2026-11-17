@@ -13,7 +13,10 @@ import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { sidebarItems, getSidebarItemsForRole } from "@/lib/navigation";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); route.pathname = "/productos"; });
+afterEach(() => {
+  cleanup();
+  route.pathname = "/productos";
+});
 
 describe("section navigation loading", () => {
   it.each(sidebarItems)("covers $href with the shared branded fallback", ({ href }) => {
@@ -25,6 +28,9 @@ describe("section navigation loading", () => {
   it("preserves sidebar destinations, active section and native link behavior", () => {
     render(<Sidebar role="admin" />);
     const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    for (const toggle of within(nav).queryAllByRole("button", { expanded: false })) {
+      fireEvent.click(toggle);
+    }
     for (const item of getSidebarItemsForRole("admin")) {
       const link = within(nav).getByRole("link", { name: item.label });
       expect(link.getAttribute("href")).toBe(item.href);
@@ -32,15 +38,58 @@ describe("section navigation loading", () => {
       expect(link.querySelector(".nav-link-activity")).not.toBeNull();
       expect(link.getAttribute("aria-current")).toBe(item.href === "/productos" ? "page" : null);
     }
-    expect(screen.getByRole("button", { name: "Cerrar sesión" }).closest("form")?.getAttribute("action")).toBe("/auth/sign-out");
+    expect(
+      screen.getByRole("button", { name: "Cerrar sesión" }).closest("form")?.getAttribute("action")
+    ).toBe("/auth/sign-out");
+  });
+
+  it("folds menu groups, opens the current one and keeps the active section visible", () => {
+    window.localStorage.clear();
+    route.pathname = "/reparaciones-access/orden/abc";
+    render(<Sidebar role="admin" />);
+    const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    const taller = within(nav).getByRole("button", { name: /Taller/ });
+    const finanzas = within(nav).getByRole("button", { name: /Finanzas/ });
+    expect(taller.getAttribute("aria-expanded")).toBe("true");
+    expect(finanzas.getAttribute("aria-expanded")).toBe("false");
+    expect(within(nav).queryByRole("link", { name: "Caja" })).toBeNull();
+    expect(
+      within(nav).getByRole("link", { name: "Reparaciones" }).getAttribute("aria-current")
+    ).toBe("page");
+
+    fireEvent.click(taller);
+    expect(taller.getAttribute("aria-expanded")).toBe("false");
+    expect(within(nav).getByRole("link", { name: "Reparaciones" })).toBeTruthy();
+    expect(within(nav).queryByRole("link", { name: "Visitas" })).toBeNull();
+
+    fireEvent.click(finanzas);
+    expect(within(nav).getByRole("link", { name: "Caja" })).toBeTruthy();
+    expect(JSON.parse(window.localStorage.getItem("chetech:menu:grupos-abiertos") ?? "[]")).toEqual(
+      ["Finanzas"]
+    );
+  });
+
+  it("restores the groups left open in this browser", () => {
+    window.localStorage.setItem("chetech:menu:grupos-abiertos", JSON.stringify(["Comercial"]));
+    render(<Sidebar role="admin" />);
+    const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    expect(
+      within(nav)
+        .getByRole("button", { name: /Comercial/ })
+        .getAttribute("aria-expanded")
+    ).toBe("true");
+    expect(within(nav).getByRole("link", { name: "Ventas" })).toBeTruthy();
+    window.localStorage.clear();
   });
 
   it("keeps mobile menu keyboard behavior and the same destinations", () => {
     render(<MobileNavigation role="admin" />);
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
-    const nav = screen.getByRole("navigation", { name: "Navegacion del local" });
+    const nav = screen.getByRole("navigation", { name: "Navegación del local" });
     for (const item of getSidebarItemsForRole("admin")) {
-      expect(within(nav).getByRole("link", { name: item.label }).getAttribute("href")).toBe(item.href);
+      expect(within(nav).getByRole("link", { name: item.label }).getAttribute("href")).toBe(
+        item.href
+      );
     }
     fireEvent.keyDown(nav, { key: "Escape" });
     expect(screen.queryByRole("navigation")).toBeNull();
@@ -51,16 +100,16 @@ describe("section navigation loading", () => {
     const { rerender } = render(<MobileNavigation role="admin" />);
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const link = screen.getByRole("link", { name: "Reparaciones" });
-    link.addEventListener("click", event => event.preventDefault());
+    link.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(link);
-    expect(screen.getByRole("navigation", { name: "Navegacion del local" })).not.toBeNull();
+    expect(screen.getByRole("navigation", { name: "Navegación del local" })).not.toBeNull();
     expect(link.querySelector(".nav-link-activity")).not.toBeNull();
     route.pathname = "/reparaciones-access";
     rerender(<MobileNavigation role="admin" />);
     expect(screen.queryByRole("navigation")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const active = screen.getByRole("link", { name: "Reparaciones" });
-    active.addEventListener("click", event => event.preventDefault());
+    active.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(active);
     expect(screen.queryByRole("navigation")).toBeNull();
   });

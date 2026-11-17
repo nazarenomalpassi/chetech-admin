@@ -70,9 +70,7 @@ export function canAccessPath(role: AppRole | null, pathname: string) {
     return true;
   }
 
-  return TECHNICIAN_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  return TECHNICIAN_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
 export function canManageCriticalData(role: AppRole | null) {

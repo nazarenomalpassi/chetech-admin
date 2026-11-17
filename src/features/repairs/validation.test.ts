@@ -26,11 +26,15 @@ describe("getRepairValidationError", () => {
   });
 
   it("rechaza cobros superiores al precio", () => {
-    expect(getRepairValidationError({ amount: 90000, payments: [{ method: "mp", amount: 90000.01 }] })).not.toBeNull();
+    expect(
+      getRepairValidationError({ amount: 90000, payments: [{ method: "mp", amount: 90000.01 }] })
+    ).not.toBeNull();
   });
 
   it("rechaza medios desconocidos o importes no finitos", () => {
-    expect(getRepairValidationError({ amount: 90000, payments: [{ method: "desconocido", amount: 1 }] })).not.toBeNull();
+    expect(
+      getRepairValidationError({ amount: 90000, payments: [{ method: "desconocido", amount: 1 }] })
+    ).not.toBeNull();
     expect(getRepairValidationError({ amount: NaN, payments: [] })).not.toBeNull();
   });
 });

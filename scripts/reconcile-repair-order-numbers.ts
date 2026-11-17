@@ -31,9 +31,7 @@ const confirmation = process.argv
   ?.split("=")[1];
 
 if (!url || !serviceRoleKey) {
-  throw new Error(
-    "Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local."
-  );
+  throw new Error("Faltan NEXT_PUBLIC_SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en .env.local.");
 }
 
 const supabase = createClient(url, serviceRoleKey, {
@@ -60,11 +58,7 @@ type NamedRow = {
   [key: string]: unknown;
 };
 
-async function fetchAllTableRows(
-  client: SupabaseClient,
-  table: string,
-  select = "*"
-) {
+async function fetchAllTableRows(client: SupabaseClient, table: string, select = "*") {
   const rows: unknown[] = [];
   const pageSize = 1_000;
   for (let start = 0; ; start += pageSize) {
@@ -82,9 +76,7 @@ async function fetchAllTableRows(
 function getLegacyGaps(orders: OrderRow[]) {
   const legacyNumbers = orders
     .filter(
-      (order) =>
-        order.import_source === LEGACY_SOURCE &&
-        order.import_file_name === SOURCE_FILE
+      (order) => order.import_source === LEGACY_SOURCE && order.import_file_name === SOURCE_FILE
     )
     .map((order) => parseRepairOrderNumber(order.legacy_order_number))
     .sort((left, right) => left - right);
@@ -144,10 +136,7 @@ async function createBackup() {
     "repairs"
   ];
   const snapshots = await Promise.all(
-    tables.map(async (table) => [
-      table,
-      await fetchAllTableRows(supabase, table)
-    ] as const)
+    tables.map(async (table) => [table, await fetchAllTableRows(supabase, table)] as const)
   );
   const output = await writeJson(
     path.join(process.cwd(), "tmp", "backups"),
@@ -170,16 +159,10 @@ async function buildDiagnostic() {
       "id,repair_number,legacy_order_number,import_source,import_file_name,customer_id,device_id,intake_date,created_at"
     ),
     fetchAllTableRows(supabase, "repair_access_customers", "id,full_name"),
-    fetchAllTableRows(
-      supabase,
-      "repair_access_devices",
-      "id,device_type,brand,model"
-    )
+    fetchAllTableRows(supabase, "repair_access_devices", "id,device_type,brand,model")
   ]);
   const orders = orderData as OrderRow[];
-  const customers = new Map(
-    (customersData as NamedRow[]).map((row) => [row.id, row.full_name])
-  );
+  const customers = new Map((customersData as NamedRow[]).map((row) => [row.id, row.full_name]));
   const devices = new Map(
     (devicesData as NamedRow[]).map((row) => [
       row.id,
@@ -216,23 +199,19 @@ async function buildDiagnostic() {
         newRepairNumber: formatRepairOrderNumber(entry.newNumber),
         newNumber: entry.newNumber,
         legacyOrderNumber: entry.legacyOrderNumber,
-        customer: source ? customers.get(source.customer_id) ?? null : null,
-        device: source ? devices.get(source.device_id) ?? null : null,
+        customer: source ? (customers.get(source.customer_id) ?? null) : null,
+        device: source ? (devices.get(source.device_id) ?? null) : null,
         intakeDate: source?.intake_date ?? null,
         createdAt: entry.createdAt,
         origin: entry.origin,
         reason: entry.reason
       };
     });
-  const historicalCount = plan.entries.filter(
-    (entry) => entry.origin === "legacy_import"
-  ).length;
+  const historicalCount = plan.entries.filter((entry) => entry.origin === "legacy_import").length;
   const currentSystemCount = plan.entries.filter(
     (entry) => entry.origin === "current_system"
   ).length;
-  const postImportCount = plan.entries.filter(
-    (entry) => entry.origin === "post_import"
-  ).length;
+  const postImportCount = plan.entries.filter((entry) => entry.origin === "post_import").length;
 
   return {
     generatedAt: new Date().toISOString(),
@@ -243,18 +222,11 @@ async function buildDiagnostic() {
       historicalOrders: historicalCount,
       currentSystemOrders: currentSystemCount,
       postImportOrders: postImportCount,
-      changedOrders: plan.entries.filter(
-        (entry) => entry.currentNumber !== entry.newNumber
-      ).length,
-      preservedOrders: plan.entries.filter(
-        (entry) => entry.currentNumber === entry.newNumber
-      ).length,
-      currentMinimum: Math.min(
-        ...plan.entries.map((entry) => entry.currentNumber)
-      ),
-      currentMaximum: Math.max(
-        ...plan.entries.map((entry) => entry.currentNumber)
-      ),
+      changedOrders: plan.entries.filter((entry) => entry.currentNumber !== entry.newNumber).length,
+      preservedOrders: plan.entries.filter((entry) => entry.currentNumber === entry.newNumber)
+        .length,
+      currentMinimum: Math.min(...plan.entries.map((entry) => entry.currentNumber)),
+      currentMaximum: Math.max(...plan.entries.map((entry) => entry.currentNumber)),
       targetMinimum: Math.min(...plan.entries.map((entry) => entry.newNumber)),
       targetMaximum,
       nextNumber: plan.nextNumber,
@@ -266,14 +238,12 @@ async function buildDiagnostic() {
     },
     checks: {
       uniqueTargets:
-        new Set(plan.entries.map((entry) => entry.newNumber)).size ===
-        plan.entries.length,
+        new Set(plan.entries.map((entry) => entry.newNumber)).size === plan.entries.length,
       allPositive: plan.entries.every((entry) => entry.newNumber > 0),
       legacyCountIs261: historicalCount === 261,
       currentRangeIsComplete: currentSystemCount === 120,
       legacyLastMapsTo265: plan.entries.some(
-        (entry) =>
-          entry.legacyOrderNumber === "266" && entry.newNumber === 265
+        (entry) => entry.legacyOrderNumber === "266" && entry.newNumber === 265
       ),
       postImportStartsAt386:
         postImportCount === 0 ||
@@ -295,10 +265,9 @@ async function main() {
       );
     }
     const backupPath = await createBackup();
-    const { data, error } = await supabase.rpc(
-      "rollback_repair_order_number_reconciliation",
-      { p_run_id: rollbackRunId }
-    );
+    const { data, error } = await supabase.rpc("rollback_repair_order_number_reconciliation", {
+      p_run_id: rollbackRunId
+    });
     if (error) throw error;
     const report = await writeJson(
       path.join(process.cwd(), "reports", "repair-order-number-reconciliation"),

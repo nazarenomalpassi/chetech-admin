@@ -46,7 +46,9 @@ describe("deleteExpenseAction", () => {
     const formData = new FormData();
     formData.set("id", "11111111-1111-4111-8111-111111111111");
 
-    await expect(deleteExpenseAction(formData)).rejects.toThrow("REDIRECT:/dashboard?error=Solo%20admin");
+    await expect(deleteExpenseAction(formData)).rejects.toThrow(
+      "REDIRECT:/dashboard?error=Solo%20admin"
+    );
     expect(createServerSupabaseClientMock).not.toHaveBeenCalled();
     expect(createAuditLogMock).not.toHaveBeenCalled();
   });
@@ -68,20 +70,33 @@ describe("purchase linkage actions", () => {
     form.set("partRequestId", "22222222-2222-4222-8222-222222222222");
     await expect(linkExpensePurchaseAction(form)).rejects.toThrow("expense_linked");
     expect(rpc).toHaveBeenCalledWith("link_expense_purchase_atomic", {
-      p_expense_id: form.get("id"), p_part_request_id: form.get("partRequestId"),
-      p_repair_order_id: null, p_expected_order_id: null, p_expected_part_id: null
+      p_expense_id: form.get("id"),
+      p_part_request_id: form.get("partRequestId"),
+      p_repair_order_id: null,
+      p_expected_order_id: null,
+      p_expected_part_id: null
     });
     expect(from).not.toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalledWith("/sueldos");
   });
 
   it("fails closed when atomic purchase linkage is unavailable", async () => {
-    const rpc = vi.fn().mockResolvedValue({ error: { code: "42883", message: "migration missing" } });
+    const rpc = vi
+      .fn()
+      .mockResolvedValue({ error: { code: "42883", message: "migration missing" } });
     const from = vi.fn();
     createServerSupabaseClientMock.mockResolvedValue({ rpc, from });
     const { saveExpenseAction } = await import("./actions");
     const form = new FormData();
-    for (const [key, value] of Object.entries({ operationId: "11111111-1111-4111-8111-111111111111", expenseDate: "2026-10-05", type: "Parts", description: "Paid", amount: "100", paymentMethod: "nx" })) form.set(key, value);
+    for (const [key, value] of Object.entries({
+      operationId: "11111111-1111-4111-8111-111111111111",
+      expenseDate: "2026-10-05",
+      type: "Parts",
+      description: "Paid",
+      amount: "100",
+      paymentMethod: "nx"
+    }))
+      form.set(key, value);
     await expect(saveExpenseAction(form)).rejects.toThrow("migration");
     expect(rpc.mock.calls[0][0]).toBe("save_expense_linked_atomic");
     expect(from).not.toHaveBeenCalled();
@@ -92,9 +107,21 @@ describe("purchase linkage actions", () => {
     createServerSupabaseClientMock.mockResolvedValue({ rpc });
     const { saveExpenseAction } = await import("./actions");
     const form = new FormData();
-    for (const [key, value] of Object.entries({ id: "22222222-2222-4222-8222-222222222222", operationId: "11111111-1111-4111-8111-111111111111", expenseDate: "2026-10-05", type: "Parts", description: "Paid", amount: "100", paymentMethod: "nx" })) form.set(key, value);
+    for (const [key, value] of Object.entries({
+      id: "22222222-2222-4222-8222-222222222222",
+      operationId: "11111111-1111-4111-8111-111111111111",
+      expenseDate: "2026-10-05",
+      type: "Parts",
+      description: "Paid",
+      amount: "100",
+      paymentMethod: "nx"
+    }))
+      form.set(key, value);
     await expect(saveExpenseAction(form)).rejects.toThrow("expense_updated");
-    expect(rpc.mock.calls[0][1]).toMatchObject({ p_operation_id: form.get("operationId"), p_payload: { id: form.get("id"), amount: 100 } });
+    expect(rpc.mock.calls[0][1]).toMatchObject({
+      p_operation_id: form.get("operationId"),
+      p_payload: { id: form.get("id"), amount: 100 }
+    });
     expect(rpc.mock.calls[0][1].p_payload).not.toHaveProperty("partRequestId");
   });
 });

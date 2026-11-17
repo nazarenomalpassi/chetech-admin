@@ -13,13 +13,19 @@ export function PwaRegister() {
     if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") return;
 
     if (process.env.NODE_ENV !== "production") {
-      void navigator.serviceWorker.getRegistrations().then((registrations) =>
-        Promise.all(registrations.map((registration) => registration.unregister()))
-      );
-      if ("caches" in window) {
-        void caches.keys().then((keys) =>
-          Promise.all(keys.filter((key) => key.startsWith("chetech-")).map((key) => caches.delete(key)))
+      void navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister()))
         );
+      if ("caches" in window) {
+        void caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys.filter((key) => key.startsWith("chetech-")).map((key) => caches.delete(key))
+            )
+          );
       }
       return;
     }
@@ -30,14 +36,19 @@ export function PwaRegister() {
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
         if (disposed) return;
-        if (registration.waiting && navigator.serviceWorker.controller) setWaitingWorker(registration.waiting);
+        if (registration.waiting && navigator.serviceWorker.controller)
+          setWaitingWorker(registration.waiting);
 
         registration.addEventListener("updatefound", () => {
           const installingWorker = registration.installing;
           if (!installingWorker) return;
 
           installingWorker.addEventListener("statechange", () => {
-            if (!disposed && installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+            if (
+              !disposed &&
+              installingWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
               setWaitingWorker(installingWorker);
             }
           });
@@ -60,7 +71,9 @@ export function PwaRegister() {
       return;
     }
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
+    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), {
+      once: true
+    });
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
   }
 
@@ -69,12 +82,12 @@ export function PwaRegister() {
   return (
     <aside
       aria-live="polite"
-      className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between"
+      className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-100 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between"
       role="status"
     >
       <div>
-        <p className="text-sm font-semibold text-slate-950">Actualizacion disponible</p>
-        <p className="mt-1 text-xs leading-5 text-slate-600">{notice}</p>
+        <p className="text-sm font-semibold text-foreground">Actualización disponible</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">{notice}</p>
       </div>
       <Button className="shrink-0" onClick={installUpdate} type="button">
         Actualizar ahora

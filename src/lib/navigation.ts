@@ -30,37 +30,99 @@ export type SidebarItem = {
 };
 
 export const sidebarItems: SidebarItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3, permission: "dashboard.view" },
+  { href: "/dashboard", label: "Inicio", icon: BarChart3, permission: "dashboard.view" },
   { href: "/productos", label: "Productos", icon: Boxes, permission: "products.view" },
   { href: "/ventas", label: "Ventas", icon: ShoppingCart, permission: "sales.manage" },
   { href: "/gastos", label: "Gastos", icon: ReceiptText, permission: "expenses.manage" },
   { href: "/visitas" as Route, label: "Visitas", icon: MapPinned, permission: "visits.view" },
-  { href: "/placas-tv" as Route, label: "Placas de Televisores", icon: Monitor, permission: "boards.manage" },
+  {
+    href: "/placas-tv" as Route,
+    label: "Placas de televisores",
+    icon: Monitor,
+    permission: "boards.manage"
+  },
   { href: "/sueldos" as Route, label: "Sueldo", icon: HandCoins, permission: "salaries.manage" },
   { href: "/pedidos" as Route, label: "Pedidos", icon: PackageCheck, permission: "orders.manage" },
-  { href: "/cuotas" as Route, label: "Cuotas", icon: CreditCard, permission: "installments.manage" },
+  {
+    href: "/cuotas" as Route,
+    label: "Cuotas",
+    icon: CreditCard,
+    permission: "installments.manage"
+  },
   { href: "/caja", label: "Caja", icon: Landmark, permission: "cash.manage" },
-  { href: "/cambio-balance" as Route, label: "Transferencias entre cuentas", icon: ArrowRightLeft, permission: "balance.manage" },
+  {
+    href: "/cambio-balance" as Route,
+    label: "Transferencias entre cuentas",
+    icon: ArrowRightLeft,
+    permission: "balance.manage"
+  },
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart, permission: "reports.manage" },
-  { href: "/reparaciones", label: "Pagos de reparaciones", icon: BadgeDollarSign, permission: "repairs.manage" },
-  { href: "/reparaciones-access" as Route, label: "Reparaciones", icon: Wrench, permission: "repairs.view" },
-  { href: "/terciarizaciones" as Route, label: "Terciarizaciones", icon: Truck, permission: "outsourcings.manage" },
-  { href: "/facturacion", label: "Facturacion", icon: FileText, permission: "invoices.manage" },
-  { href: "/configuracion", label: "Configuracion", icon: Settings, permission: "settings.manage" }
+  {
+    href: "/reparaciones",
+    label: "Cobros de reparaciones",
+    icon: BadgeDollarSign,
+    permission: "repairs.manage"
+  },
+  {
+    href: "/reparaciones-access" as Route,
+    label: "Reparaciones",
+    icon: Wrench,
+    permission: "repairs.view"
+  },
+  {
+    href: "/terciarizaciones" as Route,
+    label: "Terciarizaciones",
+    icon: Truck,
+    permission: "outsourcings.manage"
+  },
+  { href: "/facturacion", label: "Facturación", icon: FileText, permission: "invoices.manage" },
+  { href: "/configuracion", label: "Configuración", icon: Settings, permission: "settings.manage" }
 ];
 
+/** Secciones que siguen disponibles por enlace directo pero no aparecen en el menú. */
+const hiddenFromMenu = new Set<string>(["/cuotas"]);
+
 export function getSidebarItemsForRole(role: AppRole) {
-  return sidebarItems.filter((item) => hasPermission(role, item.permission));
+  return sidebarItems.filter(
+    (item) => hasPermission(role, item.permission) && !hiddenFromMenu.has(item.href)
+  );
 }
 
-export function getSidebarGroupsForRole(role: AppRole) {
+/** Una sección queda activa en su ruta y en cualquier subruta (por ejemplo, una orden abierta). */
+export function isNavItemActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export type SidebarGroup = { label: string; items: SidebarItem[] };
+
+export function getSidebarGroupsForRole(role: AppRole): SidebarGroup[] {
   const items = getSidebarItemsForRole(role);
   const groups = [
     { label: "Inicio", paths: ["/dashboard"] },
-    { label: "Taller", paths: ["/reparaciones-access", "/visitas", "/terciarizaciones", "/pedidos"] },
+    {
+      label: "Taller",
+      paths: ["/reparaciones-access", "/visitas", "/terciarizaciones", "/pedidos"]
+    },
     { label: "Comercial", paths: ["/productos", "/ventas", "/placas-tv"] },
-    { label: "Finanzas", paths: ["/caja", "/cambio-balance", "/reparaciones", "/cuotas", "/gastos", "/sueldos", "/facturacion", "/reportes"] },
-    { label: "Administracion", paths: ["/configuracion"] }
+    {
+      label: "Finanzas",
+      paths: [
+        "/caja",
+        "/cambio-balance",
+        "/reparaciones",
+        "/gastos",
+        "/sueldos",
+        "/facturacion",
+        "/reportes"
+      ]
+    },
+    { label: "Administración", paths: ["/configuracion"] }
   ];
-  return groups.map((group) => ({ label: group.label, items: group.paths.flatMap((path) => items.filter((item) => item.href === path)) })).filter((group) => group.items.length);
+  return groups
+    .map((group) => ({
+      label: group.label,
+      items: group.paths.flatMap((path) => items.filter((item) => item.href === path))
+    }))
+    .filter((group) => group.items.length);
 }

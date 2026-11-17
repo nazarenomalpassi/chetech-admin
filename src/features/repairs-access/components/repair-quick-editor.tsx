@@ -6,126 +6,396 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { saveQuickWorkshopForm } from "../coordination-actions";
 import type { RepairAccessOrderRecord } from "../queries";
-import { getPartOutstandingQuantity, getQuickWorkshopState, hasWorkshopDeliveryBalance, TECHNICAL_WORKSHOP_STATUSES } from "../workflow";
+import {
+  getPartOutstandingQuantity,
+  getQuickWorkshopState,
+  hasWorkshopDeliveryBalance,
+  TECHNICAL_WORKSHOP_STATUSES
+} from "../workflow";
 import { repairAccessStatusOptions } from "./repair-access-helpers";
 import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { WorkshopForm } from "./workshop-form";
 import { RepairWarrantyFields } from "./repair-warranty-fields";
 import { RepairWarrantyCorrection } from "./repair-warranty-correction";
 
-export function RepairQuickEditor({ order, canManage, defaultWarrantyDays }: { order: RepairAccessOrderRecord; canManage: boolean; defaultWarrantyDays?: number }) {
-  if (order.deliveredAt || order.status === "retirado") return canManage
-    ? <RepairWarrantyCorrection order={order} defaultWarrantyDays={defaultWarrantyDays} />
-    : <p className="p-4 text-sm text-slate-600">Esta orden ya fue entregada. La garantia se corrige desde administracion.</p>;
-  const pendingParts = order.workflow?.parts.filter((part) => getPartOutstandingQuantity(part) > 0).length ?? 0;
-  const hasExplicitZero = (order.workflow?.approvalStatus === "accepted" && order.workflow.approvedAmount === 0)
-    || (order.workflow?.approvalStatus === "rejected" && order.hasBudgetAmount && order.workflow.budgetRevision > 0);
-  const statusOptions = repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status
-    || (canManage && ["presupuestado_aceptado", "presupuestado_rechazado", "retirado"].includes(option.value)));
+export function RepairQuickEditor({
+  order,
+  canManage,
+  defaultWarrantyDays
+}: {
+  order: RepairAccessOrderRecord;
+  canManage: boolean;
+  defaultWarrantyDays?: number;
+}) {
+  if (order.deliveredAt || order.status === "retirado")
+    return canManage ? (
+      <RepairWarrantyCorrection order={order} defaultWarrantyDays={defaultWarrantyDays} />
+    ) : (
+      <p className="p-4 text-sm text-muted-foreground">
+        Esta orden ya fue entregada. La garantia se corrige desde administracion.
+      </p>
+    );
+  const pendingParts =
+    order.workflow?.parts.filter((part) => getPartOutstandingQuantity(part) > 0).length ?? 0;
+  const hasExplicitZero =
+    (order.workflow?.approvalStatus === "accepted" && order.workflow.approvedAmount === 0) ||
+    (order.workflow?.approvalStatus === "rejected" &&
+      order.hasBudgetAmount &&
+      order.workflow.budgetRevision > 0);
+  const statusOptions = repairAccessStatusOptions.filter(
+    (option) =>
+      TECHNICAL_WORKSHOP_STATUSES.includes(option.value) ||
+      option.value === order.status ||
+      (canManage &&
+        ["presupuestado_aceptado", "presupuestado_rechazado", "retirado"].includes(option.value))
+  );
 
-  return <WorkshopForm orderId={order.id} orderVersion={order.workflow?.version} action={saveQuickWorkshopForm}>
-    {(fields, submitting) => {
-      const state = getQuickWorkshopState(order, fields);
-      const retiring = state.status === "retirado";
-      const noFault = state.status === "no_presenta_fallas";
-      const protectQuote = noFault || (retiring && order.status === "no_presenta_fallas");
-      const canDeliver = ["listo_para_retirar", "no_presenta_fallas", "sin_solucion", "presupuestado_rechazado"].includes(order.status);
-      const hasWorkChanges = state.quoteChanged
-        || ("hasWarranty" in fields && (fields.hasWarranty === "on") !== Boolean(order.hasWarranty))
-        || ("warrantyDays" in fields && Number(fields.warrantyDays) !== (order.warrantyDays || defaultWarrantyDays || 0) && fields.hasWarranty === "on")
-        || (fields.warrantyConditions ?? order.warrantyConditions ?? "") !== (order.warrantyConditions ?? "")
-        || (fields.repairProgress ?? order.repairProgress ?? "") !== (order.repairProgress ?? "")
-        || (fields.qualityNotes ?? order.workflow?.qualityNotes ?? "") !== (order.workflow?.qualityNotes ?? "");
-      const hasBalance = hasWorkshopDeliveryBalance(order);
-      const deliveryWithBalance = hasBalance && fields.allowBalance === "on";
-      const quoteKey = JSON.stringify([fields.repairAmount ?? String(order.budgetAmount), fields.budgetDetail ?? order.budgetDetail ?? ""]);
-      const needsQuality = !noFault && (["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality);
-      const confirmSelected = fields.confirmCustomer === "on";
-      const decisionSelected = canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
-      const rejecting = state.status === "presupuestado_rechazado";
-      const responseNeedsRecording = decisionSelected && (state.quoteChanged || order.workflow?.approvalStatus !== (rejecting ? "rejected" : "accepted"));
-      const needsRejectionReason = rejecting && order.workflow?.approvalStatus === "accepted" && !state.quoteChanged;
-      const needsFreeReason = !rejecting && state.quoteAmount === 0 && state.needsConfirmation;
-      return <>
-        <input name="id" type="hidden" value={order.id} />
-        <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
-        <div className={`grid min-w-0 gap-3 ${retiring ? "" : "sm:grid-cols-2"}`}>
-          <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
-            <span>Estado de la orden</span>
-            <Select id={`quick-${order.id}-status`} name="status" defaultValue={order.status} options={statusOptions} />
-          </label>
-          <label hidden={retiring || noFault} className={retiring || noFault ? "hidden" : "grid min-w-0 gap-2 text-sm font-medium text-slate-700"}>
-            <span>Presupuesto</span>
-            <Input id={`quick-${order.id}-amount`} name="repairAmount" defaultValue={order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""} type="number" inputMode="decimal" min={0} step="0.01" disabled={order.isPaid || protectQuote} readOnly={retiring} placeholder="Sin presupuestar" />
-          </label>
-        </div>
-        {noFault ? <p className="text-sm leading-5 text-slate-600">No requiere presupuesto ni confirmacion del cliente. Se conservan los importes, cobros y la falla reportada originalmente.</p> : null}
-        {order.isPaid && !retiring && !noFault ? <p className="text-sm leading-5 text-slate-600">Importe protegido por un cobro informado. Corrige el dinero en Cobros.</p> : null}
-        <label hidden={retiring || noFault} className={retiring || noFault ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
-          <span>Detalle del presupuesto</span>
-          <Textarea id={`quick-${order.id}-budget`} name="budgetDetail" defaultValue={order.budgetDetail ?? ""} maxLength={2000} disabled={protectQuote} readOnly={retiring} className="min-h-20" placeholder="Trabajo a realizar y repuestos incluidos" />
-        </label>
-        <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}>
-          <span>Avance / trabajo realizado</span>
-          <Textarea id={`quick-${order.id}-progress`} name="repairProgress" defaultValue={order.repairProgress ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" placeholder="Que hiciste y que falta" />
-        </label>
-        {!retiring ? <p className="text-xs leading-5 text-slate-500">El presupuesto y el avance son visibles para el cliente con cuenta vinculada.</p> : null}
-        {canManage ? <div hidden={retiring || noFault}>
-          <RepairWarrantyFields order={order} fields={fields} defaultWarrantyDays={defaultWarrantyDays} disabled={retiring || noFault} />
-        </div> : null}
-        {retiring ? <div className="grid gap-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3">
-          <p className="text-sm font-semibold text-slate-900">Registrar retiro del equipo</p>
-          <label className="grid gap-2 text-sm font-medium text-slate-700"><span>Persona que retira</span>
-            <Input id={`quick-${order.id}-recipient`} name="recipient" defaultValue={fields.recipient ?? order.customer.fullName} required minLength={2} autoComplete="name" />
-          </label>
-          <label className="grid gap-2 text-sm font-medium text-slate-700"><span>Accesorios devueltos y observaciones</span>
-            <Textarea id={`quick-${order.id}-delivery-notes`} name="deliveryNotes" defaultValue={fields.deliveryNotes ?? ""} maxLength={2000} required={deliveryWithBalance} minLength={deliveryWithBalance ? 3 : undefined} className="min-h-20" placeholder="Control, cables y notas del retiro" />
-          </label>
-          {canManage && hasBalance ? <label className="flex min-h-11 items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-            <input name="allowBalance" type="checkbox" defaultChecked={fields.allowBalance === "on"} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
-            Autorizo entrega con saldo pendiente. Indica el motivo en las observaciones.
-          </label> : null}
-          <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-slate-900">
-            <input name="confirmDelivery" type="checkbox" defaultChecked={fields.confirmDelivery === "on"} required className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
-            Confirmo que el cliente retiro el equipo
-          </label>
-          {!canDeliver ? <p role="status" className="text-sm text-amber-900">Primero guarda como Listo para retirar, No presenta fallas, Sin solucion o Presupuestado y rechazado.</p> : null}
-          {hasWorkChanges ? <p role="status" className="text-sm text-amber-900">Guarda primero los cambios de presupuesto o trabajo. Vuelve al estado anterior: lo que escribiste se conserva.</p> : null}
-        </div> : null}
-        {canManage && !retiring && (decisionSelected || state.needsConfirmation) ? <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
-          {decisionSelected ? <>
-            <p className="text-sm font-semibold text-slate-900">{responseNeedsRecording
-              ? rejecting ? "Al guardar se registra que el cliente rechazo este presupuesto." : "Al guardar se registra que el cliente acepto este presupuesto."
-              : rejecting ? "El rechazo de este presupuesto ya esta registrado." : "La aceptacion de este presupuesto ya esta registrada."}</p>
-          </> : <>
-          <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-900">
-            <input key={`confirmation-${quoteKey}`} name="confirmCustomer" type="checkbox" defaultChecked={fields.confirmCustomer === "on"} className="h-5 w-5 shrink-0 accent-graphite" />
-            El cliente confirmo este presupuesto
-          </label>
-          <p className="mt-1 text-sm leading-5 text-slate-600">{confirmSelected ? "Al guardar se registra que el cliente acepto este presupuesto." : "Solo si autorizo este importe y detalle."}</p>
-          </>}
-          {responseNeedsRecording || (!decisionSelected && confirmSelected && needsFreeReason) ? <div className="mt-3 grid gap-3">
-            <label className="grid gap-2 text-sm font-medium text-slate-700"><span>{needsRejectionReason ? "Motivo del rechazo" : needsFreeReason ? "Motivo del trabajo sin cargo" : rejecting ? "Nota del rechazo (opcional)" : "Nota de confirmacion (opcional)"}</span>
-              <Textarea id={`quick-${order.id}-decision-notes`} name="decisionNotes" defaultValue={fields.decisionNotes || ""} maxLength={2000} required={needsRejectionReason || needsFreeReason} minLength={needsRejectionReason || needsFreeReason ? 3 : undefined} className="min-h-20" />
+  return (
+    <WorkshopForm
+      orderId={order.id}
+      orderVersion={order.workflow?.version}
+      action={saveQuickWorkshopForm}
+    >
+      {(fields, submitting) => {
+        const state = getQuickWorkshopState(order, fields);
+        const retiring = state.status === "retirado";
+        const noFault = state.status === "no_presenta_fallas";
+        const protectQuote = noFault || (retiring && order.status === "no_presenta_fallas");
+        const canDeliver = [
+          "listo_para_retirar",
+          "no_presenta_fallas",
+          "sin_solucion",
+          "presupuestado_rechazado"
+        ].includes(order.status);
+        const hasWorkChanges =
+          state.quoteChanged ||
+          ("hasWarranty" in fields &&
+            (fields.hasWarranty === "on") !== Boolean(order.hasWarranty)) ||
+          ("warrantyDays" in fields &&
+            Number(fields.warrantyDays) !== (order.warrantyDays || defaultWarrantyDays || 0) &&
+            fields.hasWarranty === "on") ||
+          (fields.warrantyConditions ?? order.warrantyConditions ?? "") !==
+            (order.warrantyConditions ?? "") ||
+          (fields.repairProgress ?? order.repairProgress ?? "") !== (order.repairProgress ?? "") ||
+          (fields.qualityNotes ?? order.workflow?.qualityNotes ?? "") !==
+            (order.workflow?.qualityNotes ?? "");
+        const hasBalance = hasWorkshopDeliveryBalance(order);
+        const deliveryWithBalance = hasBalance && fields.allowBalance === "on";
+        const quoteKey = JSON.stringify([
+          fields.repairAmount ?? String(order.budgetAmount),
+          fields.budgetDetail ?? order.budgetDetail ?? ""
+        ]);
+        const needsQuality =
+          !noFault &&
+          (["en_pruebas", "listo_para_retirar"].includes(state.status) || state.hasCurrentQuality);
+        const confirmSelected = fields.confirmCustomer === "on";
+        const decisionSelected =
+          canManage && ["presupuestado_aceptado", "presupuestado_rechazado"].includes(state.status);
+        const rejecting = state.status === "presupuestado_rechazado";
+        const responseNeedsRecording =
+          decisionSelected &&
+          (state.quoteChanged ||
+            order.workflow?.approvalStatus !== (rejecting ? "rejected" : "accepted"));
+        const needsRejectionReason =
+          rejecting && order.workflow?.approvalStatus === "accepted" && !state.quoteChanged;
+        const needsFreeReason = !rejecting && state.quoteAmount === 0 && state.needsConfirmation;
+        return (
+          <>
+            <input name="id" type="hidden" value={order.id} />
+            <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
+            <div className={`grid min-w-0 gap-3 ${retiring ? "" : "sm:grid-cols-2"}`}>
+              <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
+                <span>Estado de la orden</span>
+                <Select
+                  id={`quick-${order.id}-status`}
+                  name="status"
+                  defaultValue={order.status}
+                  options={statusOptions}
+                />
+              </label>
+              <label
+                hidden={retiring || noFault}
+                className={
+                  retiring || noFault
+                    ? "hidden"
+                    : "grid min-w-0 gap-2 text-sm font-medium text-body"
+                }
+              >
+                <span>Presupuesto</span>
+                <Input
+                  id={`quick-${order.id}-amount`}
+                  name="repairAmount"
+                  defaultValue={
+                    order.budgetAmount || hasExplicitZero ? String(order.budgetAmount) : ""
+                  }
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  step="0.01"
+                  disabled={order.isPaid || protectQuote}
+                  readOnly={retiring}
+                  placeholder="Sin presupuestar"
+                />
+              </label>
+            </div>
+            {noFault ? (
+              <p className="text-sm leading-5 text-muted-foreground">
+                No requiere presupuesto ni confirmacion del cliente. Se conservan los importes,
+                cobros y la falla reportada originalmente.
+              </p>
+            ) : null}
+            {order.isPaid && !retiring && !noFault ? (
+              <p className="text-sm leading-5 text-muted-foreground">
+                Importe protegido por un cobro informado. Corrige el dinero en Cobros.
+              </p>
+            ) : null}
+            <label
+              hidden={retiring || noFault}
+              className={
+                retiring || noFault ? "hidden" : "grid gap-2 text-sm font-medium text-body"
+              }
+            >
+              <span>Detalle del presupuesto</span>
+              <Textarea
+                id={`quick-${order.id}-budget`}
+                name="budgetDetail"
+                defaultValue={order.budgetDetail ?? ""}
+                maxLength={2000}
+                disabled={protectQuote}
+                readOnly={retiring}
+                className="min-h-20"
+                placeholder="Trabajo a realizar y repuestos incluidos"
+              />
             </label>
-          </div> : null}
-        </div> : null}
-        {canManage && !retiring && !noFault && !state.needsConfirmation && !decisionSelected ? <p className="text-sm text-slate-600">La aceptacion de este presupuesto ya esta registrada. Desmarcar un formulario no la revoca.</p> : null}
-        {!canManage && !noFault ? <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={false} /> : null}
-        {needsQuality ? <label className={retiring ? "hidden" : "flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm font-semibold text-slate-900"}>
-          <input key={`quality-${quoteKey}`} name="qualityChecked" type="checkbox" defaultChecked={"qualityChecked" in fields ? fields.qualityChecked === "on" : state.hasCurrentQuality} className="mt-0.5 h-5 w-5 shrink-0 accent-graphite" />
-          Equipo probado y funcionando
-        </label> : null}
-        {pendingParts > 0 && !retiring ? <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinacion y repuestos.</p> : null}
-        <details className={retiring ? "hidden" : "border-t border-slate-200 pt-2"}>
-          <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Resultado de las pruebas (opcional)</summary>
-          <label className="mt-2 grid gap-2 text-sm"><span>Detalle de las pruebas</span><Textarea id={`quick-${order.id}-quality-notes`} name="qualityNotes" defaultValue={order.workflow?.qualityNotes ?? ""} maxLength={2000} readOnly={retiring} className="min-h-20" /></label>
-        </details>
-        <div className="grid gap-2">
-          <Button type="submit" className="min-h-12 w-full" disabled={submitting || (retiring && (!canDeliver || hasWorkChanges))}>{submitting ? "Guardando..." : retiring ? "Registrar retiro" : state.status === "listo_para_retirar" ? "Guardar y marcar listo" : "Guardar cambios"}</Button>
-          <p className="text-xs leading-5 text-slate-500">{retiring ? "Registra la fecha y la persona que retira. No genera cobros ni modifica importes." : "Guardar no cobra ni entrega el equipo. Esas acciones se registran por separado."}</p>
-        </div>
-      </>;
-    }}
-  </WorkshopForm>;
+            <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-body"}>
+              <span>Avance / trabajo realizado</span>
+              <Textarea
+                id={`quick-${order.id}-progress`}
+                name="repairProgress"
+                defaultValue={order.repairProgress ?? ""}
+                maxLength={2000}
+                readOnly={retiring}
+                className="min-h-20"
+                placeholder="Que hiciste y que falta"
+              />
+            </label>
+            {!retiring ? (
+              <p className="text-xs leading-5 text-muted-foreground">
+                El presupuesto y el avance son visibles para el cliente con cuenta vinculada.
+              </p>
+            ) : null}
+            {canManage ? (
+              <div hidden={retiring || noFault}>
+                <RepairWarrantyFields
+                  order={order}
+                  fields={fields}
+                  defaultWarrantyDays={defaultWarrantyDays}
+                  disabled={retiring || noFault}
+                />
+              </div>
+            ) : null}
+            {retiring ? (
+              <div className="grid gap-3 rounded-xl border border-success-border bg-success-soft/40 p-3">
+                <p className="text-sm font-semibold text-foreground">Registrar retiro del equipo</p>
+                <label className="grid gap-2 text-sm font-medium text-body">
+                  <span>Persona que retira</span>
+                  <Input
+                    id={`quick-${order.id}-recipient`}
+                    name="recipient"
+                    defaultValue={fields.recipient ?? order.customer.fullName}
+                    required
+                    minLength={2}
+                    autoComplete="name"
+                  />
+                </label>
+                <label className="grid gap-2 text-sm font-medium text-body">
+                  <span>Accesorios devueltos y observaciones</span>
+                  <Textarea
+                    id={`quick-${order.id}-delivery-notes`}
+                    name="deliveryNotes"
+                    defaultValue={fields.deliveryNotes ?? ""}
+                    maxLength={2000}
+                    required={deliveryWithBalance}
+                    minLength={deliveryWithBalance ? 3 : undefined}
+                    className="min-h-20"
+                    placeholder="Control, cables y notas del retiro"
+                  />
+                </label>
+                {canManage && hasBalance ? (
+                  <label className="flex min-h-11 items-start gap-3 rounded-xl bg-warning-soft p-3 text-sm text-warning">
+                    <input
+                      name="allowBalance"
+                      type="checkbox"
+                      defaultChecked={fields.allowBalance === "on"}
+                      className="mt-0.5 h-5 w-5 shrink-0 accent-graphite"
+                    />
+                    Autorizo entrega con saldo pendiente. Indica el motivo en las observaciones.
+                  </label>
+                ) : null}
+                <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-foreground">
+                  <input
+                    name="confirmDelivery"
+                    type="checkbox"
+                    defaultChecked={fields.confirmDelivery === "on"}
+                    required
+                    className="mt-0.5 h-5 w-5 shrink-0 accent-graphite"
+                  />
+                  Confirmo que el cliente retiro el equipo
+                </label>
+                {!canDeliver ? (
+                  <p role="status" className="text-sm text-warning">
+                    Primero guarda como Listo para retirar, No presenta fallas, Sin solución o
+                    Presupuestado y rechazado.
+                  </p>
+                ) : null}
+                {hasWorkChanges ? (
+                  <p role="status" className="text-sm text-warning">
+                    Guarda primero los cambios de presupuesto o trabajo. Vuelve al estado anterior:
+                    lo que escribiste se conserva.
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {canManage && !retiring && (decisionSelected || state.needsConfirmation) ? (
+              <div className="rounded-xl border border-warning-border bg-warning-soft/60 p-3">
+                {decisionSelected ? (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      {responseNeedsRecording
+                        ? rejecting
+                          ? "Al guardar se registra que el cliente rechazo este presupuesto."
+                          : "Al guardar se registra que el cliente acepto este presupuesto."
+                        : rejecting
+                          ? "El rechazo de este presupuesto ya esta registrado."
+                          : "La aceptacion de este presupuesto ya esta registrada."}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-foreground">
+                      <input
+                        key={`confirmation-${quoteKey}`}
+                        name="confirmCustomer"
+                        type="checkbox"
+                        defaultChecked={fields.confirmCustomer === "on"}
+                        className="h-5 w-5 shrink-0 accent-graphite"
+                      />
+                      El cliente confirmo este presupuesto
+                    </label>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                      {confirmSelected
+                        ? "Al guardar se registra que el cliente acepto este presupuesto."
+                        : "Solo si autorizo este importe y detalle."}
+                    </p>
+                  </>
+                )}
+                {responseNeedsRecording ||
+                (!decisionSelected && confirmSelected && needsFreeReason) ? (
+                  <div className="mt-3 grid gap-3">
+                    <label className="grid gap-2 text-sm font-medium text-body">
+                      <span>
+                        {needsRejectionReason
+                          ? "Motivo del rechazo"
+                          : needsFreeReason
+                            ? "Motivo del trabajo sin cargo"
+                            : rejecting
+                              ? "Nota del rechazo (opcional)"
+                              : "Nota de confirmacion (opcional)"}
+                      </span>
+                      <Textarea
+                        id={`quick-${order.id}-decision-notes`}
+                        name="decisionNotes"
+                        defaultValue={fields.decisionNotes || ""}
+                        maxLength={2000}
+                        required={needsRejectionReason || needsFreeReason}
+                        minLength={needsRejectionReason || needsFreeReason ? 3 : undefined}
+                        className="min-h-20"
+                      />
+                    </label>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+            {canManage && !retiring && !noFault && !state.needsConfirmation && !decisionSelected ? (
+              <p className="text-sm text-muted-foreground">
+                La aceptacion de este presupuesto ya esta registrada. Desmarcar un formulario no la
+                revoca.
+              </p>
+            ) : null}
+            {!canManage && !noFault ? (
+              <ReadyForPickupRequirements
+                workflow={order.workflow}
+                status={order.status}
+                canManage={false}
+              />
+            ) : null}
+            {needsQuality ? (
+              <label
+                className={
+                  retiring
+                    ? "hidden"
+                    : "flex min-h-11 items-start gap-3 rounded-xl border border-border p-3 text-sm font-semibold text-foreground"
+                }
+              >
+                <input
+                  key={`quality-${quoteKey}`}
+                  name="qualityChecked"
+                  type="checkbox"
+                  defaultChecked={
+                    "qualityChecked" in fields
+                      ? fields.qualityChecked === "on"
+                      : state.hasCurrentQuality
+                  }
+                  className="mt-0.5 h-5 w-5 shrink-0 accent-graphite"
+                />
+                Equipo probado y funcionando
+              </label>
+            ) : null}
+            {pendingParts > 0 && !retiring ? (
+              <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
+                Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinación y
+                repuestos.
+              </p>
+            ) : null}
+            <details className={retiring ? "hidden" : "border-t border-border pt-2"}>
+              <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
+                Resultado de las pruebas (opcional)
+              </summary>
+              <label className="mt-2 grid gap-2 text-sm">
+                <span>Detalle de las pruebas</span>
+                <Textarea
+                  id={`quick-${order.id}-quality-notes`}
+                  name="qualityNotes"
+                  defaultValue={order.workflow?.qualityNotes ?? ""}
+                  maxLength={2000}
+                  readOnly={retiring}
+                  className="min-h-20"
+                />
+              </label>
+            </details>
+            <div className="grid gap-2">
+              <Button
+                type="submit"
+                className="min-h-12 w-full"
+                disabled={submitting || (retiring && (!canDeliver || hasWorkChanges))}
+              >
+                {submitting
+                  ? "Guardando..."
+                  : retiring
+                    ? "Registrar retiro"
+                    : state.status === "listo_para_retirar"
+                      ? "Guardar y marcar listo"
+                      : "Guardar cambios"}
+              </Button>
+              <p className="text-xs leading-5 text-muted-foreground">
+                {retiring
+                  ? "Registra la fecha y la persona que retira. No genera cobros ni modifica importes."
+                  : "Guardar no cobra ni entrega el equipo. Esas acciones se registran por separado."}
+              </p>
+            </div>
+          </>
+        );
+      }}
+    </WorkshopForm>
+  );
 }

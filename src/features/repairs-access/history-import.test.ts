@@ -118,13 +118,13 @@ describe("repair history import", () => {
         Equipo: "Televisor LED",
         Marca: "LG",
         Modelo: "43UH6500-SB",
-        Defecto: "Reparacion de led especial",
+        Defecto: "Reparación de led especial",
         "Fecha de ingreso": new Date("2024-11-27T03:00:48.000Z"),
         "Retiró (Sí-No)": true,
         "Fecha de retiro": null,
         "Reparación realizada": true,
         Presupuestado: true,
-        "GarantíaTiempoDeFalla": 90
+        GarantíaTiempoDeFalla: 90
       },
       3
     );
@@ -164,7 +164,7 @@ describe("repair history import", () => {
         "Fecha de ingreso": new Date("2024-12-31T03:00:48.000Z"),
         "Retiró (Sí-No)": true,
         "Fecha de retiro": new Date("2025-01-03T03:00:48.000Z"),
-        "GarantíaTiempoDeFalla": 90,
+        GarantíaTiempoDeFalla: 90,
         "Garantía hasta": new Date("2025-04-03T03:00:48.000Z")
       },
       2
@@ -188,7 +188,9 @@ describe("repair history import", () => {
           "Teléfono Celular": "3571555555",
           Equipo: "Televisor",
           Defecto: "No enciende",
-          "Fecha de ingreso": new Date(`2026-01-${String(index + 2).padStart(2, "0")}T03:00:00.000Z`)
+          "Fecha de ingreso": new Date(
+            `2026-01-${String(index + 2).padStart(2, "0")}T03:00:00.000Z`
+          )
         },
         index + 2
       )
@@ -228,20 +230,16 @@ describe("repair history import", () => {
         { rowNumber: 2, legacyOrderNumber: "15" },
         { rowNumber: 3, legacyOrderNumber: "15" }
       ])
-    ).toThrow("Numero historico repetido 15");
+    ).toThrow("Número historico repetido 15");
   });
 
   it("rejects non-positive or non-numeric historical public numbers", () => {
     expect(() =>
-      validateHistoricalOrderNumbers([
-        { rowNumber: 2, legacyOrderNumber: "ORDEN-SIN-NUMERO" }
-      ])
-    ).toThrow("Numero historico invalido");
+      validateHistoricalOrderNumbers([{ rowNumber: 2, legacyOrderNumber: "ORDEN-SIN-NUMERO" }])
+    ).toThrow("Número historico invalido");
     expect(() =>
-      validateHistoricalOrderNumbers([
-        { rowNumber: 2, legacyOrderNumber: "0" }
-      ])
-    ).toThrow("Numero historico invalido");
+      validateHistoricalOrderNumbers([{ rowNumber: 2, legacyOrderNumber: "0" }])
+    ).toThrow("Número historico invalido");
   });
 
   it("maps the verified legacy suffix into the historical public range", () => {

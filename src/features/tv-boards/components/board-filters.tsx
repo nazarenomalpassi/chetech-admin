@@ -43,8 +43,10 @@ export function BoardFilters() {
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-1 text-sm font-medium text-slate-700">
-        <label className="block" htmlFor={`${id}-search`}>Buscar placas</label>
+      <div className="space-y-1 text-sm font-medium text-body">
+        <label className="block" htmlFor={`${id}-search`}>
+          Buscar placas
+        </label>
         <Input
           aria-label="Buscar placas"
           id={`${id}-search`}
@@ -54,8 +56,10 @@ export function BoardFilters() {
         />
       </div>
 
-      <div className="space-y-1 text-sm font-medium text-slate-700">
-        <label className="block" htmlFor={`${id}-type`}>Tipo de placa</label>
+      <div className="space-y-1 text-sm font-medium text-body">
+        <label className="block" htmlFor={`${id}-type`}>
+          Tipo de placa
+        </label>
         <Select
           aria-label="Filtrar placas por tipo"
           id={`${id}-type`}
@@ -68,24 +72,26 @@ export function BoardFilters() {
         />
       </div>
 
-      <div className="space-y-1 text-sm font-medium text-slate-700">
-      <label className="block" htmlFor={`${id}-status`}>Estado</label>
-      <Select
-        aria-label="Filtrar placas por estado"
-        id={`${id}-status`}
-        defaultValue={searchParams.get("status") ?? "all"}
-        onChange={(event) => updateParam("status", event.target.value)}
-        options={[
-          { label: "Todas las placas", value: "all" },
-          { label: "Disponibles", value: "active" },
-          { label: "Dadas de baja", value: "inactive" },
-          { label: "Vendidas", value: "sold" },
-          { label: "Liberacion sin confirmar", value: "pending_release" },
-          { label: "Reclamo abierto / dinero retenido", value: "claim_open" },
-          { label: "Venta anulada", value: "cancelled" },
-          { label: "Liberacion confirmada", value: "released" }
-        ]}
-      />
+      <div className="space-y-1 text-sm font-medium text-body">
+        <label className="block" htmlFor={`${id}-status`}>
+          Estado
+        </label>
+        <Select
+          aria-label="Filtrar placas por estado"
+          id={`${id}-status`}
+          defaultValue={searchParams.get("status") ?? "all"}
+          onChange={(event) => updateParam("status", event.target.value)}
+          options={[
+            { label: "Todas las placas", value: "all" },
+            { label: "Disponibles", value: "active" },
+            { label: "Dadas de baja", value: "inactive" },
+            { label: "Vendidas", value: "sold" },
+            { label: "Liberación sin confirmar", value: "pending_release" },
+            { label: "Reclamo abierto / dinero retenido", value: "claim_open" },
+            { label: "Venta anulada", value: "cancelled" },
+            { label: "Liberación confirmada", value: "released" }
+          ]}
+        />
       </div>
     </div>
   );

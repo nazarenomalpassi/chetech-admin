@@ -4,7 +4,7 @@ import { snapshotFixture as snapshot } from "./fixtures";
 
 describe("ARCA SOAP security and wire format", () => {
   it("escapes every XML metacharacter and rejects invalid control characters", () => {
-    expect(escapeXml('<a&b>\"\'')).toBe("&lt;a&amp;b&gt;&quot;&apos;");
+    expect(escapeXml("<a&b>\"'")).toBe("&lt;a&amp;b&gt;&quot;&apos;");
     expect(() => escapeXml("a\u0000b")).toThrow();
   });
   it("sends one C voucher, zero IVA and net equal to total after discount", () => {
@@ -19,19 +19,35 @@ describe("ARCA SOAP security and wire format", () => {
     expect(xml).not.toContain("<Iva>");
   });
   it("preserves CAE and document strings including leading zeroes", () => {
-    const result = parseSoapResult('<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><FECompConsultarResponse><FECompConsultarResult><ResultGet><CodAutorizacion>01234567890123</CodAutorizacion></ResultGet></FECompConsultarResult></FECompConsultarResponse></s:Body></s:Envelope>', "FECompConsultar");
+    const result = parseSoapResult(
+      '<s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><FECompConsultarResponse><FECompConsultarResult><ResultGet><CodAutorizacion>01234567890123</CodAutorizacion></ResultGet></FECompConsultarResult></FECompConsultarResponse></s:Body></s:Envelope>',
+      "FECompConsultar"
+    );
     expect(result.ResultGet.CodAutorizacion).toBe("01234567890123");
   });
   it("rejects entities, DTD, malformed XML and SOAP faults without echoing secret contents", () => {
-    for (const xml of ['<!DOCTYPE x [<!ENTITY secret "private-key">]><x>&secret;</x>', '<x>', '<Envelope><Body><Fault><faultstring>secret-token</faultstring></Fault></Body></Envelope>']) {
+    for (const xml of [
+      '<!DOCTYPE x [<!ENTITY secret "private-key">]><x>&secret;</x>',
+      "<x>",
+      "<Envelope><Body><Fault><faultstring>secret-token</faultstring></Fault></Body></Envelope>"
+    ]) {
       expect(() => parseSoapResult(xml, "FECompConsultar")).toThrow();
-      try { parseSoapResult(xml, "FECompConsultar"); } catch (e) { expect(String(e)).not.toContain("secret-token"); }
+      try {
+        parseSoapResult(xml, "FECompConsultar");
+      } catch (e) {
+        expect(String(e)).not.toContain("secret-token");
+      }
     }
   });
   it("sets timeout and forbids redirects when transmitting credentials", async () => {
     let options: RequestInit | undefined;
-    const fetcher: typeof fetch = async (_, init) => { options = init; return new Response("ok"); };
-    expect(await soapPost("https://wswhomo.afip.gov.ar/wsfev1/service.asmx", "test", "xml", fetcher)).toBe("ok");
+    const fetcher: typeof fetch = async (_, init) => {
+      options = init;
+      return new Response("ok");
+    };
+    expect(
+      await soapPost("https://wswhomo.afip.gov.ar/wsfev1/service.asmx", "test", "xml", fetcher)
+    ).toBe("ok");
     expect(options?.redirect).toBe("error");
     expect(options?.signal).toBeInstanceOf(AbortSignal);
   });

@@ -5,11 +5,7 @@ export const repairQrId = z
   .uuid()
   .transform((value) => value.toLowerCase());
 
-export const LEGACY_REPAIR_QR_MISSING_HEADERS = [
-  "rsc",
-  "next-action",
-  "content-type",
-] as const;
+export const LEGACY_REPAIR_QR_MISSING_HEADERS = ["rsc", "next-action", "content-type"] as const;
 export const LEGACY_REPAIR_QR_CONTEXT_PARAMETERS = [
   "status",
   "error",
@@ -19,21 +15,19 @@ export const LEGACY_REPAIR_QR_CONTEXT_PARAMETERS = [
   "scope",
   "cursor",
   "from",
-  "to",
+  "to"
 ] as const;
 export function getLegacyRepairQrId(
   method: string,
   url: Pick<URL, "pathname" | "searchParams">,
-  headers: Headers,
+  headers: Headers
 ) {
   if (
     !["GET", "HEAD"].includes(method) ||
     url.pathname !== "/reparaciones-access" ||
     url.searchParams.get("view") !== "detalle" ||
     LEGACY_REPAIR_QR_MISSING_HEADERS.some((name) => headers.has(name)) ||
-    Array.from(url.searchParams.keys()).some(
-      (key) => key !== "view" && key !== "order",
-    ) ||
+    Array.from(url.searchParams.keys()).some((key) => key !== "view" && key !== "order") ||
     url.searchParams.getAll("view").length !== 1 ||
     url.searchParams.getAll("order").length !== 1
   )

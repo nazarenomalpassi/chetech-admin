@@ -66,7 +66,9 @@ export function PaymentSplitFields({
   }
 
   function addPaymentRow() {
-    const remaining = syncAmountWithTotal ? Math.max(roundPaymentAmount(totalAmount - assignedTotal), 0) : 0;
+    const remaining = syncAmountWithTotal
+      ? Math.max(roundPaymentAmount(totalAmount - assignedTotal), 0)
+      : 0;
     onChange([...payments, { ...EMPTY_PAYMENT, amount: remaining }]);
   }
 
@@ -80,15 +82,20 @@ export function PaymentSplitFields({
   }
 
   return (
-    <div className={`min-w-0 rounded-xl border border-line bg-white ${compact ? "p-3" : "p-4"}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3">
+    <div className={`min-w-0 rounded-xl border border-border bg-card ${compact ? "p-3" : "p-4"}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-3">
         <div className="flex items-start gap-2">
-          <WalletCards aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+          <WalletCards
+            aria-hidden="true"
+            className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground"
+          />
           <div>
-            <p className="text-sm font-semibold text-slate-950">{title}</p>
-            {!compact ? <p className="mt-1 text-sm text-slate-600">
-              Indicá cuánto recibe cada cuenta.
-            </p> : null}
+            <p className="text-sm font-semibold text-foreground">{title}</p>
+            {!compact ? (
+              <p className="mt-1 text-sm text-muted-foreground">
+                Indicá cuánto recibe cada cuenta.
+              </p>
+            ) : null}
           </div>
         </div>
         <Button onClick={addPaymentRow} size="sm" type="button" variant="secondary">
@@ -99,22 +106,35 @@ export function PaymentSplitFields({
       <div className="mt-4 space-y-3">
         {payments.map((payment, index) => (
           <div
-            className={compact ? "grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2" : "grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,180px)_auto] sm:items-end"}
+            className={
+              compact
+                ? "grid min-w-0 grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-end gap-2"
+                : "grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(120px,180px)_auto] sm:items-end"
+            }
             key={index}
           >
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700" htmlFor={`payment-method-${index}`}>
+              <label
+                className="block text-sm font-medium text-body"
+                htmlFor={`payment-method-${index}`}
+              >
                 Medio {index + 1}
               </label>
               <Select
                 id={`payment-method-${index}`}
                 onChange={(event) => updatePayment(index, "method", event.target.value)}
-                options={PAYMENT_METHODS.map((method) => ({ value: method.value, label: method.label }))}
+                options={PAYMENT_METHODS.map((method) => ({
+                  value: method.value,
+                  label: method.label
+                }))}
                 value={payment.method}
               />
             </div>
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-slate-700" htmlFor={`payment-amount-${index}`}>
+              <label
+                className="block text-sm font-medium text-body"
+                htmlFor={`payment-amount-${index}`}
+              >
                 Monto
               </label>
               <MoneyInput
@@ -126,44 +146,80 @@ export function PaymentSplitFields({
                 value={Number.isFinite(payment.amount) ? payment.amount : 0}
               />
             </div>
-            <Button aria-label={compact ? `Quitar medio ${index + 1}` : undefined} className={compact ? "min-h-11 w-11 px-0" : "md:mb-[1px]"} onClick={() => removePaymentRow(index)} size="sm" type="button" variant="ghost">
+            <Button
+              aria-label={compact ? `Quitar medio ${index + 1}` : undefined}
+              className={compact ? "min-h-11 w-11 px-0" : "md:mb-px"}
+              onClick={() => removePaymentRow(index)}
+              size="sm"
+              type="button"
+              variant="ghost"
+            >
               {compact ? <X aria-hidden="true" className="h-4 w-4" /> : "Quitar"}
             </Button>
           </div>
         ))}
       </div>
 
-      {compact ? <dl aria-live="polite" className="mt-3 grid min-w-0 grid-cols-2 gap-3 border-t border-line pt-3 text-sm">
-        <div className="min-w-0"><dt className="text-slate-600">Dinero recibido</dt><dd className="mt-1 break-words font-semibold tabular-nums">{formatCurrency(assignedTotal)}</dd></div>
-        <div className="min-w-0"><dt className="text-slate-600">{difference < 0 ? "Excede el saldo" : "Saldo luego del cobro"}</dt><dd className={`mt-1 break-words font-semibold tabular-nums ${difference < 0 ? "text-finance-expense" : "text-slate-950"}`}>{formatCurrency(Math.abs(difference))}</dd></div>
-      </dl> : <div className="mt-4 grid gap-3 border-t border-line pt-4 sm:grid-cols-3">
-        <div className="min-w-0">
-          <p className="text-sm text-slate-600">Total a cobrar</p>
-          <p className="mt-1 font-semibold tabular-nums text-slate-950">{formatCurrency(totalAmount)}</p>
+      {compact ? (
+        <dl
+          aria-live="polite"
+          className="mt-3 grid min-w-0 grid-cols-2 gap-3 border-t border-border pt-3 text-sm"
+        >
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">Dinero recibido</dt>
+            <dd className="mt-1 font-semibold wrap-break-word tabular-nums">
+              {formatCurrency(assignedTotal)}
+            </dd>
+          </div>
+          <div className="min-w-0">
+            <dt className="text-muted-foreground">
+              {difference < 0 ? "Excede el saldo" : "Saldo luego del cobro"}
+            </dt>
+            <dd
+              className={`mt-1 font-semibold wrap-break-word tabular-nums ${difference < 0 ? "text-danger" : "text-foreground"}`}
+            >
+              {formatCurrency(Math.abs(difference))}
+            </dd>
+          </div>
+        </dl>
+      ) : (
+        <div className="mt-4 grid gap-3 border-t border-border pt-4 sm:grid-cols-3">
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Total a cobrar</p>
+            <p className="mt-1 font-semibold text-foreground tabular-nums">
+              {formatCurrency(totalAmount)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Importe distribuido</p>
+            <p className="mt-1 font-semibold text-foreground tabular-nums">
+              {formatCurrency(assignedTotal)}
+            </p>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">
+              {difference < 0 ? "Excedente asignado" : "Falta distribuir"}
+            </p>
+            <p
+              aria-live="polite"
+              className={`mt-1 font-semibold tabular-nums ${
+                Math.abs(difference) < 0.01 ? "text-success" : "text-danger"
+              }`}
+            >
+              {formatCurrency(difference)}
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {totalAmount <= 0
+                ? "Cargá el total antes de confirmar el cobro."
+                : Math.abs(difference) < 0.01
+                  ? "Importes completos."
+                  : difference > 0
+                    ? "Todavía falta asignar parte del cobro."
+                    : "Hay mas dinero asignado que el declarado."}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="text-sm text-slate-600">Importe distribuido</p>
-          <p className="mt-1 font-semibold tabular-nums text-slate-950">{formatCurrency(assignedTotal)}</p>
-        </div>
-        <div className="min-w-0">
-          <p className="text-sm text-slate-600">{difference < 0 ? "Excedente asignado" : "Falta distribuir"}</p>
-          <p
-            aria-live="polite"
-            className={`mt-1 font-semibold tabular-nums ${
-              Math.abs(difference) < 0.01 ? "text-finance-profit" : "text-finance-expense"
-            }`}
-          >
-            {formatCurrency(difference)}
-          </p>
-          <p className="mt-1 text-xs text-slate-500">
-            {totalAmount <= 0 ? "Cargá el total antes de confirmar el cobro." : Math.abs(difference) < 0.01
-              ? "Importes completos."
-              : difference > 0
-                ? "Todavia falta asignar parte del cobro."
-                : "Hay mas dinero asignado que el declarado."}
-          </p>
-        </div>
-      </div>}
+      )}
     </div>
   );
 }

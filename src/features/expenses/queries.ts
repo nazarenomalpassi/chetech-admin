@@ -8,9 +8,11 @@ export async function getExpenses(page = 1) {
   const { from, to } = getPaginationRange(page);
   const historyQuery = (supabase as any)
     .from("expenses")
-    .select("id, expense_date, type, description, amount, payment_method, impacts_cash, is_voided, observations, created_at, updated_at, repair_order_id, part_request_id, repair_order:repair_access_orders!expenses_repair_order_id_fkey(repair_number), part_request:repair_part_requests!expenses_part_request_id_fkey(description)", { count: "exact" });
-  const { data, error, count } = await applyStableCreationOrder(historyQuery)
-    .range(from, to);
+    .select(
+      "id, expense_date, type, description, amount, payment_method, impacts_cash, is_voided, observations, created_at, updated_at, repair_order_id, part_request_id, repair_order:repair_access_orders!expenses_repair_order_id_fkey(repair_number), part_request:repair_part_requests!expenses_part_request_id_fkey(description)",
+      { count: "exact" }
+    );
+  const { data, error, count } = await applyStableCreationOrder(historyQuery).range(from, to);
 
   if (error) {
     throw new Error(error.message);
@@ -28,7 +30,9 @@ export async function getExpenses(page = 1) {
     observations: expense.observations ?? "",
     repairOrderId: expense.repair_order_id ?? null,
     partRequestId: expense.part_request_id ?? null,
-    linkLabel: expense.repair_order_id ? `${expense.repair_order?.repair_number ?? "REP"}${expense.part_request_id ? ` / ${expense.part_request?.description ?? "Compra de repuesto"}` : " / Gasto directo"}` : ""
+    linkLabel: expense.repair_order_id
+      ? `${expense.repair_order?.repair_number ?? "REP"}${expense.part_request_id ? ` / ${expense.part_request?.description ?? "Compra de repuesto"}` : " / Gasto directo"}`
+      : ""
   }));
 
   return {

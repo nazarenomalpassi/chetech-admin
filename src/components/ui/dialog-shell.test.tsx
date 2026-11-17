@@ -14,7 +14,11 @@ function Form() {
     <DialogShell labelledBy="title" onClose={() => undefined}>
       <h2 id="title">Prueba</h2>
       <button type="button">Cerrar</button>
-      <input aria-label="Presupuesto" onChange={(event) => setValue(event.target.value)} value={value} />
+      <input
+        aria-label="Presupuesto"
+        onChange={(event) => setValue(event.target.value)}
+        value={value}
+      />
       <button type="button">Guardar</button>
     </DialogShell>
   );
@@ -32,10 +36,18 @@ describe("DialogShell", () => {
   it("uses the latest close callback without resetting focus", () => {
     const first = vi.fn();
     const latest = vi.fn();
-    const { rerender } = render(<DialogShell labelledBy="title" onClose={first}><input aria-label="Monto" /></DialogShell>);
+    const { rerender } = render(
+      <DialogShell labelledBy="title" onClose={first}>
+        <input aria-label="Monto" />
+      </DialogShell>
+    );
     const input = screen.getByLabelText("Monto");
     input.focus();
-    rerender(<DialogShell labelledBy="title" onClose={latest}><input aria-label="Monto" /></DialogShell>);
+    rerender(
+      <DialogShell labelledBy="title" onClose={latest}>
+        <input aria-label="Monto" />
+      </DialogShell>
+    );
     fireEvent.keyDown(document, { key: "Escape" });
     expect(latest).toHaveBeenCalledOnce();
     expect(first).not.toHaveBeenCalled();

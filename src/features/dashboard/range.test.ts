@@ -23,7 +23,11 @@ describe("getDashboardRange", () => {
   });
 
   it("arma un rango inclusivo por fecha", () => {
-    const range = getDashboardRange("2026-04-20", "2026-04-22", new Date("2026-04-25T15:00:00.000Z"));
+    const range = getDashboardRange(
+      "2026-04-20",
+      "2026-04-22",
+      new Date("2026-04-25T15:00:00.000Z")
+    );
 
     expect(range.from).toBe("2026-04-20");
     expect(range.to).toBe("2026-04-22");
@@ -32,7 +36,11 @@ describe("getDashboardRange", () => {
   });
 
   it("normaliza fechas invertidas", () => {
-    const range = getDashboardRange("2026-04-25", "2026-04-21", new Date("2026-04-25T15:00:00.000Z"));
+    const range = getDashboardRange(
+      "2026-04-25",
+      "2026-04-21",
+      new Date("2026-04-25T15:00:00.000Z")
+    );
 
     expect(range.from).toBe("2026-04-21");
     expect(range.to).toBe("2026-04-25");

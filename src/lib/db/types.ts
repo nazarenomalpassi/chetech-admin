@@ -343,34 +343,188 @@ export type Database = {
         };
       };
       salary_members: {
-        Row: { id: string; name: string; target_amount: number; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
-        Insert: { id?: string; name: string; target_amount: number; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string };
-        Update: { name?: string; target_amount?: number; sort_order?: number; is_active?: boolean; updated_at?: string };
+        Row: {
+          id: string;
+          name: string;
+          target_amount: number;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          target_amount: number;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          target_amount?: number;
+          sort_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
       };
       financial_reserves: {
-        Row: { id: string; code: string; name: string; amount: number; sort_order: number; is_active: boolean; created_at: string; updated_at: string };
-        Insert: { id?: string; code: string; name: string; amount?: number; sort_order?: number; is_active?: boolean; created_at?: string; updated_at?: string };
-        Update: { code?: string; name?: string; amount?: number; sort_order?: number; is_active?: boolean; updated_at?: string };
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          amount: number;
+          sort_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          amount?: number;
+          sort_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          name?: string;
+          amount?: number;
+          sort_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
       };
       salary_liquidations: {
-        Row: { id: string; period_month: string; withdrawal_date: string; intended_total: number; allocated_total: number; salary_mass_snapshot: number; salary_amount: number; profit_share_amount: number; total_amount: number; coverage_percentage: number; excess_amount: number; notes: string | null; idempotency_key: string; created_by: string | null; created_at: string };
-        Insert: { id?: string; period_month: string; withdrawal_date: string; intended_total: number; allocated_total?: number; salary_mass_snapshot?: number; salary_amount?: number; profit_share_amount?: number; total_amount?: number; coverage_percentage?: number; excess_amount?: number; notes?: string | null; idempotency_key: string; created_by?: string | null; created_at?: string };
-        Update: { withdrawal_date?: string; allocated_total?: number; salary_mass_snapshot?: number; salary_amount?: number; profit_share_amount?: number; total_amount?: number; coverage_percentage?: number; excess_amount?: number; notes?: string | null };
+        Row: {
+          id: string;
+          period_month: string;
+          withdrawal_date: string;
+          intended_total: number;
+          allocated_total: number;
+          salary_mass_snapshot: number;
+          salary_amount: number;
+          profit_share_amount: number;
+          total_amount: number;
+          coverage_percentage: number;
+          excess_amount: number;
+          notes: string | null;
+          idempotency_key: string;
+          created_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          period_month: string;
+          withdrawal_date: string;
+          intended_total: number;
+          allocated_total?: number;
+          salary_mass_snapshot?: number;
+          salary_amount?: number;
+          profit_share_amount?: number;
+          total_amount?: number;
+          coverage_percentage?: number;
+          excess_amount?: number;
+          notes?: string | null;
+          idempotency_key: string;
+          created_by?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          withdrawal_date?: string;
+          allocated_total?: number;
+          salary_mass_snapshot?: number;
+          salary_amount?: number;
+          profit_share_amount?: number;
+          total_amount?: number;
+          coverage_percentage?: number;
+          excess_amount?: number;
+          notes?: string | null;
+        };
       };
       salary_liquidation_members: {
-        Row: { id: string; liquidation_id: string; member_id: string; member_name_snapshot: string; target_amount_snapshot: number; salary_amount: number; profit_share_amount: number; total_amount: number; salary_coverage_percentage: number; created_at: string };
-        Insert: { id?: string; liquidation_id: string; member_id: string; member_name_snapshot: string; target_amount_snapshot: number; salary_amount?: number; profit_share_amount?: number; salary_coverage_percentage: number; created_at?: string };
-        Update: { member_name_snapshot?: string; target_amount_snapshot?: number; salary_amount?: number; profit_share_amount?: number; salary_coverage_percentage?: number };
+        Row: {
+          id: string;
+          liquidation_id: string;
+          member_id: string;
+          member_name_snapshot: string;
+          target_amount_snapshot: number;
+          salary_amount: number;
+          profit_share_amount: number;
+          total_amount: number;
+          salary_coverage_percentage: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          liquidation_id: string;
+          member_id: string;
+          member_name_snapshot: string;
+          target_amount_snapshot: number;
+          salary_amount?: number;
+          profit_share_amount?: number;
+          salary_coverage_percentage: number;
+          created_at?: string;
+        };
+        Update: {
+          member_name_snapshot?: string;
+          target_amount_snapshot?: number;
+          salary_amount?: number;
+          profit_share_amount?: number;
+          salary_coverage_percentage?: number;
+        };
       };
       salary_liquidation_funding: {
-        Row: { id: string; liquidation_id: string; payment_method: "efectivo" | "nx" | "mp"; amount: number; created_at: string };
-        Insert: { id?: string; liquidation_id: string; payment_method: "efectivo" | "nx" | "mp"; amount: number; created_at?: string };
+        Row: {
+          id: string;
+          liquidation_id: string;
+          payment_method: "efectivo" | "nx" | "mp";
+          amount: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          liquidation_id: string;
+          payment_method: "efectivo" | "nx" | "mp";
+          amount: number;
+          created_at?: string;
+        };
         Update: { payment_method?: "efectivo" | "nx" | "mp"; amount?: number };
       };
       replenishment_plan_items: {
-        Row: { id: string; period_month: string; product_id: string; quantity_to_order: number; status: "pending" | "added" | "ordered" | "received"; notes: string | null; updated_by: string | null; created_at: string; updated_at: string };
-        Insert: { id?: string; period_month: string; product_id: string; quantity_to_order?: number; status?: "pending" | "added" | "ordered" | "received"; notes?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string };
-        Update: { quantity_to_order?: number; status?: "pending" | "added" | "ordered" | "received"; notes?: string | null; updated_by?: string | null; updated_at?: string };
+        Row: {
+          id: string;
+          period_month: string;
+          product_id: string;
+          quantity_to_order: number;
+          status: "pending" | "added" | "ordered" | "received";
+          notes: string | null;
+          updated_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          period_month: string;
+          product_id: string;
+          quantity_to_order?: number;
+          status?: "pending" | "added" | "ordered" | "received";
+          notes?: string | null;
+          updated_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          quantity_to_order?: number;
+          status?: "pending" | "added" | "ordered" | "received";
+          notes?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+        };
       };
       installment_sales: {
         Row: {

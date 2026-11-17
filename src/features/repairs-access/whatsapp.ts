@@ -69,7 +69,9 @@ export function getRepairAccessWhatsAppTemplate(
   const device = order.deviceLabel || "equipo";
   const amount = formatAmount(getAmount(order));
   const budgetDetail = order.budgetDetail?.trim();
-  const warrantyText = order.warrantyDays ? ` Tiene ${order.warrantyDays} dias de garantia desde el retiro.` : "";
+  const warrantyText = order.warrantyDays
+    ? ` Tiene ${order.warrantyDays} dias de garantía desde el retiro.`
+    : "";
 
   if (selectedKind === "budget") {
     return {
@@ -80,8 +82,10 @@ export function getRepairAccessWhatsAppTemplate(
         `Le paso el presupuesto de la reparacion de su equipo ${device}.`,
         budgetDetail ? `Detalle del presupuesto: ${budgetDetail}.` : "",
         amount ? `El total final seria ${amount}.` : "",
-        `tiene de garantia ${order.warrantyDays || 0} dias.`
-      ].filter(Boolean).join(" ")
+        `tiene de garantía ${order.warrantyDays || 0} dias.`
+      ]
+        .filter(Boolean)
+        .join(" ")
     };
   }
 
@@ -94,14 +98,16 @@ export function getRepairAccessWhatsAppTemplate(
         `Tu ${device} ya esta listo para retirar.`,
         amount ? `Total: ${amount}.` : "",
         `${warrantyText} Te esperamos en el local. Gracias.`
-      ].filter(Boolean).join(" ")
+      ]
+        .filter(Boolean)
+        .join(" ")
     };
   }
 
   if (selectedKind === "no_solution") {
     return {
       kind: "no_solution",
-      label: "Avisar sin solucion",
+      label: "Avisar sin solución",
       message: [
         customerGreeting(order.customerName, true),
         `lamentamos informarle que su equipo ${device} no va a tener reparacion.`
@@ -133,7 +139,7 @@ export function buildRepairAccessWhatsAppHref(
 
 export function getDefaultWhatsAppKind(status: string): RepairAccessWhatsAppKind {
   if (status === "presupuestado") return "budget";
-  if (status === "listo_para_retirar" || status === "retirado") return "ready";
+  if (status === "listo_para_retirar") return "ready";
   if (status === "sin_solucion") return "no_solution";
   return "general";
 }

@@ -2,52 +2,141 @@
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, render, screen } from "@testing-library/react";
-const mocks = vi.hoisted(() => ({ profile: vi.fn(), permission: vi.fn(), dashboard: vi.fn(), technician: vi.fn(), reports: vi.fn(), workshopReport: vi.fn(), inbox: vi.fn() }));
-vi.mock("@/lib/auth", () => ({ getCurrentProfile: mocks.profile, requirePermission: mocks.permission }));
+const mocks = vi.hoisted(() => ({
+  profile: vi.fn(),
+  permission: vi.fn(),
+  dashboard: vi.fn(),
+  technician: vi.fn(),
+  reports: vi.fn(),
+  workshopReport: vi.fn(),
+  inbox: vi.fn(),
+  today: vi.fn()
+}));
+vi.mock("@/lib/auth", () => ({
+  getCurrentProfile: mocks.profile,
+  requirePermission: mocks.permission
+}));
 vi.mock("@/features/dashboard/queries", () => ({ getDashboardData: mocks.dashboard }));
-vi.mock("@/features/dashboard/technician-queries", () => ({ getTechnicianDashboardData: mocks.technician }));
+vi.mock("@/features/dashboard/workshop-today", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/dashboard/workshop-today")>()),
+  getWorkshopToday: mocks.today
+}));
+vi.mock("@/features/dashboard/technician-queries", () => ({
+  getTechnicianDashboardData: mocks.technician
+}));
 vi.mock("@/features/reports/queries", () => ({ getReportsData: mocks.reports }));
 vi.mock("./queries", () => ({ getWorkshopBusinessReport: mocks.workshopReport }));
-vi.mock("@/features/repairs-access/coordination-queries", () => ({ getWorkshopInbox: mocks.inbox }));
-vi.mock("@/features/dashboard/components/dashboard-overview", () => ({ DashboardOverview: ({ workshopInbox }: { workshopInbox?: React.ReactNode }) => <div><h1>Original admin dashboard</h1>{workshopInbox}</div> }));
-vi.mock("@/features/dashboard/components/technician-dashboard", () => ({ TechnicianDashboard: ({ workshopInbox }: { workshopInbox?: React.ReactNode }) => <div><h1>Original technician dashboard</h1>{workshopInbox}</div> }));
-vi.mock("@/features/reports/components/reports-view", () => ({ ReportsView: () => <div>Original reports</div> }));
+vi.mock("@/features/repairs-access/coordination-queries", () => ({
+  getWorkshopInbox: mocks.inbox
+}));
+vi.mock("@/features/dashboard/components/dashboard-overview", () => ({
+  DashboardOverview: ({ workshopInbox }: { workshopInbox?: React.ReactNode }) => (
+    <div>
+      <h1>Original admin dashboard</h1>
+      {workshopInbox}
+    </div>
+  )
+}));
+vi.mock("@/features/dashboard/components/technician-dashboard", () => ({
+  TechnicianDashboard: ({ workshopInbox }: { workshopInbox?: React.ReactNode }) => (
+    <div>
+      <h1>Original technician dashboard</h1>
+      {workshopInbox}
+    </div>
+  )
+}));
+vi.mock("@/features/reports/components/reports-view", () => ({
+  ReportsView: () => <div>Original reports</div>
+}));
 import DashboardPage from "@/app/(admin)/dashboard/page";
 import ReportesPage from "@/app/(admin)/reportes/page";
 import { reportFixture } from "./test-fixture";
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.stubGlobal("ResizeObserver", class { observe() {} unobserve() {} disconnect() {} });
-  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({ width: 600, height: 260 } as DOMRect);
-  mocks.profile.mockResolvedValue({ user: { id: "tech-a" }, profile: { role: "admin", full_name: "Admin" } });
+  vi.stubGlobal(
+    "ResizeObserver",
+    class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    }
+  );
+  vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    width: 600,
+    height: 260
+  } as DOMRect);
+  mocks.profile.mockResolvedValue({
+    user: { id: "tech-a" },
+    profile: { role: "admin", full_name: "Admin" }
+  });
   mocks.permission.mockResolvedValue({ role: "admin" });
-  mocks.dashboard.mockResolvedValue({}); mocks.technician.mockResolvedValue({}); mocks.reports.mockResolvedValue({});
-  mocks.inbox.mockResolvedValue({ counts: { unassigned: 1, waitingCustomer: 2, awaitingReturn: 3, ready: 4, blockedParts: 5 }, tasks: [], technicians: [] });
-  mocks.workshopReport.mockResolvedValue({ range: reportFixture, report: reportFixture, migrationReady: true });
+  mocks.dashboard.mockResolvedValue({});
+  mocks.technician.mockResolvedValue({});
+  mocks.today.mockResolvedValue(null);
+  mocks.reports.mockResolvedValue({});
+  mocks.inbox.mockResolvedValue({
+    counts: { unassigned: 1, waitingCustomer: 2, awaitingReturn: 3, ready: 4, blockedParts: 5 },
+    tasks: [],
+    technicians: []
+  });
+  mocks.workshopReport.mockResolvedValue({
+    range: reportFixture,
+    report: reportFixture,
+    migrationReady: true
+  });
 });
 
 describe("disjoint page integration", () => {
   it("adds the current inbox without replacing the original admin dashboard or date range", async () => {
-    render(await DashboardPage({ searchParams: Promise.resolve({ from: "2026-10-01", to: "2026-10-05" }) }));
+    render(
+      await DashboardPage({
+        searchParams: Promise.resolve({ from: "2026-10-01", to: "2026-10-05" })
+      })
+    );
     expect(screen.getByText("Original admin dashboard")).toBeTruthy();
     expect(screen.getByText("Bandeja del taller")).toBeTruthy();
     expect(mocks.dashboard).toHaveBeenCalledWith({ dateFrom: "2026-10-01", dateTo: "2026-10-05" });
+    expect(mocks.today).toHaveBeenCalledTimes(1);
+  });
+  it("keeps the home page up when the workshop state cannot be read", async () => {
+    mocks.today.mockRejectedValue(new Error("Database unavailable"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Original admin dashboard")).toBeTruthy();
   });
   it("allows technician operational inbox but never fetches financial report data", async () => {
-    mocks.profile.mockResolvedValue({ user: { id: "tech-a" }, profile: { role: "tecnico", full_name: "Tecnico" } });
+    mocks.profile.mockResolvedValue({
+      user: { id: "tech-a" },
+      profile: { role: "tecnico", full_name: "Técnico" }
+    });
     render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Original technician dashboard")).toBeTruthy();
     expect(screen.getByText("Bandeja del taller")).toBeTruthy();
     expect(mocks.technician).toHaveBeenCalledWith("tech-a");
-    expect(mocks.dashboard).not.toHaveBeenCalled(); expect(mocks.workshopReport).not.toHaveBeenCalled();
+    expect(mocks.today).toHaveBeenCalledTimes(1);
+    expect(mocks.dashboard).not.toHaveBeenCalled();
+    expect(mocks.workshopReport).not.toHaveBeenCalled();
   });
   it("preserves ReportsView while adding the separate intake-cohort report", async () => {
-    render(await ReportesPage({ searchParams: Promise.resolve({ from: "2026-10-01", to: "2026-10-05" }) }));
+    render(
+      await ReportesPage({
+        searchParams: Promise.resolve({ from: "2026-10-01", to: "2026-10-05" })
+      })
+    );
     expect(screen.getByText("Original reports")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Negocio del taller" })).toBeTruthy();
-    expect(screen.getByText("Original reports").compareDocumentPosition(screen.getByRole("heading", { name: "Negocio del taller" })) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      screen
+        .getByText("Original reports")
+        .compareDocumentPosition(screen.getByRole("heading", { name: "Negocio del taller" })) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(mocks.workshopReport).toHaveBeenCalledWith("2026-10-01", "2026-10-05");
   });
 });

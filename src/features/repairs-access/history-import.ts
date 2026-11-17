@@ -21,8 +21,16 @@ export type ExistingHistoricalCustomer = {
 };
 
 export type HistoricalCustomerMatch =
-  | { kind: "existing"; customerId: string; reason: "phone_and_name" | "strong_identity" | "unique_exact_name" }
-  | { kind: "ambiguous"; candidateIds: string[]; reason: "shared_phone_incompatible_identity" | "multiple_identity_matches" }
+  | {
+      kind: "existing";
+      customerId: string;
+      reason: "phone_and_name" | "strong_identity" | "unique_exact_name";
+    }
+  | {
+      kind: "ambiguous";
+      candidateIds: string[];
+      reason: "shared_phone_incompatible_identity" | "multiple_identity_matches";
+    }
   | { kind: "new"; reason: "no_safe_match" };
 
 export type NormalizedHistoricalRepairRow = {
@@ -145,7 +153,9 @@ export function getHistoricalRowValue(row: HistoricalRow, header: string) {
 }
 
 export function normalizeHistoricalText(value: unknown) {
-  return String(value ?? "").trim().replace(/\s+/g, " ");
+  return String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 export function nullableHistoricalText(value: unknown) {
@@ -224,10 +234,14 @@ function joinHistoricalParts(parts: Array<string | null>, separator = ", ") {
 
 function buildHistoricalAddress(row: HistoricalRow) {
   const street = nullableHistoricalText(getHistoricalRowValue(row, "direccion cliente"));
-  const streetNumber = nullableHistoricalText(getHistoricalRowValue(row, "direccion numero cliente"));
+  const streetNumber = nullableHistoricalText(
+    getHistoricalRowValue(row, "direccion numero cliente")
+  );
   const streetLine = joinHistoricalParts([street, streetNumber], " ");
   const floor = nullableHistoricalText(getHistoricalRowValue(row, "direccion piso cliente"));
-  const apartment = nullableHistoricalText(getHistoricalRowValue(row, "direccion departamento cliente"));
+  const apartment = nullableHistoricalText(
+    getHistoricalRowValue(row, "direccion departamento cliente")
+  );
   const houseOrApartment = nullableHistoricalText(getHistoricalRowValue(row, "casadepartamento"));
   const location = [
     streetLine,
@@ -244,20 +258,23 @@ function buildHistoricalAddress(row: HistoricalRow) {
 function buildHistoricalCustomerNotes(row: HistoricalRow) {
   const iva = nullableHistoricalText(getHistoricalRowValue(row, "iva"));
   const cuit = nullableHistoricalText(getHistoricalRowValue(row, "cuit"));
-  return joinHistoricalParts([
-    iva ? `IVA: ${iva}` : null,
-    cuit && cuit !== "--" ? `CUIT: ${cuit}` : null
-  ], " | ");
+  return joinHistoricalParts(
+    [iva ? `IVA: ${iva}` : null, cuit && cuit !== "--" ? `CUIT: ${cuit}` : null],
+    " | "
+  );
 }
 
 function buildHistoricalInternalObservations(row: HistoricalRow) {
   const writtenOffAt = historicalDateOnly(getHistoricalRowValue(row, "fechadebaja"));
   const writtenOffReason = nullableHistoricalText(getHistoricalRowValue(row, "causadebaja"));
-  return joinHistoricalParts([
-    nullableHistoricalText(getHistoricalRowValue(row, "observacionesusointerno")),
-    writtenOffAt ? `Baja historica: ${writtenOffAt}` : null,
-    writtenOffReason ? `Causa de baja: ${writtenOffReason}` : null
-  ], "\n");
+  return joinHistoricalParts(
+    [
+      nullableHistoricalText(getHistoricalRowValue(row, "observacionesusointerno")),
+      writtenOffAt ? `Baja historica: ${writtenOffAt}` : null,
+      writtenOffReason ? `Causa de baja: ${writtenOffReason}` : null
+    ],
+    "\n"
+  );
 }
 
 export function normalizeHistoricalRepairRow(
@@ -278,7 +295,11 @@ export function normalizeHistoricalRepairRow(
   const primaryPhoneNormalized = normalizeHistoricalPhone(primaryPhone);
   const secondaryPhoneNormalized = normalizeHistoricalPhone(secondaryPhone);
   const fixedPhoneNormalized = normalizeHistoricalPhone(fixedPhone);
-  const alternatePhone = secondaryPhoneNormalized ? secondaryPhone : fixedPhoneNormalized ? fixedPhone : null;
+  const alternatePhone = secondaryPhoneNormalized
+    ? secondaryPhone
+    : fixedPhoneNormalized
+      ? fixedPhone
+      : null;
   const alternatePhoneNormalized = secondaryPhoneNormalized ?? fixedPhoneNormalized;
   const address = buildHistoricalAddress(row);
 
@@ -304,9 +325,8 @@ export function normalizeHistoricalRepairRow(
 
   const rawWarrantyDays = historicalNumber(getHistoricalRowValue(row, "garantiatiempodefalla"));
   const historicalWarrantyUntil = historicalDateOnly(getHistoricalRowValue(row, "garantia hasta"));
-  let warrantyDays = Number.isInteger(rawWarrantyDays) && Number(rawWarrantyDays) >= 0
-    ? Number(rawWarrantyDays)
-    : 0;
+  let warrantyDays =
+    Number.isInteger(rawWarrantyDays) && Number(rawWarrantyDays) >= 0 ? Number(rawWarrantyDays) : 0;
 
   if (!warrantyDays && pickedUpAt && historicalWarrantyUntil && rawWarrantyDays === null) {
     const start = new Date(`${pickedUpAt}T12:00:00.000Z`);
@@ -408,11 +428,19 @@ export function mapHistoricalRepairStatus({
 }
 
 function sameNullableValue(left: string | null, right: string | null) {
-  return Boolean(left && right && normalizeRepairAccessLookup(left) === normalizeRepairAccessLookup(right));
+  return Boolean(
+    left && right && normalizeRepairAccessLookup(left) === normalizeRepairAccessLookup(right)
+  );
 }
 
-function hasStrongIdentityMatch(identity: HistoricalCustomerIdentity, candidate: ExistingHistoricalCustomer) {
-  return sameNullableValue(identity.dni, candidate.dni) || sameNullableValue(identity.addressNormalized, candidate.addressNormalized);
+function hasStrongIdentityMatch(
+  identity: HistoricalCustomerIdentity,
+  candidate: ExistingHistoricalCustomer
+) {
+  return (
+    sameNullableValue(identity.dni, candidate.dni) ||
+    sameNullableValue(identity.addressNormalized, candidate.addressNormalized)
+  );
 }
 
 export function classifyHistoricalCustomerMatch(
@@ -438,23 +466,28 @@ export function classifyHistoricalCustomerMatch(
       return {
         kind: "existing",
         customerId: compatible[0].id,
-        reason: compatible[0].fullNameNormalized === identity.fullNameNormalized ? "phone_and_name" : "strong_identity"
+        reason:
+          compatible[0].fullNameNormalized === identity.fullNameNormalized
+            ? "phone_and_name"
+            : "strong_identity"
       };
     }
 
     return {
       kind: "ambiguous",
       candidateIds: phoneMatches.map((candidate) => candidate.id).sort(),
-      reason: compatible.length > 1 ? "multiple_identity_matches" : "shared_phone_incompatible_identity"
+      reason:
+        compatible.length > 1 ? "multiple_identity_matches" : "shared_phone_incompatible_identity"
     };
   }
 
   const exactNameMatches = candidates.filter(
     (candidate) =>
-      identity.fullNameNormalized &&
-      candidate.fullNameNormalized === identity.fullNameNormalized
+      identity.fullNameNormalized && candidate.fullNameNormalized === identity.fullNameNormalized
   );
-  const strongMatches = exactNameMatches.filter((candidate) => hasStrongIdentityMatch(identity, candidate));
+  const strongMatches = exactNameMatches.filter((candidate) =>
+    hasStrongIdentityMatch(identity, candidate)
+  );
 
   if (strongMatches.length === 1) {
     return { kind: "existing", customerId: strongMatches[0].id, reason: "strong_identity" };
@@ -462,7 +495,9 @@ export function classifyHistoricalCustomerMatch(
   if (strongMatches.length > 1 || exactNameMatches.length > 1) {
     return {
       kind: "ambiguous",
-      candidateIds: (strongMatches.length ? strongMatches : exactNameMatches).map((candidate) => candidate.id).sort(),
+      candidateIds: (strongMatches.length ? strongMatches : exactNameMatches)
+        .map((candidate) => candidate.id)
+        .sort(),
       reason: "multiple_identity_matches"
     };
   }
@@ -522,14 +557,14 @@ export function validateHistoricalOrderNumbers(
     const number = /^\d+$/.test(text) ? Number(text) : Number.NaN;
     if (!Number.isSafeInteger(number) || number <= 0 || number > 999_999) {
       throw new Error(
-        `Numero historico invalido en fila ${row.rowNumber}: "${text || "(vacio)"}".`
+        `Número historico invalido en fila ${row.rowNumber}: "${text || "(vacio)"}".`
       );
     }
 
     const previousRow = seen.get(number);
     if (previousRow) {
       throw new Error(
-        `Numero historico repetido ${number} en las filas ${previousRow} y ${row.rowNumber}.`
+        `Número historico repetido ${number} en las filas ${previousRow} y ${row.rowNumber}.`
       );
     }
     seen.set(number, row.rowNumber);
@@ -551,15 +586,9 @@ export function buildHistoricalPublicOrderNumberPlan(
 
   const legacyNumbers = rows.map((row) => Number(row.legacyOrderNumber));
   const maximumLegacyNumber = Math.max(...legacyNumbers, 0);
-  const gapsToClose = Math.max(
-    0,
-    maximumLegacyNumber - options.maximumPublicOrderNumber
-  );
+  const gapsToClose = Math.max(0, maximumLegacyNumber - options.maximumPublicOrderNumber);
   const legacyNumberSet = new Set(legacyNumbers);
-  const closedLegacyGaps = Array.from(
-    { length: maximumLegacyNumber },
-    (_, index) => index + 1
-  )
+  const closedLegacyGaps = Array.from({ length: maximumLegacyNumber }, (_, index) => index + 1)
     .filter((number) => !legacyNumberSet.has(number))
     .sort((left, right) => right - left)
     .slice(0, gapsToClose)
@@ -574,8 +603,7 @@ export function buildHistoricalPublicOrderNumberPlan(
   const byLegacyOrderNumber = Object.fromEntries(
     legacyNumbers.map((legacyNumber) => [
       String(legacyNumber),
-      legacyNumber -
-        closedLegacyGaps.filter((gap) => gap < legacyNumber).length
+      legacyNumber - closedLegacyGaps.filter((gap) => gap < legacyNumber).length
     ])
   );
   const publicNumbers = Object.values(byLegacyOrderNumber);
@@ -583,15 +611,11 @@ export function buildHistoricalPublicOrderNumberPlan(
   if (
     publicNumbers.some(
       (number) =>
-        !Number.isSafeInteger(number) ||
-        number <= 0 ||
-        number > options.maximumPublicOrderNumber
+        !Number.isSafeInteger(number) || number <= 0 || number > options.maximumPublicOrderNumber
     ) ||
     new Set(publicNumbers).size !== publicNumbers.length
   ) {
-    throw new Error(
-      "La numeracion historica reconciliada contiene valores invalidos o repetidos."
-    );
+    throw new Error("La numeracion historica reconciliada contiene valores invalidos o repetidos.");
   }
 
   return {
@@ -632,8 +656,7 @@ export function buildRepairHistoryImportPlan({
 
   for (const row of rows) {
     const existingOrder =
-      existingByStableKey.get(row.stableKey) ??
-      existingByLegacyNumber.get(row.legacyOrderNumber);
+      existingByStableKey.get(row.stableKey) ?? existingByLegacyNumber.get(row.legacyOrderNumber);
 
     if (existingOrder) {
       skippedOrders.push({

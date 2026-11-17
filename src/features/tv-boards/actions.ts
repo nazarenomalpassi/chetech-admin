@@ -49,7 +49,12 @@ export async function upsertTvBoardAction(input: unknown) {
   };
 
   const { data, error } = parsed.data.id
-    ? await (supabase as any).from("tv_boards").update(payload).eq("id", parsed.data.id).select("id").single()
+    ? await (supabase as any)
+        .from("tv_boards")
+        .update(payload)
+        .eq("id", parsed.data.id)
+        .select("id")
+        .single()
     : await (supabase as any).from("tv_boards").insert(payload).select("id").single();
 
   if (error) {
@@ -98,7 +103,10 @@ export async function toggleTvBoardStatusAction(id: string, nextValue: boolean) 
     };
   }
 
-  const { error } = await (supabase as any).from("tv_boards").update({ is_active: nextValue }).eq("id", id);
+  const { error } = await (supabase as any)
+    .from("tv_boards")
+    .update({ is_active: nextValue })
+    .eq("id", id);
 
   if (error) {
     return {
@@ -126,7 +134,13 @@ export async function toggleTvBoardStatusAction(id: string, nextValue: boolean) 
 export async function deleteTvBoardAction(id: string) {
   const user = await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await (supabase as any).from("tv_boards").delete().eq("id", id).is("sold_at", null).select("id").maybeSingle();
+  const { data, error } = await (supabase as any)
+    .from("tv_boards")
+    .delete()
+    .eq("id", id)
+    .is("sold_at", null)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     return {
@@ -134,7 +148,11 @@ export async function deleteTvBoardAction(id: string) {
       message: error.message
     };
   }
-  if (!data) return { success: false, message: "Una placa vendida conserva su historial y no se puede eliminar." };
+  if (!data)
+    return {
+      success: false,
+      message: "Una placa vendida conserva su historial y no se puede eliminar."
+    };
 
   await createAuditLog({
     entityType: "tv_boards",
@@ -198,7 +216,13 @@ export async function markTvBoardSoldAction(input: unknown) {
     is_active: false
   };
 
-  const { data: saved, error } = await (supabase as any).from("tv_boards").update(salePayload).eq("id", parsed.data.id).is("sold_at", null).select("id").maybeSingle();
+  const { data: saved, error } = await (supabase as any)
+    .from("tv_boards")
+    .update(salePayload)
+    .eq("id", parsed.data.id)
+    .is("sold_at", null)
+    .select("id")
+    .maybeSingle();
 
   if (error) {
     return {
@@ -207,7 +231,11 @@ export async function markTvBoardSoldAction(input: unknown) {
     };
   }
 
-  if (!saved) return { success: false, message: "La placa ya fue vendida en otro dispositivo. Actualiza el listado." };
+  if (!saved)
+    return {
+      success: false,
+      message: "La placa ya fue vendida en otro dispositivo. Actualiza el listado."
+    };
 
   await createAuditLog({
     entityType: "tv_boards",

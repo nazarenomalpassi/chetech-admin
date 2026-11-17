@@ -27,7 +27,10 @@ describe("repair access whatsapp helpers", () => {
   });
 
   it("builds ready, budget and no solution messages", () => {
-    const readyTemplate = getRepairAccessWhatsAppTemplate({ ...baseOrder, status: "listo_para_retirar" });
+    const readyTemplate = getRepairAccessWhatsAppTemplate({
+      ...baseOrder,
+      status: "listo_para_retirar"
+    });
     expect(readyTemplate.kind).toBe("ready");
     expect(readyTemplate.label).toBe("Avisar listo");
 
@@ -37,13 +40,16 @@ describe("repair access whatsapp helpers", () => {
     expect(decodeURIComponent(href ?? "")).toContain("TV Samsung 43");
     expect(decodeURIComponent(href ?? "")).toContain("listo para retirar");
 
-    const budgetHref = buildRepairAccessWhatsAppHref({ ...baseOrder, status: "presupuestado" }, "budget");
+    const budgetHref = buildRepairAccessWhatsAppHref(
+      { ...baseOrder, status: "presupuestado" },
+      "budget"
+    );
     expect(decodeURIComponent(budgetHref ?? "")).toContain("presupuesto");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("Hola Juan Perez");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("Cambio de leds");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("El total final seria $");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("90.000,00");
-    expect(decodeURIComponent(budgetHref ?? "")).toContain("tiene de garantia 30 dias");
+    expect(decodeURIComponent(budgetHref ?? "")).toContain("tiene de garantía 30 dias");
 
     const noSolutionHref = buildRepairAccessWhatsAppHref(
       { ...baseOrder, deviceLabel: "TV Samsung 43", status: "sin_solucion" },

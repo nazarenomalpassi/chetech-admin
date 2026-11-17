@@ -6,8 +6,12 @@ const container = process.env.CHETECH_FINANCIAL_STAGING_CONTAINER;
 const suite = container ? describe : describe.skip;
 suite("financial migration against the full local staging schema", () => {
   it("uses real schema, RPC guards and custody constraints in a rolled-back transaction", () => {
-    if (container !== "chetech-staging-20261005") throw new Error("Only the explicitly isolated local staging container is allowed.");
-    const migration = readFileSync("supabase/migrations/20261005194817_financial_atomic_documents_payments.sql", "utf8");
+    if (container !== "chetech-staging-20261005")
+      throw new Error("Only the explicitly isolated local staging container is allowed.");
+    const migration = readFileSync(
+      "supabase/migrations/20261005194817_financial_atomic_documents_payments.sql",
+      "utf8"
+    );
     const query = `begin;
       ${migration}
       insert into auth.users(id) values ('00000000-0000-4000-8000-000000000099') on conflict do nothing;
@@ -34,7 +38,7 @@ suite("financial migration against the full local staging schema", () => {
         if (select workflow_version from public.repair_access_orders where id=a)<>original_version then raise exception 'Issuance changed the primary order'; end if;
         r := public.save_repair_financial_atomic(jsonb_build_object('requestId',gen_random_uuid(),'customerName','Fixture','device','TV','repairAccessOrderId',a,'amount',100,'entryDate','2026-09-01','paymentDate','2026-10-05','payments',jsonb_build_array(jsonb_build_object('method','nx','amount',30))));
         select to_jsonb(m) into original_cash from public.movimientos_caja m join public.repair_payments rp on rp.cash_movement_id=m.id where rp.repair_id=(r->>'id')::uuid;
-        doc := public.save_invoice_atomic(jsonb_build_object('requestId',gen_random_uuid(),'customerName','Fixture','sourceType','repair','repairId',r->>'id','items',jsonb_build_array(jsonb_build_object('description','Reparacion','quantity',1,'unitPrice',100))));
+        doc := public.save_invoice_atomic(jsonb_build_object('requestId',gen_random_uuid(),'customerName','Fixture','sourceType','repair','repairId',r->>'id','items',jsonb_build_array(jsonb_build_object('description','Reparación','quantity',1,'unitPrice',100))));
         if (doc->>'paidTotal')::numeric<>30 or (doc->>'balance')::numeric<>70 then raise exception 'Settlement incorrect'; end if;
         perform public.add_repair_payment_atomic(jsonb_build_object('requestId',gen_random_uuid(),'repairId',r->>'id','paymentDate','2026-10-05','payments',jsonb_build_array(jsonb_build_object('method','mp','amount',70))));
         if (select to_jsonb(m) from public.movimientos_caja m where id=(original_cash->>'id')::uuid) is distinct from original_cash then raise exception 'Existing cash trace changed on deposit'; end if;
@@ -73,7 +77,24 @@ suite("financial migration against the full local staging schema", () => {
       end $$;
       rollback;
       select 'financial staging rollback verified';`;
-    const output = execFileSync("docker", ["exec", "-i", container!, "psql", "-U", "postgres", "-d", "chetech_staging", "-X", "-qAt", "-v", "ON_ERROR_STOP=1"], { input: query, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+    const output = execFileSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        container!,
+        "psql",
+        "-U",
+        "postgres",
+        "-d",
+        "chetech_staging",
+        "-X",
+        "-qAt",
+        "-v",
+        "ON_ERROR_STOP=1"
+      ],
+      { input: query, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    );
     expect(output.trim()).toBe("financial staging rollback verified");
   });
 });

@@ -43,9 +43,20 @@ function emptyData(monthKey: string): SalaryPlanningData {
     totalAvailable: 0,
     members: [],
     reserves: [],
-    merchandise: { quantitySold: 0, revenue: 0, historicalCost: 0, currentReplacementCost: 0, grossMargin: 0 },
+    merchandise: {
+      quantitySold: 0,
+      revenue: 0,
+      historicalCost: 0,
+      currentReplacementCost: 0,
+      grossMargin: 0
+    },
     suggestedSalaryAmount: 0,
-    purchaseCommitments: { ready: false, knownOutstanding: null, unknownCostCount: null, purchaseCount: null },
+    purchaseCommitments: {
+      ready: false,
+      knownOutstanding: null,
+      unknownCostCount: null,
+      purchaseCount: null
+    },
     liquidations: [],
     withdrawals: []
   };
@@ -62,14 +73,20 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
   const { data, error } = planningResult;
 
   if (error) {
-    if (error.code === "42883" || error.code === "42P01" || error.message?.includes("schema cache")) {
+    if (
+      error.code === "42883" ||
+      error.code === "42P01" ||
+      error.message?.includes("schema cache")
+    ) {
       return emptyData(monthKey);
     }
     throw new Error(error.message);
   }
 
   const payload = (data ?? {}) as Record<string, any>;
-  const profitSharePayload = profitShareResult.error ? {} : ((profitShareResult.data ?? {}) as Record<string, any>);
+  const profitSharePayload = profitShareResult.error
+    ? {}
+    : ((profitShareResult.data ?? {}) as Record<string, any>);
   const paidByMember = new Map(
     (profitSharePayload.member_payments ?? []).map((payment: any) => [
       String(payment.member_id),
@@ -98,14 +115,28 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
   const merchandise = payload.merchandise ?? {};
   const totalAvailable = numberValue(payload.total_available);
   const currentReplacementCost = numberValue(merchandise.current_replacement_cost);
-  const reserveTotal = reserves.reduce((total: number, reserve: { amount: number }) => total + reserve.amount, 0);
+  const reserveTotal = reserves.reduce(
+    (total: number, reserve: { amount: number }) => total + reserve.amount,
+    0
+  );
   const commitmentPayload = commitmentsResult.data;
-  const commitmentValuesValid = commitmentPayload && ["knownOutstanding", "unknownCostCount", "purchaseCount"]
-    .every((key) => commitmentPayload[key] != null && Number.isFinite(Number(commitmentPayload[key])) && Number(commitmentPayload[key]) >= 0);
-  const purchaseCommitments: PurchaseCommitments = commitmentsResult.error || !commitmentValuesValid
-    ? { ready: false, knownOutstanding: null, unknownCostCount: null, purchaseCount: null }
-    : { ready: true, knownOutstanding: numberValue(commitmentPayload.knownOutstanding),
-        unknownCostCount: numberValue(commitmentPayload.unknownCostCount), purchaseCount: numberValue(commitmentPayload.purchaseCount) };
+  const commitmentValuesValid =
+    commitmentPayload &&
+    ["knownOutstanding", "unknownCostCount", "purchaseCount"].every(
+      (key) =>
+        commitmentPayload[key] != null &&
+        Number.isFinite(Number(commitmentPayload[key])) &&
+        Number(commitmentPayload[key]) >= 0
+    );
+  const purchaseCommitments: PurchaseCommitments =
+    commitmentsResult.error || !commitmentValuesValid
+      ? { ready: false, knownOutstanding: null, unknownCostCount: null, purchaseCount: null }
+      : {
+          ready: true,
+          knownOutstanding: numberValue(commitmentPayload.knownOutstanding),
+          unknownCostCount: numberValue(commitmentPayload.unknownCostCount),
+          purchaseCount: numberValue(commitmentPayload.purchaseCount)
+        };
 
   return {
     migrationReady: true,
@@ -115,7 +146,8 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
     accounts,
     totalAvailable,
     members: (payload.members ?? []).map((member: any) => {
-      const extension = paidByMember.get(String(member.id)) as { salaryPaid: number; profitSharePaid: number } | undefined;
+      const extension = paidByMember.get(String(member.id)) as
+        { salaryPaid: number; profitSharePaid: number } | undefined;
       return {
         id: String(member.id),
         name: String(member.name),
@@ -133,7 +165,12 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
       currentReplacementCost,
       grossMargin: numberValue(merchandise.gross_margin)
     },
-    suggestedSalaryAmount: suggestAfterCommitments(totalAvailable, reserveTotal, currentReplacementCost, purchaseCommitments),
+    suggestedSalaryAmount: suggestAfterCommitments(
+      totalAvailable,
+      reserveTotal,
+      currentReplacementCost,
+      purchaseCommitments
+    ),
     purchaseCommitments,
     liquidations: (profitSharePayload.liquidations ?? []).map((liquidation: any) => ({
       id: String(liquidation.id),
@@ -161,19 +198,28 @@ export async function getSalaryPlanningData(requestedMonth?: string): Promise<Sa
         amount: numberValue(funding.amount)
       }))
     })),
-    withdrawals: (payload.withdrawals ?? []).filter((withdrawal: any) => withdrawal.withdrawal_type !== "salary").map((withdrawal: any) => ({
-      id: String(withdrawal.id),
-      withdrawalDate: String(withdrawal.withdrawal_date),
-      amount: numberValue(withdrawal.amount),
-      paymentMethod: normalizeCashMethodValue(withdrawal.payment_method) ?? String(withdrawal.payment_method),
-      notes: String(withdrawal.notes ?? ""),
-      createdAt: String(withdrawal.created_at),
-      withdrawalType: withdrawal.withdrawal_type === "salary" ? "salary" : "extraordinary",
-      salaryPeriod: withdrawal.salary_period ? String(withdrawal.salary_period) : null,
-      targetAmountSnapshot: withdrawal.target_amount_snapshot == null ? null : numberValue(withdrawal.target_amount_snapshot),
-      coveragePercentage: withdrawal.coverage_percentage == null ? null : numberValue(withdrawal.coverage_percentage),
-      memberId: withdrawal.member_id ? String(withdrawal.member_id) : null,
-      memberName: withdrawal.member_name ? String(withdrawal.member_name) : null
-    }))
+    withdrawals: (payload.withdrawals ?? [])
+      .filter((withdrawal: any) => withdrawal.withdrawal_type !== "salary")
+      .map((withdrawal: any) => ({
+        id: String(withdrawal.id),
+        withdrawalDate: String(withdrawal.withdrawal_date),
+        amount: numberValue(withdrawal.amount),
+        paymentMethod:
+          normalizeCashMethodValue(withdrawal.payment_method) ?? String(withdrawal.payment_method),
+        notes: String(withdrawal.notes ?? ""),
+        createdAt: String(withdrawal.created_at),
+        withdrawalType: withdrawal.withdrawal_type === "salary" ? "salary" : "extraordinary",
+        salaryPeriod: withdrawal.salary_period ? String(withdrawal.salary_period) : null,
+        targetAmountSnapshot:
+          withdrawal.target_amount_snapshot == null
+            ? null
+            : numberValue(withdrawal.target_amount_snapshot),
+        coveragePercentage:
+          withdrawal.coverage_percentage == null
+            ? null
+            : numberValue(withdrawal.coverage_percentage),
+        memberId: withdrawal.member_id ? String(withdrawal.member_id) : null,
+        memberName: withdrawal.member_name ? String(withdrawal.member_name) : null
+      }))
   };
 }

@@ -5,7 +5,11 @@ import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createPaginationMeta, getPaginationRange } from "@/lib/pagination";
 import { readRecordPages } from "@/lib/read-record-pages";
-import { buildProductSearchFilter, parseProductListState, type ProductListParams } from "./list-state";
+import {
+  buildProductSearchFilter,
+  parseProductListState,
+  type ProductListParams
+} from "./list-state";
 import { getProductAvailability } from "./availability";
 
 export async function getProductPage(filters: ProductListParams & { includeCosts?: boolean } = {}) {
@@ -16,8 +20,17 @@ export async function getProductPage(filters: ProductListParams & { includeCosts
   function buildQuery(page: number, head = false) {
     const options = head ? { count: "exact", head: true } : { count: "exact" };
     let query = filters.includeCosts
-      ? (supabase as any).from("products").select("id, sku, name, cost, sale_price, stock, min_stock, is_active, notes, category_id, categories(name)", options)
-      : (supabase as any).rpc("get_technician_product_catalog", { p_search: null, p_category: state.category || null, p_status: state.status }, options);
+      ? (supabase as any)
+          .from("products")
+          .select(
+            "id, sku, name, cost, sale_price, stock, min_stock, is_active, notes, category_id, categories(name)",
+            options
+          )
+      : (supabase as any).rpc(
+          "get_technician_product_catalog",
+          { p_search: null, p_category: state.category || null, p_status: state.status },
+          options
+        );
     if (filters.includeCosts) {
       if (state.category) query = query.eq("category_id", state.category);
       if (state.status !== "all") query = query.eq("is_active", state.status === "active");
@@ -25,7 +38,10 @@ export async function getProductPage(filters: ProductListParams & { includeCosts
     if (searchFilter) query = query.or(searchFilter);
     if (head) return query;
     const range = getPaginationRange(page, state.pageSize);
-    return query.order(column, { ascending: true }).order("id", { ascending: true }).range(range.from, range.to);
+    return query
+      .order(column, { ascending: true })
+      .order("id", { ascending: true })
+      .range(range.from, range.to);
   }
   let result = await buildQuery(state.page);
   if (result.error?.code === "PGRST103") {
@@ -33,22 +49,36 @@ export async function getProductPage(filters: ProductListParams & { includeCosts
     result = { ...counted, data: [] };
   }
   if (result.error) throw new Error(result.error.message);
-  if (!Number.isSafeInteger(result.count) || result.count < 0) throw new Error("Unavailable product count");
+  if (!Number.isSafeInteger(result.count) || result.count < 0)
+    throw new Error("Unavailable product count");
   const pagination = createPaginationMeta(result.count, state.page, state.pageSize);
   if (pagination.page !== state.page) {
     result = await buildQuery(pagination.page);
     if (result.error) throw new Error(result.error.message);
   }
-  const availability = await getProductAvailability(supabase as any, (result.data ?? []).map((product: any) => product.id));
+  const availability = await getProductAvailability(
+    supabase as any,
+    (result.data ?? []).map((product: any) => product.id)
+  );
   return {
     products: (result.data ?? []).map((product: any) => ({
-      id: product.id, sku: product.sku, name: product.name,
+      id: product.id,
+      sku: product.sku,
+      name: product.name,
       cost: filters.includeCosts ? Number(product.cost ?? 0) : 0,
-      salePrice: Number(product.sale_price), stock: Number(product.stock), minStock: Number(product.min_stock),
-      isActive: product.is_active, notes: product.notes, categoryId: product.category_id,
+      salePrice: Number(product.sale_price),
+      stock: Number(product.stock),
+      minStock: Number(product.min_stock),
+      isActive: product.is_active,
+      notes: product.notes,
+      categoryId: product.category_id,
       reservedStock: availability.values.get(product.id)?.reserved ?? null,
       availableStock: availability.values.get(product.id)?.available ?? null,
-      category: product.category_name ?? (Array.isArray(product.categories) ? product.categories[0]?.name ?? null : product.categories?.name ?? null)
+      category:
+        product.category_name ??
+        (Array.isArray(product.categories)
+          ? (product.categories[0]?.name ?? null)
+          : (product.categories?.name ?? null))
     })),
     pagination,
     availabilityStatus: availability.status,
@@ -88,12 +118,16 @@ export async function getProducts(filters?: {
         categoryId: product.category_id,
         category: product.category_name ?? null
       }))
-      .filter((product: any) => matchesSearchText(`${product.name} ${product.sku ?? ""}`, filters?.search));
+      .filter((product: any) =>
+        matchesSearchText(`${product.name} ${product.sku ?? ""}`, filters?.search)
+      );
   }
 
   let query = (supabase as any)
     .from("products")
-    .select("id, sku, name, cost, sale_price, stock, min_stock, is_active, notes, category_id, categories(name)")
+    .select(
+      "id, sku, name, cost, sale_price, stock, min_stock, is_active, notes, category_id, categories(name)"
+    )
     .order("name");
 
   if (filters?.category) {
@@ -127,10 +161,12 @@ export async function getProducts(filters?: {
       notes: product.notes,
       categoryId: product.category_id,
       category: Array.isArray(product.categories)
-        ? product.categories[0]?.name ?? null
-        : product.categories?.name ?? null
+        ? (product.categories[0]?.name ?? null)
+        : (product.categories?.name ?? null)
     }))
-    .filter((product: any) => matchesSearchText(`${product.name} ${product.sku ?? ""}`, filters?.search));
+    .filter((product: any) =>
+      matchesSearchText(`${product.name} ${product.sku ?? ""}`, filters?.search)
+    );
 }
 
 export const getProductCategories = cache(async () => {
@@ -151,8 +187,14 @@ export const getProductCategories = cache(async () => {
   }
 
   // Category options do not need product counts. Never load inventory for this fallback.
-  const data = await readRecordPages<any>((from, to) => (supabase as any).from("categories")
-    .select("id, name, sku_prefix").order("name").order("id").range(from, to));
+  const data = await readRecordPages<any>((from, to) =>
+    (supabase as any)
+      .from("categories")
+      .select("id, name, sku_prefix")
+      .order("name")
+      .order("id")
+      .range(from, to)
+  );
 
   return (data ?? []).map((category: any) => ({
     id: category.id,

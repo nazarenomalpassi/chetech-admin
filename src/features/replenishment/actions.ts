@@ -35,7 +35,13 @@ export async function saveReplenishmentItemAction(formData: FormData) {
     search: formData.get("search") || undefined
   });
   if (!parsed.success) {
-    redirect(destination(String(formData.get("periodMonth") ?? ""), undefined, parsed.error.issues[0]?.message ?? "Revisa el pedido"));
+    redirect(
+      destination(
+        String(formData.get("periodMonth") ?? ""),
+        undefined,
+        parsed.error.issues[0]?.message ?? "Revisa el pedido"
+      )
+    );
   }
 
   await requireAdmin();
@@ -47,7 +53,8 @@ export async function saveReplenishmentItemAction(formData: FormData) {
     p_status: parsed.data.status,
     p_notes: parsed.data.notes ?? null
   });
-  if (error) redirect(destination(parsed.data.periodMonth, undefined, error.message, parsed.data.search));
+  if (error)
+    redirect(destination(parsed.data.periodMonth, undefined, error.message, parsed.data.search));
 
   revalidatePath("/pedidos");
   revalidatePath("/sueldos");

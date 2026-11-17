@@ -96,7 +96,9 @@ async function getLegacyCashData({
   );
 
   const balances = CASH_METHODS.map((method) => {
-    const methodMovements = movements.filter((movement) => normalizeCashMethodValue(movement.medio_pago) === method);
+    const methodMovements = movements.filter(
+      (movement) => normalizeCashMethodValue(movement.medio_pago) === method
+    );
     const income = methodMovements
       .filter((movement) => isIncome(movement.tipo))
       .reduce((acc, movement) => acc + Number(movement.monto), 0);
@@ -105,10 +107,16 @@ async function getLegacyCashData({
       .reduce((acc, movement) => acc + Number(movement.monto), 0);
 
     const todayIncome = todayMovements
-      .filter((movement) => normalizeCashMethodValue(movement.medio_pago) === method && isIncome(movement.tipo))
+      .filter(
+        (movement) =>
+          normalizeCashMethodValue(movement.medio_pago) === method && isIncome(movement.tipo)
+      )
       .reduce((acc, movement) => acc + Number(movement.monto), 0);
     const todayOutcome = todayMovements
-      .filter((movement) => normalizeCashMethodValue(movement.medio_pago) === method && isOutcome(movement.tipo))
+      .filter(
+        (movement) =>
+          normalizeCashMethodValue(movement.medio_pago) === method && isOutcome(movement.tipo)
+      )
       .reduce((acc, movement) => acc + Number(movement.monto), 0);
 
     return {

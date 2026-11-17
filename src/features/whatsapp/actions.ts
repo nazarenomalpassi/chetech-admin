@@ -10,7 +10,10 @@ export async function toggleWhatsAppAutomation(form: FormData) {
   await requireAdmin();
   const enable = form.get("enable") === "true";
   const config = getWhatsAppConfig();
-  if (!config && enable) redirect(`/configuracion?error=${encodeURIComponent("Primero hay que conectar el WhatsApp Business del local.")}`);
+  if (!config && enable)
+    redirect(
+      `/configuracion?error=${encodeURIComponent("Primero hay que conectar el WhatsApp Business del local.")}`
+    );
   if (enable) {
     const setup = await getWhatsAppSetupStatus();
     if (!setup.ready) redirect(`/configuracion?error=${encodeURIComponent(setup.message)}`);
@@ -19,13 +22,20 @@ export async function toggleWhatsAppAutomation(form: FormData) {
   try {
     const client = createWhatsAppServiceClient();
     if (enable && config) {
-      const scheduler = await client.rpc("whatsapp_configure_worker", { p_token: config.workerSecret });
+      const scheduler = await client.rpc("whatsapp_configure_worker", {
+        p_token: config.workerSecret
+      });
       if (scheduler.error) throw new Error();
     }
     const result = await client.rpc("whatsapp_set_automation", { p_enabled: enable });
     if (result.error) throw new Error();
-  } catch { failure = true; }
-  if (failure) redirect(`/configuracion?error=${encodeURIComponent("No se pudo actualizar la conexión de WhatsApp. Revisá la configuración antes de reintentar.")}`);
+  } catch {
+    failure = true;
+  }
+  if (failure)
+    redirect(
+      `/configuracion?error=${encodeURIComponent("No se pudo actualizar la conexión de WhatsApp. Revisá la configuración antes de reintentar.")}`
+    );
   revalidatePath("/configuracion");
   redirect("/configuracion");
 }

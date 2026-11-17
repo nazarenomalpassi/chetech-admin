@@ -43,7 +43,12 @@ export async function upsertProductAction(input: unknown) {
   }
 
   const { data, error } = parsed.data.id
-    ? await (supabase as any).from("products").update(payload).eq("id", parsed.data.id).select("id, sku").single()
+    ? await (supabase as any)
+        .from("products")
+        .update(payload)
+        .eq("id", parsed.data.id)
+        .select("id, sku")
+        .single()
     : await (supabase as any)
         .rpc("create_product_with_generated_sku", {
           p_name: parsed.data.name,
@@ -82,7 +87,10 @@ export async function upsertProductAction(input: unknown) {
 export async function toggleProductStatusAction(id: string, nextValue: boolean) {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).from("products").update({ is_active: nextValue }).eq("id", id);
+  const { error } = await (supabase as any)
+    .from("products")
+    .update({ is_active: nextValue })
+    .eq("id", id);
 
   if (error) {
     return {
@@ -116,7 +124,7 @@ export async function deleteProductAction(id: string) {
       success: false,
       message:
         error.code === "23503"
-          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podes desactivarlo."
+          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podés desactivarlo."
           : error.message
     };
   }
@@ -180,6 +188,6 @@ export async function createCategoryAction(input: unknown) {
 
   return {
     success: true,
-    message: `Categoria ${data.name} creada`
+    message: `Categoría ${data.name} creada`
   };
 }

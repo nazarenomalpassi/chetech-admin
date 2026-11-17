@@ -16,7 +16,12 @@ export function normalizeCashMethodValue(method: string | null | undefined): Cas
 
   if (!normalized) return null;
   if (normalized.includes("efectivo")) return "efectivo";
-  if (normalized.includes("mercado") || normalized.includes("nx local") || normalized === "mp" || normalized.includes("local")) {
+  if (
+    normalized.includes("mercado") ||
+    normalized.includes("nx local") ||
+    normalized === "mp" ||
+    normalized.includes("local")
+  ) {
     return "mp";
   }
   if (normalized.includes("nx")) return "nx";

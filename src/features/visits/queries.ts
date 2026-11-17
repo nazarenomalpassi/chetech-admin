@@ -1,6 +1,11 @@
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getLocalDateInputValue } from "@/lib/utils";
-import { buildVisitSummary, getVisitDateRange, sortVisitsForAgenda, type VisitRecord } from "@/features/visits/model";
+import {
+  buildVisitSummary,
+  getVisitDateRange,
+  sortVisitsForAgenda,
+  type VisitRecord
+} from "@/features/visits/model";
 import type { VisitStatusValue } from "@/features/visits/schemas";
 import { createPaginationMeta, getPaginationRange, parsePage } from "@/lib/pagination";
 
@@ -27,21 +32,31 @@ export async function getVisitsData({
   const today = getLocalDateInputValue();
   const range = getVisitDateRange(date || today, view);
   const requestedPage = parsePage(page);
-  const { data: technicians, error: techniciansError } = await (supabase as any).from("profiles").select("id, full_name").in("role", ["admin", "tecnico"]).order("full_name");
+  const { data: technicians, error: techniciansError } = await (supabase as any)
+    .from("profiles")
+    .select("id, full_name")
+    .in("role", ["admin", "tecnico"])
+    .order("full_name");
   if (techniciansError) throw new Error(techniciansError.message);
   function buildQuery(columns: string, head = false) {
-    let query = (supabase as any).from("visits").select(columns, { count: head ? "exact" : undefined, head });
+    let query = (supabase as any)
+      .from("visits")
+      .select(columns, { count: head ? "exact" : undefined, head });
 
     if (search?.trim()) {
       const term = escapeLike(search.trim());
-      query = query.or(`customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,address.ilike.%${term}%`);
+      query = query.or(
+        `customer_name.ilike.%${term}%,customer_phone.ilike.%${term}%,address.ilike.%${term}%`
+      );
     }
 
     if (status && status !== "all") query = query.eq("status", status);
 
-    if (range && (date || view !== "all")) query = query.gte("visit_date", range.from).lte("visit_date", range.to);
+    if (range && (date || view !== "all"))
+      query = query.gte("visit_date", range.from).lte("visit_date", range.to);
     if (technicianId === "unassigned") query = query.is("technician_id", null);
-    else if (technicianId && /^[0-9a-f-]{36}$/i.test(technicianId)) query = query.eq("technician_id", technicianId);
+    else if (technicianId && /^[0-9a-f-]{36}$/i.test(technicianId))
+      query = query.eq("technician_id", technicianId);
     return query;
   }
 
@@ -51,8 +66,13 @@ export async function getVisitsData({
   let error = countResult.error;
   if (!error) {
     const requestedRange = getPaginationRange(pagination.page);
-    ({ data, error } = await buildQuery("id, customer_name, customer_phone, address, visit_date, time_from, time_to, reason, notes, status, created_at, updated_at, technician_id, technician_name, repair_access_order_id, repair_access_orders(repair_number)")
-      .order("visit_date", { ascending: true }).order("time_from", { ascending: true }).order("id", { ascending: true }).range(requestedRange.from, requestedRange.to));
+    ({ data, error } = await buildQuery(
+      "id, customer_name, customer_phone, address, visit_date, time_from, time_to, reason, notes, status, created_at, updated_at, technician_id, technician_name, repair_access_order_id, repair_access_orders(repair_number)"
+    )
+      .order("visit_date", { ascending: true })
+      .order("time_from", { ascending: true })
+      .order("id", { ascending: true })
+      .range(requestedRange.from, requestedRange.to));
   }
 
   if (error) {
@@ -123,8 +143,11 @@ export async function getVisitsData({
     summary: {
       todayCount: summary.todayCount,
       pendingTodayCount: summary.pendingCount,
-      openCount: visits.filter((visit) => !["realizada", "cancelada"].includes(visit.status)).length,
-      upcomingCount: visits.filter((visit) => visit.visitDate > today && !["realizada", "cancelada"].includes(visit.status)).length,
+      openCount: visits.filter((visit) => !["realizada", "cancelada"].includes(visit.status))
+        .length,
+      upcomingCount: visits.filter(
+        (visit) => visit.visitDate > today && !["realizada", "cancelada"].includes(visit.status)
+      ).length,
       nextVisit: summary.nextVisit
     }
   };
@@ -136,7 +159,9 @@ export async function getVisitsTodayDashboardSummary() {
 
   const { data, error } = await (supabase as any)
     .from("visits")
-    .select("id, customer_name, customer_phone, address, visit_date, time_from, time_to, reason, notes, status, created_at")
+    .select(
+      "id, customer_name, customer_phone, address, visit_date, time_from, time_to, reason, notes, status, created_at"
+    )
     .gte("visit_date", today)
     .order("visit_date", { ascending: true })
     .order("time_from", { ascending: true })

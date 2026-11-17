@@ -4,7 +4,10 @@ import type { Route } from "next";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { balanceTransferSchema, voidBalanceTransferSchema } from "@/features/balance-transfers/schemas";
+import {
+  balanceTransferSchema,
+  voidBalanceTransferSchema
+} from "@/features/balance-transfers/schemas";
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -30,7 +33,9 @@ export async function saveBalanceTransferAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el cambio de balance.");
+    redirectWithError(
+      parsed.error.issues[0]?.message ?? "No se pudo validar el cambio de balance."
+    );
   }
 
   const user = await requireAdmin();
@@ -44,7 +49,11 @@ export async function saveBalanceTransferAction(formData: FormData) {
     created_by: user.id
   };
 
-  const { data, error } = await (supabase as any).from("balance_transfers").insert(payload).select("id").single();
+  const { data, error } = await (supabase as any)
+    .from("balance_transfers")
+    .insert(payload)
+    .select("id")
+    .single();
 
   if (error || !data) {
     redirectWithError(error?.message ?? "No se pudo guardar el cambio de balance.");

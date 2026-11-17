@@ -24,7 +24,11 @@ export function parseFormDraftEnvelope<T>(
 
   try {
     const parsed = JSON.parse(raw) as Partial<FormDraftEnvelope<T>>;
-    if (parsed.version !== FORM_DRAFT_VERSION || typeof parsed.updatedAt !== "string" || !("data" in parsed)) {
+    if (
+      parsed.version !== FORM_DRAFT_VERSION ||
+      typeof parsed.updatedAt !== "string" ||
+      !("data" in parsed)
+    ) {
       return null;
     }
 
@@ -57,7 +61,10 @@ export function getFormDraftStorageKey(key: string) {
   return `${FORM_DRAFT_STORAGE_PREFIX}${key}`;
 }
 
-export function clearFormDraftsByPrefix(prefix: string, storage: Pick<Storage, "key" | "length" | "removeItem">) {
+export function clearFormDraftsByPrefix(
+  prefix: string,
+  storage: Pick<Storage, "key" | "length" | "removeItem">
+) {
   const fullPrefix = getFormDraftStorageKey(prefix);
   const keys: string[] = [];
 
