@@ -9,10 +9,8 @@ import {
 } from "@/features/dashboard/financial-summary";
 import { getTvBoardFinancialSummary } from "@/features/tv-boards/sales";
 import { getDashboardRange } from "@/features/dashboard/range";
-import { getDashboardInstallmentsData } from "@/features/installments/queries";
 import { getVisitsTodayDashboardSummary } from "@/features/visits/queries";
 import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
-import { getLocalDateInputValue } from "@/lib/utils";
 import { readRecordPages } from "@/lib/read-record-pages";
 
 async function getDashboardCashSummary(
@@ -89,14 +87,12 @@ export async function getDashboardData({
   const cashSettingsPromise = getCashSettings();
   const range = getDashboardRange(dateFrom, dateTo);
 
-  const todayDate = getLocalDateInputValue();
   const [
     lowStockProductsRaw,
     topProducts,
     invoicesInRange,
     cashSummaryRows,
     tvBoardSales,
-    installmentsDashboard,
     balanceTransfers,
     visitsDashboard,
     cashSettings
@@ -146,7 +142,6 @@ export async function getDashboardData({
           "No se pudieron cargar las liberaciones y reclamos de placas. Intenta nuevamente."
         );
       }),
-    getDashboardInstallmentsData(supabase as any, todayDate),
     getBalanceTransfers(supabase as any),
     getVisitsTodayDashboardSummary(),
     cashSettingsPromise
@@ -225,7 +220,6 @@ export async function getDashboardData({
     topProducts: topProducts.data ?? [],
     invoiceIncomeToday,
     realProfitToday,
-    installmentsDashboard,
     visitsDashboard,
     range
   };

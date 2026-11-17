@@ -22,14 +22,6 @@ const adminData: ComponentProps<typeof DashboardOverview> = {
   topProducts: [],
   invoiceIncomeToday: 0,
   realProfitToday: 0,
-  installmentsDashboard: {
-    dueTodayCount: 0,
-    overdueCount: 0,
-    dueTodayTotal: 0,
-    overdueTotal: 0,
-    dueToday: [],
-    overdue: []
-  },
   visitsDashboard: { todayCount: 0, pendingCount: 0, nextVisit: null },
   range: {
     from: "2026-10-05",
@@ -41,7 +33,7 @@ const adminData: ComponentProps<typeof DashboardOverview> = {
 };
 
 describe("dashboard headline and inbox placement", () => {
-  it("puts technician greeting and job links before a single collapsed inbox and metrics", () => {
+  it("puts the workshop first, then the collapsed inbox, then the technician's own work", () => {
     render(
       <TechnicianDashboard
         technicianName="Ana"
@@ -51,32 +43,27 @@ describe("dashboard headline and inbox placement", () => {
           visits: { todayCount: 0, pendingCount: 0, nextVisit: null }
         }}
         workshopInbox={<OperationalInboxSection inbox={inbox} />}
+        workshopToday={<h1>Hoy en el taller</h1>}
       />
     );
     const heading = screen.getByRole("heading", { level: 1 });
     const details = screen.getByText("Bandeja del taller").closest("details")!;
-    expect(heading.textContent).toContain("Ana");
+    const own = screen.getByRole("heading", { level: 2, name: "Tu trabajo, Ana" });
     expect(
       heading.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Abrir ordenes" }).compareDocumentPosition(details) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
-    expect(
-      details.compareDocumentPosition(screen.getByRole("region", { name: "Resumen tecnico" })) &
-        Node.DOCUMENT_POSITION_FOLLOWING
-    ).toBeTruthy();
+    expect(details.compareDocumentPosition(own) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(details.open).toBe(false);
-    expect(document.querySelectorAll("details")).toHaveLength(3);
-    expect(screen.getByText("Órdenes activas recientes").closest("summary")).not.toBeNull();
-    expect(screen.getByText("Visitas de hoy").closest("summary")?.textContent).toContain(
-      "0 agendadas"
-    );
+    expect(screen.getByText("1 orden asignada a vos.")).toBeTruthy();
+    expect(screen.getByText("No hay órdenes activas para mostrar.")).toBeTruthy();
   });
   it("puts the executive heading before the inbox without burying it after the long dashboard", () => {
     render(
-      <DashboardOverview {...adminData} workshopInbox={<OperationalInboxSection inbox={inbox} />} />
+      <DashboardOverview
+        {...adminData}
+        workshopInbox={<OperationalInboxSection inbox={inbox} />}
+        workshopToday={<h1>Hoy en el taller</h1>}
+      />
     );
     const heading = screen.getByRole("heading", { level: 1 });
     const details = screen.getByText("Bandeja del taller").closest("details")!;

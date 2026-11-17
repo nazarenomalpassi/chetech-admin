@@ -16,9 +16,6 @@ vi.mock("@/lib/app-settings", () => ({
   })
 }));
 vi.mock("@/features/balance-transfers/queries", () => ({ getBalanceTransfers: async () => [] }));
-vi.mock("@/features/installments/queries", () => ({
-  getDashboardInstallmentsData: async () => ({})
-}));
 vi.mock("@/features/visits/queries", () => ({ getVisitsTodayDashboardSummary: async () => ({}) }));
 
 beforeEach(() => {

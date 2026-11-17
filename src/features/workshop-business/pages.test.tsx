@@ -9,13 +9,18 @@ const mocks = vi.hoisted(() => ({
   technician: vi.fn(),
   reports: vi.fn(),
   workshopReport: vi.fn(),
-  inbox: vi.fn()
+  inbox: vi.fn(),
+  today: vi.fn()
 }));
 vi.mock("@/lib/auth", () => ({
   getCurrentProfile: mocks.profile,
   requirePermission: mocks.permission
 }));
 vi.mock("@/features/dashboard/queries", () => ({ getDashboardData: mocks.dashboard }));
+vi.mock("@/features/dashboard/workshop-today", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/dashboard/workshop-today")>()),
+  getWorkshopToday: mocks.today
+}));
 vi.mock("@/features/dashboard/technician-queries", () => ({
   getTechnicianDashboardData: mocks.technician
 }));
@@ -73,6 +78,7 @@ beforeEach(() => {
   mocks.permission.mockResolvedValue({ role: "admin" });
   mocks.dashboard.mockResolvedValue({});
   mocks.technician.mockResolvedValue({});
+  mocks.today.mockResolvedValue(null);
   mocks.reports.mockResolvedValue({});
   mocks.inbox.mockResolvedValue({
     counts: { unassigned: 1, waitingCustomer: 2, awaitingReturn: 3, ready: 4, blockedParts: 5 },
@@ -96,6 +102,13 @@ describe("disjoint page integration", () => {
     expect(screen.getByText("Original admin dashboard")).toBeTruthy();
     expect(screen.getByText("Bandeja del taller")).toBeTruthy();
     expect(mocks.dashboard).toHaveBeenCalledWith({ dateFrom: "2026-10-01", dateTo: "2026-10-05" });
+    expect(mocks.today).toHaveBeenCalledTimes(1);
+  });
+  it("keeps the home page up when the workshop state cannot be read", async () => {
+    mocks.today.mockRejectedValue(new Error("Database unavailable"));
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    render(await DashboardPage({ searchParams: Promise.resolve({}) }));
+    expect(screen.getByText("Original admin dashboard")).toBeTruthy();
   });
   it("allows technician operational inbox but never fetches financial report data", async () => {
     mocks.profile.mockResolvedValue({
@@ -106,6 +119,7 @@ describe("disjoint page integration", () => {
     expect(screen.getByText("Original technician dashboard")).toBeTruthy();
     expect(screen.getByText("Bandeja del taller")).toBeTruthy();
     expect(mocks.technician).toHaveBeenCalledWith("tech-a");
+    expect(mocks.today).toHaveBeenCalledTimes(1);
     expect(mocks.dashboard).not.toHaveBeenCalled();
     expect(mocks.workshopReport).not.toHaveBeenCalled();
   });
