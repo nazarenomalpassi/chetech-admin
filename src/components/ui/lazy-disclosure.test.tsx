@@ -9,7 +9,11 @@ afterEach(cleanup);
 
 describe("lazy disclosure", () => {
   it("defers hidden form rendering until the panel is opened", () => {
-    render(<LazyDisclosure summary="Actualizar trabajo"><input aria-label="Presupuesto" /></LazyDisclosure>);
+    render(
+      <LazyDisclosure summary="Actualizar trabajo">
+        <input aria-label="Presupuesto" />
+      </LazyDisclosure>
+    );
     expect(screen.queryByLabelText("Presupuesto")).toBeNull();
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
     details.open = true;
@@ -17,7 +21,11 @@ describe("lazy disclosure", () => {
     expect(screen.getByLabelText("Presupuesto")).toBeTruthy();
   });
   it("retains an unsaved draft when closing and reopening", () => {
-    render(<LazyDisclosure summary="Actualizar trabajo"><input aria-label="Presupuesto" /></LazyDisclosure>);
+    render(
+      <LazyDisclosure summary="Actualizar trabajo">
+        <input aria-label="Presupuesto" />
+      </LazyDisclosure>
+    );
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
     details.open = true;
     fireEvent(details, new Event("toggle"));

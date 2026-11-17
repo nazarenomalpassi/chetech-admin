@@ -43,7 +43,12 @@ export async function upsertProductAction(input: unknown) {
   }
 
   const { data, error } = parsed.data.id
-    ? await (supabase as any).from("products").update(payload).eq("id", parsed.data.id).select("id, sku").single()
+    ? await (supabase as any)
+        .from("products")
+        .update(payload)
+        .eq("id", parsed.data.id)
+        .select("id, sku")
+        .single()
     : await (supabase as any)
         .rpc("create_product_with_generated_sku", {
           p_name: parsed.data.name,
@@ -82,7 +87,10 @@ export async function upsertProductAction(input: unknown) {
 export async function toggleProductStatusAction(id: string, nextValue: boolean) {
   await requireAdmin();
   const supabase = await createServerSupabaseClient();
-  const { error } = await (supabase as any).from("products").update({ is_active: nextValue }).eq("id", id);
+  const { error } = await (supabase as any)
+    .from("products")
+    .update({ is_active: nextValue })
+    .eq("id", id);
 
   if (error) {
     return {

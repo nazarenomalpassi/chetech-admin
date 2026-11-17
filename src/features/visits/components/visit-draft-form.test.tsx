@@ -7,8 +7,25 @@ import { serializeVisitDraft, visitDraftStorageKey } from "../drafts";
 Object.assign(globalThis, { React });
 beforeEach(() => sessionStorage.clear());
 afterEach(cleanup);
-const saved = { ownerId: "admin", visitId: "new", sourceVersion: "", token: "saved-token", savedAt: Date.now(), fields: { customerName: "Juan" } };
-function form(props = {}) { return <VisitDraftForm ownerId="admin" visitId="new" sourceVersion="" action={vi.fn()} {...props}><label>Cliente<input name="customerName" defaultValue="" /></label><button type="submit">Guardar</button></VisitDraftForm>; }
+const saved = {
+  ownerId: "admin",
+  visitId: "new",
+  sourceVersion: "",
+  token: "saved-token",
+  savedAt: Date.now(),
+  fields: { customerName: "Juan" }
+};
+function form(props = {}) {
+  return (
+    <VisitDraftForm ownerId="admin" visitId="new" sourceVersion="" action={vi.fn()} {...props}>
+      <label>
+        Cliente
+        <input name="customerName" defaultValue="" />
+      </label>
+      <button type="submit">Guardar</button>
+    </VisitDraftForm>
+  );
+}
 describe("explicit draft recovery", () => {
   it("persists only locally and does not auto-restore over the form", () => {
     sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft(saved));
@@ -20,9 +37,14 @@ describe("explicit draft recovery", () => {
     expect(sessionStorage.getItem(visitDraftStorageKey("admin", "new"))).toContain("Juan Perez");
   });
   it("refuses stale edit recovery and leaves a readable copy", () => {
-    sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft({ ...saved, sourceVersion: "old" }));
+    sessionStorage.setItem(
+      visitDraftStorageKey("admin", "new"),
+      serializeVisitDraft({ ...saved, sourceVersion: "old" })
+    );
     render(form({ sourceVersion: "current" }));
-    expect((screen.getByRole("button", { name: "Recuperar borrador" }) as HTMLButtonElement).disabled).toBe(true);
+    expect(
+      (screen.getByRole("button", { name: "Recuperar borrador" }) as HTMLButtonElement).disabled
+    ).toBe(true);
     expect(screen.getByText(/La visita cambio/)).toBeTruthy();
   });
   it("clears only the acknowledged saved generation", () => {
@@ -35,7 +57,10 @@ describe("explicit draft recovery", () => {
   });
   it("clears another user's feature drafts rather than revealing them on a shared tab", () => {
     sessionStorage.setItem("chetech:visits-draft-owner", "other");
-    sessionStorage.setItem(visitDraftStorageKey("other", "new"), serializeVisitDraft({ ...saved, ownerId: "other" }));
+    sessionStorage.setItem(
+      visitDraftStorageKey("other", "new"),
+      serializeVisitDraft({ ...saved, ownerId: "other" })
+    );
     render(form());
     expect(sessionStorage.getItem(visitDraftStorageKey("other", "new"))).toBeNull();
     expect((screen.getByLabelText("Cliente") as HTMLInputElement).value).toBe("");
@@ -44,7 +69,9 @@ describe("explicit draft recovery", () => {
     sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft(saved));
     const { container } = render(form());
     fireEvent.click(screen.getByRole("button", { name: "Recuperar borrador" }));
-    expect((container.querySelector('input[name="draftToken"]') as HTMLInputElement).value).toBe("saved-token");
+    expect((container.querySelector('input[name="draftToken"]') as HTMLInputElement).value).toBe(
+      "saved-token"
+    );
   });
   it("keeps keyboard focus inside the recovery flow", () => {
     sessionStorage.setItem(visitDraftStorageKey("admin", "new"), serializeVisitDraft(saved));

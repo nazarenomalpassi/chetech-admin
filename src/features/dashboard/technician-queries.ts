@@ -10,15 +10,18 @@ type TechnicalOrderRow = {
   status: string;
   technician_id: string | null;
   repair_access_customers: { full_name: string } | { full_name: string }[] | null;
-  repair_access_devices: {
-    device_type: string;
-    brand: string | null;
-    model: string | null;
-  } | Array<{
-    device_type: string;
-    brand: string | null;
-    model: string | null;
-  }> | null;
+  repair_access_devices:
+    | {
+        device_type: string;
+        brand: string | null;
+        model: string | null;
+      }
+    | Array<{
+        device_type: string;
+        brand: string | null;
+        model: string | null;
+      }>
+    | null;
 };
 
 type TechnicianDashboardOrder = {
@@ -33,7 +36,7 @@ type TechnicianDashboardOrder = {
 };
 
 function firstRelation<T>(value: T | T[] | null) {
-  return Array.isArray(value) ? value[0] ?? null : value;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 export async function getTechnicianDashboardData(userId: string) {
@@ -61,7 +64,8 @@ export async function getTechnicianDashboardData(userId: string) {
       status: order.status,
       technicianId: order.technician_id,
       customerName: customer?.full_name ?? "Sin cliente",
-      device: [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - ") || "Equipo"
+      device:
+        [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - ") || "Equipo"
     };
   });
 

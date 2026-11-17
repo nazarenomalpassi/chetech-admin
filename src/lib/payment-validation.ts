@@ -1,6 +1,10 @@
 import type { PaymentSplit } from "@/lib/payment-splits";
 
-export function validatePaymentAllocation(totalAmount: number, payments: PaymentSplit[], emptyMessage: string) {
+export function validatePaymentAllocation(
+  totalAmount: number,
+  payments: PaymentSplit[],
+  emptyMessage: string
+) {
   if (totalAmount <= 0) return null;
   if (!payments.length) return emptyMessage;
 

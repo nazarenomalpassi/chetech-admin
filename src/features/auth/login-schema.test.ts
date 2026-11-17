@@ -13,6 +13,8 @@ describe("loginSchema", () => {
   });
 
   it("muestra un mensaje claro para credenciales invalidas", () => {
-    expect(getLoginErrorMessage("Invalid login credentials")).toBe("Email o contraseña incorrectos.");
+    expect(getLoginErrorMessage("Invalid login credentials")).toBe(
+      "Email o contraseña incorrectos."
+    );
   });
 });

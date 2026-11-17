@@ -9,18 +9,49 @@ Object.assign(globalThis, { React });
 afterEach(cleanup);
 
 export const snapshot: WorkshopOperationalMetricsSnapshot = {
-  version: 1, scope: "full_workshop", asOf: "2026-11-10", snapshotAt: "2026-11-10T12:00:00Z",
+  version: 1,
+  scope: "full_workshop",
+  asOf: "2026-11-10",
+  snapshotAt: "2026-11-10T12:00:00Z",
   period: { from: "2026-11-01", to: "2026-11-10" },
   current: {
-    openOrders: 84, waitingAuthorization: 11,
+    openOrders: 84,
+    waitingAuthorization: 11,
     age: { days0to7: 30, days8to14: 20, days15to30: 18, days31plus: 14, unknownIntakeOrders: 2 },
-    inactivity: { thresholdDays: 7, staleOrders: 19, knownActivityOrders: 75, unknownActivityOrders: 9 },
+    inactivity: {
+      thresholdDays: 7,
+      staleOrders: 19,
+      knownActivityOrders: 75,
+      unknownActivityOrders: 9
+    },
     parts: { orders: 13, requests: 20, unitsToPurchase: 15, unitsInTransit: 7, unitsToReceive: 22 },
-    ready: { orders: 9, datedOrders: 6, unknownDateOrders: 3, medianWaitDays: 4.5, oldestWaitDays: 12 }
+    ready: {
+      orders: 9,
+      datedOrders: 6,
+      unknownDateOrders: 3,
+      medianWaitDays: 4.5,
+      oldestWaitDays: 12
+    }
   },
-  periodFlow: { intakes: 31, closures: 24, closuresMissingDate: 2, days: [{ date: "2026-11-01", intakes: 4, closures: 3 }] },
-  warranty: { activeReturns: 3, openedInPeriod: 4, closedInPeriod: 2, uniqueOrdersInPeriod: 3,
-    matureCohort: { maturedOrders: 8, returnedOrders: 2, comparableOrders: null, returnRate: null, reason: "No hay inicio verificado de observacion continua." } },
+  periodFlow: {
+    intakes: 31,
+    closures: 24,
+    closuresMissingDate: 2,
+    days: [{ date: "2026-11-01", intakes: 4, closures: 3 }]
+  },
+  warranty: {
+    activeReturns: 3,
+    openedInPeriod: 4,
+    closedInPeriod: 2,
+    uniqueOrdersInPeriod: 3,
+    matureCohort: {
+      maturedOrders: 8,
+      returnedOrders: 2,
+      comparableOrders: null,
+      returnRate: null,
+      reason: "No hay inicio verificado de observacion continua."
+    }
+  },
   phaseDurations: [{ status: "en_revision", samples: 4, orders: 3, medianDays: 2.5 }],
   quality: { reconstructedStatusEvents: 10, ambiguousStatusEvents: 1, invalidStatusIntervals: 2 },
   methodology: { warrantyObservationFrom: null }
@@ -52,12 +83,31 @@ describe("workshop operational metrics", () => {
     expect(screen.getByText(/10 eventos reconstruidos/i)).toBeTruthy();
   });
   it("shows missing medians and warranty rates as unknown, not zero or estimated profit", () => {
-    render(<WorkshopOperationalMetrics metrics={{ ...snapshot, phaseDurations: [], current: { ...snapshot.current, ready: { orders: 0, datedOrders: 0, unknownDateOrders: 0, medianWaitDays: null, oldestWaitDays: null } } }} />);
+    render(
+      <WorkshopOperationalMetrics
+        metrics={{
+          ...snapshot,
+          phaseDurations: [],
+          current: {
+            ...snapshot.current,
+            ready: {
+              orders: 0,
+              datedOrders: 0,
+              unknownDateOrders: 0,
+              medianWaitDays: null,
+              oldestWaitDays: null
+            }
+          }
+        }}
+      />
+    );
     expect(screen.getByText(/sin intervalos de estados verificables/i)).toBeTruthy();
     expect(screen.getByText(/No hay inicio verificado/i)).toBeTruthy();
     expect(screen.queryByText("0 %")).toBeNull();
     expect(screen.queryByText(/ganancia|productividad|escaneos/i)).toBeNull();
-    expect(screen.getByRole("group", { name: "Listos sin retirar" }).textContent).toMatch(/Espera mediana: Sin muestra/);
+    expect(screen.getByRole("group", { name: "Listos sin retirar" }).textContent).toMatch(
+      /Espera mediana: Sin muestra/
+    );
   });
   it("counts repair-part units separately from unique orders and keeps warranty history separate", () => {
     render(<WorkshopOperationalMetrics metrics={snapshot} />);
@@ -71,7 +121,11 @@ describe("workshop operational metrics", () => {
   });
   it("keeps the longest pickup wait with ready equipment, not with parts purchasing", () => {
     render(<WorkshopOperationalMetrics metrics={snapshot} />);
-    expect(screen.getByRole("group", { name: "Listos sin retirar" }).textContent).toMatch(/mayor espera: 12 dias/i);
-    expect(screen.getByRole("region", { name: /repuestos pendientes/i }).textContent).not.toMatch(/espera de retiro/i);
+    expect(screen.getByRole("group", { name: "Listos sin retirar" }).textContent).toMatch(
+      /mayor espera: 12 dias/i
+    );
+    expect(screen.getByRole("region", { name: /repuestos pendientes/i }).textContent).not.toMatch(
+      /espera de retiro/i
+    );
   });
 });

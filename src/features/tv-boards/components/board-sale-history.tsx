@@ -20,8 +20,13 @@ export function BoardSaleHistory({ events }: { events: TvBoardRow["events"] }) {
         {events.map((event) => (
           <li className="space-y-1 break-words" key={event.id}>
             <p className="font-medium text-slate-800">{EVENT_LABELS[event.kind]}</p>
-            <p className="text-slate-600"><time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time>. Neto: {formatCurrency(event.netAmount)}.</p>
-            {event.notes ? <p className="whitespace-pre-wrap text-slate-600">{event.notes}</p> : null}
+            <p className="text-slate-600">
+              <time dateTime={event.createdAt}>{formatDate(event.createdAt)}</time>. Neto:{" "}
+              {formatCurrency(event.netAmount)}.
+            </p>
+            {event.notes ? (
+              <p className="whitespace-pre-wrap text-slate-600">{event.notes}</p>
+            ) : null}
           </li>
         ))}
       </ol>

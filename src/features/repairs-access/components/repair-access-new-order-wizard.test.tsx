@@ -5,13 +5,19 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { RepairAccessNewOrderWizard } from "@/features/repairs-access/components/repair-access-new-order-wizard";
-import type { RepairAccessCustomerSummary, RepairAccessOrderRecord } from "@/features/repairs-access/queries";
+import type {
+  RepairAccessCustomerSummary,
+  RepairAccessOrderRecord
+} from "@/features/repairs-access/queries";
 import { createFormDraftEnvelope, getFormDraftStorageKey } from "@/lib/form-draft";
 
 Object.assign(globalThis, { React });
 
 beforeEach(() => {
-  vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ customers: [] }) })));
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async () => ({ ok: true, json: async () => ({ customers: [] }) }))
+  );
 });
 
 afterEach(() => {
@@ -34,8 +40,17 @@ const customer: RepairAccessCustomerSummary = {
   createdAt: "2026-09-18T12:00:00.000Z"
 };
 
-const intakeEditing: Pick<RepairAccessOrderRecord,
-  "id" | "repairNumber" | "customer" | "device" | "intakeDate" | "issueReported" | "priority" | "status" | "notes"
+const intakeEditing: Pick<
+  RepairAccessOrderRecord,
+  | "id"
+  | "repairNumber"
+  | "customer"
+  | "device"
+  | "intakeDate"
+  | "issueReported"
+  | "priority"
+  | "status"
+  | "notes"
 > = {
   id: "order-1",
   repairNumber: "REP-2026-00001234",
@@ -75,12 +90,32 @@ const essentialLabels = [
 ];
 
 const optionalGroups = [
-  { label: "Otros datos (opcionales)", fields: ["customerAlternatePhone", "customerDni", "customerEmail", "customerNotes", "visualCondition", "priority", "status", "notes"] }
+  {
+    label: "Otros datos (opcionales)",
+    fields: [
+      "customerAlternatePhone",
+      "customerDni",
+      "customerEmail",
+      "customerNotes",
+      "visualCondition",
+      "priority",
+      "status",
+      "notes"
+    ]
+  }
 ];
 
-function renderIntake(props: Partial<React.ComponentProps<typeof RepairAccessNewOrderWizard>> = {}) {
+function renderIntake(
+  props: Partial<React.ComponentProps<typeof RepairAccessNewOrderWizard>> = {}
+) {
   return render(
-    <RepairAccessNewOrderWizard action={async () => undefined} customers={[]} editing={null} onCancel={() => undefined} {...props} />
+    <RepairAccessNewOrderWizard
+      action={async () => undefined}
+      customers={[]}
+      editing={null}
+      onCancel={() => undefined}
+      {...props}
+    />
   );
 }
 
@@ -111,13 +146,28 @@ function expectEssentialFieldsVisible() {
 }
 
 function fillEssentialFields() {
-  const values = ["Ana Gomez", "3571 123456", "Belgrano 200", "2026-10-06", "TV", "LG", "43LM", "SERIE-NUEVA", "Control y fuente", "Blanco", "No enciende"];
+  const values = [
+    "Ana Gomez",
+    "3571 123456",
+    "Belgrano 200",
+    "2026-10-06",
+    "TV",
+    "LG",
+    "43LM",
+    "SERIE-NUEVA",
+    "Control y fuente",
+    "Blanco",
+    "No enciende"
+  ];
   essentialLabels.forEach((label, index) => {
     fireEvent.change(screen.getByLabelText(label), { target: { value: values[index] } });
   });
 }
 
-class SaveErrorBoundary extends React.Component<{ children: React.ReactNode; onFailureCommit?: () => void }, { failed: boolean }> {
+class SaveErrorBoundary extends React.Component<
+  { children: React.ReactNode; onFailureCommit?: () => void },
+  { failed: boolean }
+> {
   state = { failed: false };
 
   static getDerivedStateFromError() {
@@ -134,11 +184,13 @@ class SaveErrorBoundary extends React.Component<{ children: React.ReactNode; onF
 }
 
 describe("RepairAccessNewOrderWizard", () => {
-  it("records WhatsApp opt-in explicitly and clears it when the recipient changes",async()=>{
-    renderIntake({editing:{...editing,whatsappDocumentConsent:true}});
-    const checkbox=screen.getByRole("checkbox",{name:/El cliente acepta recibir por WhatsApp/}) as HTMLInputElement;
+  it("records WhatsApp opt-in explicitly and clears it when the recipient changes", async () => {
+    renderIntake({ editing: { ...editing, whatsappDocumentConsent: true } });
+    const checkbox = screen.getByRole("checkbox", {
+      name: /El cliente acepta recibir por WhatsApp/
+    }) as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
-    fireEvent.change(screen.getByLabelText("Telefono"),{target:{value:"3571654321"}});
+    fireEvent.change(screen.getByLabelText("Telefono"), { target: { value: "3571654321" } });
     expect(checkbox.checked).toBe(false);
     expect(new FormData(intakeForm()).get("whatsappDocumentConsent")).toBe("off");
     fireEvent.click(checkbox);
@@ -149,7 +201,9 @@ describe("RepairAccessNewOrderWizard", () => {
 
     expectEssentialFieldsVisible();
     const sheet = screen.getByRole("region", { name: "Ficha de recepcion" });
-    essentialLabels.forEach((label) => expect(sheet.contains(screen.getByLabelText(label)), label).toBe(true));
+    essentialLabels.forEach((label) =>
+      expect(sheet.contains(screen.getByLabelText(label)), label).toBe(true)
+    );
     expect(sheet.className).toContain("grid");
     expect(sheet.className).toContain("sm:grid-cols-6");
     expect(intakeForm().querySelectorAll("section")).toHaveLength(1);
@@ -184,13 +238,30 @@ describe("RepairAccessNewOrderWizard", () => {
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
     const data = action.mock.calls[0][0];
     expect(Object.fromEntries(data.entries())).toEqual({
-      id: "", customerId: "", deviceId: "",whatsappConsentIncluded:"1",whatsappDocumentConsent:"off",
-      customerName: "Ana Gomez", customerPhone: "3571 123456", customerAlternatePhone: "",
-      customerDni: "", customerEmail: "", customerAddress: "Belgrano 200", customerNotes: "",
-      deviceType: "TV", deviceBrand: "LG", deviceModel: "43LM",
-      serialNumber: "SERIE-NUEVA", accessoryDetails: "Control y fuente", deviceColor: "Blanco", visualCondition: "",
-      intakeDate: "2026-10-06", issueReported: "No enciende",
-      priority: "normal", status: "pendiente_revision", notes: ""
+      id: "",
+      customerId: "",
+      deviceId: "",
+      whatsappConsentIncluded: "1",
+      whatsappDocumentConsent: "off",
+      customerName: "Ana Gomez",
+      customerPhone: "3571 123456",
+      customerAlternatePhone: "",
+      customerDni: "",
+      customerEmail: "",
+      customerAddress: "Belgrano 200",
+      customerNotes: "",
+      deviceType: "TV",
+      deviceBrand: "LG",
+      deviceModel: "43LM",
+      serialNumber: "SERIE-NUEVA",
+      accessoryDetails: "Control y fuente",
+      deviceColor: "Blanco",
+      visualCondition: "",
+      intakeDate: "2026-10-06",
+      issueReported: "No enciende",
+      priority: "normal",
+      status: "pendiente_revision",
+      notes: ""
     });
   });
 
@@ -198,19 +269,38 @@ describe("RepairAccessNewOrderWizard", () => {
     const action = vi.fn<(data: FormData) => Promise<void>>(async () => undefined);
     renderIntake({ editing, action });
     expectEssentialFieldsVisible();
-    expect(screen.getByRole("heading", { name: `Editar ingreso ${editing.repairNumber}` })).not.toBeNull();
+    expect(
+      screen.getByRole("heading", { name: `Editar ingreso ${editing.repairNumber}` })
+    ).not.toBeNull();
     optionalGroups.forEach((group) => expect(disclosure(group.label).open).toBe(false));
     fireEvent.submit(intakeForm());
 
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
     expect(Object.fromEntries(action.mock.calls[0][0].entries())).toEqual({
-      id: "order-1", customerId: "customer-1", deviceId: "device-1",whatsappConsentIncluded:"1",whatsappDocumentConsent:"off",
-      customerName: customer.fullName, customerPhone: customer.phone, customerAlternatePhone: customer.alternatePhone,
-      customerDni: customer.dni, customerEmail: customer.email, customerAddress: customer.address, customerNotes: customer.notes,
-      deviceType: "TV", deviceBrand: "Samsung", deviceModel: "UN43",
-      serialNumber: "SERIE-123", accessoryDetails: "Control y cable", deviceColor: "Negro", visualCondition: "Rayas en la base",
-      intakeDate: "2026-09-18", issueReported: "No da imagen",
-      priority: "urgente", status: "en_reparacion", notes: "Revisar conectores"
+      id: "order-1",
+      customerId: "customer-1",
+      deviceId: "device-1",
+      whatsappConsentIncluded: "1",
+      whatsappDocumentConsent: "off",
+      customerName: customer.fullName,
+      customerPhone: customer.phone,
+      customerAlternatePhone: customer.alternatePhone,
+      customerDni: customer.dni,
+      customerEmail: customer.email,
+      customerAddress: customer.address,
+      customerNotes: customer.notes,
+      deviceType: "TV",
+      deviceBrand: "Samsung",
+      deviceModel: "UN43",
+      serialNumber: "SERIE-123",
+      accessoryDetails: "Control y cable",
+      deviceColor: "Negro",
+      visualCondition: "Rayas en la base",
+      intakeDate: "2026-09-18",
+      issueReported: "No da imagen",
+      priority: "urgente",
+      status: "en_reparacion",
+      notes: "Revisar conectores"
     });
   });
 
@@ -243,9 +333,24 @@ describe("RepairAccessNewOrderWizard", () => {
   it("keeps modified optional fields after opening and closing the disclosure", () => {
     renderIntake({ editing });
     const changes = [
-      { group: "Otros datos (opcionales)", label: "Observaciones del cliente", name: "customerNotes", value: "Solo WhatsApp" },
-      { group: "Otros datos (opcionales)", label: "Estado visual", name: "visualCondition", value: "Base rayada" },
-      { group: "Otros datos (opcionales)", label: "Observaciones internas de recepcion", name: "notes", value: "Etiqueta nueva" }
+      {
+        group: "Otros datos (opcionales)",
+        label: "Observaciones del cliente",
+        name: "customerNotes",
+        value: "Solo WhatsApp"
+      },
+      {
+        group: "Otros datos (opcionales)",
+        label: "Estado visual",
+        name: "visualCondition",
+        value: "Base rayada"
+      },
+      {
+        group: "Otros datos (opcionales)",
+        label: "Observaciones internas de recepcion",
+        name: "notes",
+        value: "Etiqueta nueva"
+      }
     ];
 
     changes.forEach(({ group, label, name, value }) => {
@@ -268,7 +373,9 @@ describe("RepairAccessNewOrderWizard", () => {
     const form = intakeForm();
     const name = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(name, { target: { value: "Maria Perez corregido" } });
-    fireEvent.change(screen.getByLabelText("Direccion"), { target: { value: "Direccion corregida" } });
+    fireEvent.change(screen.getByLabelText("Direccion"), {
+      target: { value: "Direccion corregida" }
+    });
     fireEvent.change(screen.getByLabelText("Fecha"), { target: { value: "2026-10-01" } });
     fireEvent.change(screen.getByLabelText("Serie"), { target: { value: "SERIE-CORREGIDA" } });
     fireEvent.change(screen.getByLabelText("Color"), { target: { value: "Plateado" } });
@@ -277,7 +384,13 @@ describe("RepairAccessNewOrderWizard", () => {
     const expected = Object.fromEntries(new FormData(form).entries());
 
     view.rerender(
-      <RepairAccessNewOrderWizard action={async () => undefined} customers={[]} editing={{ ...editing, customer: { ...editing.customer }, device: { ...editing.device } }} onCancel={() => undefined} onDirtyChange={onDirtyChange} />
+      <RepairAccessNewOrderWizard
+        action={async () => undefined}
+        customers={[]}
+        editing={{ ...editing, customer: { ...editing.customer }, device: { ...editing.device } }}
+        onCancel={() => undefined}
+        onDirtyChange={onDirtyChange}
+      />
     );
 
     expect(intakeForm()).toBe(form);
@@ -285,20 +398,37 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(document.activeElement).toBe(name);
     expect(Object.fromEntries(new FormData(form).entries())).toEqual(expected);
     expect(onDirtyChange).toHaveBeenLastCalledWith(true);
-    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
-    const saved = JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
+    const saved = JSON.parse(
+      localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!
+    );
     expect(saved.data.fields).toEqual(expected);
   });
 
   it("preserves a restored edit draft when the same order refreshes", () => {
-    const fields = { customerName: "Nombre recuperado", customerAddress: "Direccion recuperada", deviceColor: "Verde", issueReported: "Falla recuperada" };
-    localStorage.setItem(getFormDraftStorageKey("repair-access:intake:order-1"), JSON.stringify(createFormDraftEnvelope({ fields })));
+    const fields = {
+      customerName: "Nombre recuperado",
+      customerAddress: "Direccion recuperada",
+      deviceColor: "Verde",
+      issueReported: "Falla recuperada"
+    };
+    localStorage.setItem(
+      getFormDraftStorageKey("repair-access:intake:order-1"),
+      JSON.stringify(createFormDraftEnvelope({ fields }))
+    );
     const view = renderIntake({ editing });
     fireEvent.click(screen.getByRole("button", { name: "Recuperar" }));
     const form = intakeForm();
 
     view.rerender(
-      <RepairAccessNewOrderWizard action={async () => undefined} customers={[]} editing={{ ...editing }} onCancel={() => undefined} />
+      <RepairAccessNewOrderWizard
+        action={async () => undefined}
+        customers={[]}
+        editing={{ ...editing }}
+        onCancel={() => undefined}
+      />
     );
 
     expect(intakeForm()).toBe(form);
@@ -309,10 +439,20 @@ describe("RepairAccessNewOrderWizard", () => {
   it("loads another order and clears edit state when the editing identity changes", () => {
     const view = renderIntake({ editing });
     fireEvent.change(screen.getByLabelText("Color"), { target: { value: "Sin guardar" } });
-    const nextOrder = { ...editing, id: "order-2", repairNumber: "REP-000500", device: { ...editing.device, id: "device-2", color: "Blanco" } };
+    const nextOrder = {
+      ...editing,
+      id: "order-2",
+      repairNumber: "REP-000500",
+      device: { ...editing.device, id: "device-2", color: "Blanco" }
+    };
 
     view.rerender(
-      <RepairAccessNewOrderWizard action={async () => undefined} customers={[]} editing={nextOrder} onCancel={() => undefined} />
+      <RepairAccessNewOrderWizard
+        action={async () => undefined}
+        customers={[]}
+        editing={nextOrder}
+        onCancel={() => undefined}
+      />
     );
 
     const data = new FormData(intakeForm());
@@ -322,20 +462,25 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(screen.getByRole("heading", { name: "Editar ingreso REP-000500" })).not.toBeNull();
   });
 
-  it.each(["Nombre y apellido", "Telefono"])("keeps customer suggestions by %s and does not reuse a device", (label) => {
-    renderIntake({ customers: [customer] });
-    const field = screen.getByLabelText(label);
-    fireEvent.change(field, { target: { value: label === "Nombre y apellido" ? "Maria" : "573744" } });
-    fireEvent.keyDown(field, { key: "Enter" });
+  it.each(["Nombre y apellido", "Telefono"])(
+    "keeps customer suggestions by %s and does not reuse a device",
+    (label) => {
+      renderIntake({ customers: [customer] });
+      const field = screen.getByLabelText(label);
+      fireEvent.change(field, {
+        target: { value: label === "Nombre y apellido" ? "Maria" : "573744" }
+      });
+      fireEvent.keyDown(field, { key: "Enter" });
 
-    const data = new FormData(intakeForm());
-    expect(data.get("customerId")).toBe(customer.id);
-    expect(data.get("customerName")).toBe(customer.fullName);
-    expect(data.get("customerPhone")).toBe(customer.phone);
-    expect(data.get("customerNotes")).toBe(customer.notes);
-    expect(data.get("deviceId")).toBe("");
-    expect(data.get("deviceType")).toBe("");
-  });
+      const data = new FormData(intakeForm());
+      expect(data.get("customerId")).toBe(customer.id);
+      expect(data.get("customerName")).toBe(customer.fullName);
+      expect(data.get("customerPhone")).toBe(customer.phone);
+      expect(data.get("customerNotes")).toBe(customer.notes);
+      expect(data.get("deviceId")).toBe("");
+      expect(data.get("deviceType")).toBe("");
+    }
+  );
 
   it("allows activating a customer suggestion with a click or keyboard-generated click", () => {
     renderIntake({ customers: [customer] });
@@ -352,9 +497,13 @@ describe("RepairAccessNewOrderWizard", () => {
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Maria" } });
     fireEvent.keyDown(field, { key: "Enter" });
-    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
 
-    const saved = JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!);
+    const saved = JSON.parse(
+      localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!
+    );
     expect(saved.data.fields.customerId).toBe(customer.id);
     expect(saved.data.fields.customerName).toBe(customer.fullName);
     expect(saved.data.fields.customerNotes).toBe(customer.notes);
@@ -364,13 +513,20 @@ describe("RepairAccessNewOrderWizard", () => {
   it("keeps debounced remote customer suggestions and submitted optional values", async () => {
     vi.useFakeTimers();
     const remote = { ...customer, id: "remote-customer", fullName: "Ana Remota" };
-    const fetchCustomers = vi.fn(async () => ({ ok: true, json: async () => ({ customers: [remote] }) }));
+    const fetchCustomers = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ customers: [remote] })
+    }));
     vi.stubGlobal("fetch", fetchCustomers);
     renderIntake();
     fireEvent.change(screen.getByLabelText("Nombre y apellido"), { target: { value: "Ana Rem" } });
     expect(fetchCustomers).not.toHaveBeenCalled();
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
-    expect(fetchCustomers).toHaveBeenCalledWith("/api/repair-access/customers?q=Ana%20Rem", { signal: expect.any(AbortSignal) });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
+    expect(fetchCustomers).toHaveBeenCalledWith("/api/repair-access/customers?q=Ana%20Rem", {
+      signal: expect.any(AbortSignal)
+    });
     fireEvent.click(screen.getByRole("option", { name: /Ana Remota/ }));
 
     const data = new FormData(intakeForm());
@@ -393,10 +549,18 @@ describe("RepairAccessNewOrderWizard", () => {
     };
     const cachedOnly = { ...customer, id: "cached-only", fullName: "Maria Gomez" };
     const remoteOnly = { ...customer, id: "remote-only", fullName: "Maria Diaz" };
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ customers: [remote, remote, remoteOnly] }) })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({
+        ok: true,
+        json: async () => ({ customers: [remote, remote, remoteOnly] })
+      }))
+    );
     renderIntake({ customers: [customer, cachedOnly] });
     fireEvent.change(screen.getByLabelText("Nombre y apellido"), { target: { value: "Maria" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
 
     const listbox = screen.getByRole("listbox", { name: "Clientes sugeridos" });
     expect(listbox.querySelectorAll('[role="option"]')).toHaveLength(3);
@@ -420,13 +584,24 @@ describe("RepairAccessNewOrderWizard", () => {
 
   it("shows remote-only matches before the seven-item cached suggestion limit", async () => {
     vi.useFakeTimers();
-    const cached = Array.from({ length: 7 }, (_, index) => ({ ...customer, id: `cached-${index}`, fullName: `Maria Local ${index}` }));
+    const cached = Array.from({ length: 7 }, (_, index) => ({
+      ...customer,
+      id: `cached-${index}`,
+      fullName: `Maria Local ${index}`
+    }));
     const remote = { ...customer, id: "remote-only", fullName: "Maria Nueva" };
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ customers: [remote] }) })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => ({ customers: [remote] }) }))
+    );
     renderIntake({ customers: cached });
     fireEvent.change(screen.getByLabelText("Nombre y apellido"), { target: { value: "Maria" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
-    const options = screen.getByRole("listbox", { name: "Clientes sugeridos" }).querySelectorAll('[role="option"]');
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
+    const options = screen
+      .getByRole("listbox", { name: "Clientes sugeridos" })
+      .querySelectorAll('[role="option"]');
     expect(options[0].textContent).toContain("Maria Nueva");
     expect(options).toHaveLength(7);
     fireEvent.click(screen.getByRole("option", { name: /Maria Nueva/ }));
@@ -436,17 +611,23 @@ describe("RepairAccessNewOrderWizard", () => {
   it("aborts an in-flight lookup when the query changes or the form unmounts", async () => {
     vi.useFakeTimers();
     const response = deferred<Response>();
-    const fetchCustomers = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(() => response.promise);
+    const fetchCustomers = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(
+      () => response.promise
+    );
     vi.stubGlobal("fetch", fetchCustomers);
     const view = renderIntake();
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Ana" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     const firstSignal = fetchCustomers.mock.calls[0][1]?.signal;
 
     fireEvent.change(field, { target: { value: "Ana Rem" } });
     expect(firstSignal?.aborted).toBe(true);
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     const secondSignal = fetchCustomers.mock.calls[1][1]?.signal;
     expect(secondSignal?.aborted).toBe(false);
     view.unmount();
@@ -458,19 +639,26 @@ describe("RepairAccessNewOrderWizard", () => {
     const staleBody = deferred<{ customers: RepairAccessCustomerSummary[] }>();
     const stale = { ...customer, id: "stale", fullName: "Ana Remota Antigua" };
     const latest = { ...customer, id: "latest", fullName: "Ana Remota Actual" };
-    const fetchCustomers = vi.fn()
+    const fetchCustomers = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: () => staleBody.promise })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ customers: [latest] }) });
     vi.stubGlobal("fetch", fetchCustomers);
     renderIntake();
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Ana" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     fireEvent.change(field, { target: { value: "Ana Rem" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     expect(screen.getByText(latest.fullName)).not.toBeNull();
 
-    await act(async () => { staleBody.resolve({ customers: [stale] }); });
+    await act(async () => {
+      staleBody.resolve({ customers: [stale] });
+    });
 
     expect(screen.queryByText(stale.fullName)).toBeNull();
     expect(screen.getByText(latest.fullName)).not.toBeNull();
@@ -482,49 +670,76 @@ describe("RepairAccessNewOrderWizard", () => {
     vi.useFakeTimers();
     const staleResponse = deferred<Response>();
     const latest = { ...customer, id: "latest", fullName: "Ana Remota Actual" };
-    vi.stubGlobal("fetch", vi.fn()
-      .mockReturnValueOnce(staleResponse.promise)
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ customers: [latest] }) }));
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockReturnValueOnce(staleResponse.promise)
+        .mockResolvedValueOnce({ ok: true, json: async () => ({ customers: [latest] }) })
+    );
     renderIntake();
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Ana" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     fireEvent.change(field, { target: { value: "Ana Rem" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
 
-    await act(async () => { staleResponse.reject(new Error("Canceled lookup")); });
+    await act(async () => {
+      staleResponse.reject(new Error("Canceled lookup"));
+    });
 
     expect(screen.getByText(latest.fullName)).not.toBeNull();
   });
 
-  it.each(["Nombre y apellido", "Telefono"])("selects the highlighted customer with arrow keys and Enter from %s", (label) => {
-    const second = { ...customer, id: "customer-2", fullName: "Maria Diaz" };
-    renderIntake({ customers: [customer, second] });
-    const field = screen.getByLabelText(label);
-    fireEvent.change(field, { target: { value: label === "Telefono" ? "573744" : "Maria" } });
-    fireEvent.keyDown(field, { key: "ArrowDown" });
-    fireEvent.keyDown(field, { key: "ArrowDown" });
-    expect(field.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByRole("option", { name: /Maria Diaz/ }).getAttribute("aria-selected")).toBe("true");
-    fireEvent.keyDown(field, { key: "Enter" });
+  it.each(["Nombre y apellido", "Telefono"])(
+    "selects the highlighted customer with arrow keys and Enter from %s",
+    (label) => {
+      const second = { ...customer, id: "customer-2", fullName: "Maria Diaz" };
+      renderIntake({ customers: [customer, second] });
+      const field = screen.getByLabelText(label);
+      fireEvent.change(field, { target: { value: label === "Telefono" ? "573744" : "Maria" } });
+      fireEvent.keyDown(field, { key: "ArrowDown" });
+      fireEvent.keyDown(field, { key: "ArrowDown" });
+      expect(field.getAttribute("aria-expanded")).toBe("true");
+      expect(screen.getByRole("option", { name: /Maria Diaz/ }).getAttribute("aria-selected")).toBe(
+        "true"
+      );
+      fireEvent.keyDown(field, { key: "Enter" });
 
-    expect(new FormData(intakeForm()).get("customerId")).toBe(second.id);
-    expect(field.getAttribute("aria-expanded")).toBe("false");
-  });
+      expect(new FormData(intakeForm()).get("customerId")).toBe(second.id);
+      expect(field.getAttribute("aria-expanded")).toBe("false");
+    }
+  );
 
   it("preserves the highlighted customer ID when asynchronous results reorder suggestions", async () => {
     vi.useFakeTimers();
     const cached = [customer, { ...customer, id: "highlighted", fullName: "Maria Z" }];
-    const remote = [{ ...customer, id: "remote-a", fullName: "Maria A" }, { ...customer, id: "remote-b", fullName: "Maria B" }];
-    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => ({ customers: remote }) })));
+    const remote = [
+      { ...customer, id: "remote-a", fullName: "Maria A" },
+      { ...customer, id: "remote-b", fullName: "Maria B" }
+    ];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => ({ ok: true, json: async () => ({ customers: remote }) }))
+    );
     renderIntake({ customers: cached });
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Maria" } });
     fireEvent.keyDown(field, { key: "ArrowDown" });
     fireEvent.keyDown(field, { key: "ArrowDown" });
-    expect(screen.getByRole("option", { name: /Maria Z/ }).getAttribute("aria-selected")).toBe("true");
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
-    expect(screen.getByRole("option", { name: /Maria Z/ }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("option", { name: /Maria Z/ }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
+    expect(screen.getByRole("option", { name: /Maria Z/ }).getAttribute("aria-selected")).toBe(
+      "true"
+    );
     fireEvent.keyDown(field, { key: "Enter" });
     expect(new FormData(intakeForm()).get("customerId")).toBe("highlighted");
   });
@@ -571,12 +786,16 @@ describe("RepairAccessNewOrderWizard", () => {
   it("closes the dropdown on blur outside the lookup and aborts pending remote work", async () => {
     vi.useFakeTimers();
     const response = deferred<Response>();
-    const fetchCustomers = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(() => response.promise);
+    const fetchCustomers = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(
+      () => response.promise
+    );
     vi.stubGlobal("fetch", fetchCustomers);
     renderIntake({ customers: [customer] });
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Maria" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(180); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(180);
+    });
     fireEvent.blur(field, { relatedTarget: screen.getByLabelText("Direccion") });
 
     expect(screen.queryByText(customer.fullName)).toBeNull();
@@ -613,7 +832,10 @@ describe("RepairAccessNewOrderWizard", () => {
   });
 
   it("enforces 44px minimum targets for recovery buttons inside the intake", () => {
-    localStorage.setItem(getFormDraftStorageKey("repair-access:intake:new"), JSON.stringify(createFormDraftEnvelope({ fields: { customerName: "Ana" } })));
+    localStorage.setItem(
+      getFormDraftStorageKey("repair-access:intake:new"),
+      JSON.stringify(createFormDraftEnvelope({ fields: { customerName: "Ana" } }))
+    );
     const view = renderIntake();
 
     expect(screen.getByRole("button", { name: "Recuperar" })).not.toBeNull();
@@ -625,9 +847,13 @@ describe("RepairAccessNewOrderWizard", () => {
     const onDirtyChange = vi.fn();
     const view = renderIntake({ onDirtyChange });
     fireEvent.change(screen.getByLabelText("Color"), { target: { value: "Azul" } });
-    await act(async () => { await vi.advanceTimersByTimeAsync(500); });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(500);
+    });
 
-    const saved = JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!);
+    const saved = JSON.parse(
+      localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!
+    );
     expect(saved.data.fields.deviceColor).toBe("Azul");
     expect(onDirtyChange).toHaveBeenLastCalledWith(true);
     view.unmount();
@@ -637,29 +863,49 @@ describe("RepairAccessNewOrderWizard", () => {
     expectEssentialFieldsVisible();
   });
 
-  it.each(["cliente", "equipo", "ingreso"])("restores a legacy %s-step draft without hiding essential fields", (activeStep) => {
-    const fields = {
-      customerId: customer.id, customerName: customer.fullName, customerPhone: customer.phone,
-      customerAddress: "Mitre 500", accessoryDetails: "Fuente y cable", deviceColor: "Rojo",
-      customerNotes: "Borrador de contacto", deviceType: "TV", deviceBrand: "LG", deviceModel: "43LM",
-      serialNumber: "SERIE-BORRADOR", intakeDate: "2026-10-05", issueReported: "Se apaga",
-      priority: "alta", status: "en_pruebas", notes: "Pendiente de confirmar"
-    };
-    localStorage.setItem(getFormDraftStorageKey("repair-access:intake:new"), JSON.stringify(createFormDraftEnvelope({ activeStep, fields })));
-    const onDirtyChange = vi.fn();
-    renderIntake({ onDirtyChange });
-    fireEvent.click(screen.getByRole("button", { name: "Recuperar" }));
+  it.each(["cliente", "equipo", "ingreso"])(
+    "restores a legacy %s-step draft without hiding essential fields",
+    (activeStep) => {
+      const fields = {
+        customerId: customer.id,
+        customerName: customer.fullName,
+        customerPhone: customer.phone,
+        customerAddress: "Mitre 500",
+        accessoryDetails: "Fuente y cable",
+        deviceColor: "Rojo",
+        customerNotes: "Borrador de contacto",
+        deviceType: "TV",
+        deviceBrand: "LG",
+        deviceModel: "43LM",
+        serialNumber: "SERIE-BORRADOR",
+        intakeDate: "2026-10-05",
+        issueReported: "Se apaga",
+        priority: "alta",
+        status: "en_pruebas",
+        notes: "Pendiente de confirmar"
+      };
+      localStorage.setItem(
+        getFormDraftStorageKey("repair-access:intake:new"),
+        JSON.stringify(createFormDraftEnvelope({ activeStep, fields }))
+      );
+      const onDirtyChange = vi.fn();
+      renderIntake({ onDirtyChange });
+      fireEvent.click(screen.getByRole("button", { name: "Recuperar" }));
 
-    expectEssentialFieldsVisible();
-    const data = new FormData(intakeForm());
-    Object.entries(fields).forEach(([name, value]) => expect(data.get(name), name).toBe(value));
-    optionalGroups.forEach((group) => expect(disclosure(group.label).open).toBe(false));
-    expect(onDirtyChange).toHaveBeenLastCalledWith(true);
-  });
+      expectEssentialFieldsVisible();
+      const data = new FormData(intakeForm());
+      Object.entries(fields).forEach(([name, value]) => expect(data.get(name), name).toBe(value));
+      optionalGroups.forEach((group) => expect(disclosure(group.label).open).toBe(false));
+      expect(onDirtyChange).toHaveBeenLastCalledWith(true);
+    }
+  );
 
   it("discards a pending draft without changing editing values", () => {
     const storageKey = getFormDraftStorageKey("repair-access:intake:order-1");
-    localStorage.setItem(storageKey, JSON.stringify(createFormDraftEnvelope({ fields: { customerName: "Otro nombre" } })));
+    localStorage.setItem(
+      storageKey,
+      JSON.stringify(createFormDraftEnvelope({ fields: { customerName: "Otro nombre" } }))
+    );
     const onDirtyChange = vi.fn();
     renderIntake({ editing, onDirtyChange });
     fireEvent.click(screen.getByRole("button", { name: "Descartar" }));
@@ -680,26 +926,39 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
     expect(onDirtyChange).toHaveBeenLastCalledWith(true);
     view.unmount();
-    const saved = JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!);
+    const saved = JSON.parse(
+      localStorage.getItem(getFormDraftStorageKey("repair-access:intake:new"))!
+    );
     expect(saved.data.fields.issueReported).toBe("No enciende");
     expect(onDirtyChange).toHaveBeenLastCalledWith(false);
   });
 
   it("recovers every submitted value after a rejected save without clearing the draft", async () => {
-    const action = vi.fn<(data: FormData) => Promise<void>>(async () => { throw new Error("Synthetic save failure"); });
+    const action = vi.fn<(data: FormData) => Promise<void>>(async () => {
+      throw new Error("Synthetic save failure");
+    });
     const view = render(
       <SaveErrorBoundary>
-        <RepairAccessNewOrderWizard action={action} customers={[]} editing={editing} onCancel={() => undefined} />
+        <RepairAccessNewOrderWizard
+          action={action}
+          customers={[]}
+          editing={editing}
+          onCancel={() => undefined}
+        />
       </SaveErrorBoundary>,
       { onCaughtError: () => undefined }
     );
     fireEvent.change(screen.getByLabelText("Falla"), { target: { value: "Se apaga al encender" } });
     const expected = Object.fromEntries(new FormData(intakeForm()).entries());
     fireEvent.submit(intakeForm());
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido")
+    );
     expect(action).toHaveBeenCalledTimes(1);
     expect(Object.fromEntries(action.mock.calls[0][0].entries())).toEqual(expected);
-    const saved = JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!);
+    const saved = JSON.parse(
+      localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!
+    );
     expect(saved.data.fields).toEqual(expected);
 
     view.unmount();
@@ -718,42 +977,78 @@ describe("RepairAccessNewOrderWizard", () => {
       throw new Error("Synthetic immediate save failure");
     });
     render(
-      <SaveErrorBoundary onFailureCommit={() => { savedAtFailureCommit = localStorage.getItem(storageKey); }}>
-        <RepairAccessNewOrderWizard action={action} customers={[]} editing={editing} onCancel={() => undefined} />
+      <SaveErrorBoundary
+        onFailureCommit={() => {
+          savedAtFailureCommit = localStorage.getItem(storageKey);
+        }}
+      >
+        <RepairAccessNewOrderWizard
+          action={action}
+          customers={[]}
+          editing={editing}
+          onCancel={() => undefined}
+        />
       </SaveErrorBoundary>,
       { onCaughtError: () => undefined }
     );
     fillEssentialFields();
-    fireEvent.change(screen.getByLabelText("Observaciones internas de recepcion"), { target: { value: "Notas sin guardar" } });
+    fireEvent.change(screen.getByLabelText("Observaciones internas de recepcion"), {
+      target: { value: "Notas sin guardar" }
+    });
     const expected = Object.fromEntries(new FormData(intakeForm()).entries());
     fireEvent.submit(intakeForm());
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido")
+    );
     await act(async () => {});
 
     expect(action).toHaveBeenCalledTimes(1);
-    expect.soft(JSON.parse(savedBeforeAction ?? "null")?.data.fields, "snapshot before action").toEqual(expected);
-    expect.soft(JSON.parse(savedAtFailureCommit ?? "null")?.data.fields, "snapshot at error fallback commit").toEqual(expected);
-    expect(JSON.parse(localStorage.getItem(storageKey)!)?.data.fields, "snapshot after passive cleanup").toEqual(expected);
+    expect
+      .soft(JSON.parse(savedBeforeAction ?? "null")?.data.fields, "snapshot before action")
+      .toEqual(expected);
+    expect
+      .soft(
+        JSON.parse(savedAtFailureCommit ?? "null")?.data.fields,
+        "snapshot at error fallback commit"
+      )
+      .toEqual(expected);
+    expect(
+      JSON.parse(localStorage.getItem(storageKey)!)?.data.fields,
+      "snapshot after passive cleanup"
+    ).toEqual(expected);
   });
 
   it("recovers submitted browser-autofill values even without a change event", async () => {
-    const action = vi.fn<(data: FormData) => Promise<void>>(async () => { throw new Error("Synthetic autofill save failure"); });
+    const action = vi.fn<(data: FormData) => Promise<void>>(async () => {
+      throw new Error("Synthetic autofill save failure");
+    });
     const view = render(
       <SaveErrorBoundary>
-        <RepairAccessNewOrderWizard action={action} customers={[]} editing={editing} onCancel={() => undefined} />
+        <RepairAccessNewOrderWizard
+          action={action}
+          customers={[]}
+          editing={editing}
+          onCancel={() => undefined}
+        />
       </SaveErrorBoundary>,
       { onCaughtError: () => undefined }
     );
-    (screen.getByLabelText("Nombre y apellido") as HTMLInputElement).value = "Nombre autocompletado";
+    (screen.getByLabelText("Nombre y apellido") as HTMLInputElement).value =
+      "Nombre autocompletado";
     (screen.getByLabelText("Direccion") as HTMLInputElement).value = "Direccion autocompletada";
     (screen.getByLabelText("Color") as HTMLInputElement).value = "Plateado";
     const expected = Object.fromEntries(new FormData(intakeForm()).entries());
     fireEvent.submit(intakeForm());
-    await waitFor(() => expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido"));
+    await waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido")
+    );
     await act(async () => {});
 
     expect(Object.fromEntries(action.mock.calls[0][0].entries())).toEqual(expected);
-    expect(JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!)?.data.fields).toEqual(expected);
+    expect(
+      JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!)
+        ?.data.fields
+    ).toEqual(expected);
     view.unmount();
     renderIntake({ editing });
     fireEvent.click(screen.getByRole("button", { name: "Recuperar" }));
@@ -765,7 +1060,12 @@ describe("RepairAccessNewOrderWizard", () => {
     const action = vi.fn<(data: FormData) => Promise<void>>(() => pendingSave.promise);
     const view = render(
       <SaveErrorBoundary>
-        <RepairAccessNewOrderWizard action={action} customers={[]} editing={editing} onCancel={() => undefined} />
+        <RepairAccessNewOrderWizard
+          action={action}
+          customers={[]}
+          editing={editing}
+          onCancel={() => undefined}
+        />
       </SaveErrorBoundary>,
       { onCaughtError: () => undefined }
     );
@@ -774,13 +1074,20 @@ describe("RepairAccessNewOrderWizard", () => {
     fireEvent.submit(form);
     await waitFor(() => expect(action).toHaveBeenCalledTimes(1));
     expect(action.mock.calls[0][0].get("issueReported")).toBe("Falla enviada");
-    fireEvent.change(screen.getByLabelText("Falla"), { target: { value: "Falla corregida durante el guardado" } });
+    fireEvent.change(screen.getByLabelText("Falla"), {
+      target: { value: "Falla corregida durante el guardado" }
+    });
     fireEvent.change(screen.getByLabelText("Color"), { target: { value: "Azul corregido" } });
     const expected = Object.fromEntries(new FormData(form).entries());
-    await act(async () => { pendingSave.reject(new Error("Synthetic delayed save failure")); });
+    await act(async () => {
+      pendingSave.reject(new Error("Synthetic delayed save failure"));
+    });
 
     expect(screen.getByRole("alert").textContent).toBe("Guardado interrumpido");
-    expect(JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!)?.data.fields).toEqual(expected);
+    expect(
+      JSON.parse(localStorage.getItem(getFormDraftStorageKey("repair-access:intake:order-1"))!)
+        ?.data.fields
+    ).toEqual(expected);
     view.unmount();
     renderIntake({ editing });
     fireEvent.click(screen.getByRole("button", { name: "Recuperar" }));

@@ -9,17 +9,26 @@ import { RepairAccessOrderDetail } from "@/features/repairs-access/components/re
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 import type { WarrantyReturnRecord } from "../warranty-return";
 
-const mocks = vi.hoisted(() => ({ router: { refresh: vi.fn() }, save: vi.fn(), saveReturn: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  router: { refresh: vi.fn() },
+  save: vi.fn(),
+  saveReturn: vi.fn()
+}));
 vi.mock("next/navigation", () => ({ useRouter: () => mocks.router }));
 vi.mock("../coordination-actions", async (original) => ({
-  ...await original<typeof import("../coordination-actions")>(), saveQuickWorkshopForm: mocks.save
+  ...(await original<typeof import("../coordination-actions")>()),
+  saveQuickWorkshopForm: mocks.save
 }));
 vi.mock("../warranty-actions", async (original) => ({
-  ...await original<typeof import("../warranty-actions")>(), saveWarrantyReturn: mocks.saveReturn
+  ...(await original<typeof import("../warranty-actions")>()),
+  saveWarrantyReturn: mocks.saveReturn
 }));
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); vi.clearAllMocks(); });
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
 
 const order: RepairAccessOrderRecord = {
   id: "repair-1",
@@ -106,37 +115,84 @@ const order: RepairAccessOrderRecord = {
 };
 
 const waitingOrder: RepairAccessOrderRecord = {
-  ...order, status: "presupuestado", budgetAmount: 208000, finalAmount: 208000,
-  workflow: { version: 1, budgetRevision: 0, approvalStatus: "legacy", approvedAmount: null, assignedTechnicianId: null,
-    assignedTechnicianName: null, location: null, nextActionDate: null, qualityCheckedAt: null, qualityNotes: null, parts: [], events: [] }
+  ...order,
+  status: "presupuestado",
+  budgetAmount: 208000,
+  finalAmount: 208000,
+  workflow: {
+    version: 1,
+    budgetRevision: 0,
+    approvalStatus: "legacy",
+    approvedAmount: null,
+    assignedTechnicianId: null,
+    assignedTechnicianName: null,
+    location: null,
+    nextActionDate: null,
+    qualityCheckedAt: null,
+    qualityNotes: null,
+    parts: [],
+    events: []
+  }
 };
 
 describe("visible collection and pickup row", () => {
   it("shows exactly one payment and delivery row outside collapsed coordination", () => {
-    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "listo_para_retirar" }} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{ ...waitingOrder, status: "listo_para_retirar" }}
+      />
+    );
     expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Cobrar" }).closest("details")).toBeNull();
     expect(screen.getByRole("button", { name: "Registrar entrega" }).closest("details")).toBeNull();
     const coordination = screen.getByText("Coordinacion y repuestos").closest("details")!;
-    coordination.open = true; fireEvent(coordination, new Event("toggle"));
+    coordination.open = true;
+    fireEvent(coordination, new Event("toggle"));
     expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
     expect(screen.getAllByRole("button", { name: "Registrar entrega" })).toHaveLength(1);
   });
 });
 
 const activeReturn: WarrantyReturnRecord = {
-  id: "20000000-0000-4000-8000-000000000001", orderId: order.id,
-  repairNumber: order.repairNumber, customerName: order.customer.fullName, deviceLabel: "Televisor Marca Modelo",
-  receivedOn: "2026-11-10", issueReported: "La pantalla vuelve a apagarse despues de diez minutos",
-  accessories: "Control remoto", conditionNotes: "Sin golpes", status: "en_revision", progress: "Verificando retroiluminacion",
-  resolution: "", closedAt: null, recipient: null, version: 3, createdAt: "2026-11-10T12:00:00Z"
+  id: "20000000-0000-4000-8000-000000000001",
+  orderId: order.id,
+  repairNumber: order.repairNumber,
+  customerName: order.customer.fullName,
+  deviceLabel: "Televisor Marca Modelo",
+  receivedOn: "2026-11-10",
+  issueReported: "La pantalla vuelve a apagarse despues de diez minutos",
+  accessories: "Control remoto",
+  conditionNotes: "Sin golpes",
+  status: "en_revision",
+  progress: "Verificando retroiluminacion",
+  resolution: "",
+  closedAt: null,
+  recipient: null,
+  version: 3,
+  createdAt: "2026-11-10T12:00:00Z"
 };
 
 describe("RepairAccessWorkshopCard", () => {
   it("exposes authorization and the recorded location/review date without opening coordination", () => {
-    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{
-      ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "pending", location: "Estante 4 / banco TV", nextActionDate: "2026-11-12" }
-    }} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{
+          ...waitingOrder,
+          workflow: {
+            ...waitingOrder.workflow!,
+            approvalStatus: "pending",
+            location: "Estante 4 / banco TV",
+            nextActionDate: "2026-11-12"
+          }
+        }}
+      />
+    );
     const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
     expect(summary.closest("details")).toBeNull();
     expect(within(summary).getByText("Esperando autorizacion del cliente")).toBeTruthy();
@@ -146,15 +202,57 @@ describe("RepairAccessWorkshopCard", () => {
   });
 
   it("shows missing receipts but never calls received or cancelled parts a blockage", () => {
-    const part = { id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 1,
-      installedQuantity: 0, status: "ordered" as const, priority: "normal", supplier: null, expectedDate: null,
-      notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt };
-    const record = { ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" as const, parts: [part] } };
-    const { rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={record} />);
-    expect(within(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` })).getByText("Faltan repuestos por recibir")).toBeTruthy();
-    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...record,
-      workflow: { ...record.workflow, parts: [{ ...part, receivedQuantity: 2 }, { ...part, id: "cancelled", status: "cancelled" }] }
-    }} />);
+    const part = {
+      id: "part-1",
+      orderId: order.id,
+      description: "Fuente",
+      quantity: 2,
+      receivedQuantity: 1,
+      installedQuantity: 0,
+      status: "ordered" as const,
+      priority: "normal",
+      supplier: null,
+      expectedDate: null,
+      notes: null,
+      unitCost: null,
+      productId: null,
+      version: 1,
+      createdAt: order.createdAt
+    };
+    const record = {
+      ...waitingOrder,
+      workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" as const, parts: [part] }
+    };
+    const { rerender } = render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={record}
+      />
+    );
+    expect(
+      within(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` })).getByText(
+        "Faltan repuestos por recibir"
+      )
+    ).toBeTruthy();
+    rerender(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{
+          ...record,
+          workflow: {
+            ...record.workflow,
+            parts: [
+              { ...part, receivedQuantity: 2 },
+              { ...part, id: "cancelled", status: "cancelled" }
+            ]
+          }
+        }}
+      />
+    );
     const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
     expect(summary.textContent).not.toContain("Faltan repuestos");
     expect(summary.textContent).toContain("Continuar trabajo autorizado");
@@ -165,54 +263,116 @@ describe("RepairAccessWorkshopCard", () => {
     ["listo_para_retirar", "Avisar y coordinar retiro"],
     ["no_presenta_fallas", "Coordinar devolucion del equipo"]
   ])("explains the real next step for %s without choosing a new status", (status, next) => {
-    render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder,
-      status, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" }
-    }} />);
-    expect(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` }).textContent).toContain(next);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{
+          ...waitingOrder,
+          status,
+          workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" }
+        }}
+      />
+    );
+    expect(
+      screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` }).textContent
+    ).toContain(next);
     expect(mocks.save).not.toHaveBeenCalled();
   });
 
-  it.each([true, false])("updates the active warranty visit instead of the original budget (admin=%s)", async (canManageIntake) => {
-    mocks.saveReturn.mockResolvedValueOnce({ success: false, message: "Guardado de prueba sin cambios" });
-    const record = { ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z", warrantyReturns: [activeReturn] };
-    const { container } = render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={record} />);
-    const header = container.querySelector("article header")!;
-    expect(header.textContent).toContain("En revision");
-    expect(header.textContent).not.toContain("Retirado por cliente");
-    expect(screen.getByText(activeReturn.issueReported)).toBeTruthy();
-    expect(screen.getByText("Falla original")).toBeTruthy();
-    expect(screen.getByText(order.issueReported)).toBeTruthy();
-    expect(screen.queryByText("Corregir garantia")).toBeNull();
-    expect(screen.queryByText("Actualizar trabajo")).toBeNull();
-    const details = screen.getByText("Actualizar reingreso").closest("details")!;
-    details.open = true; fireEvent(details, new Event("toggle"));
-    expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
-    const status = screen.getByLabelText("Estado del reingreso");
-    fireEvent.change(status, { target: { value: "en_reparacion" } });
-    fireEvent.submit(screen.getByRole("button", { name: "Guardar reingreso" }).closest("form")!);
-    await waitFor(() => expect(mocks.saveReturn).toHaveBeenCalledOnce());
-    const form = mocks.saveReturn.mock.calls[0][1] as FormData;
-    expect(form.get("id")).toBe(activeReturn.id);
-    expect(form.get("version")).toBe("3");
-    expect(form.get("status")).toBe("en_reparacion");
-    expect(form.has("repairAmount")).toBe(false);
-    expect(mocks.save).not.toHaveBeenCalled();
-    expect(container.querySelector("form form")).toBeNull();
-  });
+  it.each([true, false])(
+    "updates the active warranty visit instead of the original budget (admin=%s)",
+    async (canManageIntake) => {
+      mocks.saveReturn.mockResolvedValueOnce({
+        success: false,
+        message: "Guardado de prueba sin cambios"
+      });
+      const record = {
+        ...waitingOrder,
+        status: "retirado",
+        deliveredAt: "2026-10-01T12:00:00Z",
+        warrantyReturns: [activeReturn]
+      };
+      const { container } = render(
+        <RepairAccessWorkshopCard
+          canManageIntake={canManageIntake}
+          onEdit={vi.fn()}
+          onOpenDetail={vi.fn()}
+          order={record}
+        />
+      );
+      const header = container.querySelector("article header")!;
+      expect(header.textContent).toContain("En revision");
+      expect(header.textContent).not.toContain("Retirado por cliente");
+      expect(screen.getByText(activeReturn.issueReported)).toBeTruthy();
+      expect(screen.getByText("Falla original")).toBeTruthy();
+      expect(screen.getByText(order.issueReported)).toBeTruthy();
+      expect(screen.queryByText("Corregir garantia")).toBeNull();
+      expect(screen.queryByText("Actualizar trabajo")).toBeNull();
+      const details = screen.getByText("Actualizar reingreso").closest("details")!;
+      details.open = true;
+      fireEvent(details, new Event("toggle"));
+      expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+      const status = screen.getByLabelText("Estado del reingreso");
+      fireEvent.change(status, { target: { value: "en_reparacion" } });
+      fireEvent.submit(screen.getByRole("button", { name: "Guardar reingreso" }).closest("form")!);
+      await waitFor(() => expect(mocks.saveReturn).toHaveBeenCalledOnce());
+      const form = mocks.saveReturn.mock.calls[0][1] as FormData;
+      expect(form.get("id")).toBe(activeReturn.id);
+      expect(form.get("version")).toBe("3");
+      expect(form.get("status")).toBe("en_reparacion");
+      expect(form.has("repairAmount")).toBe(false);
+      expect(mocks.save).not.toHaveBeenCalled();
+      expect(container.querySelector("form form")).toBeNull();
+    }
+  );
 
   it("shows payment sharing after quick pickup refresh even when the editor becomes warranty correction", async () => {
-    mocks.save.mockResolvedValueOnce({ success: true, orderClosed: true, recordVersion: 2, message: "Retiro registrado" });
-    const readyOrder: RepairAccessOrderRecord = { ...waitingOrder, status: "listo_para_retirar", isPaid: true };
-    const { container, rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={readyOrder} />);
+    mocks.save.mockResolvedValueOnce({
+      success: true,
+      orderClosed: true,
+      recordVersion: 2,
+      message: "Retiro registrado"
+    });
+    const readyOrder: RepairAccessOrderRecord = {
+      ...waitingOrder,
+      status: "listo_para_retirar",
+      isPaid: true
+    };
+    const { container, rerender } = render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={readyOrder}
+      />
+    );
     const editor = screen.getByText("Actualizar trabajo").closest("details")!;
-    editor.open = true; fireEvent(editor, new Event("toggle"));
-    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "retirado" } });
+    editor.open = true;
+    fireEvent(editor, new Event("toggle"));
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), {
+      target: { value: "retirado" }
+    });
     fireEvent.click(screen.getByLabelText("Confirmo que el cliente retiro el equipo"));
     fireEvent.submit(screen.getByRole("button", { name: "Registrar retiro" }).closest("form")!);
     await waitFor(() => expect(screen.getByText("Retiro registrado")).toBeTruthy());
     await waitFor(() => expect(mocks.router.refresh).toHaveBeenCalled());
     expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
-    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...readyOrder, status: "retirado", pickedUpAt: "2026-10-21T12:00:00Z", deliveredAt: "2026-10-21T12:00:00Z", workflow: { ...readyOrder.workflow!, version: 2 } }} />);
+    rerender(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{
+          ...readyOrder,
+          status: "retirado",
+          pickedUpAt: "2026-10-21T12:00:00Z",
+          deliveredAt: "2026-10-21T12:00:00Z",
+          workflow: { ...readyOrder.workflow!, version: 2 }
+        }}
+      />
+    );
     expect(screen.getByText("Corregir garantia")).toBeTruthy();
     const send = screen.getByRole("button", { name: "Enviar pago y garant\u00eda" });
     expect(send.closest("details")).toBeNull();
@@ -221,98 +381,241 @@ describe("RepairAccessWorkshopCard", () => {
   });
 
   it("shows manual receipts above folded card actions without nested forms or duplicates", () => {
-    const { container, rerender } = render(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={waitingOrder} />);
-    expect(screen.getByRole("button", { name: "Enviar comprobante de ingreso" }).closest("details")).toBeNull();
+    const { container, rerender } = render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={waitingOrder}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Enviar comprobante de ingreso" }).closest("details")
+    ).toBeNull();
     expect(screen.queryByRole("button", { name: "Enviar pago y garant\u00eda" })).toBeNull();
-    rerender(<RepairAccessWorkshopCard canManageIntake onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "retirado", pickedUpAt: "2026-10-21T12:00:00Z" }} />);
-    expect(screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")).toBeNull();
+    rerender(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={{ ...waitingOrder, status: "retirado", pickedUpAt: "2026-10-21T12:00:00Z" }}
+      />
+    );
+    expect(
+      screen.getByRole("button", { name: "Enviar pago y garant\u00eda" }).closest("details")
+    ).toBeNull();
     const history = screen.getByText("Historial de la orden original").closest("details")!;
-    history.open = true; fireEvent(history, new Event("toggle"));
-    expect(screen.getAllByRole("button", { name: "Enviar comprobante de ingreso" })).toHaveLength(1);
+    history.open = true;
+    fireEvent(history, new Event("toggle"));
+    expect(screen.getAllByRole("button", { name: "Enviar comprobante de ingreso" })).toHaveLength(
+      1
+    );
     expect(container.querySelector("form form")).toBeNull();
   });
 
   it("does not expose receipt forms on a technician card", () => {
-    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={waitingOrder} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake={false}
+        onEdit={vi.fn()}
+        onOpenDetail={vi.fn()}
+        order={waitingOrder}
+      />
+    );
     expect(screen.queryByRole("button", { name: "Enviar comprobante de ingreso" })).toBeNull();
   });
 
-  it.each([true, false])("does not reopen the original workshop editor on a delivered order (admin=%s)", (canManageIntake) => {
-    render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={vi.fn()} onOpenDetail={vi.fn()} order={{ ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z" }} />);
-    expect(screen.queryByText("Actualizar trabajo")).toBeNull();
-    expect(screen.queryByText("Coordinacion y repuestos")).toBeNull();
-    expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
-    expect(Boolean(screen.queryByText("Registrar reingreso por garantia"))).toBe(canManageIntake);
-    if (canManageIntake) {
-      const correction = screen.getByText("Corregir garantia").closest("details")!;
-      correction.open = true; fireEvent(correction, new Event("toggle"));
-      expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
-      expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+  it.each([true, false])(
+    "does not reopen the original workshop editor on a delivered order (admin=%s)",
+    (canManageIntake) => {
+      render(
+        <RepairAccessWorkshopCard
+          canManageIntake={canManageIntake}
+          onEdit={vi.fn()}
+          onOpenDetail={vi.fn()}
+          order={{ ...waitingOrder, status: "retirado", deliveredAt: "2026-10-01T12:00:00Z" }}
+        />
+      );
+      expect(screen.queryByText("Actualizar trabajo")).toBeNull();
+      expect(screen.queryByText("Coordinacion y repuestos")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
+      expect(Boolean(screen.queryByText("Registrar reingreso por garantia"))).toBe(canManageIntake);
+      if (canManageIntake) {
+        const correction = screen.getByText("Corregir garantia").closest("details")!;
+        correction.open = true;
+        fireEvent(correction, new Event("toggle"));
+        expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
+        expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
+      }
+      expect(screen.getByText(order.issueReported)).toBeTruthy();
+      const history = screen.getByText("Historial de la orden original").closest("details")!;
+      history.open = true;
+      fireEvent(history, new Event("toggle"));
+      expect(screen.getByRole("button", { name: "Historial de trabajo" })).toBeTruthy();
+      expect(screen.queryByRole("button", { name: "Solicitar repuesto" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Asignar y organizar" })).toBeNull();
     }
-    expect(screen.getByText(order.issueReported)).toBeTruthy();
-    const history = screen.getByText("Historial de la orden original").closest("details")!;
-    history.open = true; fireEvent(history, new Event("toggle"));
-    expect(screen.getByRole("button", { name: "Historial de trabajo" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Solicitar repuesto" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Asignar y organizar" })).toBeNull();
-  });
-  it.each([true, false])("reserva toda la fila para el REP sin que los badges lo compriman (admin=%s)", (canManageIntake) => {
-    const { container } = render(<RepairAccessWorkshopCard canManageIntake={canManageIntake} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
-    const header = container.querySelector("article header")!;
-    expect(header.className).not.toContain("grid-cols-[minmax(0,1fr)_auto]");
-    expect(header.textContent).toContain(waitingOrder.repairNumber);
-  });
+  );
+  it.each([true, false])(
+    "reserva toda la fila para el REP sin que los badges lo compriman (admin=%s)",
+    (canManageIntake) => {
+      const { container } = render(
+        <RepairAccessWorkshopCard
+          canManageIntake={canManageIntake}
+          onEdit={() => undefined}
+          onOpenDetail={() => undefined}
+          order={waitingOrder}
+        />
+      );
+      const header = container.querySelector("article header")!;
+      expect(header.className).not.toContain("grid-cols-[minmax(0,1fr)_auto]");
+      expect(header.textContent).toContain(waitingOrder.repairNumber);
+    }
+  );
   it("ofrece el mismo editor rapido para la cuenta admin compartida", () => {
-    render(<RepairAccessWorkshopCard canManageIntake onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={waitingOrder}
+      />
+    );
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
-    details.open = true; fireEvent(details, new Event("toggle"));
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
     expect(screen.getByLabelText("El cliente confirmo este presupuesto")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Guardar cambios" })).toBeTruthy();
-    expect(screen.getByLabelText("Presupuesto").closest("form")?.querySelectorAll('input[name="id"]').length).toBe(1);
+    expect(
+      screen.getByLabelText("Presupuesto").closest("form")?.querySelectorAll('input[name="id"]')
+        .length
+    ).toBe(1);
   });
   it("explica en celular como habilitar listo para retirar sin inventar la confirmacion", () => {
-    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={waitingOrder} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake={false}
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={waitingOrder}
+      />
+    );
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
-    details.open = true; fireEvent(details, new Event("toggle"));
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
     const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
     expect(notice.textContent).toContain("Confirmacion del cliente pendiente");
     expect(notice.textContent).toContain("Pedile a mostrador");
     expect(notice.textContent).toContain("control de calidad");
-    fireEvent.change(screen.getByLabelText("Estado de la orden"), { target: { value: "listo_para_retirar" } });
+    fireEvent.change(screen.getByLabelText("Estado de la orden"), {
+      target: { value: "listo_para_retirar" }
+    });
     expect(screen.getByLabelText("Equipo probado y funcionando")).toBeTruthy();
   });
 
   it("muestra los pasos pendientes tambien en la ficha completa", () => {
-    const html = renderToStaticMarkup(<RepairAccessOrderDetail order={waitingOrder} onBack={() => undefined} onEditIntake={() => undefined} defaultWarrantyDays={30} />);
+    const html = renderToStaticMarkup(
+      <RepairAccessOrderDetail
+        order={waitingOrder}
+        onBack={() => undefined}
+        onEditIntake={() => undefined}
+        defaultWarrantyDays={30}
+      />
+    );
     expect(html).toContain("Presupuesto, avance y estado en un solo guardado");
     expect(html).toContain("El cliente confirmo este presupuesto");
-    expect(html).toContain('Cobrar');
+    expect(html).toContain("Cobrar");
   });
 
   it("no presenta la utilizacion pendiente como un bloqueo de recepcion", () => {
-    const readyOrder = { ...waitingOrder, workflow: { ...waitingOrder.workflow!, approvalStatus: "accepted" as const, approvedAmount: 208000,
-      parts: [{ id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 2, installedQuantity: 1, status: "received" as const,
-        priority: "normal", supplier: null, expectedDate: null, notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt }] } };
-    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={readyOrder} />);
+    const readyOrder = {
+      ...waitingOrder,
+      workflow: {
+        ...waitingOrder.workflow!,
+        approvalStatus: "accepted" as const,
+        approvedAmount: 208000,
+        parts: [
+          {
+            id: "part-1",
+            orderId: order.id,
+            description: "Fuente",
+            quantity: 2,
+            receivedQuantity: 2,
+            installedQuantity: 1,
+            status: "received" as const,
+            priority: "normal",
+            supplier: null,
+            expectedDate: null,
+            notes: null,
+            unitCost: null,
+            productId: null,
+            version: 1,
+            createdAt: order.createdAt
+          }
+        ]
+      }
+    };
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake={false}
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={readyOrder}
+      />
+    );
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
-    details.open = true; fireEvent(details, new Event("toggle"));
+    details.open = true;
+    fireEvent(details, new Event("toggle"));
     const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
     expect(notice.textContent).not.toContain("Repuestos pendientes");
     expect(notice.textContent).not.toContain("Confirmacion del cliente pendiente");
   });
-  it.each(["ordered", "cancelled"] as const)("refleja la guarda de recepcion para una solicitud %s", (status) => {
-    const nextOrder = { ...waitingOrder, workflow: { ...waitingOrder.workflow!,
-      parts: [{ id: "part-1", orderId: order.id, description: "Fuente", quantity: 2, receivedQuantity: 1, installedQuantity: 1, status,
-        priority: "normal", supplier: null, expectedDate: null, notes: null, unitCost: null, productId: null, version: 1, createdAt: order.createdAt }] } };
-    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={nextOrder} />);
-    const details = screen.getByText("Actualizar trabajo").closest("details")!;
-    details.open = true; fireEvent(details, new Event("toggle"));
-    const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
-    if (status === "ordered") {
-      expect(notice.textContent).toContain("Repuestos pendientes de recibir");
-      expect(notice.textContent).toContain("recepcion");
-    } else expect(notice.textContent).not.toContain("Repuestos pendientes");
-  });
+  it.each(["ordered", "cancelled"] as const)(
+    "refleja la guarda de recepcion para una solicitud %s",
+    (status) => {
+      const nextOrder = {
+        ...waitingOrder,
+        workflow: {
+          ...waitingOrder.workflow!,
+          parts: [
+            {
+              id: "part-1",
+              orderId: order.id,
+              description: "Fuente",
+              quantity: 2,
+              receivedQuantity: 1,
+              installedQuantity: 1,
+              status,
+              priority: "normal",
+              supplier: null,
+              expectedDate: null,
+              notes: null,
+              unitCost: null,
+              productId: null,
+              version: 1,
+              createdAt: order.createdAt
+            }
+          ]
+        }
+      };
+      render(
+        <RepairAccessWorkshopCard
+          canManageIntake={false}
+          onEdit={() => undefined}
+          onOpenDetail={() => undefined}
+          order={nextOrder}
+        />
+      );
+      const details = screen.getByText("Actualizar trabajo").closest("details")!;
+      details.open = true;
+      fireEvent(details, new Event("toggle"));
+      const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
+      if (status === "ordered") {
+        expect(notice.textContent).toContain("Repuestos pendientes de recibir");
+        expect(notice.textContent).toContain("recepcion");
+      } else expect(notice.textContent).not.toContain("Repuestos pendientes");
+    }
+  );
   it("oculta las acciones de contacto personal del tecnico en todas las resoluciones", () => {
     const html = renderToStaticMarkup(
       <RepairAccessWorkshopCard
@@ -330,12 +633,26 @@ describe("RepairAccessWorkshopCard", () => {
   });
 
   it("conserva los contactos del negocio para mostrador en desktop", () => {
-    const html = renderToStaticMarkup(<RepairAccessWorkshopCard canManageIntake onEdit={() => undefined} onOpenDetail={() => undefined} order={order} />);
+    const html = renderToStaticMarkup(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={order}
+      />
+    );
     expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="[^"]*hidden[^"]*lg:grid/);
   });
 
   it("carga los controles de trabajo solo al abrir la ficha y conserva las advertencias", () => {
-    render(<RepairAccessWorkshopCard canManageIntake={false} onEdit={() => undefined} onOpenDetail={() => undefined} order={order} />);
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake={false}
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={order}
+      />
+    );
     const details = screen.getByText("Actualizar trabajo").closest("details")!;
     details.open = true;
     fireEvent(details, new Event("toggle"));

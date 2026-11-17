@@ -45,11 +45,27 @@ type InvoiceDetail = Invoice & {
   notes: string;
   fiscalProvider: string | null;
   fiscalIssuedAt: string | null;
-  items: { description: string; quantity: number; unitPrice: number; total: number; productId?: string | null; repairId?: string | null }[];
+  items: {
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    total: number;
+    productId?: string | null;
+    repairId?: string | null;
+  }[];
 };
 
 type Options = {
-  primaryOrders: Array<{ id: string; repairNumber: string; label: string; customerName: string; customerPhone: string; amount: number; description: string; notes: string }>;
+  primaryOrders: Array<{
+    id: string;
+    repairNumber: string;
+    label: string;
+    customerName: string;
+    customerPhone: string;
+    amount: number;
+    description: string;
+    notes: string;
+  }>;
   repairs: Array<{
     id: string;
     label: string;
@@ -69,7 +85,13 @@ type Options = {
     notes: string;
     customerName: string;
     customerPhone: string;
-    items: Array<{ description: string; quantity: number; unitPrice: number; total: number; productId?: string | null }>;
+    items: Array<{
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      total: number;
+      productId?: string | null;
+    }>;
   }>;
   products: Array<{ id: string; label: string; name: string; price: number }>;
 };
@@ -103,13 +125,23 @@ export function InvoicesView({
   pagination: PaginationMeta;
   message: ActionResult | null;
 }) {
-  const initialPrimary = !editingInvoice ? options.primaryOrders.find((order) => order.id === initialPrimaryOrderId) : undefined;
-  const [sourceType, setSourceType] = useState(editingInvoice?.sourceType ?? (initialPrimary ? "repair_access" : "manual"));
+  const initialPrimary = !editingInvoice
+    ? options.primaryOrders.find((order) => order.id === initialPrimaryOrderId)
+    : undefined;
+  const [sourceType, setSourceType] = useState(
+    editingInvoice?.sourceType ?? (initialPrimary ? "repair_access" : "manual")
+  );
   const [repairId, setRepairId] = useState(editingInvoice?.repairId ?? "");
-  const [repairAccessOrderId, setRepairAccessOrderId] = useState(editingInvoice?.repairAccessOrderId ?? initialPrimary?.id ?? "");
+  const [repairAccessOrderId, setRepairAccessOrderId] = useState(
+    editingInvoice?.repairAccessOrderId ?? initialPrimary?.id ?? ""
+  );
   const [saleId, setSaleId] = useState(editingInvoice?.saleId ?? "");
-  const [customerName, setCustomerName] = useState(editingInvoice?.customerName ?? initialPrimary?.customerName ?? "");
-  const [customerPhone, setCustomerPhone] = useState(editingInvoice?.customerPhone ?? initialPrimary?.customerPhone ?? "");
+  const [customerName, setCustomerName] = useState(
+    editingInvoice?.customerName ?? initialPrimary?.customerName ?? ""
+  );
+  const [customerPhone, setCustomerPhone] = useState(
+    editingInvoice?.customerPhone ?? initialPrimary?.customerPhone ?? ""
+  );
   const [discount, setDiscount] = useState(editingInvoice?.discount ?? 0);
   const [items, setItems] = useState<DraftItem[]>(
     editingInvoice?.items.length
@@ -120,19 +152,44 @@ export function InvoicesView({
           productId: item.productId ?? null,
           repairId: item.repairId ?? null
         }))
-      : initialPrimary ? [{ description: initialPrimary.description, quantity: 1, unitPrice: initialPrimary.amount }] : [{ ...emptyItem }]
+      : initialPrimary
+        ? [
+            {
+              description: initialPrimary.description,
+              quantity: 1,
+              unitPrice: initialPrimary.amount
+            }
+          ]
+        : [{ ...emptyItem }]
   );
 
   const amounts = (() => {
     try {
       const base = calculateInvoiceAmounts(items);
-      try { return { ...calculateInvoiceAmounts(items, discount), error: null }; }
-      catch (error) { return { ...base, total: 0, error: error instanceof Error ? error.message : "Revisa el descuento." }; }
+      try {
+        return { ...calculateInvoiceAmounts(items, discount), error: null };
+      } catch (error) {
+        return {
+          ...base,
+          total: 0,
+          error: error instanceof Error ? error.message : "Revisa el descuento."
+        };
+      }
+    } catch (error) {
+      return {
+        subtotal: 0,
+        total: 0,
+        lineTotals: items.map(() => 0),
+        error: error instanceof Error ? error.message : "Revisa los importes del comprobante."
+      };
     }
-    catch (error) { return { subtotal: 0, total: 0, lineTotals: items.map(() => 0), error: error instanceof Error ? error.message : "Revisa los importes del comprobante." }; }
   })();
   const { subtotal, total } = amounts;
-  const documentLocked = Boolean(editingInvoice?.fiscalReference || editingInvoice?.fiscalLockedAt || editingInvoice?.status === "anulado");
+  const documentLocked = Boolean(
+    editingInvoice?.fiscalReference ||
+    editingInvoice?.fiscalLockedAt ||
+    editingInvoice?.status === "anulado"
+  );
 
   const statusVariant = (status: string) => {
     if (status === "pagado") return "success";
@@ -142,7 +199,9 @@ export function InvoicesView({
   };
 
   function updateItem(index: number, patch: Partial<DraftItem>) {
-    setItems((current) => current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item)));
+    setItems((current) =>
+      current.map((item, itemIndex) => (itemIndex === index ? { ...item, ...patch } : item))
+    );
   }
 
   function applyRepair(id: string) {
@@ -165,7 +224,8 @@ export function InvoicesView({
     setRepairAccessOrderId(id);
     const order = options.primaryOrders.find((candidate) => candidate.id === id);
     if (!order) return;
-    setCustomerName(order.customerName); setCustomerPhone(order.customerPhone);
+    setCustomerName(order.customerName);
+    setCustomerPhone(order.customerPhone);
     setItems([{ description: order.description, quantity: 1, unitPrice: order.amount }]);
   }
 
@@ -183,7 +243,13 @@ export function InvoicesView({
             unitPrice: item.unitPrice,
             productId: item.productId ?? null
           }))
-        : [{ description: `Venta de productos ${sale.saleNumber}`, quantity: 1, unitPrice: sale.amount }]
+        : [
+            {
+              description: `Venta de productos ${sale.saleNumber}`,
+              quantity: 1,
+              unitPrice: sale.amount
+            }
+          ]
     );
   }
 
@@ -208,21 +274,34 @@ export function InvoicesView({
 
           <div className="shrink-0 text-sm text-slate-600">
             <p>Total del comprobante</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(total)}</p>
+            <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+              {formatCurrency(total)}
+            </p>
           </div>
         </div>
 
         {editingInvoice ? (
           <div className="status-banner mt-5">
             Estas editando el comprobante {editingInvoice.invoiceNumber}.{" "}
-            <Link className="font-semibold underline decoration-graphite/30 underline-offset-4" href="/facturacion">
+            <Link
+              className="font-semibold underline decoration-graphite/30 underline-offset-4"
+              href="/facturacion"
+            >
               Salir de edicion
             </Link>
           </div>
         ) : null}
 
         {message ? (
-          <div aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"} role={message.success ? "status" : "alert"}>
+          <div
+            aria-live="polite"
+            className={
+              message.success
+                ? "status-banner status-banner--success mt-5"
+                : "status-banner status-banner--error mt-5"
+            }
+            role={message.success ? "status" : "alert"}
+          >
             {message.message}
           </div>
         ) : null}
@@ -230,11 +309,23 @@ export function InvoicesView({
         <form action={saveInvoiceAction} className="mt-6 space-y-5">
           <input name="id" type="hidden" value={editingInvoice?.id ?? ""} />
           <input name="requestId" type="hidden" value={requestId} />
-          <input name="expectedVersion" type="hidden" value={editingInvoice?.documentVersion ?? ""} />
+          <input
+            name="expectedVersion"
+            type="hidden"
+            value={editingInvoice?.documentVersion ?? ""}
+          />
           <input name="itemsJson" type="hidden" value={JSON.stringify(items)} />
           <input name="discount" type="hidden" value={discount} />
-          <p className="text-sm text-slate-600">Crear o reimprimir no cobra ni mueve stock. Pagado y saldo provienen de los cobros vinculados, no de este formulario.</p>
-          {documentLocked ? <p className="status-banner" role="status">Documento bloqueado por anulacion o circuito fiscal. Su contenido no puede modificarse.</p> : null}
+          <p className="text-sm text-slate-600">
+            Crear o reimprimir no cobra ni mueve stock. Pagado y saldo provienen de los cobros
+            vinculados, no de este formulario.
+          </p>
+          {documentLocked ? (
+            <p className="status-banner" role="status">
+              Documento bloqueado por anulacion o circuito fiscal. Su contenido no puede
+              modificarse.
+            </p>
+          ) : null}
 
           <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
             <div>
@@ -244,7 +335,13 @@ export function InvoicesView({
               <Select
                 id="sourceType"
                 name="sourceType"
-                onChange={(event) => { setSourceType(event.target.value); setRepairId(""); setRepairAccessOrderId(""); setSaleId(""); setItems([{ ...emptyItem }]); }}
+                onChange={(event) => {
+                  setSourceType(event.target.value);
+                  setRepairId("");
+                  setRepairAccessOrderId("");
+                  setSaleId("");
+                  setItems([{ ...emptyItem }]);
+                }}
                 options={[
                   { label: "Manual", value: "manual" },
                   { label: "REP (orden principal)", value: "repair_access" },
@@ -255,9 +352,27 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repairAccessOrderId">REP principal</label>
-              <SearchableSelect searchLabel="Buscar REP o cliente" id="repairAccessOrderId" name="repairAccessOrderId" disabled={sourceType !== "repair_access"} value={repairAccessOrderId} onChange={(event) => applyPrimaryOrder(event.target.value)} options={[{ label: "Seleccionar REP", value: "" }, ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))]} />
-              <p className="mt-2 text-sm text-slate-500">Disponible antes del cobro. No requiere un registro financiero historico.</p>
+              <label
+                className="mb-2 block text-sm font-medium text-slate-700"
+                htmlFor="repairAccessOrderId"
+              >
+                REP principal
+              </label>
+              <SearchableSelect
+                searchLabel="Buscar REP o cliente"
+                id="repairAccessOrderId"
+                name="repairAccessOrderId"
+                disabled={sourceType !== "repair_access"}
+                value={repairAccessOrderId}
+                onChange={(event) => applyPrimaryOrder(event.target.value)}
+                options={[
+                  { label: "Seleccionar REP", value: "" },
+                  ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))
+                ]}
+              />
+              <p className="mt-2 text-sm text-slate-500">
+                Disponible antes del cobro. No requiere un registro financiero historico.
+              </p>
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repairId">
@@ -300,44 +415,104 @@ export function InvoicesView({
               <MoneyInput id="discount" onValueChange={setDiscount} value={discount} />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerName">
+              <label
+                className="mb-2 block text-sm font-medium text-slate-700"
+                htmlFor="customerName"
+              >
                 Cliente
               </label>
-              <Input id="customerName" name="customerName" onChange={(event) => setCustomerName(event.target.value)} value={customerName} />
+              <Input
+                id="customerName"
+                name="customerName"
+                onChange={(event) => setCustomerName(event.target.value)}
+                value={customerName}
+              />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="customerPhone">
+              <label
+                className="mb-2 block text-sm font-medium text-slate-700"
+                htmlFor="customerPhone"
+              >
                 Teléfono
               </label>
-              <Input id="customerPhone" name="customerPhone" onChange={(event) => setCustomerPhone(event.target.value)} value={customerPhone} />
+              <Input
+                id="customerPhone"
+                name="customerPhone"
+                onChange={(event) => setCustomerPhone(event.target.value)}
+                value={customerPhone}
+              />
             </div>
             <div className="xl:col-span-2">
               <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">
                 Observaciones
               </label>
-              <Input id="notes" defaultValue={editingInvoice?.notes ?? initialPrimary?.notes ?? ""} name="notes" placeholder="Opcional" />
+              <Input
+                id="notes"
+                defaultValue={editingInvoice?.notes ?? initialPrimary?.notes ?? ""}
+                name="notes"
+                placeholder="Opcional"
+              />
             </div>
           </div>
 
           <details className="border-t border-graphite/10 pt-2" open={documentLocked || undefined}>
-            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">Referencia fiscal externa opcional</summary>
-          <fieldset className="grid gap-4 md:grid-cols-3" disabled={documentLocked}>
-            <legend className="sr-only">Datos de la referencia fiscal externa</legend>
-            <div><label className="mb-2 block text-sm" htmlFor="fiscalProvider">Sistema emisor</label><Input id="fiscalProvider" name="fiscalProvider" maxLength={100} defaultValue={editingInvoice?.fiscalProvider ?? ""} placeholder="Proveedor o sistema externo" /></div>
-            <div><label className="mb-2 block text-sm" htmlFor="fiscalReference">Referencia del comprobante</label><Input id="fiscalReference" name="fiscalReference" maxLength={300} defaultValue={editingInvoice?.fiscalReference ?? ""} /></div>
-            <div><label className="mb-2 block text-sm" htmlFor="fiscalIssuedAt">Fecha externa</label><Input id="fiscalIssuedAt" name="fiscalIssuedAt" type="date" defaultValue={editingInvoice?.fiscalIssuedAt?.slice(0, 10) ?? ""} /></div>
-            <p className="text-sm text-slate-500 md:col-span-3">Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se bloquea la edicion del documento interno.</p>
-          </fieldset>
+            <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+              Referencia fiscal externa opcional
+            </summary>
+            <fieldset className="grid gap-4 md:grid-cols-3" disabled={documentLocked}>
+              <legend className="sr-only">Datos de la referencia fiscal externa</legend>
+              <div>
+                <label className="mb-2 block text-sm" htmlFor="fiscalProvider">
+                  Sistema emisor
+                </label>
+                <Input
+                  id="fiscalProvider"
+                  name="fiscalProvider"
+                  maxLength={100}
+                  defaultValue={editingInvoice?.fiscalProvider ?? ""}
+                  placeholder="Proveedor o sistema externo"
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm" htmlFor="fiscalReference">
+                  Referencia del comprobante
+                </label>
+                <Input
+                  id="fiscalReference"
+                  name="fiscalReference"
+                  maxLength={300}
+                  defaultValue={editingInvoice?.fiscalReference ?? ""}
+                />
+              </div>
+              <div>
+                <label className="mb-2 block text-sm" htmlFor="fiscalIssuedAt">
+                  Fecha externa
+                </label>
+                <Input
+                  id="fiscalIssuedAt"
+                  name="fiscalIssuedAt"
+                  type="date"
+                  defaultValue={editingInvoice?.fiscalIssuedAt?.slice(0, 10) ?? ""}
+                />
+              </div>
+              <p className="text-sm text-slate-500 md:col-span-3">
+                Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se
+                bloquea la edicion del documento interno.
+              </p>
+            </fieldset>
           </details>
 
           <div className="border-t border-graphite/10 pt-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">
-                  Detalle del comprobante
-                </h2>
+                <h2 className="text-lg font-semibold text-slate-950">Detalle del comprobante</h2>
               </div>
-              <Button onClick={() => setItems((current) => [...current, { ...emptyItem }])} size="sm" type="button" variant="secondary">
+              <Button
+                onClick={() => setItems((current) => [...current, { ...emptyItem }])}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
                 Agregar item
               </Button>
             </div>
@@ -347,26 +522,68 @@ export function InvoicesView({
                   className="grid items-end gap-3 border-b border-graphite/10 pb-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_100px_130px_120px_auto]"
                   key={index}
                 >
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Producto opcional<Select
-                    aria-label={`Producto opcional del ítem ${index + 1}`}
-                    onChange={(event) => {
-                      const product = options.products.find((candidate) => candidate.id === event.target.value);
-                      updateItem(index, {
-                        productId: event.target.value || null,
-                        description: product?.name ?? item.description,
-                        unitPrice: product?.price ?? item.unitPrice
-                      });
-                    }}
-                    options={productOptions}
-                    value={item.productId ?? ""}
-                  /></label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Descripcion<Input aria-label={`Descripción del ítem ${index + 1}`} onChange={(event) => updateItem(index, { description: event.target.value })} placeholder="Descripción" value={item.description} /></label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Cantidad<Input aria-label={`Cantidad del ítem ${index + 1}`} min={0.01} onChange={(event) => updateItem(index, { quantity: Number(event.target.value) })} step="0.01" type="number" value={item.quantity} /></label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">Precio unitario<MoneyInput aria-label={`Precio unitario del ítem ${index + 1}`} onValueChange={(unitPrice) => updateItem(index, { unitPrice })} value={item.unitPrice} /></label>
-                  <div><p className="mb-2 text-sm text-slate-600">Importe</p><div className="flex min-h-11 items-center text-sm font-semibold tabular-nums text-slate-950">
-                    {formatCurrency(amounts.lineTotals[index])}
-                  </div></div>
-                  <Button disabled={items.length <= 1} onClick={() => setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))} type="button" variant="ghost">
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                    Producto opcional
+                    <Select
+                      aria-label={`Producto opcional del ítem ${index + 1}`}
+                      onChange={(event) => {
+                        const product = options.products.find(
+                          (candidate) => candidate.id === event.target.value
+                        );
+                        updateItem(index, {
+                          productId: event.target.value || null,
+                          description: product?.name ?? item.description,
+                          unitPrice: product?.price ?? item.unitPrice
+                        });
+                      }}
+                      options={productOptions}
+                      value={item.productId ?? ""}
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                    Descripcion
+                    <Input
+                      aria-label={`Descripción del ítem ${index + 1}`}
+                      onChange={(event) => updateItem(index, { description: event.target.value })}
+                      placeholder="Descripción"
+                      value={item.description}
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                    Cantidad
+                    <Input
+                      aria-label={`Cantidad del ítem ${index + 1}`}
+                      min={0.01}
+                      onChange={(event) =>
+                        updateItem(index, { quantity: Number(event.target.value) })
+                      }
+                      step="0.01"
+                      type="number"
+                      value={item.quantity}
+                    />
+                  </label>
+                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                    Precio unitario
+                    <MoneyInput
+                      aria-label={`Precio unitario del ítem ${index + 1}`}
+                      onValueChange={(unitPrice) => updateItem(index, { unitPrice })}
+                      value={item.unitPrice}
+                    />
+                  </label>
+                  <div>
+                    <p className="mb-2 text-sm text-slate-600">Importe</p>
+                    <div className="flex min-h-11 items-center text-sm font-semibold tabular-nums text-slate-950">
+                      {formatCurrency(amounts.lineTotals[index])}
+                    </div>
+                  </div>
+                  <Button
+                    disabled={items.length <= 1}
+                    onClick={() =>
+                      setItems((current) => current.filter((_, itemIndex) => itemIndex !== index))
+                    }
+                    type="button"
+                    variant="ghost"
+                  >
                     Quitar
                   </Button>
                 </div>
@@ -377,19 +594,29 @@ export function InvoicesView({
           <div className="grid gap-3 border-t border-graphite/10 pt-3 sm:grid-cols-3">
             <div className="py-2">
               <p className="text-sm text-slate-600">Subtotal</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(subtotal)}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+                {formatCurrency(subtotal)}
+              </p>
             </div>
             <div className="py-2">
               <p className="text-sm text-slate-600">Descuento</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(discount)}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+                {formatCurrency(discount)}
+              </p>
             </div>
             <div className="py-2">
               <p className="text-sm text-slate-600">Total</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{formatCurrency(total)}</p>
+              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+                {formatCurrency(total)}
+              </p>
             </div>
           </div>
 
-          {amounts.error ? <p role="alert" className="text-sm text-red-700">{amounts.error}</p> : null}
+          {amounts.error ? (
+            <p role="alert" className="text-sm text-red-700">
+              {amounts.error}
+            </p>
+          ) : null}
           <FormSubmitButton
             disabled={documentLocked || Boolean(amounts.error)}
             idleLabel={editingInvoice ? "Actualizar comprobante" : "Crear comprobante"}
@@ -404,7 +631,9 @@ export function InvoicesView({
             <div>
               <h2 className="text-lg font-semibold text-slate-950">Comprobantes internos</h2>
             </div>
-            <p className="text-sm text-slate-500">{pagination.total} comprobantes. El estado indica el cobro, no la autorizacion fiscal.</p>
+            <p className="text-sm text-slate-500">
+              {pagination.total} comprobantes. El estado indica el cobro, no la autorizacion fiscal.
+            </p>
           </div>
         </div>
         <div className="divide-y divide-graphite/10 px-4 lg:hidden">
@@ -415,26 +644,44 @@ export function InvoicesView({
                   <p className="font-semibold text-slate-950">{invoice.invoiceNumber}</p>
                   <p className="mt-1 text-sm text-slate-500">{formatDate(invoice.createdAt)}</p>
                 </div>
-                <div className="text-right"><p className="mb-1 text-sm text-slate-500">Cobro / estado</p><Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge></div>
+                <div className="text-right">
+                  <p className="mb-1 text-sm text-slate-500">Cobro / estado</p>
+                  <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
+                </div>
               </div>
               <div className="mt-4 grid gap-2 text-sm">
                 <div className="min-w-0">
                   <p className="text-sm text-slate-600">Cliente</p>
-                  <p className="mt-1 font-semibold text-slate-800">{invoice.customerName || "Sin cliente"}</p>
+                  <p className="mt-1 font-semibold text-slate-800">
+                    {invoice.customerName || "Sin cliente"}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="min-w-0">
                     <p className="text-sm text-slate-600">Origen</p>
-                    <p className="mt-1 font-semibold text-slate-800">{formatInvoiceSource(invoice.sourceType)}</p>
+                    <p className="mt-1 font-semibold text-slate-800">
+                      {formatInvoiceSource(invoice.sourceType)}
+                    </p>
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm text-slate-600">Total</p>
-                    <p className="mt-1 font-semibold text-slate-950">{formatCurrency(invoice.total)}</p>
-                    <p className="mt-1 text-sm text-slate-600">Pagado {formatCurrency(invoice.paidTotal)} / Saldo {formatCurrency(invoice.balance)}</p>
+                    <p className="mt-1 font-semibold text-slate-950">
+                      {formatCurrency(invoice.total)}
+                    </p>
+                    <p className="mt-1 text-sm text-slate-600">
+                      Pagado {formatCurrency(invoice.paidTotal)} / Saldo{" "}
+                      {formatCurrency(invoice.balance)}
+                    </p>
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-sm text-slate-600">{invoice.fiscalReference ? "Referencia fiscal externa vinculada" : invoice.fiscalLockedAt ? "Documento protegido por circuito fiscal" : "Sin vinculo fiscal"}</p>
+              <p className="mt-2 text-sm text-slate-600">
+                {invoice.fiscalReference
+                  ? "Referencia fiscal externa vinculada"
+                  : invoice.fiscalLockedAt
+                    ? "Documento protegido por circuito fiscal"
+                    : "Sin vinculo fiscal"}
+              </p>
               <div className="mt-4 grid gap-2 sm:grid-cols-3">
                 <Link
                   className={buttonVariants({ variant: "secondary", size: "sm" })}
@@ -442,7 +689,9 @@ export function InvoicesView({
                 >
                   Ver / imprimir
                 </Link>
-                {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                {invoice.status !== "anulado" &&
+                !invoice.fiscalReference &&
+                !invoice.fiscalLockedAt ? (
                   <Link
                     className={buttonVariants({ variant: "secondary", size: "sm" })}
                     href={`/facturacion?edit=${invoice.id}`}
@@ -450,20 +699,28 @@ export function InvoicesView({
                     Editar
                   </Link>
                 ) : null}
-                {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                {canVoid &&
+                invoice.status !== "anulado" &&
+                !invoice.fiscalReference &&
+                !invoice.fiscalLockedAt ? (
                   <ActionMenu label="Más acciones">
-                  <form
-                    action={voidInvoiceAction}
-                    onSubmit={(event) => {
-                      if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
-                        event.preventDefault();
-                      }
-                    }}
-                  >
-                    <input name="id" type="hidden" value={invoice.id} />
-                    <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
-                    <FormSubmitButton className="w-full" idleLabel="Anular" pendingLabel="Anulando..." variant="danger" />
-                  </form>
+                    <form
+                      action={voidInvoiceAction}
+                      onSubmit={(event) => {
+                        if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
+                          event.preventDefault();
+                        }
+                      }}
+                    >
+                      <input name="id" type="hidden" value={invoice.id} />
+                      <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
+                      <FormSubmitButton
+                        className="w-full"
+                        idleLabel="Anular"
+                        pendingLabel="Anulando..."
+                        variant="danger"
+                      />
+                    </form>
                   </ActionMenu>
                 ) : null}
               </div>
@@ -481,17 +738,35 @@ export function InvoicesView({
                 <th className="px-4 py-3 font-medium">Origen</th>
                 <th className="px-4 py-3 font-medium">Total</th>
                 <th className="px-4 py-3 font-medium">Cobro / estado</th>
-                <th className="px-4 py-3 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {invoices.map((invoice) => (
                 <tr className="border-t border-graphite/10 align-top" key={invoice.id}>
-                  <td className="px-4 py-3 font-medium text-slate-950">{invoice.invoiceNumber}<p className="mt-1 text-sm font-normal text-slate-600">{invoice.fiscalReference ? "Referencia fiscal externa" : invoice.fiscalLockedAt ? "Circuito fiscal protegido" : "Sin vinculo fiscal"}</p></td>
+                  <td className="px-4 py-3 font-medium text-slate-950">
+                    {invoice.invoiceNumber}
+                    <p className="mt-1 text-sm font-normal text-slate-600">
+                      {invoice.fiscalReference
+                        ? "Referencia fiscal externa"
+                        : invoice.fiscalLockedAt
+                          ? "Circuito fiscal protegido"
+                          : "Sin vinculo fiscal"}
+                    </p>
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{formatDate(invoice.createdAt)}</td>
                   <td className="px-4 py-3 text-slate-600">{invoice.customerName}</td>
-                  <td className="px-4 py-3 text-slate-600">{formatInvoiceSource(invoice.sourceType)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-950">{formatCurrency(invoice.total)}<p className="mt-1 text-sm font-normal text-slate-600">Pagado {formatCurrency(invoice.paidTotal)}<br />Saldo {formatCurrency(invoice.balance)}</p></td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {formatInvoiceSource(invoice.sourceType)}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-slate-950">
+                    {formatCurrency(invoice.total)}
+                    <p className="mt-1 text-sm font-normal text-slate-600">
+                      Pagado {formatCurrency(invoice.paidTotal)}
+                      <br />
+                      Saldo {formatCurrency(invoice.balance)}
+                    </p>
+                  </td>
                   <td className="px-4 py-3">
                     <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
                   </td>
@@ -503,7 +778,9 @@ export function InvoicesView({
                       >
                         Ver / imprimir
                       </Link>
-                      {invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                      {invoice.status !== "anulado" &&
+                      !invoice.fiscalReference &&
+                      !invoice.fiscalLockedAt ? (
                         <Link
                           className={buttonVariants({ variant: "secondary", size: "sm" })}
                           href={`/facturacion?edit=${invoice.id}`}
@@ -511,20 +788,34 @@ export function InvoicesView({
                           Editar
                         </Link>
                       ) : null}
-                      {canVoid && invoice.status !== "anulado" && !invoice.fiscalReference && !invoice.fiscalLockedAt ? (
+                      {canVoid &&
+                      invoice.status !== "anulado" &&
+                      !invoice.fiscalReference &&
+                      !invoice.fiscalLockedAt ? (
                         <ActionMenu label="Más acciones">
-                        <form
-                          action={voidInvoiceAction}
-                          onSubmit={(event) => {
-                            if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
-                              event.preventDefault();
-                            }
-                          }}
-                        >
-                          <input name="id" type="hidden" value={invoice.id} />
-                          <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
-                          <FormSubmitButton idleLabel="Anular" pendingLabel="Anulando..." size="sm" variant="danger" />
-                        </form>
+                          <form
+                            action={voidInvoiceAction}
+                            onSubmit={(event) => {
+                              if (
+                                !window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)
+                              ) {
+                                event.preventDefault();
+                              }
+                            }}
+                          >
+                            <input name="id" type="hidden" value={invoice.id} />
+                            <input
+                              name="expectedVersion"
+                              type="hidden"
+                              value={invoice.documentVersion}
+                            />
+                            <FormSubmitButton
+                              idleLabel="Anular"
+                              pendingLabel="Anulando..."
+                              size="sm"
+                              variant="danger"
+                            />
+                          </form>
                         </ActionMenu>
                       ) : null}
                     </div>
@@ -535,7 +826,7 @@ export function InvoicesView({
           </table>
         </div>
         {!invoices.length ? (
-          <div className="empty-panel border-t border-graphite/8">
+          <div className="empty-panel border-graphite/8 border-t">
             Todavia no emitiste comprobantes internos en este modulo.
           </div>
         ) : null}

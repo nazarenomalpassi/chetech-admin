@@ -22,27 +22,42 @@ const PAGE = { width: 80 * MM, height: 50 * MM, margin: 3 * MM };
 const TRUNCATION = "... Ver ficha";
 
 function compact(value: string) {
-  return value.normalize("NFC").replace(/\p{Cc}/gu, " ").replace(/\s+/gu, " ").trim();
+  return value
+    .normalize("NFC")
+    .replace(/\p{Cc}/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
 }
 
 function intakeDate(value: string) {
   const date = toDisplayDate(value);
   if (!Number.isFinite(date.getTime())) return "Sin fecha";
   return new Intl.DateTimeFormat("es-AR", {
-    timeZone: OPERATIONAL_TIME_ZONE, day: "2-digit", month: "2-digit", year: "numeric"
+    timeZone: OPERATIONAL_TIME_ZONE,
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
   }).format(date);
 }
 
 // This trusted brand asset contains only untransformed SVG paths and a polygon.
 // Render its actual outlines (not a recreated wordmark), cropped to the artwork.
 function drawLogo(doc: PDFKit.PDFDocument, svg: string, x: number, y: number, width: number) {
-  doc.save().translate(x, y).scale(width / 694.47).translate(-73.71, -238.84);
+  doc
+    .save()
+    .translate(x, y)
+    .scale(width / 694.47)
+    .translate(-73.71, -238.84);
   for (const [, tag, attributes] of svg.matchAll(/<(path|polygon)\b([^>]+)>/g)) {
     if (tag === "path") {
       const outline = attributes.match(/\bd="([^"]+)"/)?.[1];
       if (outline) doc.path(outline).fill("#000000");
     } else {
-      const points = attributes.match(/\bpoints="([^"]+)"/)?.[1].trim().split(/[\s,]+/).map(Number);
+      const points = attributes
+        .match(/\bpoints="([^"]+)"/)?.[1]
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number);
       if (points?.length) {
         doc.moveTo(points[0], points[1]);
         for (let i = 2; i < points.length; i += 2) doc.lineTo(points[i], points[i + 1]);
@@ -54,13 +69,16 @@ function drawLogo(doc: PDFKit.PDFDocument, svg: string, x: number, y: number, wi
 }
 
 function drawQr(doc: PDFKit.PDFDocument, qr: QRCode.QRCode, url: string) {
-  const x = PAGE.margin, y = 47, side = 26 * MM;
+  const x = PAGE.margin,
+    y = 47,
+    side = 26 * MM;
   const quiet = 4;
   const step = side / (qr.modules.size + quiet * 2);
   doc.save().rect(x, y, side, side).fill("#FFFFFF");
   for (let row = 0; row < qr.modules.size; row++) {
     for (let col = 0; col < qr.modules.size; col++) {
-      if (qr.modules.get(row, col)) doc.rect(x + (col + quiet) * step, y + (row + quiet) * step, step, step);
+      if (qr.modules.get(row, col))
+        doc.rect(x + (col + quiet) * step, y + (row + quiet) * step, step, step);
     }
   }
   doc.fill("#000000").restore();
@@ -73,15 +91,26 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
   doc.registerFont("Medium", asset("InputSans-Medium.otf"));
 
   // Lay out measured single lines explicitly: PDFKit must never paginate a sticker.
-  function field(value: string, x: number, y: number, width: number, size: number, font = "Body", maxLines = 1, suffix = TRUNCATION) {
+  function field(
+    value: string,
+    x: number,
+    y: number,
+    width: number,
+    size: number,
+    font = "Body",
+    maxLines = 1,
+    suffix = TRUNCATION
+  ) {
     doc.font(font).fontSize(size).fillColor("#000000");
     const lineHeight = doc.currentLineHeight(true) + 0.5;
     let remaining = Array.from(value);
     function prefixLength(suffix = "") {
-      let low = 0, high = remaining.length;
+      let low = 0,
+        high = remaining.length;
       while (low < high) {
         const mid = Math.ceil((low + high) / 2);
-        if (doc.widthOfString(remaining.slice(0, mid).join("").trimEnd() + suffix) <= width) low = mid;
+        if (doc.widthOfString(remaining.slice(0, mid).join("").trimEnd() + suffix) <= width)
+          low = mid;
         else high = mid - 1;
       }
       return low;
@@ -103,28 +132,79 @@ function renderLabel(doc: PDFKit.PDFDocument, data: WorkshopLabelData, qr: QRCod
     return false;
   }
 
-  const left = PAGE.margin, right = PAGE.width - PAGE.margin;
-  const logoWidth = 64, logoLeft = right - logoWidth;
+  const left = PAGE.margin,
+    right = PAGE.width - PAGE.margin;
+  const logoWidth = 64,
+    logoLeft = right - logoWidth;
   const numberWidth = logoLeft - left - 6;
   const number = compact(data.number) || "Sin número";
   let numberSize = 18;
-  while (doc.font("Medium").fontSize(numberSize).widthOfString(number) > numberWidth && numberSize > 12) numberSize -= 0.5;
+  while (
+    doc.font("Medium").fontSize(numberSize).widthOfString(number) > numberWidth &&
+    numberSize > 12
+  )
+    numberSize -= 0.5;
   const accessory = data.variant === "accessory";
   const warranty = data.variant === "warranty";
-  const heading = accessory ? `ACCESORIO A${data.accessoryIndex}` : warranty ? "REINGRESO EN GARANTIA" : "ORDEN DE SERVICIO";
+  const heading = accessory
+    ? `ACCESORIO A${data.accessoryIndex}`
+    : warranty
+      ? "REINGRESO EN GARANTIA"
+      : "ORDEN DE SERVICIO";
   field(heading, left, PAGE.margin, numberWidth, 5.6, "Medium");
   field(number, left, 18.5, numberWidth, numberSize, "Medium");
   drawLogo(doc, asset("chetech-horizontal-black.svg").toString("utf8"), logoLeft, 22, logoWidth);
-  doc.save().moveTo(left, 42).lineTo(right, 42).lineWidth(0.45).strokeColor("#000000").stroke().restore();
+  doc
+    .save()
+    .moveTo(left, 42)
+    .lineTo(right, 42)
+    .lineWidth(0.45)
+    .strokeColor("#000000")
+    .stroke()
+    .restore();
 
   drawQr(doc, qr, data.orderUrl);
-  const textLeft = 33 * MM, width = right - textLeft;
+  const textLeft = 33 * MM,
+    width = right - textLeft;
   field(compact(data.customerName) || "Sin cliente informado", textLeft, 47, width, 8.5, "Medium");
   field(compact(data.device) || "Sin equipo informado", textLeft, 59, width, 6.8);
-  field(accessory ? "ACCESORIO" : warranty ? "FALLA DEL REINGRESO" : "FALLA REPORTADA", textLeft, 72, width, 6.5, "Medium");
-  const descriptionTruncated = field(compact(accessory ? data.accessoryDescription : data.issueReported) || "Sin falla informada", textLeft, 83, width, 9.3, "Medium", 2, accessory ? "..." : TRUNCATION);
-  field(accessory ? descriptionTruncated ? "Descripcion recortada" : "Vinculado a esta orden" : `Acc.: ${compact(data.accessories) || "Sin accesorios"}`, textLeft, 112, width, 6.8);
-  field(`${warranty ? "REINGRESO" : "INGRESO"} ${intakeDate(data.intakeDate)}`, left, 125, right - left, 6.2, "Medium");
+  field(
+    accessory ? "ACCESORIO" : warranty ? "FALLA DEL REINGRESO" : "FALLA REPORTADA",
+    textLeft,
+    72,
+    width,
+    6.5,
+    "Medium"
+  );
+  const descriptionTruncated = field(
+    compact(accessory ? data.accessoryDescription : data.issueReported) || "Sin falla informada",
+    textLeft,
+    83,
+    width,
+    9.3,
+    "Medium",
+    2,
+    accessory ? "..." : TRUNCATION
+  );
+  field(
+    accessory
+      ? descriptionTruncated
+        ? "Descripcion recortada"
+        : "Vinculado a esta orden"
+      : `Acc.: ${compact(data.accessories) || "Sin accesorios"}`,
+    textLeft,
+    112,
+    width,
+    6.8
+  );
+  field(
+    `${warranty ? "REINGRESO" : "INGRESO"} ${intakeDate(data.intakeDate)}`,
+    left,
+    125,
+    right - left,
+    6.2,
+    "Medium"
+  );
   return accessory && descriptionTruncated;
 }
 
@@ -134,13 +214,21 @@ export async function generateWorkshopLabelPdf(data: WorkshopLabelData): Promise
 }
 
 /** Fit information uses the exact embedded-font measurements, not a character-count guess. */
-export async function generateWorkshopLabelPreview(data: WorkshopLabelData): Promise<{ pdf: Buffer; accessoryDescriptionTruncated: boolean }> {
+export async function generateWorkshopLabelPreview(
+  data: WorkshopLabelData
+): Promise<{ pdf: Buffer; accessoryDescriptionTruncated: boolean }> {
   let url: URL;
-  try { url = new URL(data.orderUrl); } catch { throw new Error("La URL de la orden debe ser absoluta HTTP(S)."); }
-  if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("La URL de la orden debe ser absoluta HTTP(S).");
+  try {
+    url = new URL(data.orderUrl);
+  } catch {
+    throw new Error("La URL de la orden debe ser absoluta HTTP(S).");
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:")
+    throw new Error("La URL de la orden debe ser absoluta HTTP(S).");
   const qr = QRCode.create(data.orderUrl, { errorCorrectionLevel: "M" });
   const doc = new PDFDocument({
-    size: [PAGE.width, PAGE.height], margin: PAGE.margin,
+    size: [PAGE.width, PAGE.height],
+    margin: PAGE.margin,
     info: { Title: `CHETECH - ${data.number} - Etiqueta de taller`, Author: "CHETECH" }
   });
   const chunks: Buffer[] = [];
@@ -149,7 +237,12 @@ export async function generateWorkshopLabelPreview(data: WorkshopLabelData): Pro
     doc.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
     doc.on("end", () => resolve({ pdf: Buffer.concat(chunks), accessoryDescriptionTruncated }));
     doc.on("error", reject);
-    try { accessoryDescriptionTruncated = renderLabel(doc, data, qr); doc.end(); }
-    catch (error) { doc.destroy(); reject(error); }
+    try {
+      accessoryDescriptionTruncated = renderLabel(doc, data, qr);
+      doc.end();
+    } catch (error) {
+      doc.destroy();
+      reject(error);
+    }
   });
 }

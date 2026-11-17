@@ -15,5 +15,7 @@ export default async function CambioBalancePage({
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
 
-  return <BalanceTransfersView message={message} summary={data.summary} transfers={data.transfers} />;
+  return (
+    <BalanceTransfersView message={message} summary={data.summary} transfers={data.transfers} />
+  );
 }

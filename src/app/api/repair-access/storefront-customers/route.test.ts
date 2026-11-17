@@ -33,9 +33,7 @@ describe("GET /api/repair-access/storefront-customers", () => {
     requireAdminMock.mockResolvedValue({ id: "11111111-1111-4111-8111-111111111111" });
     createServerSupabaseClientMock.mockResolvedValue({ rpc: rpcMock });
 
-    const { GET } = await import(
-      "@/app/api/repair-access/storefront-customers/route"
-    );
+    const { GET } = await import("@/app/api/repair-access/storefront-customers/route");
     const response = await GET(
       new Request("https://admin.chetech.test/api/repair-access/storefront-customers?q=Ada")
     );
@@ -62,9 +60,7 @@ describe("GET /api/repair-access/storefront-customers", () => {
   it("no cachea ni expone resultados cuando la cuenta no es administradora", async () => {
     requireAdminMock.mockRejectedValue(new Error("Sin permiso"));
 
-    const { GET } = await import(
-      "@/app/api/repair-access/storefront-customers/route"
-    );
+    const { GET } = await import("@/app/api/repair-access/storefront-customers/route");
     const response = await GET(
       new Request("https://admin.chetech.test/api/repair-access/storefront-customers?q=Ada")
     );

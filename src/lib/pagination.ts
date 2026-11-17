@@ -24,7 +24,11 @@ export function getPaginationRange(page: number, pageSize = DEFAULT_PAGE_SIZE) {
   return { from, to: from + safePageSize - 1 };
 }
 
-export function createPaginationMeta(total: number, page: number, pageSize = DEFAULT_PAGE_SIZE): PaginationMeta {
+export function createPaginationMeta(
+  total: number,
+  page: number,
+  pageSize = DEFAULT_PAGE_SIZE
+): PaginationMeta {
   const safeTotal = Math.max(0, total);
   const totalPages = Math.max(1, Math.ceil(safeTotal / pageSize));
   const safePage = Math.min(Math.max(1, page), totalPages);
@@ -39,7 +43,11 @@ export function createPaginationMeta(total: number, page: number, pageSize = DEF
   };
 }
 
-export function buildPaginationHref(pathname: string, currentParams: URLSearchParams, page: number) {
+export function buildPaginationHref(
+  pathname: string,
+  currentParams: URLSearchParams,
+  page: number
+) {
   const params = new URLSearchParams(currentParams.toString());
 
   if (page <= 1) {

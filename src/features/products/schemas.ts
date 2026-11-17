@@ -17,7 +17,11 @@ export const productSchema = z.object({
 });
 
 export const categorySchema = z.object({
-  name: z.string().trim().min(2, "El nombre debe tener al menos 2 caracteres").max(60, "El nombre es demasiado largo"),
+  name: z
+    .string()
+    .trim()
+    .min(2, "El nombre debe tener al menos 2 caracteres")
+    .max(60, "El nombre es demasiado largo"),
   skuPrefix: z
     .string()
     .trim()

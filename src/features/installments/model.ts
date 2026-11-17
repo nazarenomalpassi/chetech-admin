@@ -19,11 +19,17 @@ function roundAmount(value: number) {
 function addMonths(dateString: string, monthsToAdd: number) {
   const [year, month, day] = dateString.split("-").map(Number);
   const original = new Date(Date.UTC(year, month - 1, day));
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString) || !Number.isFinite(original.getTime()) || original.toISOString().slice(0, 10) !== dateString) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(dateString) ||
+    !Number.isFinite(original.getTime()) ||
+    original.toISOString().slice(0, 10) !== dateString
+  ) {
     throw new Error("Selecciona una fecha de vencimiento valida.");
   }
   const target = new Date(Date.UTC(year, month - 1 + monthsToAdd, 1));
-  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+  const lastDay = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)
+  ).getUTCDate();
   target.setUTCDate(Math.min(day, lastDay));
   return target.toISOString().slice(0, 10);
 }
@@ -45,9 +51,7 @@ export function generateInstallments({
   return Array.from({ length: installmentsCount }, (_, index) => {
     const installmentNumber = index + 1;
     const isLastInstallment = installmentNumber === installmentsCount;
-    const amount = isLastInstallment
-      ? roundAmount(totalAmount - assignedTotal)
-      : baseAmount;
+    const amount = isLastInstallment ? roundAmount(totalAmount - assignedTotal) : baseAmount;
 
     assignedTotal = roundAmount(assignedTotal + amount);
 
@@ -76,12 +80,17 @@ export function resolveInstallmentStatus(
 
 export function getInstallmentSaleStatus(
   currentStatus: InstallmentSaleStatus,
-  installments: Array<{ status: Exclude<InstallmentStatus, "vencida"> | InstallmentStatus; dueDate: string }>
+  installments: Array<{
+    status: Exclude<InstallmentStatus, "vencida"> | InstallmentStatus;
+    dueDate: string;
+  }>
 ) {
   if (currentStatus === "cancelada") {
     return "cancelada";
   }
 
-  const hasOpenInstallment = installments.some((installment) => installment.status !== "pagada" && installment.status !== "cancelada");
+  const hasOpenInstallment = installments.some(
+    (installment) => installment.status !== "pagada" && installment.status !== "cancelada"
+  );
   return hasOpenInstallment ? "activa" : "finalizada";
 }

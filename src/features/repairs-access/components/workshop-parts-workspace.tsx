@@ -16,15 +16,11 @@ import type { SupplierClaimsPage } from "../parts-queries";
 import {
   SUPPLIER_CLAIM_LABELS,
   type SupplierClaim,
-  type WorkshopPartsPage,
+  type WorkshopPartsPage
 } from "../supplier-claims";
 import { PART_STATUS_LABELS } from "../workflow";
 import { saveSupplierClaim } from "../supplier-claim-actions";
-import {
-  CoordinationDialog,
-  DialogField,
-  PartManagementDialog,
-} from "./order-coordination-panel";
+import { CoordinationDialog, DialogField, PartManagementDialog } from "./order-coordination-panel";
 
 export function WorkshopPartsWorkspace({
   data,
@@ -32,7 +28,7 @@ export function WorkshopPartsWorkspace({
   canManage,
   search = "",
   status = "all",
-  closed = false,
+  closed = false
 }: {
   data: WorkshopPartsPage | null;
   claims: SupplierClaimsPage | null;
@@ -73,23 +69,23 @@ export function WorkshopPartsWorkspace({
             {
               key: "requested",
               label: "Sin comprar",
-              value: data.counts.requested,
+              value: data.counts.requested
             },
             {
               key: "ordered",
               label: "En camino / parcial",
-              value: data.counts.ordered,
+              value: data.counts.ordered
             },
             {
               key: "available",
               label: "Listos para usar",
-              value: data.counts.available,
+              value: data.counts.available
             },
             {
               key: "overdue",
               label: "Llegada vencida",
-              value: data.counts.overdue,
-            },
+              value: data.counts.overdue
+            }
           ] as const
         ).map((item) => (
           <Link
@@ -99,9 +95,7 @@ export function WorkshopPartsWorkspace({
             className={`min-h-20 rounded-xl border p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${status === item.key ? "border-graphite bg-graphite text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
           >
             <span className="text-xs">{item.label}</span>
-            <strong className="mt-1 block text-xl tabular-nums">
-              {item.value}
-            </strong>
+            <strong className="mt-1 block text-xl tabular-nums">{item.value}</strong>
           </Link>
         ))}
         {canManage ? (
@@ -110,9 +104,7 @@ export function WorkshopPartsWorkspace({
             className="min-h-20 rounded-xl border border-amber-200 bg-amber-50 p-3 text-amber-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
           >
             <span className="text-xs">Reclamos activos</span>
-            <strong className="mt-1 block text-xl tabular-nums">
-              {data.counts.claims}
-            </strong>
+            <strong className="mt-1 block text-xl tabular-nums">{data.counts.claims}</strong>
           </a>
         ) : null}
       </nav>
@@ -144,7 +136,7 @@ export function WorkshopPartsWorkspace({
                 { value: "received", label: "Recibidos" },
                 { value: "available", label: "Listos para usar" },
                 { value: "overdue", label: "Llegada vencida" },
-                { value: "installed", label: "Utilizados / reclamar" },
+                { value: "installed", label: "Utilizados / reclamar" }
               ]}
             />
           </DialogField>
@@ -153,15 +145,12 @@ export function WorkshopPartsWorkspace({
           </Button>
         </form>
         <p className="text-xs text-slate-500">
-          {data.total} solicitudes en este filtro. Las compras no registran
-          egresos automaticos.
+          {data.total} solicitudes en este filtro. Las compras no registran egresos automaticos.
         </p>
         <div className="grid gap-3 xl:grid-cols-2">
           {data.items.map((part) => {
             const held = (part.claimedQuantity ?? 0) > 0;
-            const partial =
-              part.receivedQuantity > 0 &&
-              part.receivedQuantity < part.quantity;
+            const partial = part.receivedQuantity > 0 && part.receivedQuantity < part.quantity;
             const overdue =
               part.expectedDate &&
               part.expectedDate < today &&
@@ -171,10 +160,7 @@ export function WorkshopPartsWorkspace({
               !held &&
               (canManage || part.receivedQuantity > part.installedQuantity);
             return (
-              <article
-                key={part.id}
-                className="min-w-0 rounded-xl border border-slate-200 p-4"
-              >
+              <article key={part.id} className="min-w-0 rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <Link
                     className="inline-flex min-h-11 items-center rounded font-semibold underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
@@ -194,15 +180,11 @@ export function WorkshopPartsWorkspace({
                           : PART_STATUS_LABELS[part.status]}
                   </span>
                 </div>
-                <h3 className="mt-2 break-words font-semibold">
-                  {part.description}
-                </h3>
-                <p className="mt-1 break-words text-sm text-slate-500">
-                  {part.customerName}
-                </p>
+                <h3 className="mt-2 break-words font-semibold">{part.description}</h3>
+                <p className="mt-1 break-words text-sm text-slate-500">{part.customerName}</p>
                 <p className="mt-3 text-sm font-medium">
-                  {part.receivedQuantity} de {part.quantity} recibidos ·{" "}
-                  {part.installedQuantity} usados
+                  {part.receivedQuantity} de {part.quantity} recibidos · {part.installedQuantity}{" "}
+                  usados
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
                   {part.expectedDate
@@ -213,18 +195,12 @@ export function WorkshopPartsWorkspace({
                   <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <dt className="text-xs text-slate-500">Proveedor</dt>
-                      <dd className="mt-1 break-words">
-                        {part.supplier || "Por definir"}
-                      </dd>
+                      <dd className="mt-1 break-words">{part.supplier || "Por definir"}</dd>
                     </div>
                     <div>
-                      <dt className="text-xs text-slate-500">
-                        Costo por unidad
-                      </dt>
+                      <dt className="text-xs text-slate-500">Costo por unidad</dt>
                       <dd className="mt-1">
-                        {part.unitCost === null
-                          ? "Sin informar"
-                          : formatCurrency(part.unitCost)}
+                        {part.unitCost === null ? "Sin informar" : formatCurrency(part.unitCost)}
                       </dd>
                     </div>
                   </dl>
@@ -274,7 +250,7 @@ export function WorkshopPartsWorkspace({
         />
       </Card>
       {canManage ? (
-        <Card id="supplier-claims" className="space-y-4 scroll-mt-4">
+        <Card id="supplier-claims" className="scroll-mt-4 space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -282,8 +258,8 @@ export function WorkshopPartsWorkspace({
                 Reclamos al proveedor
               </h2>
               <p className="mt-1 text-sm text-slate-500">
-                Separados de la garantia del cliente. No generan devoluciones de
-                dinero ni movimientos de stock.
+                Separados de la garantia del cliente. No generan devoluciones de dinero ni
+                movimientos de stock.
               </p>
             </div>
             <Link
@@ -294,10 +270,7 @@ export function WorkshopPartsWorkspace({
             </Link>
           </div>
           {claims?.items.map((item) => (
-            <article
-              key={item.id}
-              className="rounded-xl border border-slate-200 p-4"
-            >
+            <article key={item.id} className="rounded-xl border border-slate-200 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Link
                   className="inline-flex min-h-11 items-center font-semibold underline"
@@ -311,27 +284,18 @@ export function WorkshopPartsWorkspace({
                   {SUPPLIER_CLAIM_LABELS[item.status]}
                 </span>
               </div>
-              <p className="mt-2 whitespace-pre-wrap break-words text-sm">
-                {item.reason}
-              </p>
+              <p className="mt-2 whitespace-pre-wrap break-words text-sm">{item.reason}</p>
               <p className="mt-2 text-xs text-slate-500">
-                {item.quantity} unidad(es) ·{" "}
-                {item.supplier || "Proveedor sin informar"} ·{" "}
+                {item.quantity} unidad(es) · {item.supplier || "Proveedor sin informar"} ·{" "}
                 {formatDate(item.createdAt)}
-                {item.warrantyReturnId
-                  ? " · Vinculado a reingreso por garantia"
-                  : ""}
+                {item.warrantyReturnId ? " · Vinculado a reingreso por garantia" : ""}
               </p>
               {item.resolution ? (
-                <p className="mt-2 whitespace-pre-wrap text-sm">
-                  Resolucion: {item.resolution}
-                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm">Resolucion: {item.resolution}</p>
               ) : null}
               <p className="mt-2 text-xs text-slate-500">
                 Costo adicional:{" "}
-                {item.extraCost === null
-                  ? "Sin informar"
-                  : formatCurrency(item.extraCost)}
+                {item.extraCost === null ? "Sin informar" : formatCurrency(item.extraCost)}
               </p>
               {!item.closedAt ? (
                 <Button
@@ -388,9 +352,7 @@ export function WorkshopPartsWorkspace({
               name="quantity"
               type="number"
               min={1}
-              max={
-                claimPart.receivedQuantity - (claimPart.claimedQuantity ?? 0)
-              }
+              max={claimPart.receivedQuantity - (claimPart.claimedQuantity ?? 0)}
               step={1}
               defaultValue={1}
               required
@@ -411,8 +373,8 @@ export function WorkshopPartsWorkspace({
             <Input name="extraCost" type="number" min={0} step="0.01" />
           </DialogField>
           <p className="text-xs text-slate-500">
-            Dejalo vacio si no se conoce. No registra un egreso en Caja; el
-            importe real se carga en Gastos cuando corresponda.
+            Dejalo vacio si no se conoce. No registra un egreso en Caja; el importe real se carga en
+            Gastos cuando corresponda.
           </p>
         </CoordinationDialog>
       ) : null}
@@ -432,17 +394,14 @@ export function WorkshopPartsWorkspace({
             <Select
               name="claimStatus"
               defaultValue={claim.status}
-              options={Object.entries(SUPPLIER_CLAIM_LABELS).map(
-                ([value, label]) => ({ value, label }),
-              )}
+              options={Object.entries(SUPPLIER_CLAIM_LABELS).map(([value, label]) => ({
+                value,
+                label
+              }))}
             />
           </DialogField>
           <DialogField label="Avance o resolucion">
-            <Textarea
-              name="resolution"
-              maxLength={2000}
-              defaultValue={claim.resolution ?? ""}
-            />
+            <Textarea name="resolution" maxLength={2000} defaultValue={claim.resolution ?? ""} />
           </DialogField>
           <DialogField label="Costo adicional conocido (opcional)">
             <Input
@@ -454,8 +413,8 @@ export function WorkshopPartsWorkspace({
             />
           </DialogField>
           <p className="text-xs text-slate-500">
-            Al resolver o cancelar se requiere un detalle. El historial se
-            conserva; no se modifica automaticamente el inventario ni el dinero.
+            Al resolver o cancelar se requiere un detalle. El historial se conserva; no se modifica
+            automaticamente el inventario ni el dinero.
           </p>
         </CoordinationDialog>
       ) : null}
@@ -468,7 +427,7 @@ function Pagination({
   total,
   size,
   name,
-  link,
+  link
 }: {
   page: number;
   total: number;

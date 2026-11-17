@@ -17,14 +17,18 @@ function key(ownerId = "owner-a", scope = "order-a") {
 }
 
 function renderDraft(initialProps: Partial<Options> = {}) {
-  return renderHook((props: Partial<Options>) => usePaymentDraft<Value>({
-    ownerId: "owner-a",
-    scope: "order-a",
-    value: initialValue,
-    isDirty: true,
-    onRestore: vi.fn(),
-    ...props
-  }), { initialProps });
+  return renderHook(
+    (props: Partial<Options>) =>
+      usePaymentDraft<Value>({
+        ownerId: "owner-a",
+        scope: "order-a",
+        value: initialValue,
+        isDirty: true,
+        onRestore: vi.fn(),
+        ...props
+      }),
+    { initialProps }
+  );
 }
 
 function stored(ownerId = "owner-a", scope = "order-a") {
@@ -50,9 +54,15 @@ afterEach(() => {
 
 describe("payment draft persistence", () => {
   it("accepts a freshly constructed inline value on every clean render without looping", () => {
-    const { result } = renderHook(() => usePaymentDraft({
-      ownerId: "owner-a", scope: "order-a", value: { amount: 0 }, isDirty: false, onRestore: vi.fn()
-    }));
+    const { result } = renderHook(() =>
+      usePaymentDraft({
+        ownerId: "owner-a",
+        scope: "order-a",
+        value: { amount: 0 },
+        isDirty: false,
+        onRestore: vi.fn()
+      })
+    );
 
     expect(result.current.lastSavedAt).toBeNull();
     expect(result.current.pendingDraft).toBeNull();
@@ -60,9 +70,15 @@ describe("payment draft persistence", () => {
 
   it("does not restart debounce or save repeatedly for equal inline dirty values", () => {
     const write = vi.spyOn(Storage.prototype, "setItem");
-    const { result, rerender } = renderHook(() => usePaymentDraft({
-      ownerId: "owner-a", scope: "order-a", value: { amount: 250 }, isDirty: true, onRestore: vi.fn()
-    }));
+    const { result, rerender } = renderHook(() =>
+      usePaymentDraft({
+        ownerId: "owner-a",
+        scope: "order-a",
+        value: { amount: 250 },
+        isDirty: true,
+        onRestore: vi.fn()
+      })
+    );
     act(() => vi.advanceTimersByTime(300));
     rerender();
     act(() => vi.advanceTimersByTime(200));
@@ -129,7 +145,11 @@ describe("payment draft persistence", () => {
 
   it("isolates owners and scopes, including delimiter-containing identities", () => {
     const first = renderDraft({ ownerId: "a:b", scope: "c" });
-    const second = renderDraft({ ownerId: "a", scope: "b:c", value: { ...initialValue, amount: 900 } });
+    const second = renderDraft({
+      ownerId: "a",
+      scope: "b:c",
+      value: { ...initialValue, amount: 900 }
+    });
     const third = renderDraft({ scope: "order-b", value: { ...initialValue, amount: 800 } });
     act(() => {
       first.result.current.persistNow();
@@ -145,23 +165,26 @@ describe("payment draft persistence", () => {
     expect(stored("a", "b:c").data.amount).toBe(900);
   });
 
-  it.each(["scope", "ownerId"] as const)("flushes only the outgoing snapshot on a dynamic %s switch", (field) => {
-    const { result, rerender, unmount } = renderDraft();
-    const next = field === "scope" ? { scope: "order-b" } : { ownerId: "owner-b" };
-    const nextValue = { amount: 999, requestId: "next-token" };
+  it.each(["scope", "ownerId"] as const)(
+    "flushes only the outgoing snapshot on a dynamic %s switch",
+    (field) => {
+      const { result, rerender, unmount } = renderDraft();
+      const next = field === "scope" ? { scope: "order-b" } : { ownerId: "owner-b" };
+      const nextValue = { amount: 999, requestId: "next-token" };
 
-    rerender({ ...next, value: nextValue });
+      rerender({ ...next, value: nextValue });
 
-    expect(stored().data).toEqual(initialValue);
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-    const owner = next.ownerId ?? "owner-a";
-    const scope = next.scope ?? "order-a";
-    expect(stored(owner, scope)).toBeNull();
-    unmount();
-    expect(stored(owner, scope).data).toEqual(nextValue);
-    expect(stored().data).toEqual(initialValue);
-  });
+      expect(stored().data).toEqual(initialValue);
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+      const owner = next.ownerId ?? "owner-a";
+      const scope = next.scope ?? "order-a";
+      expect(stored(owner, scope)).toBeNull();
+      unmount();
+      expect(stored(owner, scope).data).toEqual(nextValue);
+      expect(stored().data).toEqual(initialValue);
+    }
+  );
 
   it("flushes the old owner before disabling persistence and never saves ownerless values", () => {
     const { rerender, unmount } = renderDraft();
@@ -247,7 +270,10 @@ describe("explicit payment draft recovery", () => {
   });
 
   it("discards recovery without applying it and allows current dirty input to save", () => {
-    window.localStorage.setItem(key(), JSON.stringify(createFormDraftEnvelope({ amount: 600, requestId: "old" })));
+    window.localStorage.setItem(
+      key(),
+      JSON.stringify(createFormDraftEnvelope({ amount: 600, requestId: "old" }))
+    );
     const onRestore = vi.fn();
     const { result } = renderDraft({ onRestore });
 
@@ -280,7 +306,11 @@ describe("successful payment cleanup", () => {
     const { result, unmount } = renderHook(() => {
       const [value, setValue] = useState(initialValue);
       const draft = usePaymentDraft({
-        ownerId: "owner-a", scope: "order-a", value, isDirty: true, onRestore: setValue
+        ownerId: "owner-a",
+        scope: "order-a",
+        value,
+        isDirty: true,
+        onRestore: setValue
       });
       return { draft, setValue };
     });
@@ -309,22 +339,25 @@ describe("successful payment cleanup", () => {
     expect(stored("owner-a", "order-b").data.amount).toBe(900);
   });
 
-  it.each([false, true])("clearDraft cannot be undone by timers, persistNow, or unmount (already saved: %s)", (saved) => {
-    const { result, rerender, unmount } = renderDraft();
-    if (saved) act(() => result.current.persistNow());
+  it.each([false, true])(
+    "clearDraft cannot be undone by timers, persistNow, or unmount (already saved: %s)",
+    (saved) => {
+      const { result, rerender, unmount } = renderDraft();
+      if (saved) act(() => result.current.persistNow());
 
-    act(() => result.current.clearDraft());
-    rerender({ value: { ...initialValue } });
-    act(() => {
-      vi.advanceTimersByTime(1_000);
-      expect(result.current.persistNow()).toBe(false);
-    });
-    unmount();
+      act(() => result.current.clearDraft());
+      rerender({ value: { ...initialValue } });
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+        expect(result.current.persistNow()).toBe(false);
+      });
+      unmount();
 
-    expect(stored()).toBeNull();
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-  });
+      expect(stored()).toBeNull();
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+    }
+  );
 
   it("clears recovery without a stale dirty snapshot being saved on unmount", () => {
     window.localStorage.setItem(key(), JSON.stringify(createFormDraftEnvelope(initialValue)));
@@ -355,9 +388,17 @@ describe("successful payment cleanup", () => {
   });
 
   it("survives StrictMode effect replay without turning its own flush into recovery", () => {
-    const { result, unmount } = renderHook(() => usePaymentDraft({
-      ownerId: "owner-a", scope: "order-a", value: initialValue, isDirty: true, onRestore: vi.fn()
-    }), { wrapper: ({ children }) => <StrictMode>{children}</StrictMode> });
+    const { result, unmount } = renderHook(
+      () =>
+        usePaymentDraft({
+          ownerId: "owner-a",
+          scope: "order-a",
+          value: initialValue,
+          isDirty: true,
+          onRestore: vi.fn()
+        }),
+      { wrapper: ({ children }) => <StrictMode>{children}</StrictMode> }
+    );
 
     expect(result.current.pendingDraft).toBeNull();
     act(() => result.current.clearDraft());
@@ -369,16 +410,23 @@ describe("successful payment cleanup", () => {
 describe("committed payment snapshots", () => {
   it.each(["order-a", "order-b"])("ignores an interrupted render for scope %s", (scope) => {
     const suspended = new Promise<never>(() => undefined);
-    const { rerender, unmount } = renderHook((props: { scope: string; value: Value; suspend: boolean }) => {
-      const draft = usePaymentDraft({
-        ownerId: "owner-a", scope: props.scope, value: props.value, isDirty: true, onRestore: vi.fn()
-      });
-      if (props.suspend) throw suspended;
-      return draft;
-    }, {
-      initialProps: { scope: "order-a", value: initialValue, suspend: false },
-      wrapper: ({ children }) => <Suspense fallback={null}>{children}</Suspense>
-    });
+    const { rerender, unmount } = renderHook(
+      (props: { scope: string; value: Value; suspend: boolean }) => {
+        const draft = usePaymentDraft({
+          ownerId: "owner-a",
+          scope: props.scope,
+          value: props.value,
+          isDirty: true,
+          onRestore: vi.fn()
+        });
+        if (props.suspend) throw suspended;
+        return draft;
+      },
+      {
+        initialProps: { scope: "order-a", value: initialValue, suspend: false },
+        wrapper: ({ children }) => <Suspense fallback={null}>{children}</Suspense>
+      }
+    );
 
     rerender({ scope, value: { amount: 999, requestId: "not-committed" }, suspend: true });
     unmount();
@@ -390,24 +438,29 @@ describe("committed payment snapshots", () => {
 
 describe("payment draft storage failures", () => {
   function blockStorage(access: "getItem" | "setItem" | "removeItem" | "getter") {
-    const fail = () => { throw new DOMException("Unavailable storage", "SecurityError"); };
+    const fail = () => {
+      throw new DOMException("Unavailable storage", "SecurityError");
+    };
     return access === "getter"
       ? vi.spyOn(window, "localStorage", "get").mockImplementation(fail)
       : vi.spyOn(Storage.prototype, access).mockImplementation(fail);
   }
 
-  it.each(["setItem", "getter"] as const)("contains %s failures during debounce and permits an explicit retry", (access) => {
-    const { result } = renderDraft();
-    const failure = blockStorage(access);
-    expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
-    act(() => expect(result.current.persistNow()).toBe(false));
-    expect(result.current.lastSavedAt).toBeNull();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+  it.each(["setItem", "getter"] as const)(
+    "contains %s failures during debounce and permits an explicit retry",
+    (access) => {
+      const { result } = renderDraft();
+      const failure = blockStorage(access);
+      expect(() => act(() => vi.advanceTimersByTime(500))).not.toThrow();
+      act(() => expect(result.current.persistNow()).toBe(false));
+      expect(result.current.lastSavedAt).toBeNull();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
 
-    failure.mockRestore();
-    act(() => expect(result.current.persistNow()).toBe(true));
-    expect(stored().data).toEqual(initialValue);
-  });
+      failure.mockRestore();
+      act(() => expect(result.current.persistNow()).toBe(true));
+      expect(stored().data).toEqual(initialValue);
+    }
+  );
 
   it("does not advance the last successful timestamp or stored value on quota failure", () => {
     const { result, rerender } = renderDraft();
@@ -422,35 +475,44 @@ describe("payment draft storage failures", () => {
     expect(stored().data).toEqual(initialValue);
   });
 
-  it.each(["getItem", "getter"] as const)("contains %s failures while loading and remains usable", (access) => {
-    const failure = blockStorage(access);
-    const { result } = renderDraft();
-    expect(result.current.pendingDraft).toBeNull();
-    expect(result.current.lastSavedAt).toBeNull();
-    failure.mockRestore();
-    act(() => expect(result.current.persistNow()).toBe(true));
-  });
+  it.each(["getItem", "getter"] as const)(
+    "contains %s failures while loading and remains usable",
+    (access) => {
+      const failure = blockStorage(access);
+      const { result } = renderDraft();
+      expect(result.current.pendingDraft).toBeNull();
+      expect(result.current.lastSavedAt).toBeNull();
+      failure.mockRestore();
+      act(() => expect(result.current.persistNow()).toBe(true));
+    }
+  );
 
-  it.each(["setItem", "getter"] as const)("contains %s failures on unmount and removes dirty guards", (access) => {
-    const { unmount } = renderDraft();
-    blockStorage(access);
-    expect(unmount).not.toThrow();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-  });
+  it.each(["setItem", "getter"] as const)(
+    "contains %s failures on unmount and removes dirty guards",
+    (access) => {
+      const { unmount } = renderDraft();
+      blockStorage(access);
+      expect(unmount).not.toThrow();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+    }
+  );
 
-  it.each(["removeItem", "getter"] as const)("suppresses a cleared snapshot even when %s fails", (access) => {
-    const { result, unmount } = renderDraft();
-    const failure = blockStorage(access);
-    expect(() => act(() => result.current.clearDraft())).not.toThrow();
-    failure.mockRestore();
-    act(() => {
-      vi.advanceTimersByTime(1_000);
-      expect(result.current.persistNow()).toBe(false);
-    });
-    unmount();
-    expect(stored()).toBeNull();
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-  });
+  it.each(["removeItem", "getter"] as const)(
+    "suppresses a cleared snapshot even when %s fails",
+    (access) => {
+      const { result, unmount } = renderDraft();
+      const failure = blockStorage(access);
+      expect(() => act(() => result.current.clearDraft())).not.toThrow();
+      failure.mockRestore();
+      act(() => {
+        vi.advanceTimersByTime(1_000);
+        expect(result.current.persistNow()).toBe(false);
+      });
+      unmount();
+      expect(stored()).toBeNull();
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+    }
+  );
 
   it("allows retrying failed removal without reviving the cleared snapshot", () => {
     const { result } = renderDraft();
@@ -475,9 +537,15 @@ describe("payment draft storage failures", () => {
   it("contains serialization errors without losing dirty guards", () => {
     const circular: { self?: unknown } = {};
     circular.self = circular;
-    const { result, unmount } = renderHook(() => usePaymentDraft({
-      ownerId: "owner-a", scope: "order-a", value: circular, isDirty: true, onRestore: vi.fn()
-    }));
+    const { result, unmount } = renderHook(() =>
+      usePaymentDraft({
+        ownerId: "owner-a",
+        scope: "order-a",
+        value: circular,
+        isDirty: true,
+        onRestore: vi.fn()
+      })
+    );
     act(() => expect(result.current.persistNow()).toBe(false));
     expect(result.current.lastSavedAt).toBeNull();
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
@@ -556,7 +624,11 @@ describe("payment draft navigation guards", () => {
     renderDraft();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     const navigate = vi.fn((event: React.MouseEvent) => event.preventDefault());
-    render(<a href="/next-order" onClick={navigate}><span>Next</span></a>);
+    render(
+      <a href="/next-order" onClick={navigate}>
+        <span>Next</span>
+      </a>
+    );
 
     fireEvent.click(screen.getByText("Next"));
     expect(confirm).toHaveBeenCalledOnce();
@@ -581,7 +653,16 @@ describe("payment draft navigation guards", () => {
   ])("does not intercept unrelated anchor behavior: %j", ({ href, target, download, ...event }) => {
     renderDraft();
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
-    render(<a href={href} target={target} download={download} onClick={(click) => click.preventDefault()}>Next</a>);
+    render(
+      <a
+        href={href}
+        target={target}
+        download={download}
+        onClick={(click) => click.preventDefault()}
+      >
+        Next
+      </a>
+    );
     fireEvent.click(screen.getByRole("link"), event);
     expect(confirm).not.toHaveBeenCalled();
   });
@@ -590,7 +671,11 @@ describe("payment draft navigation guards", () => {
     renderDraft();
     renderDraft({ scope: "order-b", value: { amount: 900, requestId: "other" } });
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(true);
-    render(<a href="/next-order" onClick={(event) => event.preventDefault()}>Next</a>);
+    render(
+      <a href="/next-order" onClick={(event) => event.preventDefault()}>
+        Next
+      </a>
+    );
 
     fireEvent.click(screen.getByRole("link"));
 
@@ -605,7 +690,11 @@ describe("payment draft navigation guards", () => {
     act(() => result.current.clearDraft());
     const beforeUnload = new Event("beforeunload", { cancelable: true });
     window.dispatchEvent(beforeUnload);
-    render(<a href="/next-order" onClick={(event) => event.preventDefault()}>Next</a>);
+    render(
+      <a href="/next-order" onClick={(event) => event.preventDefault()}>
+        Next
+      </a>
+    );
     fireEvent.click(screen.getByRole("link"));
 
     expect(beforeUnload.defaultPrevented).toBe(false);
@@ -632,26 +721,37 @@ describe("payment draft navigation guards", () => {
     expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
   });
 
-  it.each([true, false])("cooperates with the generic hook regardless of which unmounts first: %s", (genericFirst) => {
-    const generic = renderHook(() => usePersistentFormDraft({
-      draftKey: "unrelated-generic", value: initialValue, isDirty: true, onRestore: vi.fn()
-    }));
-    const payment = renderDraft();
-    const dispatch = vi.spyOn(window, "dispatchEvent");
+  it.each([true, false])(
+    "cooperates with the generic hook regardless of which unmounts first: %s",
+    (genericFirst) => {
+      const generic = renderHook(() =>
+        usePersistentFormDraft({
+          draftKey: "unrelated-generic",
+          value: initialValue,
+          isDirty: true,
+          onRestore: vi.fn()
+        })
+      );
+      const payment = renderDraft();
+      const dispatch = vi.spyOn(window, "dispatchEvent");
 
-    if (genericFirst) {
-      generic.unmount();
-      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-      payment.unmount();
-    } else {
-      payment.unmount();
-      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
-      generic.unmount();
+      if (genericFirst) {
+        generic.unmount();
+        expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+        payment.unmount();
+      } else {
+        payment.unmount();
+        expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(true);
+        generic.unmount();
+      }
+
+      expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
+      expect(dispatch).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          type: "chetech:draft-state",
+          detail: { hasUnsavedChanges: false }
+        })
+      );
     }
-
-    expect(document.documentElement.hasAttribute("data-unsaved-changes")).toBe(false);
-    expect(dispatch).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: "chetech:draft-state", detail: { hasUnsavedChanges: false }
-    }));
-  });
+  );
 });

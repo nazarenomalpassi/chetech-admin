@@ -5,13 +5,11 @@ import { redirect } from "next/navigation";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { hasSupabaseEnv } from "@/lib/supabase/config";
 import { isSupabaseAuthRateLimitError } from "@/lib/supabase/auth-errors";
-import {
-  hasPermission,
-  normalizeAppRole,
-  type AppPermission
-} from "@/lib/permissions";
+import { hasPermission, normalizeAppRole, type AppPermission } from "@/lib/permissions";
 
-async function getSessionUserFallback(supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>) {
+async function getSessionUserFallback(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>
+) {
   const {
     data: { session }
   } = await supabase.auth.getSession();

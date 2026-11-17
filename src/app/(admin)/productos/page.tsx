@@ -15,5 +15,13 @@ export default async function ProductosPage({
     getProductCategories()
   ]);
 
-  return <ProductsView canManage={profile.role === "admin"} categories={categories} products={result.products} pagination={result.pagination} filterParams={params} />;
+  return (
+    <ProductsView
+      canManage={profile.role === "admin"}
+      categories={categories}
+      products={result.products}
+      pagination={result.pagination}
+      filterParams={params}
+    />
+  );
 }

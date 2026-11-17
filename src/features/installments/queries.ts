@@ -1,6 +1,10 @@
 import { getLocalDateInputValue } from "@/lib/utils";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getInstallmentSaleStatus, resolveInstallmentStatus, type InstallmentSaleStatus } from "@/features/installments/model";
+import {
+  getInstallmentSaleStatus,
+  resolveInstallmentStatus,
+  type InstallmentSaleStatus
+} from "@/features/installments/model";
 
 type InstallmentFilters = {
   customer?: string;
@@ -11,7 +15,9 @@ type InstallmentFilters = {
   paymentMethod?: string;
 };
 
-export function isInstallmentsUnavailableError(error: { code?: string; message?: string } | null | undefined) {
+export function isInstallmentsUnavailableError(
+  error: { code?: string; message?: string } | null | undefined
+) {
   const message = error?.message?.toLowerCase() ?? "";
 
   return (
@@ -45,7 +51,9 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
   const today = getLocalDateInputValue();
   let salesQuery = (supabase as any)
     .from("installment_sales")
-    .select("id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at, installments(id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at, financial_version)")
+    .select(
+      "id, product_name, customer_name, total_amount, installments_count, notes, status, created_at, updated_at, installments(id, installment_sale_id, installment_number, due_date, amount, payment_method, status, paid_at, notes, created_at, updated_at, financial_version)"
+    )
     .order("created_at", { ascending: false });
 
   if (filters.customer?.trim()) {
@@ -80,20 +88,20 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
       const installments = [...(sale.installments ?? [])]
         .sort((a: any, b: any) => Number(a.installment_number) - Number(b.installment_number))
         .map((installment: any) => ({
-        id: installment.id,
-        financialVersion: Number(installment.financial_version),
-        saleId: installment.installment_sale_id,
-        installmentNumber: Number(installment.installment_number),
-        dueDate: installment.due_date,
-        amount: Number(installment.amount),
-        paymentMethod: installment.payment_method,
-        status: installment.status,
-        displayStatus: resolveInstallmentStatus(installment.status, installment.due_date, today),
-        paidAt: installment.paid_at,
-        notes: installment.notes ?? "",
-        createdAt: installment.created_at,
-        updatedAt: installment.updated_at
-      }));
+          id: installment.id,
+          financialVersion: Number(installment.financial_version),
+          saleId: installment.installment_sale_id,
+          installmentNumber: Number(installment.installment_number),
+          dueDate: installment.due_date,
+          amount: Number(installment.amount),
+          paymentMethod: installment.payment_method,
+          status: installment.status,
+          displayStatus: resolveInstallmentStatus(installment.status, installment.due_date, today),
+          paidAt: installment.paid_at,
+          notes: installment.notes ?? "",
+          createdAt: installment.created_at,
+          updatedAt: installment.updated_at
+        }));
 
       const saleDisplayStatus = getInstallmentSaleStatus(
         sale.status as InstallmentSaleStatus,
@@ -103,9 +111,14 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
         }))
       );
 
-      const filteredInstallments = installments.filter((installment) => matchesInstallmentFilters(installment, filters));
+      const filteredInstallments = installments.filter((installment) =>
+        matchesInstallmentFilters(installment, filters)
+      );
 
-      if ((filters.status || filters.paymentMethod || filters.dueFrom || filters.dueTo) && !filteredInstallments.length) {
+      if (
+        (filters.status || filters.paymentMethod || filters.dueFrom || filters.dueTo) &&
+        !filteredInstallments.length
+      ) {
         return null;
       }
 
@@ -119,7 +132,9 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
         .reduce((acc, installment) => acc + installment.amount, 0);
 
       const pendingAmount = installments
-        .filter((installment) => installment.status !== "pagada" && installment.status !== "cancelada")
+        .filter(
+          (installment) => installment.status !== "pagada" && installment.status !== "cancelada"
+        )
         .reduce((acc, installment) => acc + installment.amount, 0);
 
       return {
@@ -140,35 +155,35 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
       };
     })
     .filter(Boolean) as Array<{
+    id: string;
+    productName: string;
+    customerName: string;
+    totalAmount: number;
+    installmentsCount: number;
+    notes: string;
+    status: InstallmentSaleStatus;
+    displayStatus: InstallmentSaleStatus;
+    createdAt: string;
+    updatedAt: string;
+    paidAmount: number;
+    pendingAmount: number;
+    paidCount: number;
+    installments: Array<{
       id: string;
-      productName: string;
-      customerName: string;
-      totalAmount: number;
-      installmentsCount: number;
+      financialVersion: number;
+      saleId: string;
+      installmentNumber: number;
+      dueDate: string;
+      amount: number;
+      paymentMethod: string;
+      status: string;
+      displayStatus: string;
+      paidAt: string | null;
       notes: string;
-      status: InstallmentSaleStatus;
-      displayStatus: InstallmentSaleStatus;
       createdAt: string;
       updatedAt: string;
-      paidAmount: number;
-      pendingAmount: number;
-      paidCount: number;
-      installments: Array<{
-        id: string;
-        financialVersion: number;
-        saleId: string;
-        installmentNumber: number;
-        dueDate: string;
-        amount: number;
-        paymentMethod: string;
-        status: string;
-        displayStatus: string;
-        paidAt: string | null;
-        notes: string;
-        createdAt: string;
-        updatedAt: string;
-      }>;
     }>;
+  }>;
 
   const allVisibleInstallments = sales.flatMap((sale) => sale.installments);
 
@@ -177,9 +192,15 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
     today,
     summary: {
       activeSales: sales.filter((sale) => sale.displayStatus === "activa").length,
-      pendingInstallments: allVisibleInstallments.filter((installment) => installment.displayStatus === "pendiente").length,
-      overdueInstallments: allVisibleInstallments.filter((installment) => installment.displayStatus === "vencida").length,
-      paidInstallments: allVisibleInstallments.filter((installment) => installment.displayStatus === "pagada").length
+      pendingInstallments: allVisibleInstallments.filter(
+        (installment) => installment.displayStatus === "pendiente"
+      ).length,
+      overdueInstallments: allVisibleInstallments.filter(
+        (installment) => installment.displayStatus === "vencida"
+      ).length,
+      paidInstallments: allVisibleInstallments.filter(
+        (installment) => installment.displayStatus === "pagada"
+      ).length
     },
     sales
   };
@@ -188,7 +209,9 @@ export async function getInstallmentSalesData(filters: InstallmentFilters) {
 export async function getDashboardInstallmentsData(supabase: any, today: string) {
   const installmentsResult = await (supabase as any)
     .from("installments")
-    .select("id, installment_sale_id, installment_number, due_date, amount, payment_method, status, installment_sales(product_name, customer_name, installments_count)")
+    .select(
+      "id, installment_sale_id, installment_number, due_date, amount, payment_method, status, installment_sales(product_name, customer_name, installments_count)"
+    )
     .in("status", ["pendiente", "vencida"]);
 
   if (installmentsResult.error) {
@@ -225,7 +248,10 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
   });
 
   const dueToday = installments
-    .filter((installment: (typeof installments)[number]) => installment.displayStatus === "pendiente" && installment.dueDate === today)
+    .filter(
+      (installment: (typeof installments)[number]) =>
+        installment.displayStatus === "pendiente" && installment.dueDate === today
+    )
     .map((installment) => {
       const sale = installment.sale;
 
@@ -244,7 +270,9 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
 
   const overdue = installments
     .filter((installment: (typeof installments)[number]) => installment.displayStatus === "vencida")
-    .sort((a: (typeof installments)[number], b: (typeof installments)[number]) => a.dueDate.localeCompare(b.dueDate))
+    .sort((a: (typeof installments)[number], b: (typeof installments)[number]) =>
+      a.dueDate.localeCompare(b.dueDate)
+    )
     .map((installment) => {
       const sale = installment.sale;
 
@@ -262,14 +290,30 @@ export async function getDashboardInstallmentsData(supabase: any, today: string)
     .slice(0, 6);
 
   return {
-    dueTodayCount: installments.filter((installment: (typeof installments)[number]) => installment.displayStatus === "pendiente" && installment.dueDate === today).length,
-    overdueCount: installments.filter((installment: (typeof installments)[number]) => installment.displayStatus === "vencida").length,
+    dueTodayCount: installments.filter(
+      (installment: (typeof installments)[number]) =>
+        installment.displayStatus === "pendiente" && installment.dueDate === today
+    ).length,
+    overdueCount: installments.filter(
+      (installment: (typeof installments)[number]) => installment.displayStatus === "vencida"
+    ).length,
     dueTodayTotal: installments
-      .filter((installment: (typeof installments)[number]) => installment.displayStatus === "pendiente" && installment.dueDate === today)
-      .reduce((acc: number, installment: (typeof installments)[number]) => acc + installment.amount, 0),
+      .filter(
+        (installment: (typeof installments)[number]) =>
+          installment.displayStatus === "pendiente" && installment.dueDate === today
+      )
+      .reduce(
+        (acc: number, installment: (typeof installments)[number]) => acc + installment.amount,
+        0
+      ),
     overdueTotal: installments
-      .filter((installment: (typeof installments)[number]) => installment.displayStatus === "vencida")
-      .reduce((acc: number, installment: (typeof installments)[number]) => acc + installment.amount, 0),
+      .filter(
+        (installment: (typeof installments)[number]) => installment.displayStatus === "vencida"
+      )
+      .reduce(
+        (acc: number, installment: (typeof installments)[number]) => acc + installment.amount,
+        0
+      ),
     dueToday,
     overdue
   };

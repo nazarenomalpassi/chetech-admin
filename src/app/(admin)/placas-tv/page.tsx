@@ -8,7 +8,15 @@ export default async function PlacasTvPage({
   searchParams: Promise<{
     search?: string;
     boardType?: "all" | "fuente" | "main" | "tcom" | "placa_unica";
-    status?: "all" | "active" | "inactive" | "sold" | "pending_release" | "released" | "claim_open" | "cancelled";
+    status?:
+      | "all"
+      | "active"
+      | "inactive"
+      | "sold"
+      | "pending_release"
+      | "released"
+      | "claim_open"
+      | "cancelled";
   }>;
 }) {
   const params = await searchParams;

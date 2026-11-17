@@ -13,12 +13,25 @@ describe("generateInstallments", () => {
     ["2026-12-31", ["2026-12-31", "2027-01-31", "2027-02-28", "2027-03-31"]],
     ["2028-02-29", ["2028-02-29", "2028-03-29", "2028-04-29", "2028-05-29"]]
   ])("clamps each target month from the original day: %s", (firstDueDate, expected) => {
-    expect(generateInstallments({ totalAmount: 100, installmentsCount: 4, firstDueDate, paymentMethod: "nx" })
-      .map((item) => item.dueDate)).toEqual(expected);
+    expect(
+      generateInstallments({
+        totalAmount: 100,
+        installmentsCount: 4,
+        firstDueDate,
+        paymentMethod: "nx"
+      }).map((item) => item.dueDate)
+    ).toEqual(expected);
   });
 
   it("rejects impossible dates rather than silently rolling them over", () => {
-    expect(() => generateInstallments({ totalAmount: 100, installmentsCount: 2, firstDueDate: "2026-02-31", paymentMethod: "mp" })).toThrow();
+    expect(() =>
+      generateInstallments({
+        totalAmount: 100,
+        installmentsCount: 2,
+        firstDueDate: "2026-02-31",
+        paymentMethod: "mp"
+      })
+    ).toThrow();
   });
   it("genera cuotas mensuales a partir de la primera fecha", () => {
     expect(
@@ -81,7 +94,12 @@ describe("resolveInstallmentStatus", () => {
 
 describe("getInstallmentSaleStatus", () => {
   it("does not consider cancelled installments unpaid debt", () => {
-    expect(getInstallmentSaleStatus("activa", [{ status: "pagada", dueDate: "2026-10-05" }, { status: "cancelada", dueDate: "2026-11-05" }])).toBe("finalizada");
+    expect(
+      getInstallmentSaleStatus("activa", [
+        { status: "pagada", dueDate: "2026-10-05" },
+        { status: "cancelada", dueDate: "2026-11-05" }
+      ])
+    ).toBe("finalizada");
   });
   it("marca la venta como finalizada si todas las cuotas estan pagadas", () => {
     expect(

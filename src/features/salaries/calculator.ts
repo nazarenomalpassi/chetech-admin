@@ -43,9 +43,12 @@ function allocateCents(total: number, targets: number[]) {
     };
   });
   let remaining = total - allocations.reduce((sum, allocation) => sum + allocation.amount, 0);
-  const byRemainder = [...allocations].sort(
-    (left, right) =>
-      (left.remainder === right.remainder ? left.index - right.index : left.remainder > right.remainder ? -1 : 1)
+  const byRemainder = [...allocations].sort((left, right) =>
+    left.remainder === right.remainder
+      ? left.index - right.index
+      : left.remainder > right.remainder
+        ? -1
+        : 1
   );
 
   for (let index = 0; remaining > 0; index += 1) {
@@ -53,12 +56,16 @@ function allocateCents(total: number, targets: number[]) {
     remaining -= 1;
   }
 
-  return allocations.sort((left, right) => left.index - right.index).map((allocation) => allocation.amount);
+  return allocations
+    .sort((left, right) => left.index - right.index)
+    .map((allocation) => allocation.amount);
 }
 
 export function calculateSalaryPlan(members: SalaryMemberInput[], intendedTotal: number) {
   const targetCents = members.map((member) => toCents(member.targetAmount));
-  const paidCents = members.map((member, index) => Math.min(toCents(member.paidAmount), targetCents[index]));
+  const paidCents = members.map((member, index) =>
+    Math.min(toCents(member.paidAmount), targetCents[index])
+  );
   const remainingCents = targetCents.map((target, index) => Math.max(target - paidCents[index], 0));
   const salaryMassCents = targetCents.reduce((sum, amount) => sum + amount, 0);
   const paidSalaryCents = paidCents.reduce((sum, amount) => sum + amount, 0);
@@ -67,18 +74,21 @@ export function calculateSalaryPlan(members: SalaryMemberInput[], intendedTotal:
   const salaryBatchCents = Math.min(intendedCents, remainingSalaryCents);
   const profitShareCents = Math.max(intendedCents - salaryBatchCents, 0);
   const salaryAllocations = allocateCents(salaryBatchCents, remainingCents);
-  const profitShareAllocations = allocateCents(profitShareCents, members.map(() => 1));
+  const profitShareAllocations = allocateCents(
+    profitShareCents,
+    members.map(() => 1)
+  );
 
   const allocations: SalaryMemberAllocation[] = members.map((member, index) => {
     const salaryCents = salaryAllocations[index];
     const profitCents = profitShareAllocations[index];
     const paidAfterCents = paidCents[index] + salaryCents;
-    const remainingCents = targetCents[index] > paidAfterCents ? targetCents[index] - paidAfterCents : 0;
+    const remainingCents =
+      targetCents[index] > paidAfterCents ? targetCents[index] - paidAfterCents : 0;
 
     return {
       ...member,
-      targetSharePercentage:
-        salaryMassCents > 0 ? (targetCents[index] / salaryMassCents) * 100 : 0,
+      targetSharePercentage: salaryMassCents > 0 ? (targetCents[index] / salaryMassCents) * 100 : 0,
       desiredCumulativeAmount: fromCents(paidAfterCents),
       amountDueNow: fromCents(salaryCents),
       salaryAmount: fromCents(salaryCents),
@@ -96,7 +106,8 @@ export function calculateSalaryPlan(members: SalaryMemberInput[], intendedTotal:
     intendedTotal: fromCents(intendedCents),
     cappedSalaryTotal: fromCents(salaryBatchCents),
     salaryAmount: fromCents(salaryBatchCents),
-    coveragePercentage: salaryMassCents > 0 ? ((paidSalaryCents + salaryBatchCents) / salaryMassCents) * 100 : 0,
+    coveragePercentage:
+      salaryMassCents > 0 ? ((paidSalaryCents + salaryBatchCents) / salaryMassCents) * 100 : 0,
     excessAmount: fromCents(profitShareCents),
     batchTotal: fromCents(intendedCents),
     members: allocations

@@ -14,7 +14,12 @@ export async function readRecordPages<T>(
     if (result.error) throw new Error(result.error.message);
     const page = result.data ?? [];
     if (result.count != null) {
-      if (!Number.isSafeInteger(result.count) || result.count < 0 || (expectedCount != null && expectedCount !== result.count)) throw new Error("The record count changed. Retry the read.");
+      if (
+        !Number.isSafeInteger(result.count) ||
+        result.count < 0 ||
+        (expectedCount != null && expectedCount !== result.count)
+      )
+        throw new Error("The record count changed. Retry the read.");
       expectedCount = result.count;
     }
     for (const record of page) {
@@ -27,7 +32,8 @@ export async function readRecordPages<T>(
     }
     if (expectedCount != null) {
       if (records.length === expectedCount) return records;
-      if (!page.length || records.length > expectedCount) throw new Error("Incomplete counted record read. Retry the read.");
+      if (!page.length || records.length > expectedCount)
+        throw new Error("Incomplete counted record read. Retry the read.");
       from += page.length;
     } else {
       if (page.length < pageSize) return records;

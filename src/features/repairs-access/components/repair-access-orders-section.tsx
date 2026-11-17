@@ -73,35 +73,38 @@ export function RepairAccessOrdersSection({
     if (!matchesStatus) return false;
     const matchesWarranty =
       warrantyFilter === "todos" ||
-      (warrantyFilter === "pending_delivery" && (Boolean(summary.activeReturn) || (!order.deliveredAt && !order.pickedUpAt && order.status !== "retirado"))) ||
-      (warrantyFilter === "active" &&
-        ["active", "expires_today"].includes(order.warranty.code)) ||
+      (warrantyFilter === "pending_delivery" &&
+        (Boolean(summary.activeReturn) ||
+          (!order.deliveredAt && !order.pickedUpAt && order.status !== "retirado"))) ||
+      (warrantyFilter === "active" && ["active", "expires_today"].includes(order.warranty.code)) ||
       order.warranty.code === warrantyFilter;
     if (!matchesWarranty) return false;
     if (!normalizedSearch) return true;
 
-    const haystack = normalizeRepairAccessLookup([
-      order.repairNumber,
-      order.legacyOrderNumber,
-      order.customer.fullName,
-      order.customer.phone,
-      order.customer.alternatePhone,
-      order.customer.dni,
-      order.device.deviceType,
-      order.device.brand,
-      order.device.model,
-      order.device.serialNumber,
-      order.issueReported,
-      order.technicalDiagnosis,
-      order.budgetDetail,
-      order.repairProgress,
-      summary.activeReturn?.issueReported,
-      summary.activeReturn?.progress,
-      summary.activeReturn?.resolution,
-      getRepairAccessStatusLabel(summary.status),
-      getRepairAccessStatusLabel(order.status),
-      order.status
-    ].join(" "));
+    const haystack = normalizeRepairAccessLookup(
+      [
+        order.repairNumber,
+        order.legacyOrderNumber,
+        order.customer.fullName,
+        order.customer.phone,
+        order.customer.alternatePhone,
+        order.customer.dni,
+        order.device.deviceType,
+        order.device.brand,
+        order.device.model,
+        order.device.serialNumber,
+        order.issueReported,
+        order.technicalDiagnosis,
+        order.budgetDetail,
+        order.repairProgress,
+        summary.activeReturn?.issueReported,
+        summary.activeReturn?.progress,
+        summary.activeReturn?.resolution,
+        getRepairAccessStatusLabel(summary.status),
+        getRepairAccessStatusLabel(order.status),
+        order.status
+      ].join(" ")
+    );
 
     return haystack.includes(normalizedSearch);
   });
@@ -112,8 +115,14 @@ export function RepairAccessOrdersSection({
   }, [normalizedSearch, statusFilter, warrantyFilter]);
 
   function togglePresentation() {
-    if (document.documentElement.hasAttribute("data-unsaved-changes") && !window.confirm("Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Queres cambiar la vista?")) return;
-    setPresentation((current) => current === "cards" ? "table" : "cards");
+    if (
+      document.documentElement.hasAttribute("data-unsaved-changes") &&
+      !window.confirm(
+        "Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Queres cambiar la vista?"
+      )
+    )
+      return;
+    setPresentation((current) => (current === "cards" ? "table" : "cards"));
   }
 
   return (
@@ -121,35 +130,53 @@ export function RepairAccessOrdersSection({
       <div className="grid min-w-0 gap-4 min-[1600px]:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)] min-[1600px]:items-end">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-slate-950 outline-none" ref={headingRef} tabIndex={-1}>Mesa de trabajo</h2>
-            {canManageIntake && onNew ? <Button onClick={onNew} type="button">Nueva orden</Button> : null}
+            <h2
+              className="text-xl font-semibold text-slate-950 outline-none"
+              ref={headingRef}
+              tabIndex={-1}
+            >
+              Mesa de trabajo
+            </h2>
+            {canManageIntake && onNew ? (
+              <Button onClick={onNew} type="button">
+                Nueva orden
+              </Button>
+            ) : null}
           </div>
         </div>
         <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
             <span>Buscar orden</span>
-          <Input
-            aria-label="Buscar orden de service"
-            onChange={(event) => onSearchChange(event.target.value)}
-            onCompositionStart={() => onSearchCompositionChange?.(true)}
-            onCompositionEnd={() => onSearchCompositionChange?.(false)}
-            maxLength={200}
-            placeholder="Numero de orden, cliente, equipo o falla..."
-            value={search}
-          />
+            <Input
+              aria-label="Buscar orden de service"
+              onChange={(event) => onSearchChange(event.target.value)}
+              onCompositionStart={() => onSearchCompositionChange?.(true)}
+              onCompositionEnd={() => onSearchCompositionChange?.(false)}
+              maxLength={200}
+              placeholder="Numero de orden, cliente, equipo o falla..."
+              value={search}
+            />
           </label>
           <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
             <span>Estado</span>
-          <Select
-            aria-label="Filtrar ordenes por estado"
-            name="statusFilter"
-            onChange={(event) => onStatusFilterChange(event.target.value)}
-            options={[{ value: "todos", label: "Todos los estados" }, ...repairAccessStatusOptions]}
-            value={statusFilter}
-          />
+            <Select
+              aria-label="Filtrar ordenes por estado"
+              name="statusFilter"
+              onChange={(event) => onStatusFilterChange(event.target.value)}
+              options={[
+                { value: "todos", label: "Todos los estados" },
+                ...repairAccessStatusOptions
+              ]}
+              value={statusFilter}
+            />
           </label>
-          <details className="min-w-0 sm:col-span-2" open={warrantyFilter !== "todos" ? true : undefined}>
-            <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">Filtros</summary>
+          <details
+            className="min-w-0 sm:col-span-2"
+            open={warrantyFilter !== "todos" ? true : undefined}
+          >
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+              Filtros
+            </summary>
             <div className="pt-2 sm:max-w-sm">
               <Select
                 aria-label="Filtrar ordenes por garantia"
@@ -172,137 +199,242 @@ export function RepairAccessOrdersSection({
 
       {canManageIntake ? (
         <div aria-label="Presentacion de ordenes" className="flex justify-end">
-          <Button aria-pressed={presentation === "table"} onClick={togglePresentation} type="button" variant="ghost">
+          <Button
+            aria-pressed={presentation === "table"}
+            onClick={togglePresentation}
+            type="button"
+            variant="ghost"
+          >
             {presentation === "cards" ? "Ver tabla" : "Ver tarjetas"}
           </Button>
         </div>
       ) : null}
 
       {!canManageIntake || presentation === "cards" ? (
-      <div className="grid items-start gap-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))] md:grid-cols-2 2xl:grid-cols-3">
-        {visibleOrders.length ? (
-          visibleOrders.map((order) => (
-            <RepairAccessWorkshopCard
-              defaultWarrantyDays={defaultWarrantyDays}
-              canManageIntake={canManageIntake}
-              technicians={technicians}
-              key={order.id}
-              onEdit={onEdit}
-              onOpenDetail={onOpenDetail}
-              order={order}
-            />
-          ))
-        ) : (
-          <div className="rounded-xl border border-dashed border-graphite/15 bg-white px-4 py-6 text-sm leading-6 text-slate-500 md:col-span-2 2xl:col-span-3">
-            No hay ordenes para esa busqueda o estado.
-          </div>
-        )}
-      </div>
-      ) : (
-      <div className="overflow-hidden rounded-xl border border-slate-100">
-        <div className="overflow-x-auto bg-white">
-          <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Orden</th>
-                <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Equipo / falla</th>
-                <th className="px-4 py-3 font-medium">Ingreso</th>
-                <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium">Garantia</th>
-                <th className="px-4 py-3 font-medium">Importes</th>
-                <th className="px-4 py-3 font-medium">Proximo paso</th>
-                <th className="px-4 py-3 font-medium text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleOrders.length ? (
-                visibleOrders.map((order) => {
-                  const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
-                  const summary = getWorkshopOrderSummary(order);
-                  const activeReturn = summary.activeReturn;
-
-                  return (
-                    <tr className="border-t border-slate-100 align-top" key={order.id}>
-                      <td className="px-4 py-4">
-                        <button aria-label={`Ficha completa ${order.repairNumber}`} className="min-h-11 whitespace-nowrap font-semibold text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" onClick={() => onOpenDetail(order)} type="button">
-                          {order.repairNumber}
-                        </button>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
-                        <p className="mt-1 text-xs text-slate-500">{order.customer.phone || order.customer.dni || "Sin dato extra"}</p>
-                      </td>
-                      <td className="px-4 py-4 text-slate-600">
-                        <p className="font-medium text-slate-800">{deviceLabel || "Equipo"}</p>
-                        {order.device.serialNumber ? <p className="mt-1 text-xs text-slate-500">Serie: {order.device.serialNumber}</p> : null}
-                        {activeReturn ? <>
-                          <p className="mt-2 text-xs font-semibold text-amber-900">Reingreso por garantia activo</p>
-                          <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-sm font-medium leading-5 text-slate-900 [overflow-wrap:anywhere]">{activeReturn.issueReported}</p>
-                        </> : null}
-                        <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere]">{activeReturn ? `Falla original: ${order.issueReported}` : order.issueReported}</p>
-                      </td>
-                      <td className="px-4 py-4 text-slate-600">{formatDate(activeReturn?.receivedOn ?? order.intakeDate)}{activeReturn ? <p className="mt-1 text-xs text-slate-500">Reingreso de garantia</p> : null}</td>
-                      <td className="px-4 py-4"><RepairAccessStatusBadge status={summary.status} /></td>
-                      <td className="px-4 py-4">
-                        <RepairAccessWarrantyBadge warranty={order.warranty} />
-                        {order.warranty.expiresOn ? (
-                          <p className="mt-1 text-xs text-slate-500">
-                            Hasta {formatDate(order.warranty.expiresOn)}
-                          </p>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-4 text-slate-600">
-                        {activeReturn ? <p className="mb-1 text-xs font-medium text-slate-500">Orden original</p> : null}
-                        <p>Pres.: {formatCurrency(order.budgetAmount)}</p>
-                        <p className="mt-1 text-xs text-slate-500">Final: {formatCurrency(order.finalAmount)}</p>
-                        <p className="mt-1 text-xs text-slate-500">{order.isPaid ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}` : "Sin cobrar"}</p>
-                      </td>
-                      <td className="min-w-52 px-4 py-4"><WorkshopOrderNextStep repairNumber={order.repairNumber} summary={summary} /></td>
-                      <td className="px-4 py-4">
-                        <div className="flex min-w-64 flex-wrap justify-end gap-2">
-                          <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">Ficha completa</Button>
-                          {activeReturn ? <div className="w-full min-w-0 rounded-lg border border-slate-200 p-3"><WarrantyReturnCase key={activeReturn.id} record={activeReturn} canManage={canManageIntake} /></div>
-                          : order.workflow ? <LazyDisclosure className="w-full rounded-lg border border-slate-200" summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40" summary={order.status === "retirado" || order.deliveredAt ? "Corregir garantia" : "Actualizar trabajo"}>
-                            <RepairQuickEditor order={order} canManage={canManageIntake} defaultWarrantyDays={defaultWarrantyDays} />
-                          </LazyDisclosure> : null}
-                          <span className="hidden lg:inline-flex"><RepairAccessWhatsAppButton order={order} /></span>
-                          {canManageIntake ? (
-                            <ActionMenu label="Mas acciones">
-                              <Button onClick={() => onEdit(order)} size="sm" type="button" variant="secondary">Editar ingreso</Button>
-                              <form action={cancelRepairAccessOrderAction} onSubmit={(event) => {
-                                if (!window.confirm(`Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`)) event.preventDefault();
-                              }}>
-                                <input name="id" type="hidden" value={order.id} />
-                                <Button size="sm" type="submit" variant="danger">Anular</Button>
-                              </form>
-                            </ActionMenu>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td className="px-4 py-8 text-center text-slate-500" colSpan={9}>
-                    No hay ordenes para esa busqueda o estado.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="grid items-start gap-3 pb-[calc(0.25rem+env(safe-area-inset-bottom))] md:grid-cols-2 2xl:grid-cols-3">
+          {visibleOrders.length ? (
+            visibleOrders.map((order) => (
+              <RepairAccessWorkshopCard
+                defaultWarrantyDays={defaultWarrantyDays}
+                canManageIntake={canManageIntake}
+                technicians={technicians}
+                key={order.id}
+                onEdit={onEdit}
+                onOpenDetail={onOpenDetail}
+                order={order}
+              />
+            ))
+          ) : (
+            <div className="rounded-xl border border-dashed border-graphite/15 bg-white px-4 py-6 text-sm leading-6 text-slate-500 md:col-span-2 2xl:col-span-3">
+              No hay ordenes para esa busqueda o estado.
+            </div>
+          )}
         </div>
-      </div>
+      ) : (
+        <div className="overflow-hidden rounded-xl border border-slate-100">
+          <div className="overflow-x-auto bg-white">
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 text-left text-slate-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Orden</th>
+                  <th className="px-4 py-3 font-medium">Cliente</th>
+                  <th className="px-4 py-3 font-medium">Equipo / falla</th>
+                  <th className="px-4 py-3 font-medium">Ingreso</th>
+                  <th className="px-4 py-3 font-medium">Estado</th>
+                  <th className="px-4 py-3 font-medium">Garantia</th>
+                  <th className="px-4 py-3 font-medium">Importes</th>
+                  <th className="px-4 py-3 font-medium">Proximo paso</th>
+                  <th className="px-4 py-3 text-right font-medium">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibleOrders.length ? (
+                  visibleOrders.map((order) => {
+                    const deviceLabel = [
+                      order.device.deviceType,
+                      order.device.brand,
+                      order.device.model
+                    ]
+                      .filter(Boolean)
+                      .join(" - ");
+                    const summary = getWorkshopOrderSummary(order);
+                    const activeReturn = summary.activeReturn;
+
+                    return (
+                      <tr className="border-t border-slate-100 align-top" key={order.id}>
+                        <td className="px-4 py-4">
+                          <button
+                            aria-label={`Ficha completa ${order.repairNumber}`}
+                            className="min-h-11 whitespace-nowrap font-semibold text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                            onClick={() => onOpenDetail(order)}
+                            type="button"
+                          >
+                            {order.repairNumber}
+                          </button>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {order.customer.phone || order.customer.dni || "Sin dato extra"}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          <p className="font-medium text-slate-800">{deviceLabel || "Equipo"}</p>
+                          {order.device.serialNumber ? (
+                            <p className="mt-1 text-xs text-slate-500">
+                              Serie: {order.device.serialNumber}
+                            </p>
+                          ) : null}
+                          {activeReturn ? (
+                            <>
+                              <p className="mt-2 text-xs font-semibold text-amber-900">
+                                Reingreso por garantia activo
+                              </p>
+                              <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-sm font-medium leading-5 text-slate-900 [overflow-wrap:anywhere]">
+                                {activeReturn.issueReported}
+                              </p>
+                            </>
+                          ) : null}
+                          <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere]">
+                            {activeReturn
+                              ? `Falla original: ${order.issueReported}`
+                              : order.issueReported}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {formatDate(activeReturn?.receivedOn ?? order.intakeDate)}
+                          {activeReturn ? (
+                            <p className="mt-1 text-xs text-slate-500">Reingreso de garantia</p>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-4">
+                          <RepairAccessStatusBadge status={summary.status} />
+                        </td>
+                        <td className="px-4 py-4">
+                          <RepairAccessWarrantyBadge warranty={order.warranty} />
+                          {order.warranty.expiresOn ? (
+                            <p className="mt-1 text-xs text-slate-500">
+                              Hasta {formatDate(order.warranty.expiresOn)}
+                            </p>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-4 text-slate-600">
+                          {activeReturn ? (
+                            <p className="mb-1 text-xs font-medium text-slate-500">
+                              Orden original
+                            </p>
+                          ) : null}
+                          <p>Pres.: {formatCurrency(order.budgetAmount)}</p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            Final: {formatCurrency(order.finalAmount)}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500">
+                            {order.isPaid
+                              ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}`
+                              : "Sin cobrar"}
+                          </p>
+                        </td>
+                        <td className="min-w-52 px-4 py-4">
+                          <WorkshopOrderNextStep
+                            repairNumber={order.repairNumber}
+                            summary={summary}
+                          />
+                        </td>
+                        <td className="px-4 py-4">
+                          <div className="flex min-w-64 flex-wrap justify-end gap-2">
+                            <Button
+                              onClick={() => onOpenDetail(order)}
+                              size="sm"
+                              type="button"
+                              variant="secondary"
+                            >
+                              Ficha completa
+                            </Button>
+                            {activeReturn ? (
+                              <div className="w-full min-w-0 rounded-lg border border-slate-200 p-3">
+                                <WarrantyReturnCase
+                                  key={activeReturn.id}
+                                  record={activeReturn}
+                                  canManage={canManageIntake}
+                                />
+                              </div>
+                            ) : order.workflow ? (
+                              <LazyDisclosure
+                                className="w-full rounded-lg border border-slate-200"
+                                summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40"
+                                summary={
+                                  order.status === "retirado" || order.deliveredAt
+                                    ? "Corregir garantia"
+                                    : "Actualizar trabajo"
+                                }
+                              >
+                                <RepairQuickEditor
+                                  order={order}
+                                  canManage={canManageIntake}
+                                  defaultWarrantyDays={defaultWarrantyDays}
+                                />
+                              </LazyDisclosure>
+                            ) : null}
+                            <span className="hidden lg:inline-flex">
+                              <RepairAccessWhatsAppButton order={order} />
+                            </span>
+                            {canManageIntake ? (
+                              <ActionMenu label="Mas acciones">
+                                <Button
+                                  onClick={() => onEdit(order)}
+                                  size="sm"
+                                  type="button"
+                                  variant="secondary"
+                                >
+                                  Editar ingreso
+                                </Button>
+                                <form
+                                  action={cancelRepairAccessOrderAction}
+                                  onSubmit={(event) => {
+                                    if (
+                                      !window.confirm(
+                                        `Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`
+                                      )
+                                    )
+                                      event.preventDefault();
+                                  }}
+                                >
+                                  <input name="id" type="hidden" value={order.id} />
+                                  <Button size="sm" type="submit" variant="danger">
+                                    Anular
+                                  </Button>
+                                </form>
+                              </ActionMenu>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td className="px-4 py-8 text-center text-slate-500" colSpan={9}>
+                      No hay ordenes para esa busqueda o estado.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       {visibleOrders.length < filteredOrders.length ? (
-        <div className="flex flex-col items-center gap-2 border-t border-graphite/8 pt-4 sm:flex-row sm:justify-between">
+        <div className="border-graphite/8 flex flex-col items-center gap-2 border-t pt-4 sm:flex-row sm:justify-between">
           <p className="text-xs text-slate-500">
             Mostrando {visibleOrders.length} de {filteredOrders.length} ordenes encontradas.
           </p>
           <Button
-            onClick={() => setVisibleLimit((current) => getNextWorkshopVisibleLimit(current, filteredOrders.length))}
+            onClick={() =>
+              setVisibleLimit((current) =>
+                getNextWorkshopVisibleLimit(current, filteredOrders.length)
+              )
+            }
             type="button"
             variant="secondary"
           >

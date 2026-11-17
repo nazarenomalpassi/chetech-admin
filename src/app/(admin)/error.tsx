@@ -28,7 +28,8 @@ export default function AdminError({
             No se pudieron cargar los datos.
           </h1>
           <p className="mt-3 text-sm leading-6 text-slate-500">
-            Intentá cargar esta sección nuevamente. Si el problema continúa, conservá el código del error para consultarlo.
+            Intentá cargar esta sección nuevamente. Si el problema continúa, conservá el código del
+            error para consultarlo.
           </p>
           {digest ? <p className="mt-3 text-xs text-slate-600">{digest}</p> : null}
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
@@ -36,7 +37,10 @@ export default function AdminError({
               <RotateCcw className="mr-2 h-4 w-4" />
               Intentar nuevamente
             </Button>
-            <Link className={cn(buttonVariants({ variant: "secondary" }), "justify-center")} href="/dashboard">
+            <Link
+              className={cn(buttonVariants({ variant: "secondary" }), "justify-center")}
+              href="/dashboard"
+            >
               Volver al dashboard
             </Link>
           </div>

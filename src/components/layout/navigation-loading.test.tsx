@@ -13,7 +13,10 @@ import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { sidebarItems, getSidebarItemsForRole } from "@/lib/navigation";
 
 Object.assign(globalThis, { React });
-afterEach(() => { cleanup(); route.pathname = "/productos"; });
+afterEach(() => {
+  cleanup();
+  route.pathname = "/productos";
+});
 
 describe("section navigation loading", () => {
   it.each(sidebarItems)("covers $href with the shared branded fallback", ({ href }) => {
@@ -32,7 +35,9 @@ describe("section navigation loading", () => {
       expect(link.querySelector(".nav-link-activity")).not.toBeNull();
       expect(link.getAttribute("aria-current")).toBe(item.href === "/productos" ? "page" : null);
     }
-    expect(screen.getByRole("button", { name: "Cerrar sesión" }).closest("form")?.getAttribute("action")).toBe("/auth/sign-out");
+    expect(
+      screen.getByRole("button", { name: "Cerrar sesión" }).closest("form")?.getAttribute("action")
+    ).toBe("/auth/sign-out");
   });
 
   it("keeps mobile menu keyboard behavior and the same destinations", () => {
@@ -40,7 +45,9 @@ describe("section navigation loading", () => {
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const nav = screen.getByRole("navigation", { name: "Navegacion del local" });
     for (const item of getSidebarItemsForRole("admin")) {
-      expect(within(nav).getByRole("link", { name: item.label }).getAttribute("href")).toBe(item.href);
+      expect(within(nav).getByRole("link", { name: item.label }).getAttribute("href")).toBe(
+        item.href
+      );
     }
     fireEvent.keyDown(nav, { key: "Escape" });
     expect(screen.queryByRole("navigation")).toBeNull();
@@ -51,7 +58,7 @@ describe("section navigation loading", () => {
     const { rerender } = render(<MobileNavigation role="admin" />);
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const link = screen.getByRole("link", { name: "Reparaciones" });
-    link.addEventListener("click", event => event.preventDefault());
+    link.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(link);
     expect(screen.getByRole("navigation", { name: "Navegacion del local" })).not.toBeNull();
     expect(link.querySelector(".nav-link-activity")).not.toBeNull();
@@ -60,7 +67,7 @@ describe("section navigation loading", () => {
     expect(screen.queryByRole("navigation")).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const active = screen.getByRole("link", { name: "Reparaciones" });
-    active.addEventListener("click", event => event.preventDefault());
+    active.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(active);
     expect(screen.queryByRole("navigation")).toBeNull();
   });

@@ -40,13 +40,19 @@ export function ProductsView({
   }>;
 }) {
   const searchParams = useSearchParams();
-  const filterKey = JSON.stringify([searchParams.get("search"), searchParams.get("category"), searchParams.get("status")]);
+  const filterKey = JSON.stringify([
+    searchParams.get("search"),
+    searchParams.get("category"),
+    searchParams.get("status")
+  ]);
   const [open, setOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<ProductFormValues | null>(null);
 
   const totalProducts = pagination.total;
   const activeProducts = products.filter((product) => product.isActive).length;
-  const lowStockProducts = products.filter((product) => product.availableStock != null && product.availableStock <= product.minStock).length;
+  const lowStockProducts = products.filter(
+    (product) => product.availableStock != null && product.availableStock <= product.minStock
+  ).length;
   const unknownAvailability = products.filter((product) => product.availableStock == null).length;
   const rangeStart = products.length ? (pagination.page - 1) * pagination.pageSize + 1 : 0;
   const rangeEnd = products.length ? rangeStart + products.length - 1 : 0;
@@ -57,8 +63,13 @@ export function ProductsView({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="panel-heading">Productos</h1>
-            <p aria-live="polite" className="mt-1 text-sm text-slate-600">Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos.</p>
-            <p className="mt-1 text-sm text-slate-500">En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.{unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}</p>
+            <p aria-live="polite" className="mt-1 text-sm text-slate-600">
+              Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos.
+            </p>
+            <p className="mt-1 text-sm text-slate-500">
+              En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.
+              {unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}
+            </p>
           </div>
 
           {canManage ? (
@@ -75,17 +86,30 @@ export function ProductsView({
             <p className="text-sm text-slate-600">Catalogo de consulta</p>
           )}
         </div>
-        <div className="mt-4"><ProductFilters categories={categories} /></div>
+        <div className="mt-4">
+          <ProductFilters categories={categories} />
+        </div>
       </Card>
 
       <ProductTable
         canManage={canManage}
         filterKey={filterKey}
         onEdit={(id) => {
-          const product = products.find(item => item.id === id);
+          const product = products.find((item) => item.id === id);
           if (!product) return;
           // Keep the edit snapshot stable when server pagination revalidates behind the dialog.
-          setSelectedProduct({ id: product.id, sku: product.sku, name: product.name, categoryId: product.categoryId, cost: product.cost, salePrice: product.salePrice, stock: product.stock, minStock: product.minStock, isActive: product.isActive, notes: product.notes ?? "" });
+          setSelectedProduct({
+            id: product.id,
+            sku: product.sku,
+            name: product.name,
+            categoryId: product.categoryId,
+            cost: product.cost,
+            salePrice: product.salePrice,
+            stock: product.stock,
+            minStock: product.minStock,
+            isActive: product.isActive,
+            notes: product.notes ?? ""
+          });
           setOpen(true);
         }}
         products={products}

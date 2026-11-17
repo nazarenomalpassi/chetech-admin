@@ -15,44 +15,58 @@ export function Sidebar({ role }: { role: AppRole }) {
   const groups = getSidebarGroupsForRole(role);
 
   return (
-    <aside data-navigation-theme="dark" className="flex h-full max-h-full w-full overflow-hidden rounded-2xl bg-graphite p-3 text-white">
-
+    <aside
+      data-navigation-theme="dark"
+      className="flex h-full max-h-full w-full overflow-hidden rounded-2xl bg-graphite p-3 text-white"
+    >
       <div className="relative z-10 flex h-full min-h-0 w-full flex-col">
         <div className="flex min-h-[80px] flex-none items-center justify-center border-b border-white/10 px-3 py-4">
-          <img alt="Chetech" className="h-auto w-[142px] max-w-full" width={142} height={42} src="/brand/chetech-horizontal-white.svg" />
+          <img
+            alt="Chetech"
+            className="h-auto w-[142px] max-w-full"
+            width={142}
+            height={42}
+            src="/brand/chetech-horizontal-white.svg"
+          />
         </div>
 
         <div className="mt-3 flex min-h-0 flex-1 flex-col">
-          <nav aria-label="Navegación principal" className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]">
-            {groups.map((group) => <section key={group.label} className="space-y-1 pb-3"><h2 className="px-3 pt-2 text-xs font-medium text-white/65">{group.label}</h2>{group.items.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href;
+          <nav
+            aria-label="Navegación principal"
+            className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+          >
+            {groups.map((group) => (
+              <section key={group.label} className="space-y-1 pb-3">
+                <h2 className="px-3 pt-2 text-xs font-medium text-white/65">{group.label}</h2>
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.href;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "nav-section-link group flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium",
-                    active
-                      ? "bg-white text-graphite"
-                      : "text-white/80"
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center",
-                      active ? "text-graphite" : "text-white/75"
-                    )}
-                  >
-                    <Icon aria-hidden="true" className="h-4 w-4" />
-                  </span>
-                  <span className="min-w-0 leading-5">{item.label}</span>
-                  <NavigationPending label={item.label} />
-                </Link>
-              );
-            })}</section>)}
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "nav-section-link group flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium",
+                        active ? "bg-white text-graphite" : "text-white/80"
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center",
+                          active ? "text-graphite" : "text-white/75"
+                        )}
+                      >
+                        <Icon aria-hidden="true" className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0 leading-5">{item.label}</span>
+                      <NavigationPending label={item.label} />
+                    </Link>
+                  );
+                })}
+              </section>
+            ))}
           </nav>
         </div>
 

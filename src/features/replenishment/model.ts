@@ -21,7 +21,14 @@ export type AggregatedSoldItem = {
   currentUnitCost: number;
 };
 
-const CANCELLED_STATUSES = new Set(["anulada", "anulado", "cancelada", "cancelado", "cancelled", "voided"]);
+const CANCELLED_STATUSES = new Set([
+  "anulada",
+  "anulado",
+  "cancelada",
+  "cancelado",
+  "cancelled",
+  "voided"
+]);
 
 export function aggregateSoldItems(items: SoldItemInput[]) {
   const byProduct = new Map<string, AggregatedSoldItem>();
@@ -55,12 +62,19 @@ export function aggregateSoldItems(items: SoldItemInput[]) {
     byProduct.set(item.productId, current);
   }
 
-  return Array.from(byProduct.values()).sort((left, right) => right.quantitySold - left.quantitySold);
+  return Array.from(byProduct.values()).sort(
+    (left, right) => right.quantitySold - left.quantitySold
+  );
 }
 
-export function calculateOrderTotal(items: Array<{ quantityToOrder: number; currentUnitCost: number }>) {
+export function calculateOrderTotal(
+  items: Array<{ quantityToOrder: number; currentUnitCost: number }>
+) {
   return items.reduce(
-    (total, item) => total + Math.max(0, Math.trunc(Number(item.quantityToOrder) || 0)) * Number(item.currentUnitCost || 0),
+    (total, item) =>
+      total +
+      Math.max(0, Math.trunc(Number(item.quantityToOrder) || 0)) *
+        Number(item.currentUnitCost || 0),
     0
   );
 }

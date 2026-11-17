@@ -32,11 +32,22 @@ export function MobileNavigation({ role }: { role: AppRole }) {
             onClick={() => setOpen(false)}
           >
             <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/[0.06]">
-              <img alt="" className="h-6 w-6" width={24} height={24} src="/brand/chetech-isologo-white.svg" />
+              <img
+                alt=""
+                className="h-6 w-6"
+                width={24}
+                height={24}
+                src="/brand/chetech-isologo-white.svg"
+              />
             </span>
             <span className="min-w-0">
-              <span className="font-brand block text-lg">Chetech</span>
-              <span className="block text-xs leading-5 text-white/80" data-testid="mobile-current-section">{currentSection}</span>
+              <span className="block font-brand text-lg">Chetech</span>
+              <span
+                className="block text-xs leading-5 text-white/80"
+                data-testid="mobile-current-section"
+              >
+                {currentSection}
+              </span>
             </span>
           </Link>
 
@@ -54,39 +65,59 @@ export function MobileNavigation({ role }: { role: AppRole }) {
         </div>
 
         {open ? (
-          <div className="mt-3 max-h-[calc(100svh-7.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 pt-3" id="mobile-navigation" onKeyDown={(event) => { if (event.key === "Escape") { setOpen(false); event.currentTarget.parentElement?.querySelector<HTMLButtonElement>("button[aria-expanded]")?.focus(); } }}>
+          <div
+            className="mt-3 max-h-[calc(100svh-7.5rem)] overflow-y-auto overscroll-contain border-t border-white/10 pt-3"
+            id="mobile-navigation"
+            onKeyDown={(event) => {
+              if (event.key === "Escape") {
+                setOpen(false);
+                event.currentTarget.parentElement
+                  ?.querySelector<HTMLButtonElement>("button[aria-expanded]")
+                  ?.focus();
+              }
+            }}
+          >
             <nav className="grid gap-3" aria-label="Navegacion del local">
-              {groups.map((group) => <section key={group.label}><h2 className="mb-2 px-3 text-xs font-medium text-white/65">{group.label}</h2><div className="grid gap-1 sm:grid-cols-2">{group.items.map((item) => {
-                const Icon = item.icon;
-                const active = pathname === item.href;
+              {groups.map((group) => (
+                <section key={group.label}>
+                  <h2 className="mb-2 px-3 text-xs font-medium text-white/65">{group.label}</h2>
+                  <div className="grid gap-1 sm:grid-cols-2">
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      const active = pathname === item.href;
 
-                return (
-                  <Link
-                    className={cn(
-                      "nav-section-link flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
-                      active
-                        ? "bg-white text-graphite"
-                        : "text-white/80"
-                    )}
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    key={item.href}
-                    onClick={() => {
-                      // Keep Link's pending feedback mounted until the new route arrives.
-                      if (active) setOpen(false);
-                    }}
-                  >
-                    <span className="nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center">
-                      <Icon aria-hidden="true" className="h-4 w-4" />
-                    </span>
-                    <span>{item.label}</span>
-                    <NavigationPending label={item.label} />
-                  </Link>
-                );
-              })}</div></section>)}
+                      return (
+                        <Link
+                          className={cn(
+                            "nav-section-link flex min-h-11 items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium",
+                            active ? "bg-white text-graphite" : "text-white/80"
+                          )}
+                          href={item.href}
+                          aria-current={active ? "page" : undefined}
+                          key={item.href}
+                          onClick={() => {
+                            // Keep Link's pending feedback mounted until the new route arrives.
+                            if (active) setOpen(false);
+                          }}
+                        >
+                          <span className="nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center">
+                            <Icon aria-hidden="true" className="h-4 w-4" />
+                          </span>
+                          <span>{item.label}</span>
+                          <NavigationPending label={item.label} />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
             </nav>
 
-            <form action="/auth/sign-out" className="mt-3 border-t border-white/8 pt-3" method="post">
+            <form
+              action="/auth/sign-out"
+              className="border-white/8 mt-3 border-t pt-3"
+              method="post"
+            >
               <button
                 className={cn(
                   buttonVariants({ variant: "secondary" }),

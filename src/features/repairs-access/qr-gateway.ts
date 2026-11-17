@@ -15,7 +15,7 @@ export const repairQrHeaders = {
   "Referrer-Policy": "no-referrer",
   "Content-Security-Policy":
     "default-src 'none'; img-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
 };
 
 export function getRepairQrBranding() {
@@ -42,12 +42,12 @@ export async function getRepairQrResponse(input: unknown): Promise<Response> {
     )
       return getRepairQrBranding();
     const order = await (supabase as any).rpc("workshop_order_payload", {
-      p_order_id: id,
+      p_order_id: id
     });
     if (order.error || order.data?.id !== id) return getRepairQrBranding();
     return new Response(null, {
       status: 303,
-      headers: { ...repairQrHeaders, Location: getPrivateRepairPath(id) },
+      headers: { ...repairQrHeaders, Location: getPrivateRepairPath(id) }
     });
   } catch {
     // Anonymous, unavailable and unknown records have the same public response.

@@ -94,7 +94,10 @@ function normalizeCustomer(row: Row, index: number): NormalizedCustomer {
     nullableText(row["CUIT"]),
     nullableText(row["D?gitoVerificador"])
   ].filter(Boolean);
-  const notes = [iva ? `IVA: ${iva}` : null, cuitParts.length ? `CUIT: ${cuitParts.join("-")}` : null]
+  const notes = [
+    iva ? `IVA: ${iva}` : null,
+    cuitParts.length ? `CUIT: ${cuitParts.join("-")}` : null
+  ]
     .filter(Boolean)
     .join(" | ");
 
@@ -145,7 +148,9 @@ async function main() {
 
   const { data: existingCustomers, error: existingError } = await supabase
     .from("repair_access_customers")
-    .select("id, full_name, phone, phone_normalized, alternate_phone, alternate_phone_normalized, dni, email, address, notes");
+    .select(
+      "id, full_name, phone, phone_normalized, alternate_phone, alternate_phone_normalized, dni, email, address, notes"
+    );
 
   if (existingError) throw existingError;
 
@@ -204,7 +209,9 @@ async function main() {
       else summary.imported += 1;
     }
 
-    console.log(JSON.stringify({ dryRun: true, file: path.basename(workbookPath), summary }, null, 2));
+    console.log(
+      JSON.stringify({ dryRun: true, file: path.basename(workbookPath), summary }, null, 2)
+    );
     return;
   }
 
@@ -221,7 +228,8 @@ async function main() {
     .select("id")
     .single();
 
-  if (batchError || !batch) throw batchError ?? new Error("No se pudo crear el lote de importacion.");
+  if (batchError || !batch)
+    throw batchError ?? new Error("No se pudo crear el lote de importacion.");
 
   for (const customer of validRows) {
     const dedupePhone = customer.phoneNormalized ?? customer.alternatePhoneNormalized!;
@@ -234,7 +242,8 @@ async function main() {
         phone: customer.phone ?? existing.phone,
         phone_normalized: customer.phoneNormalized ?? existing.phone_normalized,
         alternate_phone: customer.alternatePhone ?? existing.alternate_phone,
-        alternate_phone_normalized: customer.alternatePhoneNormalized ?? existing.alternate_phone_normalized,
+        alternate_phone_normalized:
+          customer.alternatePhoneNormalized ?? existing.alternate_phone_normalized,
         dni: customer.dni ?? existing.dni,
         email: customer.email ?? existing.email,
         address: customer.address ?? existing.address,
@@ -342,7 +351,13 @@ async function main() {
 
   if (updateBatchError) throw updateBatchError;
 
-  console.log(JSON.stringify({ dryRun: false, file: path.basename(workbookPath), batchId: batch.id, summary }, null, 2));
+  console.log(
+    JSON.stringify(
+      { dryRun: false, file: path.basename(workbookPath), batchId: batch.id, summary },
+      null,
+      2
+    )
+  );
 }
 
 main().catch((error) => {

@@ -2,12 +2,7 @@ const DATE_ONLY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const OPERATIONAL_TIME_ZONE = "America/Argentina/Buenos_Aires";
 
 export type RepairWarrantyStateCode =
-  | "none"
-  | "pending_delivery"
-  | "active"
-  | "expires_today"
-  | "expired"
-  | "needs_review";
+  "none" | "pending_delivery" | "active" | "expires_today" | "expired" | "needs_review";
 
 export type RepairWarrantyState = {
   code: RepairWarrantyStateCode;

@@ -17,7 +17,9 @@ export function RepairAccessCustomersSection({
   onSearchChange: (value: string) => void;
 }) {
   const normalizedSearch = search.trim().toLowerCase();
-  const [remoteCustomers, setRemoteCustomers] = useState<RepairAccessCustomerSummary[] | null>(null);
+  const [remoteCustomers, setRemoteCustomers] = useState<RepairAccessCustomerSummary[] | null>(
+    null
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState(false);
 
@@ -34,9 +36,12 @@ export function RepairAccessCustomersSection({
     const timeoutId = window.setTimeout(async () => {
       setIsSearching(true);
       try {
-        const response = await fetch(`/api/repair-access/customers?q=${encodeURIComponent(search)}`, {
-          signal: controller.signal
-        });
+        const response = await fetch(
+          `/api/repair-access/customers?q=${encodeURIComponent(search)}`,
+          {
+            signal: controller.signal
+          }
+        );
         if (!response.ok) throw new Error("Customer search failed");
         const payload = await response.json();
         if (controller.signal.aborted) return;
@@ -58,12 +63,23 @@ export function RepairAccessCustomersSection({
   const sourceCustomers = remoteCustomers ?? customers;
   const filteredCustomers = sourceCustomers.filter((customer) => {
     if (!normalizedSearch) return true;
-    const haystack = [customer.fullName, customer.phone, customer.alternatePhone, customer.dni, customer.email, customer.address]
+    const haystack = [
+      customer.fullName,
+      customer.phone,
+      customer.alternatePhone,
+      customer.dni,
+      customer.email,
+      customer.address
+    ]
       .join(" ")
       .toLowerCase();
     return haystack.includes(normalizedSearch);
   });
-  const emptyMessage = searchError ? "Intenta la busqueda nuevamente." : isSearching ? "Buscando clientes..." : "No encontramos clientes con esa busqueda.";
+  const emptyMessage = searchError
+    ? "Intenta la busqueda nuevamente."
+    : isSearching
+      ? "Buscando clientes..."
+      : "No encontramos clientes con esa busqueda.";
 
   return (
     <Card className="space-y-5">
@@ -77,20 +93,33 @@ export function RepairAccessCustomersSection({
         <div className="w-full lg:max-w-sm">
           <label className="grid gap-2 text-sm font-medium text-slate-700">
             <span>Buscar cliente</span>
-            <Input onChange={(event) => onSearchChange(event.target.value)} placeholder="Nombre, telefono, DNI o email" value={search} />
+            <Input
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Nombre, telefono, DNI o email"
+              value={search}
+            />
           </label>
-          {isSearching ? <p className="mt-2 text-xs text-slate-500">Buscando en toda la base...</p> : null}
+          {isSearching ? (
+            <p className="mt-2 text-xs text-slate-500">Buscando en toda la base...</p>
+          ) : null}
         </div>
       </div>
 
-      {searchError ? <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">No se pudo completar la busqueda de clientes. Intenta de nuevo; no se confirmo si hay coincidencias.</p> : null}
+      {searchError ? (
+        <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">
+          No se pudo completar la busqueda de clientes. Intenta de nuevo; no se confirmo si hay
+          coincidencias.
+        </p>
+      ) : null}
       <div className="min-w-0">
         <div className="divide-y divide-slate-200 lg:hidden">
           {filteredCustomers.length ? (
             filteredCustomers.map((customer) => (
               <article className="min-w-0 py-3 text-sm" key={customer.id}>
                 <p className="font-semibold text-slate-950">{customer.fullName}</p>
-                <p className="mt-1 text-sm text-slate-600">{customer.phone || customer.alternatePhone || "-"}</p>
+                <p className="mt-1 text-sm text-slate-600">
+                  {customer.phone || customer.alternatePhone || "-"}
+                </p>
                 <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <span className="text-slate-500">DNI</span>
@@ -98,18 +127,24 @@ export function RepairAccessCustomersSection({
                   </div>
                   <div>
                     <span className="text-slate-500">Alta</span>
-                    <p className="mt-1 font-semibold text-slate-700">{formatDate(customer.createdAt)}</p>
+                    <p className="mt-1 font-semibold text-slate-700">
+                      {formatDate(customer.createdAt)}
+                    </p>
                   </div>
                 </div>
-                {customer.email ? <p className="mt-2 break-words text-sm text-slate-500">{customer.email}</p> : null}
-                {customer.address ? <p className="mt-1 break-words text-sm leading-5 text-slate-500">{customer.address}</p> : null}
+                {customer.email ? (
+                  <p className="mt-2 break-words text-sm text-slate-500">{customer.email}</p>
+                ) : null}
+                {customer.address ? (
+                  <p className="mt-1 break-words text-sm leading-5 text-slate-500">
+                    {customer.address}
+                  </p>
+                ) : null}
                 <p className="mt-2 text-xs text-slate-500">{customer.source}</p>
               </article>
             ))
           ) : (
-            <div className="px-4 py-8 text-center text-sm text-slate-500">
-              {emptyMessage}
-            </div>
+            <div className="px-4 py-8 text-center text-sm text-slate-500">{emptyMessage}</div>
           )}
         </div>
 
@@ -133,7 +168,9 @@ export function RepairAccessCustomersSection({
                       <p className="font-semibold text-slate-950">{customer.fullName}</p>
                       <p className="text-xs text-slate-500">{customer.email || "Sin email"}</p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{customer.phone || customer.alternatePhone || "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {customer.phone || customer.alternatePhone || "-"}
+                    </td>
                     <td className="px-4 py-3 text-slate-600">{customer.dni || "-"}</td>
                     <td className="px-4 py-3 text-slate-600">{customer.address || "-"}</td>
                     <td className="px-4 py-3 text-slate-600">{customer.source}</td>

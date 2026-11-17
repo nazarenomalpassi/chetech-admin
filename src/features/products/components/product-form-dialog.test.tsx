@@ -7,8 +7,22 @@ Object.assign(globalThis, { React });
 vi.mock("@/features/products/actions", () => ({ upsertProductAction: vi.fn() }));
 import { ProductFormDialog } from "./product-form-dialog";
 
-afterEach(() => { cleanup(); vi.restoreAllMocks(); });
-const product = { id: "1", sku: "CAB-001", name: "Cable", categoryId: null, cost: 10, salePrice: 20, stock: 7, minStock: 1, isActive: true, notes: "" };
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+const product = {
+  id: "1",
+  sku: "CAB-001",
+  name: "Cable",
+  categoryId: null,
+  cost: 10,
+  salePrice: 20,
+  stock: 7,
+  minStock: 1,
+  isActive: true,
+  notes: ""
+};
 
 it("closes an unchanged edit without a discard prompt", () => {
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
@@ -24,7 +38,14 @@ it.each(["cancel", "close", "escape"])("protects changed product values on %s", 
   const onClose = vi.fn();
   render(<ProductFormDialog open categories={[]} product={product} onClose={onClose} />);
   fireEvent.change(screen.getByLabelText("Nombre"), { target: { value: "Cable nuevo" } });
-  const close = () => closeMethod === "escape" ? fireEvent.keyDown(document, { key: "Escape" }) : fireEvent.click(screen.getByRole("button", { name: closeMethod === "cancel" ? "Cancelar" : "Cerrar formulario de producto" }));
+  const close = () =>
+    closeMethod === "escape"
+      ? fireEvent.keyDown(document, { key: "Escape" })
+      : fireEvent.click(
+          screen.getByRole("button", {
+            name: closeMethod === "cancel" ? "Cancelar" : "Cerrar formulario de producto"
+          })
+        );
   close();
   expect(confirm).toHaveBeenCalledOnce();
   expect(onClose).not.toHaveBeenCalled();

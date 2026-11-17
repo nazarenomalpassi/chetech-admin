@@ -6,18 +6,14 @@ import ReparacionesAccessPage from "../../page";
 export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Orden de taller",
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: false }
 };
 
-export default async function PrivateRepairPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default async function PrivateRepairPage({ params }: { params: Promise<{ id: string }> }) {
   await requirePermission("repairs.view");
   const parsed = repairQrId.safeParse((await params).id);
   if (!parsed.success) notFound();
   return ReparacionesAccessPage({
-    searchParams: Promise.resolve({ order: parsed.data, view: "detalle" }),
+    searchParams: Promise.resolve({ order: parsed.data, view: "detalle" })
   });
 }

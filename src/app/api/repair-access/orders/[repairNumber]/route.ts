@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 
 import { requireAdmin, requireUser } from "@/lib/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getRepairFinancialRecordByNativeId, normalizeRepairCollectionNumber } from "@/features/repairs/queries";
+import {
+  getRepairFinancialRecordByNativeId,
+  normalizeRepairCollectionNumber
+} from "@/features/repairs/queries";
 import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper";
 import { deriveDocumentSettlement } from "@/features/invoices/document-model";
 
@@ -15,7 +18,10 @@ export async function GET(
     await requireAdmin();
     draftOwnerId = (await requireUser()).id;
   } catch {
-    return NextResponse.json({ error: "Necesitas iniciar sesion para consultar la orden." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Necesitas iniciar sesion para consultar la orden." },
+      { status: 401 }
+    );
   }
 
   const { repairNumber } = await params;
@@ -71,7 +77,10 @@ export async function GET(
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json({ error: "No se pudo consultar la orden de reparacion." }, { status: 500 });
+    return NextResponse.json(
+      { error: "No se pudo consultar la orden de reparacion." },
+      { status: 500 }
+    );
   }
 
   if (!data) {
@@ -85,52 +94,73 @@ export async function GET(
     ? data.repair_access_devices[0]
     : data.repair_access_devices;
   let financialRecord;
-  try { financialRecord = await getRepairFinancialRecordByNativeId(data.id, supabase); }
-  catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : "Revisa el registro financiero vinculado." }, { status: 409, headers: { "Cache-Control": "private, no-store" } }); }
+  try {
+    financialRecord = await getRepairFinancialRecordByNativeId(data.id, supabase);
+  } catch (error) {
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : "Revisa el registro financiero vinculado."
+      },
+      { status: 409, headers: { "Cache-Control": "private, no-store" } }
+    );
+  }
 
   const amount = financialRecord ? financialRecord.finalPrice : mapPrimaryOrderOption(data).amount;
-  const settlement = financialRecord ?? deriveDocumentSettlement(amount, (data.repair_access_payments ?? [])
-    .filter((payment: { voided_at?: string | null }) => !payment.voided_at)
-    .map((payment: { method: string; amount: number | string }) => ({ method: payment.method, amount: Number(payment.amount) })));
-
-  return NextResponse.json({
-    draftOwnerId,
-    financialRecord,
-    order: {
-      id: data.id,
-      repairNumber: data.repair_number,
-      status: data.status,
-      isPaid: Boolean(data.is_paid),
-      workflowVersion: data.workflow_version,
-      deliveredAt: data.delivered_at ?? null,
-      intakeDate: data.intake_date,
-      customerName: customer?.full_name ?? "",
-      customerPhone: customer?.phone ?? "",
-      customerAlternatePhone: customer?.alternate_phone ?? "",
-      customerDni: customer?.dni ?? "",
-      customerEmail: customer?.email ?? "",
-      customerAddress: customer?.address ?? "",
-      device: [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - "),
-      issueDescription: data.budget_detail || data.issue_reported || "",
+  const settlement =
+    financialRecord ??
+    deriveDocumentSettlement(
       amount,
-      paidTotal: settlement.paidTotal,
-      balance: settlement.balance,
-      paymentMethod: data.payment_method ?? "",
-      paymentNotes: data.payment_notes ?? "",
-      warrantyDays: Number(data.warranty_days ?? 0),
-      warrantyStart: data.warranty_start ?? "",
-      warrantyUntil: data.warranty_until ?? "",
-      warrantyConditions: data.warranty_conditions ?? "",
-      observations: [
-        `Orden Access: ${data.repair_number}`,
-        customer?.phone ? `Telefono: ${customer.phone}` : "",
-        customer?.dni ? `DNI: ${customer.dni}` : "",
-        customer?.address ? `Direccion: ${customer.address}` : "",
-        device?.serial_number ? `Serie: ${device.serial_number}` : "",
-        device?.accessory_details ? `Accesorios: ${device.accessory_details}` : "",
-        data.payment_notes ? `Cobro informado en ficha: ${data.payment_notes}` : "",
-        data.warranty_conditions ? `Garantia: ${data.warranty_conditions}` : ""
-      ].filter(Boolean).join("\n")
-    }
-  }, { headers: { "Cache-Control": "private, no-store" } });
+      (data.repair_access_payments ?? [])
+        .filter((payment: { voided_at?: string | null }) => !payment.voided_at)
+        .map((payment: { method: string; amount: number | string }) => ({
+          method: payment.method,
+          amount: Number(payment.amount)
+        }))
+    );
+
+  return NextResponse.json(
+    {
+      draftOwnerId,
+      financialRecord,
+      order: {
+        id: data.id,
+        repairNumber: data.repair_number,
+        status: data.status,
+        isPaid: Boolean(data.is_paid),
+        workflowVersion: data.workflow_version,
+        deliveredAt: data.delivered_at ?? null,
+        intakeDate: data.intake_date,
+        customerName: customer?.full_name ?? "",
+        customerPhone: customer?.phone ?? "",
+        customerAlternatePhone: customer?.alternate_phone ?? "",
+        customerDni: customer?.dni ?? "",
+        customerEmail: customer?.email ?? "",
+        customerAddress: customer?.address ?? "",
+        device: [device?.device_type, device?.brand, device?.model].filter(Boolean).join(" - "),
+        issueDescription: data.budget_detail || data.issue_reported || "",
+        amount,
+        paidTotal: settlement.paidTotal,
+        balance: settlement.balance,
+        paymentMethod: data.payment_method ?? "",
+        paymentNotes: data.payment_notes ?? "",
+        warrantyDays: Number(data.warranty_days ?? 0),
+        warrantyStart: data.warranty_start ?? "",
+        warrantyUntil: data.warranty_until ?? "",
+        warrantyConditions: data.warranty_conditions ?? "",
+        observations: [
+          `Orden Access: ${data.repair_number}`,
+          customer?.phone ? `Telefono: ${customer.phone}` : "",
+          customer?.dni ? `DNI: ${customer.dni}` : "",
+          customer?.address ? `Direccion: ${customer.address}` : "",
+          device?.serial_number ? `Serie: ${device.serial_number}` : "",
+          device?.accessory_details ? `Accesorios: ${device.accessory_details}` : "",
+          data.payment_notes ? `Cobro informado en ficha: ${data.payment_notes}` : "",
+          data.warranty_conditions ? `Garantia: ${data.warranty_conditions}` : ""
+        ]
+          .filter(Boolean)
+          .join("\n")
+      }
+    },
+    { headers: { "Cache-Control": "private, no-store" } }
+  );
 }

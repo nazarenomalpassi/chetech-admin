@@ -35,28 +35,72 @@ describe("updateRepairAccessWorkshopAction", () => {
     vi.clearAllMocks();
   });
 
-  it.each(["updateRepairAccessWorkshopAction", "updateRepairAccessTechnicalAction", "updateRepairAccessStatusAction"] as const)("%s guarda sin fallas sin reenviar importes o garantia del formulario anterior", async (action) => {
-    const orderId = "11111111-1111-4111-8111-111111111111";
-    const rpc = vi.fn().mockResolvedValue({ data: { id: orderId }, error: null });
-    requireAdminMock.mockResolvedValue({ role: "admin" }); requirePermissionMock.mockResolvedValue({ role: "tecnico" });
-    createServerSupabaseClientMock.mockResolvedValue({ rpc });
-    const form = new FormData();
-    Object.entries({ id: orderId, expectedVersion: "3", status: "no_presenta_fallas", repairAmount: "999", budgetAmount: "999", finalAmount: "999", budgetDetail: "Stale scope", isPaid: "on", hasWarranty: "on" }).forEach(([key, value]) => form.set(key, value));
-    const actions = await import("./actions");
-    await expect(actions[action](form)).rejects.toThrow("REDIRECT:");
-    expect(rpc).toHaveBeenCalledWith("workshop_save", { p_order_id: orderId, p_expected_version: 3, p_payload: { status: "no_presenta_fallas" } });
-  });
+  it.each([
+    "updateRepairAccessWorkshopAction",
+    "updateRepairAccessTechnicalAction",
+    "updateRepairAccessStatusAction"
+  ] as const)(
+    "%s guarda sin fallas sin reenviar importes o garantia del formulario anterior",
+    async (action) => {
+      const orderId = "11111111-1111-4111-8111-111111111111";
+      const rpc = vi.fn().mockResolvedValue({ data: { id: orderId }, error: null });
+      requireAdminMock.mockResolvedValue({ role: "admin" });
+      requirePermissionMock.mockResolvedValue({ role: "tecnico" });
+      createServerSupabaseClientMock.mockResolvedValue({ rpc });
+      const form = new FormData();
+      Object.entries({
+        id: orderId,
+        expectedVersion: "3",
+        status: "no_presenta_fallas",
+        repairAmount: "999",
+        budgetAmount: "999",
+        finalAmount: "999",
+        budgetDetail: "Stale scope",
+        isPaid: "on",
+        hasWarranty: "on"
+      }).forEach(([key, value]) => form.set(key, value));
+      const actions = await import("./actions");
+      await expect(actions[action](form)).rejects.toThrow("REDIRECT:");
+      expect(rpc).toHaveBeenCalledWith("workshop_save", {
+        p_order_id: orderId,
+        p_expected_version: 3,
+        p_payload: { status: "no_presenta_fallas" }
+      });
+    }
+  );
 
   it("conserva el motivo del bloqueo en la ficha completa de mostrador", async () => {
     const orderId = "11111111-1111-4111-8111-111111111111";
-    requireAdminMock.mockResolvedValue({ id: "22222222-2222-4222-8222-222222222222", role: "admin" });
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: "23514", message: "Registra una autorizacion vigente del cliente antes de marcar listo para retirar." } });
+    requireAdminMock.mockResolvedValue({
+      id: "22222222-2222-4222-8222-222222222222",
+      role: "admin"
+    });
+    const rpc = vi.fn().mockResolvedValue({
+      data: null,
+      error: {
+        code: "23514",
+        message: "Registra una autorizacion vigente del cliente antes de marcar listo para retirar."
+      }
+    });
     createServerSupabaseClientMock.mockResolvedValue({
       rpc,
-      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { id: orderId, status: "presupuestado", is_paid: false }, error: null }) }) }) })
+      from: () => ({
+        select: () => ({
+          eq: () => ({
+            maybeSingle: async () => ({
+              data: { id: orderId, status: "presupuestado", is_paid: false },
+              error: null
+            })
+          })
+        })
+      })
     });
     const form = new FormData();
-    form.set("id", orderId); form.set("status", "listo_para_retirar"); form.set("budgetAmount", "208000"); form.set("finalAmount", "208000"); form.set("expectedVersion", "1");
+    form.set("id", orderId);
+    form.set("status", "listo_para_retirar");
+    form.set("budgetAmount", "208000");
+    form.set("finalAmount", "208000");
+    form.set("expectedVersion", "1");
     const { updateRepairAccessTechnicalAction } = await import("@/features/repairs-access/actions");
     await expect(updateRepairAccessTechnicalAction(form)).rejects.toThrow("REDIRECT:");
     const target = new URL(redirectMock.mock.calls.at(-1)![0], "https://chetech.test");

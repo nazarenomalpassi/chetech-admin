@@ -20,8 +20,14 @@ const baseRepair = {
 
 describe("repair form helpers", () => {
   it("preserves valid payment methods and falls back safely", () => {
-    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "nx" }).paymentMethod).toBe("nx");
-    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "mp" }).paymentMethod).toBe("mp");
-    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "" }).paymentMethod).toBe("efectivo");
+    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "nx" }).paymentMethod).toBe(
+      "nx"
+    );
+    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "mp" }).paymentMethod).toBe(
+      "mp"
+    );
+    expect(buildRepairFormFromRepair({ ...baseRepair, paymentMethod: "" }).paymentMethod).toBe(
+      "efectivo"
+    );
   });
 });

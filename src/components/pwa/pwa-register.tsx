@@ -13,13 +13,19 @@ export function PwaRegister() {
     if (window.location.protocol !== "https:" && window.location.hostname !== "localhost") return;
 
     if (process.env.NODE_ENV !== "production") {
-      void navigator.serviceWorker.getRegistrations().then((registrations) =>
-        Promise.all(registrations.map((registration) => registration.unregister()))
-      );
-      if ("caches" in window) {
-        void caches.keys().then((keys) =>
-          Promise.all(keys.filter((key) => key.startsWith("chetech-")).map((key) => caches.delete(key)))
+      void navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister()))
         );
+      if ("caches" in window) {
+        void caches
+          .keys()
+          .then((keys) =>
+            Promise.all(
+              keys.filter((key) => key.startsWith("chetech-")).map((key) => caches.delete(key))
+            )
+          );
       }
       return;
     }
@@ -30,14 +36,19 @@ export function PwaRegister() {
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
         if (disposed) return;
-        if (registration.waiting && navigator.serviceWorker.controller) setWaitingWorker(registration.waiting);
+        if (registration.waiting && navigator.serviceWorker.controller)
+          setWaitingWorker(registration.waiting);
 
         registration.addEventListener("updatefound", () => {
           const installingWorker = registration.installing;
           if (!installingWorker) return;
 
           installingWorker.addEventListener("statechange", () => {
-            if (!disposed && installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+            if (
+              !disposed &&
+              installingWorker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
               setWaitingWorker(installingWorker);
             }
           });
@@ -60,7 +71,9 @@ export function PwaRegister() {
       return;
     }
 
-    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), { once: true });
+    navigator.serviceWorker.addEventListener("controllerchange", () => window.location.reload(), {
+      once: true
+    });
     waitingWorker.postMessage({ type: "SKIP_WAITING" });
   }
 

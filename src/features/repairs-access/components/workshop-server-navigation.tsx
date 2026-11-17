@@ -8,7 +8,19 @@ import { Select } from "@/components/ui/select";
 import type { WorkshopPageInfo } from "../page-queries";
 import { getWorkshopLinkIntent } from "./workshop-navigation-intent";
 
-export function WorkshopServerNavigation({ pageInfo, search, status, warranty, isComposing = false }: { pageInfo: WorkshopPageInfo; search: string; status: string; warranty: string; isComposing?: boolean }) {
+export function WorkshopServerNavigation({
+  pageInfo,
+  search,
+  status,
+  warranty,
+  isComposing = false
+}: {
+  pageInfo: WorkshopPageInfo;
+  search: string;
+  status: string;
+  warranty: string;
+  isComposing?: boolean;
+}) {
   const router = useRouter();
   const pendingFilterRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastRequestedFiltersRef = useRef<string | null>(null);
@@ -17,7 +29,11 @@ export function WorkshopServerNavigation({ pageInfo, search, status, warranty, i
     function cancelRewrite(params: URLSearchParams) {
       if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current);
       pendingFilterRef.current = null;
-      lastRequestedFiltersRef.current = JSON.stringify([params.get("q") ?? "", params.get("state") ?? "todos", params.get("warranty") ?? "todos"]);
+      lastRequestedFiltersRef.current = JSON.stringify([
+        params.get("q") ?? "",
+        params.get("state") ?? "todos",
+        params.get("warranty") ?? "todos"
+      ]);
     }
     function cancelRewriteOnHistoryNavigation() {
       cancelRewrite(new URLSearchParams(window.location.search));
@@ -35,7 +51,8 @@ export function WorkshopServerNavigation({ pageInfo, search, status, warranty, i
   }, []);
   useEffect(() => {
     if (isComposing || lastRequestedFiltersRef.current === filterKey) return;
-    if (search === pageInfo.search && status === pageInfo.status && warranty === pageInfo.warranty) return;
+    if (search === pageInfo.search && status === pageInfo.status && warranty === pageInfo.warranty)
+      return;
     pendingFilterRef.current = setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       params.set("view", "ordenes");
@@ -43,15 +60,30 @@ export function WorkshopServerNavigation({ pageInfo, search, status, warranty, i
       params.delete("order");
       params.delete("status");
       params.delete("error");
-      if (search) params.set("q", search); else params.delete("q");
-      if (status !== "todos") params.set("state", status); else params.delete("state");
-      if (warranty !== "todos") params.set("warranty", warranty); else params.delete("warranty");
+      if (search) params.set("q", search);
+      else params.delete("q");
+      if (status !== "todos") params.set("state", status);
+      else params.delete("state");
+      if (warranty !== "todos") params.set("warranty", warranty);
+      else params.delete("warranty");
       pendingFilterRef.current = null;
       lastRequestedFiltersRef.current = filterKey;
       router.replace(`/reparaciones-access?${params}` as Route, { scroll: false });
     }, 350);
-    return () => { if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current); };
-  }, [search, status, warranty, pageInfo.search, pageInfo.status, pageInfo.warranty, router, filterKey, isComposing]);
+    return () => {
+      if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current);
+    };
+  }, [
+    search,
+    status,
+    warranty,
+    pageInfo.search,
+    pageInfo.status,
+    pageInfo.warranty,
+    router,
+    filterKey,
+    isComposing
+  ]);
   function navigationParams() {
     // Explicit navigation must include pending filters and cancel their debounced rewrite.
     if (pendingFilterRef.current) clearTimeout(pendingFilterRef.current);
@@ -62,33 +94,67 @@ export function WorkshopServerNavigation({ pageInfo, search, status, warranty, i
     params.delete("order");
     params.delete("status");
     params.delete("error");
-    if (search) params.set("q", search); else params.delete("q");
-    if (status !== "todos") params.set("state", status); else params.delete("state");
-    if (warranty !== "todos") params.set("warranty", warranty); else params.delete("warranty");
+    if (search) params.set("q", search);
+    else params.delete("q");
+    if (status !== "todos") params.set("state", status);
+    else params.delete("state");
+    if (warranty !== "todos") params.set("warranty", warranty);
+    else params.delete("warranty");
     return params;
   }
   function setScope(scope: string) {
-    const p = navigationParams(); p.delete("cursor"); if (scope !== "all") p.set("scope", scope); else p.delete("scope"); router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
+    const p = navigationParams();
+    p.delete("cursor");
+    if (scope !== "all") p.set("scope", scope);
+    else p.delete("scope");
+    router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
   }
   function next() {
     const p = navigationParams();
-    if (search !== pageInfo.search || status !== pageInfo.status || warranty !== pageInfo.warranty) p.delete("cursor");
+    if (search !== pageInfo.search || status !== pageInfo.status || warranty !== pageInfo.warranty)
+      p.delete("cursor");
     else if (pageInfo.nextCursor) p.set("cursor", pageInfo.nextCursor);
     router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
   }
-  function first() { const p = navigationParams(); p.delete("cursor"); router.push(`/reparaciones-access?${p}` as Route, { scroll: false }); }
-  return <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
-    <label className="grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 sm:w-auto sm:min-w-48"><span>Vista de trabajo</span><Select aria-label="Vista de trabajo" value={pageInfo.scope} onChange={(e) => setScope(e.target.value)} options={[
-      { value: "all", label: "Todas las ordenes" }, { value: "mine", label: "Mis ordenes" },
-      { value: "unassigned", label: "Sin responsable" }, { value: "approved", label: "Autorizadas" },
-      { value: "parts", label: "Faltan repuestos" }, { value: "waiting_customer", label: "Esperando cliente" },
-      { value: "ready", label: "Listas para retirar" }, { value: "return", label: "Pendientes de devolver" },
-      { value: "overdue", label: "Revision vencida" }
-    ]} /></label>
-    <p className="py-3 text-sm text-slate-500">{pageInfo.total} ordenes · {pageInfo.pageSize} por pagina</p>
-    <div className="flex flex-wrap gap-2">
-      {pageInfo.cursor ? <Button variant="secondary" type="button" onClick={first}>Primera pagina</Button> : null}
-      <Button variant="secondary" type="button" disabled={!pageInfo.nextCursor} onClick={next}>Siguiente</Button>
+  function first() {
+    const p = navigationParams();
+    p.delete("cursor");
+    router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
+  }
+  return (
+    <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
+      <label className="grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 sm:w-auto sm:min-w-48">
+        <span>Vista de trabajo</span>
+        <Select
+          aria-label="Vista de trabajo"
+          value={pageInfo.scope}
+          onChange={(e) => setScope(e.target.value)}
+          options={[
+            { value: "all", label: "Todas las ordenes" },
+            { value: "mine", label: "Mis ordenes" },
+            { value: "unassigned", label: "Sin responsable" },
+            { value: "approved", label: "Autorizadas" },
+            { value: "parts", label: "Faltan repuestos" },
+            { value: "waiting_customer", label: "Esperando cliente" },
+            { value: "ready", label: "Listas para retirar" },
+            { value: "return", label: "Pendientes de devolver" },
+            { value: "overdue", label: "Revision vencida" }
+          ]}
+        />
+      </label>
+      <p className="py-3 text-sm text-slate-500">
+        {pageInfo.total} ordenes · {pageInfo.pageSize} por pagina
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {pageInfo.cursor ? (
+          <Button variant="secondary" type="button" onClick={first}>
+            Primera pagina
+          </Button>
+        ) : null}
+        <Button variant="secondary" type="button" disabled={!pageInfo.nextCursor} onClick={next}>
+          Siguiente
+        </Button>
+      </div>
     </div>
-  </div>;
+  );
 }

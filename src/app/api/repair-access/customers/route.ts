@@ -8,7 +8,10 @@ export async function GET(request: Request) {
   try {
     await requireAdmin();
   } catch {
-    return NextResponse.json({ customers: [], error: "Necesitas iniciar sesion para buscar clientes." }, { status: 401 });
+    return NextResponse.json(
+      { customers: [], error: "Necesitas iniciar sesion para buscar clientes." },
+      { status: 401 }
+    );
   }
 
   const { searchParams } = new URL(request.url);
@@ -26,22 +29,24 @@ export async function GET(request: Request) {
     .limit(12);
 
   if (error) {
-    return NextResponse.json({ customers: [], error: "No se pudieron cargar los clientes." }, { status: 500 });
+    return NextResponse.json(
+      { customers: [], error: "No se pudieron cargar los clientes." },
+      { status: 500 }
+    );
   }
 
-  const customers = (data ?? [])
-    .map((customer: any) => ({
-      id: customer.id,
-      fullName: customer.full_name,
-      phone: customer.phone ?? "",
-      alternatePhone: customer.alternate_phone ?? "",
-      dni: customer.dni ?? "",
-      email: customer.email ?? "",
-      address: customer.address ?? "",
-      notes: customer.notes ?? "",
-      source: customer.source ?? "manual",
-      createdAt: customer.created_at
-    }));
+  const customers = (data ?? []).map((customer: any) => ({
+    id: customer.id,
+    fullName: customer.full_name,
+    phone: customer.phone ?? "",
+    alternatePhone: customer.alternate_phone ?? "",
+    dni: customer.dni ?? "",
+    email: customer.email ?? "",
+    address: customer.address ?? "",
+    notes: customer.notes ?? "",
+    source: customer.source ?? "manual",
+    createdAt: customer.created_at
+  }));
 
   return NextResponse.json({ customers });
 }

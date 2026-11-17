@@ -7,9 +7,7 @@ export default function AccessDeniedPage() {
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 text-amber-700">
           <ShieldX aria-hidden="true" className="h-7 w-7" />
         </span>
-        <p className="mt-6 text-sm text-brand-700">
-          Panel Chetech
-        </p>
+        <p className="mt-6 text-sm text-brand-700">Panel Chetech</p>
         <h1 className="mt-3 text-3xl font-semibold text-slate-950">Esta cuenta no tiene acceso</h1>
         <p className="mt-3 text-sm leading-6 text-slate-600">
           Tu sesión es válida, pero el panel administrativo está reservado para administradores y

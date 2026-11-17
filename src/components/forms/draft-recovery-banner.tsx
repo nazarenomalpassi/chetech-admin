@@ -28,9 +28,12 @@ export function DraftRecoveryBanner({
         <div className="flex min-w-0 items-start gap-3">
           <Clock3 aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
           <div>
-            <h2 className="font-semibold" id="draft-recovery-title">Encontramos datos sin guardar</h2>
+            <h2 className="font-semibold" id="draft-recovery-title">
+              Encontramos datos sin guardar
+            </h2>
             <p className="mt-1 text-sm leading-5 text-amber-900">
-              El borrador se guardó en este dispositivo el {timestamp}. Podés recuperarlo o descartarlo.
+              El borrador se guardó en este dispositivo el {timestamp}. Podés recuperarlo o
+              descartarlo.
             </p>
           </div>
         </div>

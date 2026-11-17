@@ -47,14 +47,18 @@ async function main() {
     measure("repair_orders_current_150", () =>
       supabase
         .from("repair_access_orders")
-        .select("id,repair_number,intake_date,issue_reported,technical_diagnosis,repair_progress,budget_amount,budget_detail,budget_response_notes,budget_response_at,approved_amount,final_amount,payment_method,payment_notes,is_paid,paid_at,delivered_at,warranty_start,warranty_until,warranty_days,warranty_conditions,warranty_active,work_performed,used_parts,internal_observations,technician_name,notes,priority,status,created_at,repair_access_customers(id,full_name,phone,alternate_phone,phone_normalized,dni,email,address,notes),repair_access_devices(id,device_type,brand,model,serial_number,accessory_details,visual_condition,notes)")
+        .select(
+          "id,repair_number,intake_date,issue_reported,technical_diagnosis,repair_progress,budget_amount,budget_detail,budget_response_notes,budget_response_at,approved_amount,final_amount,payment_method,payment_notes,is_paid,paid_at,delivered_at,warranty_start,warranty_until,warranty_days,warranty_conditions,warranty_active,work_performed,used_parts,internal_observations,technician_name,notes,priority,status,created_at,repair_access_customers(id,full_name,phone,alternate_phone,phone_normalized,dni,email,address,notes),repair_access_devices(id,device_type,brand,model,serial_number,accessory_details,visual_condition,notes)"
+        )
         .order("created_at", { ascending: false })
         .limit(150)
     ),
     measure("repair_orders_optimized_100", () =>
       supabase
         .from("repair_access_orders")
-        .select("id,repair_number,intake_date,issue_reported,technical_diagnosis,repair_progress,budget_amount,budget_detail,budget_response_notes,budget_response_at,approved_amount,final_amount,payment_method,payment_notes,is_paid,paid_at,delivered_at,warranty_start,warranty_until,warranty_days,warranty_conditions,warranty_active,work_performed,used_parts,internal_observations,technician_name,notes,priority,status,created_at,repair_access_customers(id,full_name,phone,alternate_phone,phone_normalized,dni,email,address,notes),repair_access_devices(id,device_type,brand,model,serial_number,accessory_details,visual_condition,notes)")
+        .select(
+          "id,repair_number,intake_date,issue_reported,technical_diagnosis,repair_progress,budget_amount,budget_detail,budget_response_notes,budget_response_at,approved_amount,final_amount,payment_method,payment_notes,is_paid,paid_at,delivered_at,warranty_start,warranty_until,warranty_days,warranty_conditions,warranty_active,work_performed,used_parts,internal_observations,technician_name,notes,priority,status,created_at,repair_access_customers(id,full_name,phone,alternate_phone,phone_normalized,dni,email,address,notes),repair_access_devices(id,device_type,brand,model,serial_number,accessory_details,visual_condition,notes)"
+        )
         .order("created_at", { ascending: false })
         .limit(100)
     ),

@@ -49,8 +49,15 @@ function isIncome(type: string) {
   return type === "venta" || type === "reparacion" || type === "facturacion";
 }
 
-export function CashView({ canClose, data, message }: { canClose: boolean; data: CashData; message: ActionResult | null }) {
-
+export function CashView({
+  canClose,
+  data,
+  message
+}: {
+  canClose: boolean;
+  data: CashData;
+  message: ActionResult | null;
+}) {
   return (
     <div className="space-y-4">
       <Card className="overflow-hidden">
@@ -63,12 +70,16 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
           </div>
           <div className="border-l border-slate-200 pl-4">
             <p className="text-sm text-slate-600">Saldo total disponible</p>
-            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-950">{formatCurrency(data.totalBalance)}</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums text-slate-950">
+              {formatCurrency(data.totalBalance)}
+            </p>
           </div>
         </div>
 
         {message ? (
-          <p className={`mt-4 rounded-2xl px-4 py-3 text-sm ${message.success ? "bg-brand-100 text-graphite" : "bg-rose-50 text-rose-700"}`}>
+          <p
+            className={`mt-4 rounded-2xl px-4 py-3 text-sm ${message.success ? "bg-brand-100 text-graphite" : "bg-rose-50 text-rose-700"}`}
+          >
             {message.message}
           </p>
         ) : null}
@@ -79,7 +90,9 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-slate-600">{formatCashMethod(account.method)}</p>
-                  <p className="mt-2 break-words text-2xl font-semibold tabular-nums text-graphite">{formatCurrency(account.balance)}</p>
+                  <p className="mt-2 break-words text-2xl font-semibold tabular-nums text-graphite">
+                    {formatCurrency(account.balance)}
+                  </p>
                 </div>
                 <div className="text-slate-500">
                   <Wallet className="h-5 w-5" />
@@ -88,11 +101,15 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
               <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div className="py-1">
                   <p className="text-sm text-slate-600">Ingresos hoy</p>
-                  <p className="mt-1 font-semibold text-graphite">{formatCurrency(account.todayIncome)}</p>
+                  <p className="mt-1 font-semibold text-graphite">
+                    {formatCurrency(account.todayIncome)}
+                  </p>
                 </div>
                 <div className="py-1">
                   <p className="text-sm text-slate-600">Egresos hoy</p>
-                  <p className="mt-1 font-semibold text-graphite">{formatCurrency(account.todayOutcome)}</p>
+                  <p className="mt-1 font-semibold text-graphite">
+                    {formatCurrency(account.todayOutcome)}
+                  </p>
                 </div>
               </div>
             </div>
@@ -104,7 +121,9 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
         <Card>
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Cierre del {formatDate(data.today)}</h2>
+              <h2 className="text-xl font-semibold text-slate-950">
+                Cierre del {formatDate(data.today)}
+              </h2>
             </div>
             <LockKeyhole className="h-5 w-5 text-fog" />
           </div>
@@ -113,21 +132,28 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
             <ReconciliationPanel today={data.today} balances={data.balances} />
           ) : (
             <div className="mt-5 rounded-xl bg-brand-50 p-5 text-sm leading-6 text-slate-600">
-              Podes consultar caja y movimientos, pero el cierre diario queda reservado para administradores.
+              Podes consultar caja y movimientos, pero el cierre diario queda reservado para
+              administradores.
             </div>
           )}
 
           <div className="mt-6">
-            <p className="text-sm font-semibold text-slate-950">Cierres anteriores (sin arqueo por cuenta)</p>
+            <p className="text-sm font-semibold text-slate-950">
+              Cierres anteriores (sin arqueo por cuenta)
+            </p>
             <div className="mt-3 space-y-2">
               {data.closures.length ? (
                 data.closures.map((closure) => (
                   <div key={closure.id} className="border-b border-slate-200 py-3">
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-medium text-graphite">{formatDate(closure.date)}</span>
-                      <span className="font-semibold text-graphite">{formatCurrency(closure.finalBalance)}</span>
+                      <span className="font-semibold text-graphite">
+                        {formatCurrency(closure.finalBalance)}
+                      </span>
                     </div>
-                    {closure.observations ? <p className="mt-1 text-xs text-slate-500">{closure.observations}</p> : null}
+                    {closure.observations ? (
+                      <p className="mt-1 text-xs text-slate-500">{closure.observations}</p>
+                    ) : null}
                   </div>
                 ))
               ) : (
@@ -158,20 +184,30 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
                           <span className="rounded-full bg-brand-100 p-1 text-graphite">
                             <Icon className="h-3.5 w-3.5" />
                           </span>
-                          <p className="font-semibold text-graphite">{formatMovementType(movement.type)}</p>
+                          <p className="font-semibold text-graphite">
+                            {formatMovementType(movement.type)}
+                          </p>
                         </div>
-                        <p className="mt-1 text-xs text-slate-500">{formatDate(movement.date)} - {formatCashMethod(movement.method)}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {formatDate(movement.date)} - {formatCashMethod(movement.method)}
+                        </p>
                       </div>
                       <p className="shrink-0 font-semibold text-graphite">
                         {income ? "+" : "-"} {formatCurrency(movement.amount)}
                       </p>
                     </div>
-                    {movement.description ? <p className="mt-2 break-words text-xs leading-5 text-slate-500">{movement.description}</p> : null}
+                    {movement.description ? (
+                      <p className="mt-2 break-words text-xs leading-5 text-slate-500">
+                        {movement.description}
+                      </p>
+                    ) : null}
                   </article>
                 );
               })}
               {!data.recentMovements.length ? (
-                <div className="bg-white px-4 py-8 text-sm text-slate-500">Todavia no hay movimientos de caja.</div>
+                <div className="bg-white px-4 py-8 text-sm text-slate-500">
+                  Todavia no hay movimientos de caja.
+                </div>
               ) : null}
             </div>
 
@@ -182,7 +218,7 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
                     <th className="px-4 py-3 font-medium">Fecha</th>
                     <th className="px-4 py-3 font-medium">Tipo</th>
                     <th className="px-4 py-3 font-medium">Medio</th>
-                    <th className="px-4 py-3 font-medium text-right">Monto</th>
+                    <th className="px-4 py-3 text-right font-medium">Monto</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white">
@@ -197,11 +233,17 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
                             <span className="rounded-full bg-brand-100 p-1 text-graphite">
                               <Icon className="h-3.5 w-3.5" />
                             </span>
-                            <span className="font-medium text-graphite">{formatMovementType(movement.type)}</span>
+                            <span className="font-medium text-graphite">
+                              {formatMovementType(movement.type)}
+                            </span>
                           </div>
-                          {movement.description ? <p className="mt-1 text-xs text-slate-500">{movement.description}</p> : null}
+                          {movement.description ? (
+                            <p className="mt-1 text-xs text-slate-500">{movement.description}</p>
+                          ) : null}
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{formatCashMethod(movement.method)}</td>
+                        <td className="px-4 py-3 text-slate-600">
+                          {formatCashMethod(movement.method)}
+                        </td>
                         <td className="px-4 py-3 text-right font-semibold text-graphite">
                           {income ? "+" : "-"} {formatCurrency(movement.amount)}
                         </td>
@@ -211,7 +253,9 @@ export function CashView({ canClose, data, message }: { canClose: boolean; data:
                 </tbody>
               </table>
               {!data.recentMovements.length ? (
-                <div className="bg-white px-4 py-8 text-sm text-slate-500">Todavia no hay movimientos de caja.</div>
+                <div className="bg-white px-4 py-8 text-sm text-slate-500">
+                  Todavia no hay movimientos de caja.
+                </div>
               ) : null}
             </div>
           </div>

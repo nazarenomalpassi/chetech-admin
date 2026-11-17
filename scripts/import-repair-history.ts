@@ -27,10 +27,13 @@ const APPLY_CONFIRMATION = `IMPORT-${EXPECTED_ROWS}`;
 loadEnvConfig(process.cwd());
 
 const workbookPath =
-  process.argv.find((argument) => !argument.startsWith("--") && argument.toLowerCase().endsWith(".xlsx")) ??
-  DEFAULT_WORKBOOK_PATH;
+  process.argv.find(
+    (argument) => !argument.startsWith("--") && argument.toLowerCase().endsWith(".xlsx")
+  ) ?? DEFAULT_WORKBOOK_PATH;
 const applyMode = process.argv.includes("--apply");
-const confirmation = process.argv.find((argument) => argument.startsWith("--confirm="))?.split("=")[1];
+const confirmation = process.argv
+  .find((argument) => argument.startsWith("--confirm="))
+  ?.split("=")[1];
 const rollbackBatchId = process.argv
   .find((argument) => argument.startsWith("--rollback="))
   ?.split("=")[1];
@@ -81,7 +84,7 @@ type CurrentOrderRow = {
 };
 
 function firstRelation<T>(value: T | T[] | null) {
-  return Array.isArray(value) ? value[0] ?? null : value;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
 function sanitizeRawValue(value: unknown, key: string) {
@@ -133,10 +136,8 @@ async function fetchExistingImportedOrders(): Promise<ExistingHistoricalOrder[]>
 }
 
 async function fetchCurrentOrders() {
-  const { data, error } = await supabase
-    .from("repair_access_orders")
-    .select(
-      `
+  const { data, error } = await supabase.from("repair_access_orders").select(
+    `
         id,
         order_number,
         repair_number,
@@ -146,7 +147,7 @@ async function fetchCurrentOrders() {
         repair_access_customers (full_name, full_name_normalized, phone_normalized),
         repair_access_devices (device_type, brand, model)
       `
-    );
+  );
 
   if (error) throw error;
   return (data ?? []) as CurrentOrderRow[];
@@ -173,8 +174,7 @@ function findContentCollisionCandidates(
       const samePhone =
         Boolean(row.customer.phoneNormalized) &&
         customer?.phone_normalized === row.customer.phoneNormalized;
-      const sameName =
-        customer?.full_name_normalized === row.customer.fullNameNormalized;
+      const sameName = customer?.full_name_normalized === row.customer.fullNameNormalized;
       const sameDevice =
         normalizeHistoricalHeader(device?.device_type) ===
         normalizeHistoricalHeader(row.device.deviceType);
@@ -273,7 +273,11 @@ async function createBackup() {
 
 async function main() {
   if (rollbackBatchId) {
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(rollbackBatchId)) {
+    if (
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        rollbackBatchId
+      )
+    ) {
       throw new Error("El identificador del lote de reversa no es valido.");
     }
     if (confirmation !== `ROLLBACK-${rollbackBatchId}`) {
@@ -339,20 +343,15 @@ async function main() {
     fetchExistingImportedOrders(),
     fetchCurrentOrders()
   ]);
-  const existingCustomers: ExistingHistoricalCustomer[] = existingCustomerRows.map(
-    (customer) => ({
-      id: customer.id,
-      fullNameNormalized:
-        customer.full_name_normalized ??
-        normalizeHistoricalHeader(customer.full_name),
-      phoneNormalized: customer.phone_normalized,
-      alternatePhoneNormalized: customer.alternate_phone_normalized,
-      dni: customer.dni,
-      addressNormalized: customer.address
-        ? normalizeHistoricalHeader(customer.address)
-        : null
-    })
-  );
+  const existingCustomers: ExistingHistoricalCustomer[] = existingCustomerRows.map((customer) => ({
+    id: customer.id,
+    fullNameNormalized:
+      customer.full_name_normalized ?? normalizeHistoricalHeader(customer.full_name),
+    phoneNormalized: customer.phone_normalized,
+    alternatePhoneNormalized: customer.alternate_phone_normalized,
+    dni: customer.dni,
+    addressNormalized: customer.address ? normalizeHistoricalHeader(customer.address) : null
+  }));
   const plan = buildRepairHistoryImportPlan({
     rows: normalizedRows,
     existingCustomers,
@@ -365,10 +364,7 @@ async function main() {
   const duplicateStableKeys = Object.entries(stableKeyCounts)
     .filter(([, count]) => count > 1)
     .map(([stableKey, count]) => ({ stableKey, count }));
-  const contentCollisionCandidates = findContentCollisionCandidates(
-    normalizedRows,
-    currentOrders
-  );
+  const contentCollisionCandidates = findContentCollisionCandidates(normalizedRows, currentOrders);
   const currentOrderByPublicNumber = new Map(
     currentOrders.map((order) => [order.order_number, order])
   );
@@ -388,17 +384,18 @@ async function main() {
       : [];
   });
   const today = getOperationalDate();
-  const warrantyStates = normalizedRows.map((row) =>
-    getWarrantyState({
-      hasWarranty: row.order.hasWarranty,
-      warrantyDays: row.order.warrantyDays,
-      pickedUpAt: row.order.pickedUpAt,
-      repairStatus: row.order.status,
-      warrantyStart: row.order.warrantyStart,
-      warrantyUntil: row.order.warrantyUntil,
-      requiresReview: row.order.warrantyRequiresReview,
-      today
-    }).code
+  const warrantyStates = normalizedRows.map(
+    (row) =>
+      getWarrantyState({
+        hasWarranty: row.order.hasWarranty,
+        warrantyDays: row.order.warrantyDays,
+        pickedUpAt: row.order.pickedUpAt,
+        repairStatus: row.order.status,
+        warrantyStart: row.order.warrantyStart,
+        warrantyUntil: row.order.warrantyUntil,
+        requiresReview: row.order.warrantyRequiresReview,
+        today
+      }).code
   );
   const durationValues = rawRows
     .map((row) => getHistoricalRowValue(row, "garantiatiempodefalla"))
@@ -410,9 +407,7 @@ async function main() {
     ...contentCollisionCandidates.map(
       (entry) => `posible_orden_ya_existente_${entry.legacyOrderNumber}`
     ),
-    ...publicNumberCollisions.map(
-      (entry) => `numero_publico_ocupado_${entry.publicOrderNumber}`
-    )
+    ...publicNumberCollisions.map((entry) => `numero_publico_ocupado_${entry.publicOrderNumber}`)
   ];
   const coverage = plan.summary.ordersNew + plan.summary.ordersSkipped;
   const applyReady =
@@ -436,9 +431,7 @@ async function main() {
       existingCustomers: existingCustomers.length,
       ...plan.summary,
       ambiguousMatches: plan.ambiguousRows.length,
-      ordersRequiringReview: normalizedRows.filter(
-        (row) => row.reviewReasons.length > 0
-      ).length,
+      ordersRequiringReview: normalizedRows.filter((row) => row.reviewReasons.length > 0).length,
       retiredWithoutPickupDate: normalizedRows.filter((row) =>
         row.reviewReasons.includes("retirada_sin_fecha")
       ).length,
@@ -446,16 +439,16 @@ async function main() {
     },
     sourceReconciliation: {
       expectedRows: EXPECTED_ROWS,
-      uniqueLegacyOrderNumbers: new Set(
-        normalizedRows.map((row) => row.legacyOrderNumber)
-      ).size,
+      uniqueLegacyOrderNumbers: new Set(normalizedRows.map((row) => row.legacyOrderNumber)).size,
       closedLegacyGaps: publicOrderNumberPlan.closedLegacyGaps,
-      maximumPublicOrderNumber:
-        publicOrderNumberPlan.maximumPublicOrderNumber,
+      maximumPublicOrderNumber: publicOrderNumberPlan.maximumPublicOrderNumber,
       duplicateStableKeys,
       intakeDateRange: [
         normalizedRows.map((row) => row.order.intakeDate).sort()[0] ?? null,
-        normalizedRows.map((row) => row.order.intakeDate).sort().at(-1) ?? null
+        normalizedRows
+          .map((row) => row.order.intakeDate)
+          .sort()
+          .at(-1) ?? null
       ],
       statusCounts: countBy(normalizedRows, (row) => row.order.status),
       warrantyDurationCounts: countBy(durationValues, (value) => value),
@@ -529,10 +522,7 @@ async function main() {
       matchReason: entry.matchReason,
       row: {
         ...entry.row,
-        publicOrderNumber:
-          publicOrderNumberPlan.byLegacyOrderNumber[
-            entry.row.legacyOrderNumber
-          ]
+        publicOrderNumber: publicOrderNumberPlan.byLegacyOrderNumber[entry.row.legacyOrderNumber]
       },
       rawData: sanitizeRawRow(rawRows[entry.row.rowNumber - 2] ?? {})
     })),

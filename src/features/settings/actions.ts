@@ -6,10 +6,7 @@ import { z } from "zod";
 
 import { createAuditLog } from "@/lib/audit";
 import { requireAdmin } from "@/lib/auth";
-import {
-  getBusinessGoalsKey,
-  getRepairWarrantySettingsKey
-} from "@/lib/app-settings";
+import { getBusinessGoalsKey, getRepairWarrantySettingsKey } from "@/lib/app-settings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 const businessGoalsSchema = z.object({

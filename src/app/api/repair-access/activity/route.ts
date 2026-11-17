@@ -7,12 +7,18 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export const dynamic = "force-dynamic";
 
 function privateJson(body: unknown, status = 200) {
-  return NextResponse.json(body, { status, headers: { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
+  return NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" }
+  });
 }
 
 export async function GET(request: Request) {
-  try { await requirePermission("repairs.view"); }
-  catch { return privateJson({ error: "Necesitas acceso al taller para consultar el historial." }, 403); }
+  try {
+    await requirePermission("repairs.view");
+  } catch {
+    return privateJson({ error: "Necesitas acceso al taller para consultar el historial." }, 403);
+  }
 
   const params = new URL(request.url).searchParams;
   const order = z.string().uuid().safeParse(params.get("orderId"));
@@ -34,10 +40,20 @@ export async function GET(request: Request) {
       p_limit: Math.min(30, limit)
     });
     if (error) {
-      if (error.code === "42501") return privateJson({ error: "No tienes permiso para consultar este historial." }, 403);
-      if (error.code === "P0002") return privateJson({ error: "La orden ya no esta disponible." }, 404);
-      if (error.code === "22023") return privateJson({ error: "La pagina de historial no es valida. Vuelve a abrir la orden." }, 400);
-      if (error.code === "PGRST202" || error.code === "42883") return privateJson({ error: "El historial completo todavia no esta disponible. Intenta mas tarde." }, 503);
+      if (error.code === "42501")
+        return privateJson({ error: "No tienes permiso para consultar este historial." }, 403);
+      if (error.code === "P0002")
+        return privateJson({ error: "La orden ya no esta disponible." }, 404);
+      if (error.code === "22023")
+        return privateJson(
+          { error: "La pagina de historial no es valida. Vuelve a abrir la orden." },
+          400
+        );
+      if (error.code === "PGRST202" || error.code === "42883")
+        return privateJson(
+          { error: "El historial completo todavia no esta disponible. Intenta mas tarde." },
+          503
+        );
       throw new Error("Activity read failed");
     }
     return privateJson(activityPageSchema.parse(data));

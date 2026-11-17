@@ -59,9 +59,7 @@ export function RepairCustomerLinkCard({
         if (requestError instanceof DOMException && requestError.name === "AbortError") return;
         setResults([]);
         setError(
-          requestError instanceof Error
-            ? requestError.message
-            : "No se pudieron buscar clientes."
+          requestError instanceof Error ? requestError.message : "No se pudieron buscar clientes."
         );
       } finally {
         if (!controller.signal.aborted) setLoading(false);
@@ -89,9 +87,7 @@ export function RepairCustomerLinkCard({
       </div>
 
       <div className="mt-4 border-y border-slate-200 py-3">
-        <p className="text-sm font-medium text-slate-500">
-          Vinculación actual
-        </p>
+        <p className="text-sm font-medium text-slate-500">Vinculación actual</p>
         {linkedCustomer ? (
           <div className="mt-3 flex items-start gap-3">
             <UserRound aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
@@ -106,7 +102,9 @@ export function RepairCustomerLinkCard({
             </div>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-slate-500">Esta reparación todavía no tiene una cuenta vinculada.</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Esta reparación todavía no tiene una cuenta vinculada.
+          </p>
         )}
       </div>
 
@@ -156,9 +154,14 @@ export function RepairCustomerLinkCard({
                   onClick={() => setSelected(customer)}
                   type="button"
                 >
-                  <span className="block break-words text-sm font-semibold">{customer.fullName}</span>
-                  <span className={`mt-1 block break-all text-xs ${isSelected ? "text-white/70" : "text-slate-500"}`}>
-                    {[customer.email, customer.phone].filter(Boolean).join(" · ") || "Sin datos de contacto"}
+                  <span className="block break-words text-sm font-semibold">
+                    {customer.fullName}
+                  </span>
+                  <span
+                    className={`mt-1 block break-all text-xs ${isSelected ? "text-white/70" : "text-slate-500"}`}
+                  >
+                    {[customer.email, customer.phone].filter(Boolean).join(" · ") ||
+                      "Sin datos de contacto"}
                   </span>
                 </button>
               );

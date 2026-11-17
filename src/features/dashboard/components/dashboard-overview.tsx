@@ -193,8 +193,18 @@ export function DashboardOverview({
 
       {workshopInbox}
 
-      <section aria-label={`Metricas del ${formatDate(range.from)} al ${formatDate(range.to)}`} className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        {metrics.map((metric) => <MetricCard {...metric} className="p-4 xl:[&>div>span]:hidden" format="currency" key={metric.key} />)}
+      <section
+        aria-label={`Metricas del ${formatDate(range.from)} al ${formatDate(range.to)}`}
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
+      >
+        {metrics.map((metric) => (
+          <MetricCard
+            {...metric}
+            className="p-4 xl:[&>div>span]:hidden"
+            format="currency"
+            key={metric.key}
+          />
+        ))}
       </section>
 
       <div className="space-y-4">
@@ -203,16 +213,22 @@ export function DashboardOverview({
         <div className="grid items-start gap-4 xl:grid-cols-2">
           <DashboardDisclosure
             title="Saldo disponible por cuenta"
-            summary={<>{formatCurrency(accountBalances.reduce((total, account) => total + account.balance, 0))} disponibles en {accountBalances.length} cuentas. MP pendiente: {formatCurrency(pendingMercadoPagoReleaseAmount)}; retenido: {formatCurrency(heldMercadoPagoClaimAmount)}. Saldos actuales.</>}
+            summary={
+              <>
+                {formatCurrency(
+                  accountBalances.reduce((total, account) => total + account.balance, 0)
+                )}{" "}
+                disponibles en {accountBalances.length} cuentas. MP pendiente:{" "}
+                {formatCurrency(pendingMercadoPagoReleaseAmount)}; retenido:{" "}
+                {formatCurrency(heldMercadoPagoClaimAmount)}. Saldos actuales.
+              </>
+            }
           >
             <p className="text-sm text-slate-600">Saldos actuales, no del periodo filtrado.</p>
 
             <div className="mt-4 space-y-3">
               {accountBalances.map((account) => (
-                <div
-                  key={account.method}
-                  className="border-t border-slate-200 py-3"
-                >
+                <div key={account.method} className="border-t border-slate-200 py-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-500">
@@ -228,10 +244,10 @@ export function DashboardOverview({
               <div className="border-t border-amber-200 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-500">
-                      MP de placas pendiente
+                    <p className="text-sm font-semibold text-slate-500">MP de placas pendiente</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Sin confirmar liberacion; excluye reclamos
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">Sin confirmar liberacion; excluye reclamos</p>
                   </div>
                   <p className="text-xl font-semibold text-finance-caution">
                     {formatCurrency(pendingMercadoPagoReleaseAmount)}
@@ -241,18 +257,33 @@ export function DashboardOverview({
               <div className="border-t border-amber-200 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <Link className="text-sm font-semibold text-amber-800 underline-offset-4 hover:underline" href={"/placas-tv?status=claim_open" as Route}>MP retenido por reclamos</Link>
-                    <p className="mt-1 text-xs text-slate-500">Separado del pendiente y de la caja disponible</p>
+                    <Link
+                      className="text-sm font-semibold text-amber-800 underline-offset-4 hover:underline"
+                      href={"/placas-tv?status=claim_open" as Route}
+                    >
+                      MP retenido por reclamos
+                    </Link>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Separado del pendiente y de la caja disponible
+                    </p>
                   </div>
-                  <p className="text-xl font-semibold tabular-nums text-amber-800">{formatCurrency(heldMercadoPagoClaimAmount)}</p>
+                  <p className="text-xl font-semibold tabular-nums text-amber-800">
+                    {formatCurrency(heldMercadoPagoClaimAmount)}
+                  </p>
                 </div>
               </div>
             </div>
           </DashboardDisclosure>
 
-          <DashboardDisclosure title="Visitas de hoy" summary={`${visitsDashboard.todayCount} agendadas; ${visitsDashboard.pendingCount} pendientes hoy.`}>
+          <DashboardDisclosure
+            title="Visitas de hoy"
+            summary={`${visitsDashboard.todayCount} agendadas; ${visitsDashboard.pendingCount} pendientes hoy.`}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/visitas" as Route}>
+              <Link
+                className={cn(buttonVariants({ variant: "secondary" }), "px-4")}
+                href={"/visitas" as Route}
+              >
                 Abrir visitas
               </Link>
             </div>
@@ -260,16 +291,26 @@ export function DashboardOverview({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="border-t border-slate-200 py-3">
                 <p className="text-sm font-semibold text-slate-500">Visitas hoy</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">{visitsDashboard.todayCount}</p>
-                <p className="mt-1 text-sm text-slate-500">Pendientes hoy: {visitsDashboard.pendingCount}</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {visitsDashboard.todayCount}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  Pendientes hoy: {visitsDashboard.pendingCount}
+                </p>
               </div>
               <div className="border-t border-slate-200 py-3">
                 <p className="text-sm font-semibold text-slate-500">Proxima visita</p>
                 {visitsDashboard.nextVisit ? (
                   <>
-                    <p className="mt-2 text-base font-semibold text-slate-950">{visitsDashboard.nextVisit.customerName}</p>
+                    <p className="mt-2 text-base font-semibold text-slate-950">
+                      {visitsDashboard.nextVisit.customerName}
+                    </p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {getVisitTimeLabel(visitsDashboard.nextVisit.timeFrom, visitsDashboard.nextVisit.timeTo)} | {visitsDashboard.nextVisit.reason}
+                      {getVisitTimeLabel(
+                        visitsDashboard.nextVisit.timeFrom,
+                        visitsDashboard.nextVisit.timeTo
+                      )}{" "}
+                      | {visitsDashboard.nextVisit.reason}
                     </p>
                   </>
                 ) : (
@@ -279,9 +320,15 @@ export function DashboardOverview({
             </div>
           </DashboardDisclosure>
 
-          <DashboardDisclosure title="Cuotas por cobrar" summary={`${installmentsDashboard.dueTodayCount} hoy: ${formatCurrency(installmentsDashboard.dueTodayTotal)}; ${installmentsDashboard.overdueCount} vencidas: ${formatCurrency(installmentsDashboard.overdueTotal)}.`}>
+          <DashboardDisclosure
+            title="Cuotas por cobrar"
+            summary={`${installmentsDashboard.dueTodayCount} hoy: ${formatCurrency(installmentsDashboard.dueTodayTotal)}; ${installmentsDashboard.overdueCount} vencidas: ${formatCurrency(installmentsDashboard.overdueTotal)}.`}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <Link className={cn(buttonVariants({ variant: "secondary" }), "px-4")} href={"/cuotas" as Route}>
+              <Link
+                className={cn(buttonVariants({ variant: "secondary" }), "px-4")}
+                href={"/cuotas" as Route}
+              >
                 Ver cuotas
               </Link>
             </div>
@@ -289,13 +336,21 @@ export function DashboardOverview({
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="border-t border-slate-200 py-3">
                 <p className="text-sm font-semibold text-slate-500">Cuotas por cobrar hoy</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">{installmentsDashboard.dueTodayCount}</p>
-                <p className="mt-1 text-sm text-slate-500">{formatCurrency(installmentsDashboard.dueTodayTotal)}</p>
+                <p className="mt-2 text-2xl font-semibold text-slate-950">
+                  {installmentsDashboard.dueTodayCount}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {formatCurrency(installmentsDashboard.dueTodayTotal)}
+                </p>
               </div>
               <div className="border-t border-amber-200 py-3">
                 <p className="text-sm font-semibold text-slate-500">Cuotas vencidas</p>
-                <p className="mt-2 text-2xl font-semibold text-finance-caution">{installmentsDashboard.overdueCount}</p>
-                <p className="mt-1 text-sm text-slate-500">{formatCurrency(installmentsDashboard.overdueTotal)}</p>
+                <p className="mt-2 text-2xl font-semibold text-finance-caution">
+                  {installmentsDashboard.overdueCount}
+                </p>
+                <p className="mt-1 text-sm text-slate-500">
+                  {formatCurrency(installmentsDashboard.overdueTotal)}
+                </p>
               </div>
             </div>
 
@@ -309,7 +364,8 @@ export function DashboardOverview({
                         {installment.customerName} | {installment.productName}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Cuota {installment.installmentLabel} | {formatCurrency(installment.amount)} | {getDashboardAccountLabel(installment.paymentMethod)}
+                        Cuota {installment.installmentLabel} | {formatCurrency(installment.amount)}{" "}
+                        | {getDashboardAccountLabel(installment.paymentMethod)}
                       </p>
                     </div>
                   ))
@@ -327,7 +383,9 @@ export function DashboardOverview({
                         {installment.customerName} | {installment.productName}
                       </p>
                       <p className="mt-1 text-sm text-slate-500">
-                        Cuota {installment.installmentLabel} | Vencia {formatDate(installment.dueDate)} | {formatCurrency(installment.amount)} | {getDashboardAccountLabel(installment.paymentMethod)}
+                        Cuota {installment.installmentLabel} | Vencia{" "}
+                        {formatDate(installment.dueDate)} | {formatCurrency(installment.amount)} |{" "}
+                        {getDashboardAccountLabel(installment.paymentMethod)}
                       </p>
                     </div>
                   ))
@@ -338,8 +396,14 @@ export function DashboardOverview({
             </div>
           </DashboardDisclosure>
 
-          <DashboardDisclosure title="Productos mas vendidos" summary={topProducts.length ? `${topProducts.length} productos destacados; ${topProducts.reduce((total, product) => total + product.quantity, 0)} unidades en esta lista del periodo.` : "Sin ventas registradas en el periodo."}>
-
+          <DashboardDisclosure
+            title="Productos mas vendidos"
+            summary={
+              topProducts.length
+                ? `${topProducts.length} productos destacados; ${topProducts.reduce((total, product) => total + product.quantity, 0)} unidades en esta lista del periodo.`
+                : "Sin ventas registradas en el periodo."
+            }
+          >
             <div className="mt-4 space-y-3">
               {topProducts.length ? (
                 topProducts.map((product, index) => (
@@ -351,8 +415,12 @@ export function DashboardOverview({
                       {String(index + 1).padStart(2, "0")}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm font-medium text-slate-950">{product.name}</p>
-                      <p className="mt-1 text-xs text-slate-500">{product.quantity} unidades registradas</p>
+                      <p className="break-words text-sm font-medium text-slate-950">
+                        {product.name}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {product.quantity} unidades registradas
+                      </p>
                     </div>
                   </div>
                 ))

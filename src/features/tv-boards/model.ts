@@ -1,7 +1,8 @@
 import type { TvBoardReleaseEvidence, TvBoardSaleStatus } from "./sales";
 
 export type TvBoardClaimStatus = "none" | "open" | "cancelled";
-export type TvBoardSaleEventKind = "start_claim" | "resume_sale" | "cancel_sale" | "confirm_release";
+export type TvBoardSaleEventKind =
+  "start_claim" | "resume_sale" | "cancel_sale" | "confirm_release";
 export type TvBoardRow = {
   id: string;
   brand: string;
@@ -27,7 +28,13 @@ export type TvBoardRow = {
   linkedSale?: { id: string; number: string; method: "nx" | "mp" | null } | null;
   createdAt: string;
   updatedAt: string;
-  events: Array<{ id: string; kind: TvBoardSaleEventKind; notes: string; netAmount: number; createdAt: string }>;
+  events: Array<{
+    id: string;
+    kind: TvBoardSaleEventKind;
+    notes: string;
+    netAmount: number;
+    createdAt: string;
+  }>;
 };
 
 export type TvBoardFinancialSummary = {

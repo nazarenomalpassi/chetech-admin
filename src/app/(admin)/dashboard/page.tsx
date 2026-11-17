@@ -15,9 +15,17 @@ export default async function DashboardPage({
   const { user, profile } = await getCurrentProfile();
 
   if (profile.role === "tecnico") {
-    const [technicianData, inbox] = await Promise.all([getTechnicianDashboardData(user.id), getWorkshopInbox()]);
-    return <TechnicianDashboard data={technicianData} technicianName={profile.full_name || "tecnico"}
-      workshopInbox={<OperationalInboxSection inbox={inbox} />} />;
+    const [technicianData, inbox] = await Promise.all([
+      getTechnicianDashboardData(user.id),
+      getWorkshopInbox()
+    ]);
+    return (
+      <TechnicianDashboard
+        data={technicianData}
+        technicianName={profile.full_name || "tecnico"}
+        workshopInbox={<OperationalInboxSection inbox={inbox} />}
+      />
+    );
   }
 
   const [data, inbox] = await Promise.all([

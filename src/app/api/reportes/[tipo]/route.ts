@@ -7,7 +7,14 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type ReportType = "ventas" | "gastos" | "caja" | "reparaciones" | "facturacion" | "sueldos";
 
-const REPORT_TYPES: ReportType[] = ["ventas", "gastos", "caja", "reparaciones", "facturacion", "sueldos"];
+const REPORT_TYPES: ReportType[] = [
+  "ventas",
+  "gastos",
+  "caja",
+  "reparaciones",
+  "facturacion",
+  "sueldos"
+];
 
 function csvEscape(value: unknown) {
   const text = String(value ?? "");
@@ -15,7 +22,10 @@ function csvEscape(value: unknown) {
 }
 
 function toCsv(headers: string[], rows: unknown[][]) {
-  return [headers.map(csvEscape).join(","), ...rows.map((row) => row.map(csvEscape).join(","))].join("\n");
+  return [
+    headers.map(csvEscape).join(","),
+    ...rows.map((row) => row.map(csvEscape).join(","))
+  ].join("\n");
 }
 
 function csvResponse(csv: string, filename: string) {
@@ -45,7 +55,9 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
     let query = applyStableCreationOrder(
       (supabase as any)
         .from("sales")
-        .select("id, sale_number, subtotal, cost_total, profit_total, sold_at, created_at, updated_at, created_by")
+        .select(
+          "id, sale_number, subtotal, cost_total, profit_total, sold_at, created_at, updated_at, created_by"
+        )
     );
     if (from) query = query.gte("sold_at", `${from}T00:00:00.000Z`);
     if (to) query = query.lte("sold_at", `${to}T23:59:59.999Z`);
@@ -72,7 +84,9 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
     let query = applyStableCreationOrder(
       (supabase as any)
         .from("repairs")
-        .select("id, customer_name, device, order_number, final_price, estimated_price, entry_date, created_at, updated_at, created_by")
+        .select(
+          "id, customer_name, device, order_number, final_price, estimated_price, entry_date, created_at, updated_at, created_by"
+        )
     );
     if (from) query = query.gte("entry_date", from);
     if (to) query = query.lte("entry_date", to);
@@ -81,7 +95,15 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
 
     return csvResponse(
       toCsv(
-        ["cliente", "equipo", "numero_orden", "monto_final", "monto_estimado", "fecha", "creado_por"],
+        [
+          "cliente",
+          "equipo",
+          "numero_orden",
+          "monto_final",
+          "monto_estimado",
+          "fecha",
+          "creado_por"
+        ],
         (data ?? []).map((row: any) => [
           row.customer_name,
           row.device,
@@ -100,7 +122,9 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
     let query = applyStableCreationOrder(
       (supabase as any)
         .from("expenses")
-        .select("id, expense_date, type, description, amount, payment_method, is_voided, observations, created_at, updated_at")
+        .select(
+          "id, expense_date, type, description, amount, payment_method, is_voided, observations, created_at, updated_at"
+        )
     );
     if (from) query = query.gte("expense_date", from);
     if (to) query = query.lte("expense_date", to);
@@ -127,7 +151,9 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
   if (reportType === "facturacion") {
     let query = (supabase as any)
       .from("invoices")
-      .select("invoice_number, customer_name, customer_phone, source_type, total, paid_total, balance, status, created_at")
+      .select(
+        "invoice_number, customer_name, customer_phone, source_type, total, paid_total, balance, status, created_at"
+      )
       .order("created_at", { ascending: false });
     if (from) query = query.gte("created_at", `${from}T00:00:00.000Z`);
     if (to) query = query.lte("created_at", `${to}T23:59:59.999Z`);
@@ -163,7 +189,10 @@ export async function GET(request: Request, context: { params: Promise<{ tipo: s
     const { data, error } = await query;
 
     if (error?.code === "42P01") {
-      return csvResponse(toCsv(["fecha", "monto", "cuenta", "observaciones", "creado_en"], []), "reporte-sueldos.csv");
+      return csvResponse(
+        toCsv(["fecha", "monto", "cuenta", "observaciones", "creado_en"], []),
+        "reporte-sueldos.csv"
+      );
     }
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

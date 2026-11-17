@@ -8,15 +8,39 @@ import type { WorkshopPageInfo } from "../page-queries";
 Object.assign(globalThis, { React });
 const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-const pageInfo: WorkshopPageInfo = { total: 67, pageSize: 30, cursor: "page2", nextCursor: "page3", search: "telefono", status: "presupuestado", warranty: "active", scope: "parts" };
-const props = { pageInfo, search: pageInfo.search, status: pageInfo.status, warranty: pageInfo.warranty };
+const pageInfo: WorkshopPageInfo = {
+  total: 67,
+  pageSize: 30,
+  cursor: "page2",
+  nextCursor: "page3",
+  search: "telefono",
+  status: "presupuestado",
+  warranty: "active",
+  scope: "parts"
+};
+const props = {
+  pageInfo,
+  search: pageInfo.search,
+  status: pageInfo.status,
+  warranty: pageInfo.warranty
+};
 
 beforeEach(() => {
-  vi.clearAllMocks(); vi.useFakeTimers();
-  window.history.replaceState(null, "", "/reparaciones-access?view=ordenes&q=telefono&state=presupuestado&warranty=active&scope=parts&cursor=page2&order=repair-1&custom=keep");
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+  window.history.replaceState(
+    null,
+    "",
+    "/reparaciones-access?view=ordenes&q=telefono&state=presupuestado&warranty=active&scope=parts&cursor=page2&order=repair-1&custom=keep"
+  );
 });
-afterEach(() => { cleanup(); vi.useRealTimers(); });
-function pushedParams() { return new URL(router.push.mock.calls.at(-1)![0], window.location.origin).searchParams; }
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
+function pushedParams() {
+  return new URL(router.push.mock.calls.at(-1)![0], window.location.origin).searchParams;
+}
 
 describe("server order navigation", () => {
   it("cancels the old debounce and does not rewrite an accepted same-route link intent", () => {
@@ -26,7 +50,9 @@ describe("server order navigation", () => {
     anchor.addEventListener("click", (event) => event.preventDefault());
     document.body.append(anchor);
     fireEvent.click(anchor);
-    rerender(<WorkshopServerNavigation {...props} search="" status="pendiente_revision" warranty="todos" />);
+    rerender(
+      <WorkshopServerNavigation {...props} search="" status="pendiente_revision" warranty="todos" />
+    );
     act(() => vi.advanceTimersByTime(1000));
     expect(router.replace).not.toHaveBeenCalled();
     anchor.remove();
@@ -38,7 +64,8 @@ describe("server order navigation", () => {
     expect(router.replace).not.toHaveBeenCalled();
     rerender(<WorkshopServerNavigation {...props} search="Belén " isComposing={false} />);
     act(() => vi.advanceTimersByTime(350));
-    const params = new URL(router.replace.mock.calls.at(-1)![0], window.location.origin).searchParams;
+    const params = new URL(router.replace.mock.calls.at(-1)![0], window.location.origin)
+      .searchParams;
     expect(params.get("q")).toBe("Belén ");
   });
 
@@ -46,7 +73,13 @@ describe("server order navigation", () => {
     const { rerender } = render(<WorkshopServerNavigation {...props} search="Belén Pérez" />);
     act(() => vi.advanceTimersByTime(350));
     expect(router.replace).toHaveBeenCalledOnce();
-    rerender(<WorkshopServerNavigation {...props} search="Belén Pérez" pageInfo={{ ...pageInfo, search: "Bel" }} />);
+    rerender(
+      <WorkshopServerNavigation
+        {...props}
+        search="Belén Pérez"
+        pageInfo={{ ...pageInfo, search: "Bel" }}
+      />
+    );
     act(() => vi.advanceTimersByTime(1000));
     expect(router.replace).toHaveBeenCalledOnce();
   });
@@ -68,12 +101,20 @@ describe("server order navigation", () => {
   it("debounces filter changes while preserving scope and unrelated URL parameters", () => {
     const { rerender } = render(<WorkshopServerNavigation {...props} search="pantalla" />);
     act(() => vi.advanceTimersByTime(200));
-    rerender(<WorkshopServerNavigation {...props} search="pantalla rota" status="todos" warranty="todos" />);
+    rerender(
+      <WorkshopServerNavigation {...props} search="pantalla rota" status="todos" warranty="todos" />
+    );
     act(() => vi.advanceTimersByTime(349));
     expect(router.replace).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1));
-    const params = new URL(router.replace.mock.calls.at(-1)![0], window.location.origin).searchParams;
-    expect(Object.fromEntries(params)).toEqual({ view: "ordenes", q: "pantalla rota", scope: "parts", custom: "keep" });
+    const params = new URL(router.replace.mock.calls.at(-1)![0], window.location.origin)
+      .searchParams;
+    expect(Object.fromEntries(params)).toEqual({
+      view: "ordenes",
+      q: "pantalla rota",
+      scope: "parts",
+      custom: "keep"
+    });
     expect(router.replace.mock.calls.at(-1)![1]).toEqual({ scroll: false });
   });
 
@@ -117,11 +158,20 @@ describe("server order navigation", () => {
   it("returns to the first page with filters and custom parameters intact", () => {
     render(<WorkshopServerNavigation {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Primera pagina" }));
-    expect(Object.fromEntries(pushedParams())).toEqual({ view: "ordenes", q: "telefono", state: "presupuestado", warranty: "active", scope: "parts", custom: "keep" });
+    expect(Object.fromEntries(pushedParams())).toEqual({
+      view: "ordenes",
+      q: "telefono",
+      state: "presupuestado",
+      warranty: "active",
+      scope: "parts",
+      custom: "keep"
+    });
   });
 
   it("disables next when there is no further page", () => {
     render(<WorkshopServerNavigation {...props} pageInfo={{ ...pageInfo, nextCursor: null }} />);
-    expect((screen.getByRole("button", { name: "Siguiente" }) as HTMLButtonElement).disabled).toBe(true);
+    expect((screen.getByRole("button", { name: "Siguiente" }) as HTMLButtonElement).disabled).toBe(
+      true
+    );
   });
 });

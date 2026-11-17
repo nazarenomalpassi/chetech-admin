@@ -5,18 +5,31 @@ import { getVisitsData } from "./queries";
 let query: Record<string, ReturnType<typeof vi.fn>>;
 beforeEach(() => {
   query = {};
-  for (const method of ["select", "limit", "range", "or", "eq", "gte", "lte", "is", "order"]) query[method] = vi.fn(() => query);
+  for (const method of ["select", "limit", "range", "or", "eq", "gte", "lte", "is", "order"])
+    query[method] = vi.fn(() => query);
   query.then = vi.fn((resolve) => resolve({ data: [], error: null, count: 601 }));
   const profiles: Record<string, ReturnType<typeof vi.fn>> = {};
   for (const method of ["select", "in", "order"]) profiles[method] = vi.fn(() => profiles);
-  profiles.then = vi.fn((resolve) => resolve({ data: [{ id: "tech", full_name: "Juan" }], error: null }));
-  vi.mocked(createServerSupabaseClient).mockResolvedValue({ from: (table: string) => table === "profiles" ? profiles : query } as never);
+  profiles.then = vi.fn((resolve) =>
+    resolve({ data: [{ id: "tech", full_name: "Juan" }], error: null })
+  );
+  vi.mocked(createServerSupabaseClient).mockResolvedValue({
+    from: (table: string) => (table === "profiles" ? profiles : query)
+  } as never);
 });
 describe("server-side visit filters", () => {
   it("counts before fetching so an out-of-range request cannot trigger a 416", async () => {
     query.then.mockImplementation((resolve) => {
       const lastRange = query.range.mock.calls.at(-1);
-      return resolve(lastRange && lastRange[0] > 600 ? { data: null, error: { code: "PGRST103", message: "Requested range not satisfiable" }, count: null } : { data: [], error: null, count: 601 });
+      return resolve(
+        lastRange && lastRange[0] > 600
+          ? {
+              data: null,
+              error: { code: "PGRST103", message: "Requested range not satisfiable" },
+              count: null
+            }
+          : { data: [], error: null, count: 601 }
+      );
     });
     const result = await getVisitsData({ page: "99999" });
     expect(result.pagination.page).toBe(25);

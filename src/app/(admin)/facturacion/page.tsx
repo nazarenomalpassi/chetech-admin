@@ -9,7 +9,13 @@ import { parsePage } from "@/lib/pagination";
 export default async function FacturacionPage({
   searchParams
 }: {
-  searchParams: Promise<{ status?: string; error?: string; edit?: string; page?: string; order?: string }>;
+  searchParams: Promise<{
+    status?: string;
+    error?: string;
+    edit?: string;
+    page?: string;
+    order?: string;
+  }>;
 }) {
   const params = await searchParams;
   const profile = await requirePermission("invoices.manage");

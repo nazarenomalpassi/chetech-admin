@@ -25,19 +25,32 @@ export function getVisitDateRange(date: string, view: string) {
   if (!operationDateSchema.safeParse(date).success) return null;
   const start = new Date(`${date}T00:00:00Z`);
   if (view !== "week") return { from: date, to: date };
-  start.setUTCDate(start.getUTCDate() - (start.getUTCDay() + 6) % 7);
+  start.setUTCDate(start.getUTCDate() - ((start.getUTCDay() + 6) % 7));
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 6);
   return { from: start.toISOString().slice(0, 10), to: end.toISOString().slice(0, 10) };
 }
 
-type ScheduledVisit = { id?: string; technicianId?: string | null; visitDate: string; timeFrom: string; timeTo: string; status: string };
+type ScheduledVisit = {
+  id?: string;
+  technicianId?: string | null;
+  visitDate: string;
+  timeFrom: string;
+  timeTo: string;
+  status: string;
+};
 
 export function visitsOverlap(left: ScheduledVisit, right: ScheduledVisit) {
-  return Boolean(left.technicianId && left.technicianId === right.technicianId &&
-    !(left.id && left.id === right.id) && left.visitDate === right.visitDate &&
-    !["realizada", "cancelada"].includes(left.status) && !["realizada", "cancelada"].includes(right.status) &&
-    left.timeFrom.slice(0, 5) < right.timeTo.slice(0, 5) && right.timeFrom.slice(0, 5) < left.timeTo.slice(0, 5));
+  return Boolean(
+    left.technicianId &&
+    left.technicianId === right.technicianId &&
+    !(left.id && left.id === right.id) &&
+    left.visitDate === right.visitDate &&
+    !["realizada", "cancelada"].includes(left.status) &&
+    !["realizada", "cancelada"].includes(right.status) &&
+    left.timeFrom.slice(0, 5) < right.timeTo.slice(0, 5) &&
+    right.timeFrom.slice(0, 5) < left.timeTo.slice(0, 5)
+  );
 }
 
 export const visitStatusLabels: Record<VisitStatusValue, string> = {

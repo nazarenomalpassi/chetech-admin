@@ -264,17 +264,26 @@ textarea {
 }
 
 @keyframes brand-loading-travel {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(360%); }
+  from {
+    transform: translateX(-110%);
+  }
+  to {
+    transform: translateX(360%);
+  }
 }
 
 .nav-section-link {
   position: relative;
-  transition: background-color 160ms var(--ease-out), color 160ms var(--ease-out), box-shadow 160ms var(--ease-out);
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
 }
 
 .nav-section-icon {
-  transition: transform 160ms var(--ease-out), color 160ms var(--ease-out);
+  transition:
+    transform 160ms var(--ease-out),
+    color 160ms var(--ease-out);
 }
 
 .nav-section-link::before {
@@ -288,7 +297,9 @@ textarea {
   content: "";
   opacity: 0;
   transform: translateY(-50%) scaleY(0.5);
-  transition: opacity 160ms var(--ease-out), transform 160ms var(--ease-out);
+  transition:
+    opacity 160ms var(--ease-out),
+    transform 160ms var(--ease-out);
 }
 
 .nav-section-link:focus-visible {
@@ -409,11 +420,11 @@ textarea {
   background: #fff;
 }
 
-  .table-shell .overflow-x-auto {
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior-x: contain;
-    max-width: 100%;
-  }
+.table-shell .overflow-x-auto {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  max-width: 100%;
+}
 
 .table-toolbar {
   border-bottom: 1px solid rgba(29, 29, 27, 0.08);
@@ -483,10 +494,13 @@ a:focus-visible {
 }
 
 @media (pointer: coarse) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select, textarea {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+  select,
+  textarea {
     font-size: 1rem;
   }
-  button, summary {
+  button,
+  summary {
     min-height: 2.75rem;
   }
 }
@@ -573,7 +587,6 @@ a:focus-visible {
   .empty-panel {
     padding: 1.25rem 1rem;
   }
-
 }
 
 @media (display-mode: standalone) {

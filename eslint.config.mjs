@@ -11,13 +11,21 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: [".agents/**", ".next/**", ".next-staging/**", "tmp/**", "node_modules/**", "next-env.d.ts", "tsconfig.tsbuildinfo"]
+    ignores: [
+      ".agents/**",
+      ".next/**",
+      ".next-staging/**",
+      "tmp/**",
+      "node_modules/**",
+      "next-env.d.ts",
+      "tsconfig.tsbuildinfo"
+    ]
   },
   ...compat.extends("next/core-web-vitals", "next/typescript"),
   {
     rules: {
       "@next/next/no-img-element": "off",
-      "@typescript-eslint/no-explicit-any": "off"
+      "@typescript-eslint/no-explicit-any": "warn"
     }
   }
 ];

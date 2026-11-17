@@ -41,7 +41,17 @@ import type { WorkshopOperationalMetricsSnapshot } from "../operational-metrics"
 import { Input } from "@/components/ui/input";
 import { WarrantyObservationControl } from "./warranty-observation-control";
 
-type RepairAccessSection = "panel" | "nueva" | "clientes" | "ordenes" | "garantias" | "repuestos" | "metricas" | "detalle" | "consultas" | "importar";
+type RepairAccessSection =
+  | "panel"
+  | "nueva"
+  | "clientes"
+  | "ordenes"
+  | "garantias"
+  | "repuestos"
+  | "metricas"
+  | "detalle"
+  | "consultas"
+  | "importar";
 
 const primarySections: { key: RepairAccessSection; label: string }[] = [
   { key: "ordenes", label: "Ordenes" },
@@ -75,8 +85,13 @@ export function RepairsAccessView({
   warrantyReturnsCount = 0,
   warrantyReturnsSearch = "",
   warrantyReturnsClosed = false,
-  partsPage = null, supplierClaimsPage = null, partsSearch = "", partsStatus = "all", supplierClaimsClosed = false,
-  operationalMetrics = null, metricsRange
+  partsPage = null,
+  supplierClaimsPage = null,
+  partsSearch = "",
+  partsStatus = "all",
+  supplierClaimsClosed = false,
+  operationalMetrics = null,
+  metricsRange
 }: {
   orders: RepairAccessOrderRecord[];
   technicians?: WorkshopTechnician[];
@@ -95,27 +110,40 @@ export function RepairsAccessView({
   warrantyReturnsCount?: number;
   warrantyReturnsSearch?: string;
   warrantyReturnsClosed?: boolean;
-  partsPage?: WorkshopPartsPage | null; supplierClaimsPage?: SupplierClaimsPage | null;
-  partsSearch?: string; partsStatus?: string; supplierClaimsClosed?: boolean;
-  operationalMetrics?: WorkshopOperationalMetricsSnapshot | null; metricsRange?: { from: string; to: string };
+  partsPage?: WorkshopPartsPage | null;
+  supplierClaimsPage?: SupplierClaimsPage | null;
+  partsSearch?: string;
+  partsStatus?: string;
+  supplierClaimsClosed?: boolean;
+  operationalMetrics?: WorkshopOperationalMetricsSnapshot | null;
+  metricsRange?: { from: string; to: string };
 }) {
   const router = useRouter();
   const initialSelectedOrder = orders.find((order) => order.id === initialOrderId) ?? null;
-  const requestedSection = [...primarySections, ...secondarySections].some((section) => section.key === initialView)
+  const requestedSection = [...primarySections, ...secondarySections].some(
+    (section) => section.key === initialView
+  )
     ? (initialView as RepairAccessSection)
     : null;
-  const intakeSaved = actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
+  const intakeSaved =
+    actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
   let entrySection: RepairAccessSection = "ordenes";
   if (initialView === "garantias") entrySection = "garantias";
   if (initialView === "repuestos") entrySection = "repuestos";
   if (canManageIntake) {
     if (initialView === "detalle" && initialSelectedOrder) entrySection = "detalle";
     else if (requestedSection && requestedSection !== "nueva") entrySection = requestedSection;
-    else if (!intakeSaved) entrySection = requestedSection ?? (message && !message.success && !initialOrderId ? "nueva" : "ordenes");
+    else if (!intakeSaved)
+      entrySection =
+        requestedSection ?? (message && !message.success && !initialOrderId ? "nueva" : "ordenes");
   }
   const [activeSection, setActiveSection] = useState<RepairAccessSection>(entrySection);
-  const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(() => entrySection === "nueva" ? initialSelectedOrder : null);
-  const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(initialSelectedOrder);
+  const [editing, setEditing] = useState<RepairAccessOrderRecord | null>(() =>
+    entrySection === "nueva" ? initialSelectedOrder : null
+  );
+  const [selectedOrder, setSelectedOrder] = useState<RepairAccessOrderRecord | null>(
+    initialSelectedOrder
+  );
   const [customerSearch, setCustomerSearch] = useState("");
   const deepLinkSearch = initialSelectedOrder?.repairNumber ?? "";
   const [orderSearch, setOrderSearch] = useState(pageInfo?.search || deepLinkSearch);
@@ -128,7 +156,12 @@ export function RepairsAccessView({
   const orderHeadingRef = useRef<HTMLHeadingElement>(null);
   const previousSectionRef = useRef(activeSection);
   const moreOptionsRef = useRef<HTMLDetailsElement>(null);
-  const navigationKey = JSON.stringify([initialOrderId, initialView, actionStatus, canManageIntake]);
+  const navigationKey = JSON.stringify([
+    initialOrderId,
+    initialView,
+    actionStatus,
+    canManageIntake
+  ]);
   const previousNavigationRef = useRef(navigationKey);
   const pendingNavigationRef = useRef<string | null>(null);
   const pageSearch = pageInfo?.search;
@@ -204,30 +237,55 @@ export function RepairsAccessView({
     if (sectionChanged && activeSection === "ordenes") orderHeadingRef.current?.focus();
   }, [activeSection]);
 
-  function updateSectionUrl(section: RepairAccessSection, orderId?: string, filters?: { search: string; status: string; warranty: string }) {
+  function updateSectionUrl(
+    section: RepairAccessSection,
+    orderId?: string,
+    filters?: { search: string; status: string; warranty: string }
+  ) {
     const params = new URLSearchParams(window.location.search);
     params.set("view", section);
-    if (orderId) params.set("order", orderId); else params.delete("order");
+    if (orderId) params.set("order", orderId);
+    else params.delete("order");
     params.delete("status");
     params.delete("error");
-    const nextFilters = filters ?? { search: orderSearch, status: statusFilter, warranty: warrantyFilter };
-    if (nextFilters.search !== (pageSearch ?? "") || nextFilters.status !== (pageStatus ?? "todos") || nextFilters.warranty !== (pageWarranty ?? "todos")) params.delete("cursor");
-    if (nextFilters.search) params.set("q", nextFilters.search); else params.delete("q");
-    if (nextFilters.status !== "todos") params.set("state", nextFilters.status); else params.delete("state");
-    if (nextFilters.warranty !== "todos") params.set("warranty", nextFilters.warranty); else params.delete("warranty");
+    const nextFilters = filters ?? {
+      search: orderSearch,
+      status: statusFilter,
+      warranty: warrantyFilter
+    };
+    if (
+      nextFilters.search !== (pageSearch ?? "") ||
+      nextFilters.status !== (pageStatus ?? "todos") ||
+      nextFilters.warranty !== (pageWarranty ?? "todos")
+    )
+      params.delete("cursor");
+    if (nextFilters.search) params.set("q", nextFilters.search);
+    else params.delete("q");
+    if (nextFilters.status !== "todos") params.set("state", nextFilters.status);
+    else params.delete("state");
+    if (nextFilters.warranty !== "todos") params.set("warranty", nextFilters.warranty);
+    else params.delete("warranty");
     pendingNavigationRef.current = JSON.stringify([orderId, section, undefined, canManageIntake]);
     router.push(`/reparaciones-access?${params}` as Route, { scroll: false });
   }
 
   function navigate(section: string) {
     if (![...primarySections, ...secondarySections].some((item) => item.key === section)) return;
-    if (!canManageIntake && section !== "ordenes" && section !== "garantias" && section !== "repuestos") return;
+    if (
+      !canManageIntake &&
+      section !== "ordenes" &&
+      section !== "garantias" &&
+      section !== "repuestos"
+    )
+      return;
     if (activeSection === "nueva" && section === "nueva" && !editing) return;
     if (
       activeSection === "nueva" &&
       (section !== "nueva" || editing) &&
       intakeDirty &&
-      !window.confirm("Hay cambios sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés salir?")
+      !window.confirm(
+        "Hay cambios sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés salir?"
+      )
     ) {
       return;
     }
@@ -255,7 +313,10 @@ export function RepairsAccessView({
   }
 
   function stopEdit() {
-    if (intakeDirty && !window.confirm("Hay cambios sin guardar. ¿Querés cancelar y conservar el borrador?")) {
+    if (
+      intakeDirty &&
+      !window.confirm("Hay cambios sin guardar. ¿Querés cancelar y conservar el borrador?")
+    ) {
       return;
     }
     setEditing(null);
@@ -280,10 +341,14 @@ export function RepairsAccessView({
         window.localStorage.removeItem(getFormDraftStorageKey("repair-access:intake:new"));
       }
       if (actionStatus === "repair_access_intake_updated" && initialOrderId) {
-        window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:intake:${initialOrderId}`));
+        window.localStorage.removeItem(
+          getFormDraftStorageKey(`repair-access:intake:${initialOrderId}`)
+        );
       }
       if (actionStatus === "repair_access_technical_updated" && initialOrderId) {
-        window.localStorage.removeItem(getFormDraftStorageKey(`repair-access:technical:${initialOrderId}`));
+        window.localStorage.removeItem(
+          getFormDraftStorageKey(`repair-access:technical:${initialOrderId}`)
+        );
       }
     } catch {
       // Browser draft storage cannot invalidate an already completed server save.
@@ -304,57 +369,158 @@ export function RepairsAccessView({
   return (
     <div className="space-y-5">
       {message ? (
-        <p className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>
+        <p
+          className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}
+        >
           {message.message}
         </p>
       ) : null}
 
-      {canManageIntake && message?.success && actionStatus === "repair_access_created" && initialSelectedOrder && activeSection === "ordenes" ? (
+      {canManageIntake &&
+      message?.success &&
+      actionStatus === "repair_access_created" &&
+      initialSelectedOrder &&
+      activeSection === "ordenes" ? (
         <Card className="space-y-3">
-          <h2 className="break-words text-base font-semibold text-slate-950">Ingreso guardado: {initialSelectedOrder.repairNumber}</h2>
+          <h2 className="break-words text-base font-semibold text-slate-950">
+            Ingreso guardado: {initialSelectedOrder.repairNumber}
+          </h2>
           <RepairLabelPrintLink orderId={initialSelectedOrder.id} />
-          <RepairDocumentShareActions key={initialSelectedOrder.id} order={initialSelectedOrder} canManageIntake />
+          <RepairDocumentShareActions
+            key={initialSelectedOrder.id}
+            order={initialSelectedOrder}
+            canManageIntake
+          />
         </Card>
       ) : null}
 
-      <nav aria-label="Secciones de reparaciones" className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3">
-        {primarySections.filter((section) => canManageIntake || section.key === "ordenes" || section.key === "garantias" || section.key === "repuestos").map((section) => (
-          <button
-            aria-current={activeSection === section.key ? "page" : undefined}
-            className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
-            key={section.key}
-            onClick={() => navigate(section.key)}
-            type="button"
-          >
-            {section.key === "garantias" ? `${section.label} (${warrantyReturnsCount})` : section.label}
-          </button>
-        ))}
-        {canManageIntake ? <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
-          <summary className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}>Mas opciones</summary>
-          <div className="flex flex-wrap gap-2 pt-2">
-            {secondarySections.map((section) => (
-              <Button aria-current={activeSection === section.key ? "page" : undefined} key={section.key} onClick={() => navigate(section.key)} type="button" variant="ghost">{section.label}</Button>
-            ))}
-          </div>
-        </details> : null}
+      <nav
+        aria-label="Secciones de reparaciones"
+        className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3"
+      >
+        {primarySections
+          .filter(
+            (section) =>
+              canManageIntake ||
+              section.key === "ordenes" ||
+              section.key === "garantias" ||
+              section.key === "repuestos"
+          )
+          .map((section) => (
+            <button
+              aria-current={activeSection === section.key ? "page" : undefined}
+              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              key={section.key}
+              onClick={() => navigate(section.key)}
+              type="button"
+            >
+              {section.key === "garantias"
+                ? `${section.label} (${warrantyReturnsCount})`
+                : section.label}
+            </button>
+          ))}
+        {canManageIntake ? (
+          <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
+            <summary
+              className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}
+            >
+              Mas opciones
+            </summary>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {secondarySections.map((section) => (
+                <Button
+                  aria-current={activeSection === section.key ? "page" : undefined}
+                  key={section.key}
+                  onClick={() => navigate(section.key)}
+                  type="button"
+                  variant="ghost"
+                >
+                  {section.label}
+                </Button>
+              ))}
+            </div>
+          </details>
+        ) : null}
       </nav>
 
       {pageInfo ? <WorkshopUpdates disabled={intakeDirty} /> : null}
       {activeSection === "panel" && inbox ? <WorkshopInbox inbox={inbox} /> : null}
-      {activeSection === "panel" ? <RepairAccessCommandCenter onNavigate={navigate} onOpenStatus={openStatus} onOpenDetail={openDetail} orders={orders} summary={summary} /> : null}
-      {activeSection === "ordenes" && pageInfo ? <WorkshopServerNavigation pageInfo={pageInfo} search={orderSearch} status={statusFilter} warranty={warrantyFilter} isComposing={isSearchComposing} /> : null}
-      {activeSection === "garantias" ? <WarrantyReturnsSection data={warrantyReturnsPage} search={warrantyReturnsSearch} closed={warrantyReturnsClosed} canManage={canManageIntake} /> : null}
-      {activeSection === "repuestos" ? <WorkshopPartsWorkspace data={partsPage} claims={supplierClaimsPage} canManage={canManageIntake} search={partsSearch} status={partsStatus} closed={supplierClaimsClosed} /> : null}
-      {canManageIntake && activeSection === "metricas" ? <div className="space-y-4">
-        <form action="/reparaciones-access" method="get" className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4">
-          <input name="view" type="hidden" value="metricas" />
-          <label className="grid gap-2 text-sm font-medium">Desde<Input key={metricsRange?.from} name="from" type="date" required defaultValue={metricsRange?.from} /></label>
-          <label className="grid gap-2 text-sm font-medium">Hasta<Input key={metricsRange?.to} name="to" type="date" required defaultValue={metricsRange?.to} /></label>
-          <Button type="submit" className="min-h-11">Aplicar periodo</Button>
-        </form>
-        <WorkshopOperationalMetrics metrics={operationalMetrics} />
-        {operationalMetrics ? <WarrantyObservationControl startedOn={operationalMetrics.methodology.warrantyObservationFrom} /> : null}
-      </div> : null}
+      {activeSection === "panel" ? (
+        <RepairAccessCommandCenter
+          onNavigate={navigate}
+          onOpenStatus={openStatus}
+          onOpenDetail={openDetail}
+          orders={orders}
+          summary={summary}
+        />
+      ) : null}
+      {activeSection === "ordenes" && pageInfo ? (
+        <WorkshopServerNavigation
+          pageInfo={pageInfo}
+          search={orderSearch}
+          status={statusFilter}
+          warranty={warrantyFilter}
+          isComposing={isSearchComposing}
+        />
+      ) : null}
+      {activeSection === "garantias" ? (
+        <WarrantyReturnsSection
+          data={warrantyReturnsPage}
+          search={warrantyReturnsSearch}
+          closed={warrantyReturnsClosed}
+          canManage={canManageIntake}
+        />
+      ) : null}
+      {activeSection === "repuestos" ? (
+        <WorkshopPartsWorkspace
+          data={partsPage}
+          claims={supplierClaimsPage}
+          canManage={canManageIntake}
+          search={partsSearch}
+          status={partsStatus}
+          closed={supplierClaimsClosed}
+        />
+      ) : null}
+      {canManageIntake && activeSection === "metricas" ? (
+        <div className="space-y-4">
+          <form
+            action="/reparaciones-access"
+            method="get"
+            className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4"
+          >
+            <input name="view" type="hidden" value="metricas" />
+            <label className="grid gap-2 text-sm font-medium">
+              Desde
+              <Input
+                key={metricsRange?.from}
+                name="from"
+                type="date"
+                required
+                defaultValue={metricsRange?.from}
+              />
+            </label>
+            <label className="grid gap-2 text-sm font-medium">
+              Hasta
+              <Input
+                key={metricsRange?.to}
+                name="to"
+                type="date"
+                required
+                defaultValue={metricsRange?.to}
+              />
+            </label>
+            <Button type="submit" className="min-h-11">
+              Aplicar periodo
+            </Button>
+          </form>
+          <WorkshopOperationalMetrics metrics={operationalMetrics} />
+          {operationalMetrics ? (
+            <WarrantyObservationControl
+              startedOn={operationalMetrics.methodology.warrantyObservationFrom}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       {activeSection === "nueva" ? (
         <RepairAccessNewOrderWizard
@@ -367,7 +533,11 @@ export function RepairsAccessView({
       ) : null}
 
       {activeSection === "clientes" ? (
-        <RepairAccessCustomersSection customers={customers} onSearchChange={setCustomerSearch} search={customerSearch} />
+        <RepairAccessCustomersSection
+          customers={customers}
+          onSearchChange={setCustomerSearch}
+          search={customerSearch}
+        />
       ) : null}
 
       {activeSection === "ordenes" ? (
@@ -400,15 +570,29 @@ export function RepairsAccessView({
         />
       ) : null}
 
-      {activeSection === "consultas" ? <RepairAccessQueriesPlaceholder onNavigate={navigate} summary={summary} /> : null}
-      {activeSection === "importar" ? <RepairAccessImportPanel latestImport={latestImport} /> : null}
+      {activeSection === "consultas" ? (
+        <RepairAccessQueriesPlaceholder onNavigate={navigate} summary={summary} />
+      ) : null}
+      {activeSection === "importar" ? (
+        <RepairAccessImportPanel latestImport={latestImport} />
+      ) : null}
     </div>
   );
 }
 
-function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: RepairAccessSummary; onNavigate: (section: string) => void }) {
+function RepairAccessQueriesPlaceholder({
+  summary,
+  onNavigate
+}: {
+  summary: RepairAccessSummary;
+  onNavigate: (section: string) => void;
+}) {
   const queryCards = [
-    { title: "Pendientes de revision", value: summary.statusCounts.pendiente_revision ?? 0, action: "Ver ordenes" },
+    {
+      title: "Pendientes de revision",
+      value: summary.statusCounts.pendiente_revision ?? 0,
+      action: "Ver ordenes"
+    },
     { title: "Esperando cliente", value: summary.waitingCustomer, action: "Filtrar" },
     { title: "Listas para retirar", value: summary.readyToPickup, action: "Ver retiros" },
     { title: "Garantias vigentes", value: summary.activeWarranties, action: "Ver garantias" },
@@ -425,14 +609,21 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
             Abri una vista filtrada para revisar esperas, entregas y garantias del taller.
           </p>
         </div>
-        <Button onClick={() => onNavigate("ordenes")} type="button" variant="secondary">Abrir ordenes</Button>
+        <Button onClick={() => onNavigate("ordenes")} type="button" variant="secondary">
+          Abrir ordenes
+        </Button>
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {queryCards.map((card) => (
           <div className="rounded-xl border border-slate-100 bg-slate-50 p-5" key={card.title}>
             <p className="text-sm font-medium text-slate-600">{card.title}</p>
             <p className="mt-2 text-2xl font-semibold text-slate-950">{card.value}</p>
-            <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4" href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}>{card.action}</Link>
+            <Link
+              className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4"
+              href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}
+            >
+              {card.action}
+            </Link>
           </div>
         ))}
       </div>
@@ -440,12 +631,17 @@ function RepairAccessQueriesPlaceholder({ summary, onNavigate }: { summary: Repa
   );
 }
 
-function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessImportSummary | null }) {
+function RepairAccessImportPanel({
+  latestImport
+}: {
+  latestImport: RepairAccessImportSummary | null;
+}) {
   return (
     <Card>
       <h2 className="text-xl font-semibold text-slate-950">Trazabilidad del Excel</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-        Ultimo lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y no modifica caja.
+        Ultimo lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y
+        no modifica caja.
       </p>
 
       {latestImport ? (
@@ -457,10 +653,16 @@ function RepairAccessImportPanel({ latestImport }: { latestImport: RepairAccessI
           <ImportMetric label="Errores" value={String(latestImport.errorCount)} />
         </div>
       ) : (
-        <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">Todavia no hay importaciones registradas.</p>
+        <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
+          Todavia no hay importaciones registradas.
+        </p>
       )}
 
-      {latestImport ? <p className="mt-4 text-sm text-slate-500">Ultima importacion: {formatDate(latestImport.createdAt)}</p> : null}
+      {latestImport ? (
+        <p className="mt-4 text-sm text-slate-500">
+          Ultima importacion: {formatDate(latestImport.createdAt)}
+        </p>
+      ) : null}
     </Card>
   );
 }

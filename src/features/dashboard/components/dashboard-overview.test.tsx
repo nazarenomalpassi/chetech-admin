@@ -8,14 +8,32 @@ Object.assign(globalThis, { React });
 afterEach(cleanup);
 
 const data: ComponentProps<typeof DashboardOverview> = {
-  salesTodayTotal: 100, expensesTodayTotal: 20, repairsTodayTotal: 50,
-  invoiceIncomeToday: 30, realProfitToday: 160, lowStockProducts: [],
+  salesTodayTotal: 100,
+  expensesTodayTotal: 20,
+  repairsTodayTotal: 50,
+  invoiceIncomeToday: 30,
+  realProfitToday: 160,
+  lowStockProducts: [],
   accountBalances: [{ method: "efectivo", openingBalance: 0, balance: 420 }],
-  pendingMercadoPagoReleaseAmount: 90, heldMercadoPagoClaimAmount: 15,
+  pendingMercadoPagoReleaseAmount: 90,
+  heldMercadoPagoClaimAmount: 15,
   topProducts: [{ name: "Cable", quantity: 3 }],
-  installmentsDashboard: { dueTodayCount: 2, overdueCount: 1, dueTodayTotal: 80, overdueTotal: 40, dueToday: [], overdue: [] },
+  installmentsDashboard: {
+    dueTodayCount: 2,
+    overdueCount: 1,
+    dueTodayTotal: 80,
+    overdueTotal: 40,
+    dueToday: [],
+    overdue: []
+  },
   visitsDashboard: { todayCount: 3, pendingCount: 2, nextVisit: null },
-  range: { from: "2026-10-01", to: "2026-10-05", today: "2026-10-05", isToday: false, isCustomRange: true }
+  range: {
+    from: "2026-10-01",
+    to: "2026-10-05",
+    today: "2026-10-05",
+    isToday: false,
+    isCustomRange: true
+  }
 };
 
 describe("dashboard independent disclosures", () => {
@@ -31,7 +49,13 @@ describe("dashboard independent disclosures", () => {
 
   it("folds every lower panel independently with useful summaries and native controls", () => {
     const { container } = render(<DashboardOverview {...data} />);
-    const labels = ["Reposicion sugerida", "Saldo disponible por cuenta", "Visitas de hoy", "Cuotas por cobrar", "Productos mas vendidos"];
+    const labels = [
+      "Reposicion sugerida",
+      "Saldo disponible por cuenta",
+      "Visitas de hoy",
+      "Cuotas por cobrar",
+      "Productos mas vendidos"
+    ];
     expect(container.querySelectorAll("details")).toHaveLength(labels.length);
     const panels = labels.map((label) => {
       const summary = screen.getByText(label).closest("summary")!;

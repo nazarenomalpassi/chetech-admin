@@ -27,27 +27,42 @@ const salaryLiquidationSchema = z.object({
   periodMonth: monthSchema,
   withdrawalDate: z.string().date("Selecciona una fecha valida"),
   intendedTotal: z.coerce.number().positive("El retiro debe ser mayor a cero"),
-  allocations: z.array(z.object({
-    memberId: z.string().uuid(),
-    salaryAmount: z.coerce.number().nonnegative(),
-    profitShareAmount: z.coerce.number().nonnegative(),
-    totalAmount: z.coerce.number().nonnegative()
-  })).min(1),
-  fundingSources: z.array(z.object({
-    paymentMethod: z.enum(["efectivo", "nx", "mp"]),
-    amount: z.coerce.number().nonnegative()
-  })).min(1).max(3).superRefine((sources, context) => {
-    if (new Set(sources.map((source) => source.paymentMethod)).size !== sources.length) {
-      context.addIssue({ code: z.ZodIssueCode.custom, message: "No repitas cuentas en el retiro" });
-    }
-  }),
+  allocations: z
+    .array(
+      z.object({
+        memberId: z.string().uuid(),
+        salaryAmount: z.coerce.number().nonnegative(),
+        profitShareAmount: z.coerce.number().nonnegative(),
+        totalAmount: z.coerce.number().nonnegative()
+      })
+    )
+    .min(1),
+  fundingSources: z
+    .array(
+      z.object({
+        paymentMethod: z.enum(["efectivo", "nx", "mp"]),
+        amount: z.coerce.number().nonnegative()
+      })
+    )
+    .min(1)
+    .max(3)
+    .superRefine((sources, context) => {
+      if (new Set(sources.map((source) => source.paymentMethod)).size !== sources.length) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "No repitas cuentas en el retiro"
+        });
+      }
+    }),
   notes: z.string().max(500).optional(),
   idempotencyKey: z.string().uuid()
 });
 
 const planningConfigSchema = z.object({
   periodMonth: monthSchema,
-  members: z.array(z.object({ id: z.string().uuid(), targetAmount: z.coerce.number().positive() })).min(1),
+  members: z
+    .array(z.object({ id: z.string().uuid(), targetAmount: z.coerce.number().positive() }))
+    .min(1),
   reserves: z.array(z.object({ id: z.string().uuid(), amount: z.coerce.number().nonnegative() }))
 });
 
@@ -72,7 +87,9 @@ async function assertExtraordinaryWithdrawal(supabase: any, id?: string) {
     .single();
   if (error) redirectWithError(error.message, id);
   if (data?.withdrawal_type === "salary") {
-    redirectWithError("Las liquidaciones confirmadas no se editan ni eliminan desde retiros manuales.");
+    redirectWithError(
+      "Las liquidaciones confirmadas no se editan ni eliminan desde retiros manuales."
+    );
   }
 }
 
@@ -86,7 +103,10 @@ export async function saveSalaryWithdrawalAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirectWithError(parsed.error.issues[0]?.message ?? "No se pudo validar el retiro", String(formData.get("id") ?? ""));
+    redirectWithError(
+      parsed.error.issues[0]?.message ?? "No se pudo validar el retiro",
+      String(formData.get("id") ?? "")
+    );
   }
 
   const user = await requireAdmin();
@@ -129,9 +149,10 @@ export async function saveSalaryWithdrawalAction(formData: FormData) {
     : await (supabase as any).from("salary_withdrawals").insert(payload).select("id").single();
 
   if (error || !data) {
-    const message = error?.code === "42P01"
-      ? "Falta ejecutar la migracion de sueldos en Supabase antes de usar este modulo."
-      : error?.message ?? "No se pudo guardar el retiro";
+    const message =
+      error?.code === "42P01"
+        ? "Falta ejecutar la migracion de sueldos en Supabase antes de usar este modulo."
+        : (error?.message ?? "No se pudo guardar el retiro");
     redirectWithError(message, parsed.data.id);
   }
 
@@ -183,9 +204,10 @@ export async function deleteSalaryWithdrawalAction(formData: FormData) {
   const { error } = await (supabase as any).from("salary_withdrawals").delete().eq("id", id);
 
   if (error) {
-    const message = error.code === "42P01"
-      ? "Falta ejecutar la migracion de sueldos en Supabase antes de usar este modulo."
-      : error.message;
+    const message =
+      error.code === "42P01"
+        ? "Falta ejecutar la migracion de sueldos en Supabase antes de usar este modulo."
+        : error.message;
     redirectWithError(message);
   }
 
@@ -209,7 +231,10 @@ export async function confirmSalaryLiquidationAction(formData: FormData) {
     allocations = JSON.parse(String(formData.get("allocationsJson") ?? "[]"));
     fundingSources = JSON.parse(String(formData.get("fundingSourcesJson") ?? "[]"));
   } catch {
-    redirectPlanningError("No se pudo leer la distribucion de la liquidacion.", String(formData.get("periodMonth") ?? ""));
+    redirectPlanningError(
+      "No se pudo leer la distribucion de la liquidacion.",
+      String(formData.get("periodMonth") ?? "")
+    );
   }
 
   const parsed = salaryLiquidationSchema.safeParse({
@@ -222,7 +247,10 @@ export async function confirmSalaryLiquidationAction(formData: FormData) {
     idempotencyKey: formData.get("idempotencyKey")
   });
   if (!parsed.success) {
-    redirectPlanningError(parsed.error.issues[0]?.message ?? "Revisa la liquidacion.", String(formData.get("periodMonth") ?? ""));
+    redirectPlanningError(
+      parsed.error.issues[0]?.message ?? "Revisa la liquidacion.",
+      String(formData.get("periodMonth") ?? "")
+    );
   }
 
   await requireAdmin();
@@ -253,7 +281,10 @@ export async function saveSalaryPlanningConfigAction(formData: FormData) {
     members = JSON.parse(String(formData.get("membersJson") ?? "[]"));
     reserves = JSON.parse(String(formData.get("reservesJson") ?? "[]"));
   } catch {
-    redirectPlanningError("No se pudo leer la configuracion.", String(formData.get("periodMonth") ?? ""));
+    redirectPlanningError(
+      "No se pudo leer la configuracion.",
+      String(formData.get("periodMonth") ?? "")
+    );
   }
   const parsed = planningConfigSchema.safeParse({
     periodMonth: formData.get("periodMonth"),
@@ -261,7 +292,10 @@ export async function saveSalaryPlanningConfigAction(formData: FormData) {
     reserves
   });
   if (!parsed.success) {
-    redirectPlanningError(parsed.error.issues[0]?.message ?? "Revisa la configuracion.", String(formData.get("periodMonth") ?? ""));
+    redirectPlanningError(
+      parsed.error.issues[0]?.message ?? "Revisa la configuracion.",
+      String(formData.get("periodMonth") ?? "")
+    );
   }
 
   await requireAdmin();

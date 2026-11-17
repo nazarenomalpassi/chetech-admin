@@ -84,7 +84,13 @@ function cancelSave<T>(session: Session<T>) {
 }
 
 function canPersist<T>(session: Session<T>) {
-  return session.active && session.key !== null && session.isDirty && !session.cleared && !session.pendingDraft;
+  return (
+    session.active &&
+    session.key !== null &&
+    session.isDirty &&
+    !session.cleared &&
+    !session.pendingDraft
+  );
 }
 
 function persist<T>(session: Session<T>, notify = true): boolean {
@@ -111,7 +117,9 @@ const GUARDED_NAVIGATION = Symbol("payment-draft-navigation");
 const GUARDED_HISTORY = Symbol("payment-draft-history");
 const DIRTY_QUERY_EVENT = "chetech:payment-draft-query";
 type DirtyQuery = { dirty: boolean; externalDirty: boolean };
-type DraftStateEvent = CustomEvent<{ hasUnsavedChanges: boolean }> & { [PAYMENT_STATE_EVENT]?: boolean };
+type DraftStateEvent = CustomEvent<{ hasUnsavedChanges: boolean }> & {
+  [PAYMENT_STATE_EVENT]?: boolean;
+};
 
 function queryDirtyState(): DirtyQuery {
   const detail = { dirty: false, externalDirty: false };
@@ -122,7 +130,8 @@ function queryDirtyState(): DirtyQuery {
 function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
   const root = document.documentElement;
   const existing = queryDirtyState();
-  let externalDirty = existing.externalDirty || (root.hasAttribute("data-unsaved-changes") && !existing.dirty);
+  let externalDirty =
+    existing.externalDirty || (root.hasAttribute("data-unsaved-changes") && !existing.dirty);
   let skipNextPopState = false;
 
   function handleQuery(event: Event) {
@@ -135,7 +144,9 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
     const state = queryDirtyState();
     const hasUnsavedChanges = state.dirty || state.externalDirty || externalDirty;
     root.toggleAttribute("data-unsaved-changes", hasUnsavedChanges);
-    const event: DraftStateEvent = new CustomEvent("chetech:draft-state", { detail: { hasUnsavedChanges } });
+    const event: DraftStateEvent = new CustomEvent("chetech:draft-state", {
+      detail: { hasUnsavedChanges }
+    });
     event[PAYMENT_STATE_EVENT] = true;
     window.dispatchEvent(event);
   }
@@ -155,16 +166,31 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
   }
 
   function handleClick(event: MouseEvent & { [GUARDED_NAVIGATION]?: boolean }) {
-    if (!isDirty() || event.defaultPrevented || event.button !== 0 ||
-        event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (
+      !isDirty() ||
+      event.defaultPrevented ||
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    )
+      return;
     const target = event.target;
     if (!(target instanceof Element)) return;
     const anchor = target.closest<HTMLAnchorElement>("a[href]");
-    if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download")) return;
+    if (!anchor || (anchor.target && anchor.target !== "_self") || anchor.hasAttribute("download"))
+      return;
     const next = new URL(anchor.href, window.location.href);
-    if (next.origin !== window.location.origin ||
-        (next.pathname === window.location.pathname && next.search === window.location.search)) return;
-    if (!event[GUARDED_NAVIGATION] && !window.confirm("Hay cambios sin guardar. Queres continuar?")) {
+    if (
+      next.origin !== window.location.origin ||
+      (next.pathname === window.location.pathname && next.search === window.location.search)
+    )
+      return;
+    if (
+      !event[GUARDED_NAVIGATION] &&
+      !window.confirm("Hay cambios sin guardar. Queres continuar?")
+    ) {
       event.preventDefault();
       event.stopPropagation();
       return;
@@ -173,7 +199,9 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
     flush();
   }
 
-  function handlePopState(event: PopStateEvent & { [GUARDED_HISTORY]?: "accepted" | "cancelled" | "correction" }) {
+  function handlePopState(
+    event: PopStateEvent & { [GUARDED_HISTORY]?: "accepted" | "cancelled" | "correction" }
+  ) {
     if (skipNextPopState) {
       skipNextPopState = false;
       event[GUARDED_HISTORY] = "correction";
@@ -185,7 +213,10 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
       return;
     }
     if (!isDirty()) return;
-    if (event[GUARDED_HISTORY] === "accepted" || window.confirm("Hay cambios sin guardar. Queres continuar?")) {
+    if (
+      event[GUARDED_HISTORY] === "accepted" ||
+      window.confirm("Hay cambios sin guardar. Queres continuar?")
+    ) {
       event[GUARDED_HISTORY] = "accepted";
       flush();
       return;
@@ -219,7 +250,9 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
 /** Call persistNow before submitting; call clearDraft only after confirmed success. */
 export function usePaymentDraft<T>(options: PaymentDraftOptions<T>): PaymentDraft<T> {
   const { ownerId, scope, value, isDirty, onRestore } = options;
-  const storageKey = ownerId ? getFormDraftStorageKey(`repair-payment:${JSON.stringify([ownerId, scope])}`) : null;
+  const storageKey = ownerId
+    ? getFormDraftStorageKey(`repair-payment:${JSON.stringify([ownerId, scope])}`)
+    : null;
   const [session, setSession] = useState(() => createSession(storageKey, options));
   const [, refresh] = useReducer((revision: number) => revision + 1, 0);
 
@@ -232,13 +265,16 @@ export function usePaymentDraft<T>(options: PaymentDraftOptions<T>): PaymentDraf
 
   useLayoutEffect(() => {
     const serialized = serialize(value);
-    const changed = session.isDirty !== isDirty ||
-      (!Object.is(session.value, value) && (serialized === undefined || serialized !== session.serialized));
+    const changed =
+      session.isDirty !== isDirty ||
+      (!Object.is(session.value, value) &&
+        (serialized === undefined || serialized !== session.serialized));
     session.value = value;
     session.serialized = serialized;
     session.isDirty = isDirty;
     if (session.cleared) {
-      const sameValue = Object.is(value, session.cleared.value) ||
+      const sameValue =
+        Object.is(value, session.cleared.value) ||
         (session.cleared.serialized !== undefined && serialized === session.cleared.serialized);
       if (!isDirty || !sameValue) session.cleared = null;
     }
@@ -272,7 +308,9 @@ export function usePaymentDraft<T>(options: PaymentDraftOptions<T>): PaymentDraf
     }
     const guard = registerDirtyGuard(
       () => session.active && session.isDirty && !session.cleared,
-      () => { persist(session); }
+      () => {
+        persist(session);
+      }
     );
     session.syncDirty = guard.sync;
     scheduleSave(session);

@@ -16,8 +16,10 @@ export default async function ReportesPage({
     getWorkshopBusinessReport(params.from, params.to)
   ]);
 
-  return <div className="space-y-8">
-    <ReportsView canExport={profile.role === "admin"} data={data} />
-    <WorkshopBusinessReportView data={workshop} />
-  </div>;
+  return (
+    <div className="space-y-8">
+      <ReportsView canExport={profile.role === "admin"} data={data} />
+      <WorkshopBusinessReportView data={workshop} />
+    </div>
+  );
 }

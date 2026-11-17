@@ -45,9 +45,7 @@ describe("acciones del portal de reparaciones", () => {
     requireAdminMock.mockResolvedValue({ id: "33333333-3333-4333-8333-333333333333" });
     createServerSupabaseClientMock.mockResolvedValue({ rpc: rpcMock });
 
-    const { setRepairCustomerLinkAction } = await import(
-      "@/features/repairs-access/actions"
-    );
+    const { setRepairCustomerLinkAction } = await import("@/features/repairs-access/actions");
     const formData = new FormData();
     formData.set("orderId", orderId);
     formData.set("customerUserId", customerId);
@@ -76,9 +74,7 @@ describe("acciones del portal de reparaciones", () => {
     });
     createServerSupabaseClientMock.mockResolvedValue({ rpc: rpcMock });
 
-    const { updateRepairCustomerPortalAction } = await import(
-      "@/features/repairs-access/actions"
-    );
+    const { updateRepairCustomerPortalAction } = await import("@/features/repairs-access/actions");
     const formData = new FormData();
     formData.set("id", orderId);
     formData.set("publicProgress", "Diagnostico finalizado.");

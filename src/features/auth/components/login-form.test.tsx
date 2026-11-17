@@ -7,8 +7,14 @@ import { LoginForm } from "./login-form";
 const login = vi.hoisted(() => vi.fn());
 vi.mock("@/features/auth/actions", () => ({ loginAction: login }));
 
-beforeEach(() => { vi.stubGlobal("React", React); login.mockClear(); });
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
+beforeEach(() => {
+  vi.stubGlobal("React", React);
+  login.mockClear();
+});
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("login credentials", () => {
   it("uses browser autofill and toggles password visibility without losing or submitting credentials", () => {

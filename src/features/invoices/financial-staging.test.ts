@@ -6,8 +6,12 @@ const container = process.env.CHETECH_FINANCIAL_STAGING_CONTAINER;
 const suite = container ? describe : describe.skip;
 suite("financial migration against the full local staging schema", () => {
   it("uses real schema, RPC guards and custody constraints in a rolled-back transaction", () => {
-    if (container !== "chetech-staging-20261005") throw new Error("Only the explicitly isolated local staging container is allowed.");
-    const migration = readFileSync("supabase/migrations/20261005194817_financial_atomic_documents_payments.sql", "utf8");
+    if (container !== "chetech-staging-20261005")
+      throw new Error("Only the explicitly isolated local staging container is allowed.");
+    const migration = readFileSync(
+      "supabase/migrations/20261005194817_financial_atomic_documents_payments.sql",
+      "utf8"
+    );
     const query = `begin;
       ${migration}
       insert into auth.users(id) values ('00000000-0000-4000-8000-000000000099') on conflict do nothing;
@@ -73,7 +77,24 @@ suite("financial migration against the full local staging schema", () => {
       end $$;
       rollback;
       select 'financial staging rollback verified';`;
-    const output = execFileSync("docker", ["exec", "-i", container!, "psql", "-U", "postgres", "-d", "chetech_staging", "-X", "-qAt", "-v", "ON_ERROR_STOP=1"], { input: query, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+    const output = execFileSync(
+      "docker",
+      [
+        "exec",
+        "-i",
+        container!,
+        "psql",
+        "-U",
+        "postgres",
+        "-d",
+        "chetech_staging",
+        "-X",
+        "-qAt",
+        "-v",
+        "ON_ERROR_STOP=1"
+      ],
+      { input: query, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+    );
     expect(output.trim()).toBe("financial staging rollback verified");
   });
 });

@@ -23,7 +23,10 @@ import {
   getRepairOutsourcingStatusLabel,
   getRepairOutsourcingStatusTone
 } from "@/features/outsourcings/helpers";
-import type { RepairOutsourcingRecord, RepairOutsourcingSummary } from "@/features/outsourcings/queries";
+import type {
+  RepairOutsourcingRecord,
+  RepairOutsourcingSummary
+} from "@/features/outsourcings/queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatDate, getLocalDateInputValue } from "@/lib/utils";
 
@@ -60,14 +63,23 @@ export function RepairOutsourcingsView({
   const [sentAt, setSentAt] = useState(today);
   const [workshopName, setWorkshopName] = useState("");
   const [notes, setNotes] = useState("");
-  const [lookupStatus, setLookupStatus] = useState<{ loading: boolean; message: string; success: boolean }>({
+  const [lookupStatus, setLookupStatus] = useState<{
+    loading: boolean;
+    message: string;
+    success: boolean;
+  }>({
     loading: false,
     message: "",
     success: false
   });
 
   const filteredRecords = records;
-  const params = new URLSearchParams({ search: filters.search, outsourceStatus: filters.status, date: filters.date, view: filters.view });
+  const params = new URLSearchParams({
+    search: filters.search,
+    outsourceStatus: filters.status,
+    date: filters.date,
+    view: filters.view
+  });
   if (pagination.page > 1) params.set("page", String(pagination.page));
   const returnTo = `/terciarizaciones?${params.toString()}`;
 
@@ -84,21 +96,32 @@ export function RepairOutsourcingsView({
     const requestedNumber = orderNumber.trim();
 
     if (!requestedNumber) {
-      setLookupStatus({ loading: false, message: "Ingresa un numero de orden REP.", success: false });
+      setLookupStatus({
+        loading: false,
+        message: "Ingresa un numero de orden REP.",
+        success: false
+      });
       return;
     }
 
     setLookupStatus({ loading: true, message: "Buscando orden de reparacion...", success: false });
 
     try {
-      const response = await fetch(`/api/repair-access/orders/${encodeURIComponent(requestedNumber)}`, {
-        headers: { accept: "application/json" }
-      });
+      const response = await fetch(
+        `/api/repair-access/orders/${encodeURIComponent(requestedNumber)}`,
+        {
+          headers: { accept: "application/json" }
+        }
+      );
       const result = await response.json();
 
       if (!response.ok || !result.order) {
         setSelectedOrder(null);
-        setLookupStatus({ loading: false, message: "No encontre una orden de Reparaciones con ese numero.", success: false });
+        setLookupStatus({
+          loading: false,
+          message: "No encontre una orden de Reparaciones con ese numero.",
+          success: false
+        });
         return;
       }
 
@@ -111,7 +134,11 @@ export function RepairOutsourcingsView({
       });
     } catch {
       setSelectedOrder(null);
-      setLookupStatus({ loading: false, message: "No pude consultar la orden. Proba de nuevo.", success: false });
+      setLookupStatus({
+        loading: false,
+        message: "No pude consultar la orden. Proba de nuevo.",
+        success: false
+      });
     }
   }
 
@@ -122,9 +149,12 @@ export function RepairOutsourcingsView({
           <div className="max-w-3xl">
             <h1 className="text-2xl font-semibold text-slate-950">Terciarizaciones</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni entrega al cliente.
+              Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni
+              entrega al cliente.
             </p>
-            <p className="mt-1 text-sm text-slate-500">Indicadores de todo el resultado filtrado.</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Indicadores de todo el resultado filtrado.
+            </p>
           </div>
 
           <dl className="grid grid-cols-2 gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-3 xl:grid-cols-6">
@@ -138,7 +168,15 @@ export function RepairOutsourcingsView({
         </div>
 
         {message ? (
-          <div role={message.success ? "status" : "alert"} aria-live="polite" className={message.success ? "status-banner status-banner--success mt-5" : "status-banner status-banner--error mt-5"}>
+          <div
+            role={message.success ? "status" : "alert"}
+            aria-live="polite"
+            className={
+              message.success
+                ? "status-banner status-banner--success mt-5"
+                : "status-banner status-banner--error mt-5"
+            }
+          >
             {message.message}
           </div>
         ) : null}
@@ -166,12 +204,20 @@ export function RepairOutsourcingsView({
                   value={orderNumber}
                 />
               </label>
-              <Button disabled={lookupStatus.loading} onClick={() => void loadRepairOrder()} type="button">
+              <Button
+                disabled={lookupStatus.loading}
+                onClick={() => void loadRepairOrder()}
+                type="button"
+              >
                 {lookupStatus.loading ? "Buscando..." : "Cargar orden"}
               </Button>
             </div>
             {lookupStatus.message ? (
-              <p role={lookupStatus.success || lookupStatus.loading ? "status" : "alert"} aria-live="polite" className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}>
+              <p
+                role={lookupStatus.success || lookupStatus.loading ? "status" : "alert"}
+                aria-live="polite"
+                className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}
+              >
                 {lookupStatus.message}
               </p>
             ) : (
@@ -184,15 +230,30 @@ export function RepairOutsourcingsView({
           {selectedOrder ? (
             <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoBlock label="Orden" value={selectedOrder.repairNumber} />
-              <InfoBlock label="Cliente" value={selectedOrder.customerName} helper={selectedOrder.customerPhone || selectedOrder.customerDni} />
-              <InfoBlock label="Equipo" value={selectedOrder.device || "Equipo"} helper={selectedOrder.issueDescription} />
-              <InfoBlock label="Ingreso" value={formatDate(selectedOrder.intakeDate)} helper={selectedOrder.status.replaceAll("_", " ")} />
+              <InfoBlock
+                label="Cliente"
+                value={selectedOrder.customerName}
+                helper={selectedOrder.customerPhone || selectedOrder.customerDni}
+              />
+              <InfoBlock
+                label="Equipo"
+                value={selectedOrder.device || "Equipo"}
+                helper={selectedOrder.issueDescription}
+              />
+              <InfoBlock
+                label="Ingreso"
+                value={formatDate(selectedOrder.intakeDate)}
+                helper={selectedOrder.status.replaceAll("_", " ")}
+              />
             </div>
           ) : null}
 
           <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="workshopName" className="mb-2 block text-sm font-medium text-slate-700">
+              <label
+                htmlFor="workshopName"
+                className="mb-2 block text-sm font-medium text-slate-700"
+              >
                 Taller externo
               </label>
               <Input
@@ -207,11 +268,37 @@ export function RepairOutsourcingsView({
               <label htmlFor="sentAt" className="mb-2 block text-sm font-medium text-slate-700">
                 Fecha de envio
               </label>
-              <Input aria-label="Fecha de envio al taller" name="sentAt" onChange={(event) => setSentAt(event.target.value)} type="date" value={sentAt} />
+              <Input
+                aria-label="Fecha de envio al taller"
+                name="sentAt"
+                onChange={(event) => setSentAt(event.target.value)}
+                type="date"
+                value={sentAt}
+              />
             </div>
-            <label className="grid gap-2 text-sm">Responsable del seguimiento<Input name="responsibleName" required maxLength={120} placeholder="Persona del local que consulta al tercero" /></label>
-            <label className="grid gap-2 text-sm">Fecha prometida<Input name="promisedAt" type="date" min={sentAt} /></label>
-            <label className="grid gap-2 text-sm">Costo previsto (opcional)<Input name="expectedCost" type="number" min="0" step="0.01" placeholder="Desconocido" /></label>
+            <label className="grid gap-2 text-sm">
+              Responsable del seguimiento
+              <Input
+                name="responsibleName"
+                required
+                maxLength={120}
+                placeholder="Persona del local que consulta al tercero"
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              Fecha prometida
+              <Input name="promisedAt" type="date" min={sentAt} />
+            </label>
+            <label className="grid gap-2 text-sm">
+              Costo previsto (opcional)
+              <Input
+                name="expectedCost"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Desconocido"
+              />
+            </label>
             <div className="sm:col-span-2">
               <label htmlFor="notes" className="mb-2 block text-sm font-medium text-slate-700">
                 Observaciones
@@ -245,7 +332,10 @@ export function RepairOutsourcingsView({
                 Buscar terciarizacion
               </label>
               <div className="relative">
-                <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <Search
+                  aria-hidden="true"
+                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                />
                 <Input
                   aria-label="Buscar terciarizaciones por orden, cliente, equipo o taller"
                   className="pl-10"
@@ -255,10 +345,52 @@ export function RepairOutsourcingsView({
                 />
               </div>
             </div>
-            <label className="grid gap-2 text-sm">Estado<Select aria-label="Estado de terciarizacion" name="outsourceStatus" defaultValue={filters.status} options={[{ value: "en_taller", label: "En taller" }, { value: "retirado", label: "Retornadas al local" }, { value: "vencidas", label: "Vencidas" }, { value: "cancelado", label: "Anuladas" }, { value: "todos", label: "Todas" }]} /></label>
-            <label className="grid gap-2 text-sm">Fecha de envio<Input aria-label="Fecha de envio" type="date" name="date" defaultValue={filters.date} /></label>
-            <label className="grid gap-2 text-sm">Periodo<Select aria-label="Periodo de envios" name="view" defaultValue={filters.view} options={[{ value: "all", label: "Todo / fecha exacta" }, { value: "day", label: "Dia" }, { value: "week", label: "Semana (lunes a domingo)" }]} /></label>
-            <div className="flex flex-wrap gap-2"><Button type="submit">Filtrar</Button><Link className="inline-flex min-h-11 items-center underline" href="/terciarizaciones">Limpiar</Link></div>
+            <label className="grid gap-2 text-sm">
+              Estado
+              <Select
+                aria-label="Estado de terciarizacion"
+                name="outsourceStatus"
+                defaultValue={filters.status}
+                options={[
+                  { value: "en_taller", label: "En taller" },
+                  { value: "retirado", label: "Retornadas al local" },
+                  { value: "vencidas", label: "Vencidas" },
+                  { value: "cancelado", label: "Anuladas" },
+                  { value: "todos", label: "Todas" }
+                ]}
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              Fecha de envio
+              <Input
+                aria-label="Fecha de envio"
+                type="date"
+                name="date"
+                defaultValue={filters.date}
+              />
+            </label>
+            <label className="grid gap-2 text-sm">
+              Periodo
+              <Select
+                aria-label="Periodo de envios"
+                name="view"
+                defaultValue={filters.view}
+                options={[
+                  { value: "all", label: "Todo / fecha exacta" },
+                  { value: "day", label: "Dia" },
+                  { value: "week", label: "Semana (lunes a domingo)" }
+                ]}
+              />
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit">Filtrar</Button>
+              <Link
+                className="inline-flex min-h-11 items-center underline"
+                href="/terciarizaciones"
+              >
+                Limpiar
+              </Link>
+            </div>
           </form>
         </div>
 
@@ -266,49 +398,66 @@ export function RepairOutsourcingsView({
           {filteredRecords.length ? (
             filteredRecords.map((record) => (
               <article className="py-4" key={record.id}>
-              <div className="flex min-w-0 items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-semibold text-brand-700">{record.order.repairNumber}</p>
-                  <p className="mt-1 font-medium text-slate-950">{record.order.customerName}</p>
-                  <p className="mt-1 text-sm text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-brand-700">{record.order.repairNumber}</p>
+                    <p className="mt-1 font-medium text-slate-950">{record.order.customerName}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {record.order.customerPhone || record.order.customerDni || "-"}
+                    </p>
+                  </div>
+                  <StatusPill status={record.status} />
                 </div>
-                <StatusPill status={record.status} />
-              </div>
-              <div className="mt-4 min-w-0">
-                <p className="text-sm text-slate-600">Equipo / falla</p>
-                <p className="mt-1 font-semibold text-slate-800">{record.order.deviceLabel}</p>
-                {record.order.serialNumber ? <p className="mt-1 text-sm text-slate-500">Serie: {record.order.serialNumber}</p> : null}
-                <p className="mt-1 text-sm leading-5 text-slate-500">{record.order.issueReported}</p>
-              </div>
-              <div className="mt-3 min-w-0">
-                <p className="text-sm text-slate-600">Taller externo</p>
-                <p className="mt-1 font-semibold text-slate-950">{record.workshopName}</p>
-                {record.notes ? <p className="mt-1 whitespace-pre-line text-sm leading-5 text-slate-500">{record.notes}</p> : null}
-              </div>
+                <div className="mt-4 min-w-0">
+                  <p className="text-sm text-slate-600">Equipo / falla</p>
+                  <p className="mt-1 font-semibold text-slate-800">{record.order.deviceLabel}</p>
+                  {record.order.serialNumber ? (
+                    <p className="mt-1 text-sm text-slate-500">
+                      Serie: {record.order.serialNumber}
+                    </p>
+                  ) : null}
+                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                    {record.order.issueReported}
+                  </p>
+                </div>
+                <div className="mt-3 min-w-0">
+                  <p className="text-sm text-slate-600">Taller externo</p>
+                  <p className="mt-1 font-semibold text-slate-950">{record.workshopName}</p>
+                  {record.notes ? (
+                    <p className="mt-1 whitespace-pre-line text-sm leading-5 text-slate-500">
+                      {record.notes}
+                    </p>
+                  ) : null}
+                </div>
                 <p className="mt-3 text-sm text-slate-500">
-                  Enviado: {formatDate(record.sentAt)} / Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
+                  Enviado: {formatDate(record.sentAt)} / Retorno:{" "}
+                  {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
                 </p>
-              <div className="mt-4 space-y-2">
-                <OutsourcingOperations record={record} returnTo={returnTo} />
-                {record.status === "en_taller" ? (
-                  <ActionMenu label="Más acciones">
-                  <form
-                    action={cancelRepairOutsourcingAction}
-                    onSubmit={(event) => {
-                      if (!window.confirm(`Anular la terciarizacion de ${record.order.repairNumber}?`)) {
-                        event.preventDefault();
-                      }
-                    }}
-                  >
-                    <input name="id" type="hidden" value={record.id} />
-                    <input name="returnTo" type="hidden" value={returnTo} />
-                    <Button className="w-full" type="submit" variant="danger">
-                      Anular
-                    </Button>
-                  </form>
-                  </ActionMenu>
-                ) : null}
-              </div>
+                <div className="mt-4 space-y-2">
+                  <OutsourcingOperations record={record} returnTo={returnTo} />
+                  {record.status === "en_taller" ? (
+                    <ActionMenu label="Más acciones">
+                      <form
+                        action={cancelRepairOutsourcingAction}
+                        onSubmit={(event) => {
+                          if (
+                            !window.confirm(
+                              `Anular la terciarizacion de ${record.order.repairNumber}?`
+                            )
+                          ) {
+                            event.preventDefault();
+                          }
+                        }}
+                      >
+                        <input name="id" type="hidden" value={record.id} />
+                        <input name="returnTo" type="hidden" value={returnTo} />
+                        <Button className="w-full" type="submit" variant="danger">
+                          Anular
+                        </Button>
+                      </form>
+                    </ActionMenu>
+                  ) : null}
+                </div>
               </article>
             ))
           ) : (
@@ -328,29 +477,45 @@ export function RepairOutsourcingsView({
                 <th className="px-4 py-3 font-medium">Taller externo</th>
                 <th className="px-4 py-3 font-medium">Fechas</th>
                 <th className="px-4 py-3 font-medium">Estado</th>
-                <th className="px-4 py-3 font-medium text-right">Acciones</th>
+                <th className="px-4 py-3 text-right font-medium">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredRecords.map((record) => (
                 <tr className="border-t border-graphite/10 align-top" key={record.id}>
-                  <td className="px-4 py-3 font-semibold text-brand-700">{record.order.repairNumber}</td>
+                  <td className="px-4 py-3 font-semibold text-brand-700">
+                    {record.order.repairNumber}
+                  </td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-slate-950">{record.order.customerName}</p>
-                    <p className="text-sm text-slate-500">{record.order.customerPhone || record.order.customerDni || "-"}</p>
+                    <p className="text-sm text-slate-500">
+                      {record.order.customerPhone || record.order.customerDni || "-"}
+                    </p>
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     <p className="font-medium text-slate-800">{record.order.deviceLabel}</p>
-                    {record.order.serialNumber ? <p className="mt-1 text-sm text-slate-500">Serie: {record.order.serialNumber}</p> : null}
-                    <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">{record.order.issueReported}</p>
+                    {record.order.serialNumber ? (
+                      <p className="mt-1 text-sm text-slate-500">
+                        Serie: {record.order.serialNumber}
+                      </p>
+                    ) : null}
+                    <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">
+                      {record.order.issueReported}
+                    </p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-semibold text-slate-950">{record.workshopName}</p>
-                    {record.notes ? <p className="mt-1 max-w-xs whitespace-pre-line text-sm leading-5 text-slate-500">{record.notes}</p> : null}
+                    {record.notes ? (
+                      <p className="mt-1 max-w-xs whitespace-pre-line text-sm leading-5 text-slate-500">
+                        {record.notes}
+                      </p>
+                    ) : null}
                   </td>
                   <td className="px-4 py-3 text-slate-600">
                     <p>Enviado: {formatDate(record.sentAt)}</p>
-                    <p className="mt-1 text-sm text-slate-500">Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}</p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
+                    </p>
                   </td>
                   <td className="px-4 py-3">
                     <StatusPill status={record.status} />
@@ -360,20 +525,24 @@ export function RepairOutsourcingsView({
                       <OutsourcingOperations record={record} returnTo={returnTo} />
                       {record.status === "en_taller" ? (
                         <ActionMenu label="Más acciones">
-                        <form
-                          action={cancelRepairOutsourcingAction}
-                          onSubmit={(event) => {
-                            if (!window.confirm(`Anular la terciarizacion de ${record.order.repairNumber}?`)) {
-                              event.preventDefault();
-                            }
-                          }}
-                        >
-                          <input name="id" type="hidden" value={record.id} />
-                          <input name="returnTo" type="hidden" value={returnTo} />
-                          <Button size="sm" type="submit" variant="danger">
-                            Anular
-                          </Button>
-                        </form>
+                          <form
+                            action={cancelRepairOutsourcingAction}
+                            onSubmit={(event) => {
+                              if (
+                                !window.confirm(
+                                  `Anular la terciarizacion de ${record.order.repairNumber}?`
+                                )
+                              ) {
+                                event.preventDefault();
+                              }
+                            }}
+                          >
+                            <input name="id" type="hidden" value={record.id} />
+                            <input name="returnTo" type="hidden" value={returnTo} />
+                            <Button size="sm" type="submit" variant="danger">
+                              Anular
+                            </Button>
+                          </form>
                         </ActionMenu>
                       ) : null}
                     </div>
@@ -383,7 +552,7 @@ export function RepairOutsourcingsView({
             </tbody>
           </table>
           {!filteredRecords.length ? (
-            <div className="empty-panel border-t border-graphite/8">
+            <div className="empty-panel border-graphite/8 border-t">
               No encontre terciarizaciones para esa busqueda o filtro.
             </div>
           ) : null}
@@ -395,7 +564,12 @@ export function RepairOutsourcingsView({
 }
 
 function SummaryValue({ label, value }: { label: string; value: number }) {
-  return <div><dt className="text-sm text-slate-600">{label}</dt><dd className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{value}</dd></div>;
+  return (
+    <div>
+      <dt className="text-sm text-slate-600">{label}</dt>
+      <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{value}</dd>
+    </div>
+  );
 }
 
 function InfoBlock({ label, value, helper }: { label: string; value: string; helper?: string }) {
@@ -409,5 +583,9 @@ function InfoBlock({ label, value, helper }: { label: string; value: string; hel
 }
 
 function StatusPill({ status }: { status: string }) {
-  return <Badge variant={getRepairOutsourcingStatusTone(status)}>{getRepairOutsourcingStatusLabel(status)}</Badge>;
+  return (
+    <Badge variant={getRepairOutsourcingStatusTone(status)}>
+      {getRepairOutsourcingStatusLabel(status)}
+    </Badge>
+  );
 }

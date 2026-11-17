@@ -6,10 +6,8 @@ import { mapSalesHistoryRows } from "@/features/sales/history-mapper";
 export async function getSalesHistory(page = 1) {
   const supabase = await createServerSupabaseClient();
   const { from, to } = getPaginationRange(page);
-  const historyQuery = (supabase as any)
-    .from("sales")
-    .select(
-      `
+  const historyQuery = (supabase as any).from("sales").select(
+    `
         id,
         tv_board_id,
         sale_number,
@@ -23,10 +21,9 @@ export async function getSalesHistory(page = 1) {
         sale_payments(method, amount),
         sale_items(product_id, description, quantity, unit_price, total, products(name, sku))
       `,
-      { count: "exact" }
-    );
-  const { data, error, count } = await applyStableCreationOrder(historyQuery)
-    .range(from, to);
+    { count: "exact" }
+  );
+  const { data, error, count } = await applyStableCreationOrder(historyQuery).range(from, to);
 
   if (error) {
     throw new Error(error.message);

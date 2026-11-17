@@ -32,12 +32,15 @@ export function DialogShell({
   }, [onClose]);
 
   useEffect(() => {
-    const previousActiveElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousActiveElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     const panel = panelRef.current;
     document.body.style.overflow = "hidden";
 
-    const focusableElements = panel ? Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector)) : [];
+    const focusableElements = panel
+      ? Array.from(panel.querySelectorAll<HTMLElement>(focusableSelector))
+      : [];
     (focusableElements[0] ?? panel)?.focus();
 
     function handleKeyDown(event: KeyboardEvent) {

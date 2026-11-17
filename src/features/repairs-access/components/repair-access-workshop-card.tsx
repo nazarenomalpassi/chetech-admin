@@ -58,7 +58,9 @@ export function RepairAccessWorkshopCard({
   onEdit: (order: RepairAccessOrderRecord) => void;
   onOpenDetail: (order: RepairAccessOrderRecord) => void;
 }) {
-  const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model].filter(Boolean).join(" - ");
+  const deviceLabel = [order.device.deviceType, order.device.brand, order.device.model]
+    .filter(Boolean)
+    .join(" - ");
   const phone = order.customer.phone || order.customer.alternatePhone;
   const repairAmount = order.finalAmount || order.budgetAmount;
   const quoteAmount = order.budgetAmount || order.finalAmount;
@@ -97,7 +99,9 @@ export function RepairAccessWorkshopCard({
         <section>
           <div className="flex items-center gap-2 text-slate-500">
             <Wrench aria-hidden="true" className="h-4 w-4" />
-            <p className="text-sm font-medium">{activeReturn ? "Falla original" : "Falla reportada"}</p>
+            <p className="text-sm font-medium">
+              {activeReturn ? "Falla original" : "Falla reportada"}
+            </p>
           </div>
           <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
             {order.issueReported || "Sin falla declarada"}
@@ -105,113 +109,212 @@ export function RepairAccessWorkshopCard({
         </section>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <WorkshopInfo icon={MonitorCog} label="Equipo" value={deviceLabel || "Equipo sin descripcion"} />
+          <WorkshopInfo
+            icon={MonitorCog}
+            label="Equipo"
+            value={deviceLabel || "Equipo sin descripcion"}
+          />
           <WorkshopInfo icon={UserRound} label="Cliente" value={order.customer.fullName} />
         </div>
 
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-graphite/8 py-3 text-sm">
-          <WorkshopMeta icon={CircleDollarSign} label={activeReturn ? "Monto original" : "Monto actual"} value={repairAmount ? formatCurrency(repairAmount) : "Sin cargar"} />
-          <WorkshopMeta icon={CalendarDays} label={activeReturn ? "Ingreso original" : "Ingreso"} value={formatDate(order.intakeDate)} />
+        <div className="border-graphite/8 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-3 text-sm">
+          <WorkshopMeta
+            icon={CircleDollarSign}
+            label={activeReturn ? "Monto original" : "Monto actual"}
+            value={repairAmount ? formatCurrency(repairAmount) : "Sin cargar"}
+          />
+          <WorkshopMeta
+            icon={CalendarDays}
+            label={activeReturn ? "Ingreso original" : "Ingreso"}
+            value={formatDate(order.intakeDate)}
+          />
           {order.budgetDetail ? (
-            <WorkshopMeta className="col-span-2" icon={FileText} label={activeReturn ? "Presupuesto original" : "Presupuesto"} value={order.budgetDetail} />
+            <WorkshopMeta
+              className="col-span-2"
+              icon={FileText}
+              label={activeReturn ? "Presupuesto original" : "Presupuesto"}
+              value={order.budgetDetail}
+            />
           ) : null}
           {order.repairProgress ? (
-            <WorkshopMeta className="col-span-2" icon={ClipboardPenLine} label={activeReturn ? "Avance original" : "Ultimo avance"} value={order.repairProgress} />
+            <WorkshopMeta
+              className="col-span-2"
+              icon={ClipboardPenLine}
+              label={activeReturn ? "Avance original" : "Ultimo avance"}
+              value={order.repairProgress}
+            />
           ) : null}
         </div>
 
-        {!activeReturn && (!delivered || (canManageIntake && order.workflow)) ? <LazyDisclosure className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
-          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
-          summary={<>
-            <span className="flex items-center gap-2">
-              <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
-              {delivered ? "Corregir garantia" : "Actualizar trabajo"}
-            </span>
-            <ChevronDown aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
-          </>}
-        >
-
-          {order.workflow ? <RepairQuickEditor order={order} canManage={canManageIntake} defaultWarrantyDays={defaultWarrantyDays} /> : <WorkshopCardForm order={order}>
-            <input name="id" type="hidden" value={order.id} />
-
-            <ReadyForPickupRequirements workflow={order.workflow} status={order.status} canManage={canManageIntake} />
-
-            <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">Estado de la orden</span>
-              <Select defaultValue={order.status} id={`workshop-${order.id}-status`} name="status" options={repairAccessStatusOptions.filter((option) => TECHNICAL_WORKSHOP_STATUSES.includes(option.value) || option.value === order.status)} />
-            </label>
-
-            <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">Presupuesto · visible para el cliente</span>
-              <Input
-                defaultValue={quoteAmount ? String(quoteAmount) : ""}
-                disabled={order.isPaid}
-                inputMode="decimal"
-                id={`workshop-${order.id}-amount`}
-                min={0}
-                name="repairAmount"
-                placeholder="Ej: 125000"
-                step="0.01"
-                type="number"
+        {!activeReturn && (!delivered || (canManageIntake && order.workflow)) ? (
+          <LazyDisclosure
+            className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
+            summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
+            summary={
+              <>
+                <span className="flex items-center gap-2">
+                  <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
+                  {delivered ? "Corregir garantia" : "Actualizar trabajo"}
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  className="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
+                />
+              </>
+            }
+          >
+            {order.workflow ? (
+              <RepairQuickEditor
+                order={order}
+                canManage={canManageIntake}
+                defaultWarrantyDays={defaultWarrantyDays}
               />
-              <span className="mt-1.5 block text-xs leading-5 text-slate-500">
-                {order.isPaid ? "El monto queda protegido porque la orden ya fue cobrada." : "Importe presupuestado o acordado con el cliente."}
-              </span>
-            </label>
+            ) : (
+              <WorkshopCardForm order={order}>
+                <input name="id" type="hidden" value={order.id} />
 
-            <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">Detalle del presupuesto · visible para el cliente</span>
-              <Textarea
-                className="min-h-24"
-                defaultValue={order.budgetDetail ?? ""}
-                maxLength={2000}
-                name="budgetDetail"
-                id={`workshop-${order.id}-budget`}
-                placeholder="Trabajo a realizar, repuestos y alcance del presupuesto"
-              />
-            </label>
+                <ReadyForPickupRequirements
+                  workflow={order.workflow}
+                  status={order.status}
+                  canManage={canManageIntake}
+                />
 
-            <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">Avance de reparacion · visible para el cliente</span>
-              <Textarea
-                className="min-h-24"
-                defaultValue={order.repairProgress ?? ""}
-                maxLength={2000}
-                name="repairProgress"
-                id={`workshop-${order.id}-progress`}
-                placeholder="Que se reviso, que se hizo y que falta"
-              />
-            </label>
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Estado de la orden
+                  </span>
+                  <Select
+                    defaultValue={order.status}
+                    id={`workshop-${order.id}-status`}
+                    name="status"
+                    options={repairAccessStatusOptions.filter(
+                      (option) =>
+                        TECHNICAL_WORKSHOP_STATUSES.includes(option.value) ||
+                        option.value === order.status
+                    )}
+                  />
+                </label>
 
-            <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm"><input className="mt-1" type="checkbox" name="qualityChecked" />Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar listo.</label>
-            <label><span className="mb-2 block text-xs font-medium text-slate-500">Resultado de las pruebas (opcional)</span><Textarea name="qualityNotes" maxLength={2000} /></label>
-            <FormSubmitButton
-              className="min-h-12 w-full"
-              idleLabel="Guardar actualizacion"
-              pendingLabel="Guardando cambios..."
-            />
-          </WorkshopCardForm>}
-        </LazyDisclosure> : null}
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Presupuesto · visible para el cliente
+                  </span>
+                  <Input
+                    defaultValue={quoteAmount ? String(quoteAmount) : ""}
+                    disabled={order.isPaid}
+                    inputMode="decimal"
+                    id={`workshop-${order.id}-amount`}
+                    min={0}
+                    name="repairAmount"
+                    placeholder="Ej: 125000"
+                    step="0.01"
+                    type="number"
+                  />
+                  <span className="mt-1.5 block text-xs leading-5 text-slate-500">
+                    {order.isPaid
+                      ? "El monto queda protegido porque la orden ya fue cobrada."
+                      : "Importe presupuestado o acordado con el cliente."}
+                  </span>
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Detalle del presupuesto · visible para el cliente
+                  </span>
+                  <Textarea
+                    className="min-h-24"
+                    defaultValue={order.budgetDetail ?? ""}
+                    maxLength={2000}
+                    name="budgetDetail"
+                    id={`workshop-${order.id}-budget`}
+                    placeholder="Trabajo a realizar, repuestos y alcance del presupuesto"
+                  />
+                </label>
+
+                <label>
+                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                    Avance de reparacion · visible para el cliente
+                  </span>
+                  <Textarea
+                    className="min-h-24"
+                    defaultValue={order.repairProgress ?? ""}
+                    maxLength={2000}
+                    name="repairProgress"
+                    id={`workshop-${order.id}-progress`}
+                    placeholder="Que se reviso, que se hizo y que falta"
+                  />
+                </label>
+
+                <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm">
+                  <input className="mt-1" type="checkbox" name="qualityChecked" />
+                  Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar
+                  listo.
+                </label>
+                <label>
+                  <span className="mb-2 block text-xs font-medium text-slate-500">
+                    Resultado de las pruebas (opcional)
+                  </span>
+                  <Textarea name="qualityNotes" maxLength={2000} />
+                </label>
+                <FormSubmitButton
+                  className="min-h-12 w-full"
+                  idleLabel="Guardar actualizacion"
+                  pendingLabel="Guardando cambios..."
+                />
+              </WorkshopCardForm>
+            )}
+          </LazyDisclosure>
+        ) : null}
 
         <RepairOrderCollectionActions order={order} canManage={canManageIntake} />
-        <RepairDocumentShareActions key={order.id} order={order} canManageIntake={canManageIntake} />
-        {canManageIntake ? <div className="flex flex-wrap gap-2">
-          <Button className="min-h-11 w-full" onClick={() => onOpenDetail(order)} type="button" variant="secondary">Ficha completa</Button>
-        </div> : null}
-        {order.workflow ? <LazyDisclosure className="border-t border-slate-200" summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40" summary={delivered ? "Historial de la orden original" : "Coordinacion y repuestos"}>
-          <OrderCoordinationPanel compact order={order} canManage={canManageIntake} technicians={technicians} />
-        </LazyDisclosure> : null}
+        <RepairDocumentShareActions
+          key={order.id}
+          order={order}
+          canManageIntake={canManageIntake}
+        />
+        {canManageIntake ? (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="min-h-11 w-full"
+              onClick={() => onOpenDetail(order)}
+              type="button"
+              variant="secondary"
+            >
+              Ficha completa
+            </Button>
+          </div>
+        ) : null}
+        {order.workflow ? (
+          <LazyDisclosure
+            className="border-t border-slate-200"
+            summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+            summary={delivered ? "Historial de la orden original" : "Coordinacion y repuestos"}
+          >
+            <OrderCoordinationPanel
+              compact
+              order={order}
+              canManage={canManageIntake}
+              technicians={technicians}
+            />
+          </LazyDisclosure>
+        ) : null}
         {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
-        <LazyDisclosure className="group border-t border-slate-200"
+        <LazyDisclosure
+          className="group border-t border-slate-200"
           summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
-          summary={<>
-            <span className="flex items-center gap-2">
-              <Globe2 aria-hidden="true" className="h-4 w-4" />
-              Portal del cliente
-            </span>
-            <ChevronDown aria-hidden="true" className="h-5 w-5 transition-transform duration-200 group-open:rotate-180" />
-          </>}
+          summary={
+            <>
+              <span className="flex items-center gap-2">
+                <Globe2 aria-hidden="true" className="h-4 w-4" />
+                Portal del cliente
+              </span>
+              <ChevronDown
+                aria-hidden="true"
+                className="h-5 w-5 transition-transform duration-200 group-open:rotate-180"
+              />
+            </>
+          }
         >
           <RepairCustomerPortalForm
             embedded
@@ -221,35 +324,69 @@ export function RepairAccessWorkshopCard({
           />
         </LazyDisclosure>
 
-        <div data-workshop-contact-actions="true" className={canManageIntake ? "hidden grid-cols-2 gap-2 lg:grid" : "hidden"}>
-          <RepairAccessWhatsAppButton className="w-full" label="WhatsApp" order={order} size="default" />
+        <div
+          data-workshop-contact-actions="true"
+          className={canManageIntake ? "hidden grid-cols-2 gap-2 lg:grid" : "hidden"}
+        >
+          <RepairAccessWhatsAppButton
+            className="w-full"
+            label="WhatsApp"
+            order={order}
+            size="default"
+          />
           {phone ? (
-            <a className={cn(buttonVariants({ variant: "secondary" }), "w-full")} href={`tel:${phone.replace(/\D+/g, "")}`}>
+            <a
+              className={cn(buttonVariants({ variant: "secondary" }), "w-full")}
+              href={`tel:${phone.replace(/\D+/g, "")}`}
+            >
               <Phone aria-hidden="true" className="h-4 w-4" />
               Llamar
             </a>
           ) : (
-            <span className={cn(buttonVariants({ variant: "ghost" }), "w-full cursor-not-allowed opacity-50")}>Sin telefono</span>
+            <span
+              className={cn(
+                buttonVariants({ variant: "ghost" }),
+                "w-full cursor-not-allowed opacity-50"
+              )}
+            >
+              Sin telefono
+            </span>
           )}
         </div>
 
         {canManageIntake ? (
           <div className="flex justify-end border-t border-slate-200 pt-2">
             <ActionMenu label="Mas acciones">
-              <a className={buttonVariants({ variant: "secondary" })} href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}>Registrar cobro</a>
-              <Button className="w-full" onClick={() => onEdit(order)} type="button" variant="secondary">
+              <a
+                className={buttonVariants({ variant: "secondary" })}
+                href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}
+              >
+                Registrar cobro
+              </a>
+              <Button
+                className="w-full"
+                onClick={() => onEdit(order)}
+                type="button"
+                variant="secondary"
+              >
                 Editar ingreso
               </Button>
               <form
                 action={cancelRepairAccessOrderAction}
                 onSubmit={(event) => {
-                  if (!window.confirm(`Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`)) {
+                  if (
+                    !window.confirm(
+                      `Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`
+                    )
+                  ) {
                     event.preventDefault();
                   }
                 }}
               >
                 <input name="id" type="hidden" value={order.id} />
-                <Button className="w-full" type="submit" variant="danger">Anular orden</Button>
+                <Button className="w-full" type="submit" variant="danger">
+                  Anular orden
+                </Button>
               </form>
             </ActionMenu>
           </div>
@@ -259,8 +396,26 @@ export function RepairAccessWorkshopCard({
   );
 }
 
-function WorkshopCardForm({ order, children }: { order: RepairAccessOrderRecord; children: React.ReactNode }) {
-  return order.workflow ? <WorkshopForm orderId={order.id} orderVersion={order.workflow.version}>{children}</WorkshopForm> : <form action={updateRepairAccessWorkshopAction} data-workshop-form className="grid gap-4 border-t border-graphite/10 p-4">{children}</form>;
+function WorkshopCardForm({
+  order,
+  children
+}: {
+  order: RepairAccessOrderRecord;
+  children: React.ReactNode;
+}) {
+  return order.workflow ? (
+    <WorkshopForm orderId={order.id} orderVersion={order.workflow.version}>
+      {children}
+    </WorkshopForm>
+  ) : (
+    <form
+      action={updateRepairAccessWorkshopAction}
+      data-workshop-form
+      className="grid gap-4 border-t border-graphite/10 p-4"
+    >
+      {children}
+    </form>
+  );
 }
 
 function WorkshopInfo({

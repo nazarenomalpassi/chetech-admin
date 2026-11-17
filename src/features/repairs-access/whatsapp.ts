@@ -69,7 +69,9 @@ export function getRepairAccessWhatsAppTemplate(
   const device = order.deviceLabel || "equipo";
   const amount = formatAmount(getAmount(order));
   const budgetDetail = order.budgetDetail?.trim();
-  const warrantyText = order.warrantyDays ? ` Tiene ${order.warrantyDays} dias de garantia desde el retiro.` : "";
+  const warrantyText = order.warrantyDays
+    ? ` Tiene ${order.warrantyDays} dias de garantia desde el retiro.`
+    : "";
 
   if (selectedKind === "budget") {
     return {
@@ -81,7 +83,9 @@ export function getRepairAccessWhatsAppTemplate(
         budgetDetail ? `Detalle del presupuesto: ${budgetDetail}.` : "",
         amount ? `El total final seria ${amount}.` : "",
         `tiene de garantia ${order.warrantyDays || 0} dias.`
-      ].filter(Boolean).join(" ")
+      ]
+        .filter(Boolean)
+        .join(" ")
     };
   }
 
@@ -94,7 +98,9 @@ export function getRepairAccessWhatsAppTemplate(
         `Tu ${device} ya esta listo para retirar.`,
         amount ? `Total: ${amount}.` : "",
         `${warrantyText} Te esperamos en el local. Gracias.`
-      ].filter(Boolean).join(" ")
+      ]
+        .filter(Boolean)
+        .join(" ")
     };
   }
 
