@@ -17,7 +17,9 @@
     "import:excel": "tsx scripts/import-chetech.ts",
     "import:repair-clients": "tsx scripts/import-repair-access-customers.ts",
     "import:repair-history": "tsx scripts/import-repair-history.ts",
-    "reconcile:repair-numbers": "tsx scripts/reconcile-repair-order-numbers.ts"
+    "reconcile:repair-numbers": "tsx scripts/reconcile-repair-order-numbers.ts",
+    "db:types": "tsx scripts/generate-db-types.ts",
+    "db:export-migrations": "tsx scripts/export-remote-migrations.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
