@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
   const router = useRouter();
@@ -116,14 +117,20 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
           variant="secondary"
           size="sm"
           onClick={() => {
-            if (
-              !dirty.current ||
-              window.confirm("Hay cambios sin guardar. ¿Querés actualizar la pantalla?")
-            ) {
+            const update = () => {
               dirty.current = false;
               setWaiting(false);
               router.refresh();
-            }
+            };
+            if (!dirty.current) return update();
+            confirmThen(
+              {
+                title: "¿Actualizar la pantalla?",
+                description: "Hay cambios sin guardar en un formulario del taller.",
+                confirmLabel: "Actualizar"
+              },
+              update
+            );
           }}
         >
           Revisar novedades
