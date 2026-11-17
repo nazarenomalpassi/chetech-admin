@@ -43,11 +43,12 @@ Genera `src/lib/db/database.types.ts` con las tablas y funciones del esquema `pu
 ## Migraciones nuevas
 
 - Nombre: `migrations/<AAAAMMDDhhmmss>_<nombre>.sql`, idempotentes y aditivas cuando se pueda.
-- Se aplican todas juntas en el pase final del plan de mejora, después de un respaldo completo y verificado (`docs/operations/backup-restore.md`).
+- Las que cambian datos (por ejemplo, la unificación de cobros) se aplican solo después de un respaldo completo y verificado (`docs/operations/backup-restore.md`).
 - Si se aplican con la herramienta `apply_migration`, Supabase registra la hora de aplicación como versión: renombrá el archivo con esa versión para que el repo y producción sigan alineados.
-- Pendientes de aplicar en producción, en este orden (ninguna modifica datos):
-  - `20261117200000_drop_duplicate_workshop_order_index.sql`: quita un índice idéntico a `repair_access_orders_created_at_id_idx`. Se revierte recreándolo.
-  - `20261117210000_workshop_today.sql`: función de solo lectura `get_workshop_today()` para el inicio "Hoy en el taller". Hasta que se aplique, el inicio muestra un aviso en lugar del resumen por etapa. Se revierte con `drop function public.get_workshop_today(); drop function private.get_workshop_today();`.
+- Aplicadas el 17/11/2026 con `apply_migration` (sin cambios de datos):
+  - `20261117220926_workshop_today.sql`: función de solo lectura `get_workshop_today()` del inicio "Hoy en el taller". Reversión: `drop function public.get_workshop_today(); drop function private.get_workshop_today();`.
+  - `20261117220945_drop_duplicate_workshop_order_index.sql`: quita un índice idéntico a `repair_access_orders_created_at_id_idx`. Reversión: recrear `workshop_orders_creation_idx` sobre `(created_at desc, id desc)`.
+- Pendientes de aplicar: ninguna.
 
 ## Ajustes que no son SQL
 
