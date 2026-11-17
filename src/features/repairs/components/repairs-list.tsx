@@ -23,7 +23,7 @@ import type { ActionResult } from "@/lib/form-state";
 import type { PaymentSplit } from "@/lib/payment-splits";
 import type { PaginationMeta } from "@/lib/pagination";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
-import { confirmSubmit } from "@/components/ui/confirm-dialog";
+import { confirmSubmit, confirmThen } from "@/components/ui/confirm-dialog";
 
 type Repair = {
   id: string;
@@ -294,11 +294,21 @@ export function RepairsList({
       return;
     }
     const data = parsed.data;
-    if (
-      dirty &&
-      !window.confirm("Recuperar reemplazara los datos que estas escribiendo. Continuar?")
-    )
+    if (dirty) {
+      confirmThen(
+        {
+          title: "¿Recuperar el borrador?",
+          description: "Reemplaza los datos que estás escribiendo.",
+          confirmLabel: "Recuperar"
+        },
+        () => void restoreParsedDraft(data)
+      );
       return;
+    }
+    await restoreParsedDraft(data);
+  }
+
+  async function restoreParsedDraft(data: z.infer<typeof editorDraftSchema>) {
     cancelLookup();
     const generation = lookupRequest.current.generation;
     const controller = new AbortController();
@@ -794,14 +804,14 @@ export function RepairsList({
               method="get"
               className="flex max-w-xl flex-1 flex-wrap items-end gap-2"
               onSubmit={(event) => {
-                if (
-                  dirty &&
-                  !window.confirm(
-                    "Hay un cobro sin guardar. El borrador queda disponible para recuperarlo. Continuar con la busqueda?"
-                  )
-                )
-                  event.preventDefault();
-                else draft.persistNow();
+                if (dirty)
+                  confirmSubmit(event, {
+                    title: "¿Buscar otra REP?",
+                    description:
+                      "Hay un cobro sin guardar. El borrador queda disponible para recuperarlo.",
+                    confirmLabel: "Buscar"
+                  });
+                if (!event.defaultPrevented) draft.persistNow();
               }}
             >
               {editing?.id ? (

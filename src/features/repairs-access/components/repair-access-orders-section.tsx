@@ -31,6 +31,7 @@ import { WarrantyReturnCase } from "./warranty-return-panel";
 import { getWorkshopOrderSummary } from "../workshop-order-summary";
 import { WorkshopOrderNextStep } from "./workshop-order-next-step";
 import { confirmSubmit } from "@/components/ui/confirm-dialog";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 const NARROW_QUERY = "(max-width: 767px)";
 function subscribeNarrow(onChange: () => void) {
@@ -147,14 +148,16 @@ export function RepairAccessOrdersSection({
   }, [normalizedSearch, statusFilter, warrantyFilter]);
 
   function togglePresentation() {
-    if (
-      document.documentElement.hasAttribute("data-unsaved-changes") &&
-      !window.confirm(
-        "Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Querés cambiar la vista?"
-      )
-    )
-      return;
-    setPresentation((current) => (current === "cards" ? "table" : "cards"));
+    const toggle = () => setPresentation((current) => (current === "cards" ? "table" : "cards"));
+    if (!document.documentElement.hasAttribute("data-unsaved-changes")) return toggle();
+    confirmThen(
+      {
+        title: "¿Cambiar la vista?",
+        description: "Hay cambios sin guardar. El borrador queda disponible para recuperarlo.",
+        confirmLabel: "Cambiar la vista"
+      },
+      toggle
+    );
   }
 
   return (

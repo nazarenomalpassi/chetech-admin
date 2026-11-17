@@ -36,6 +36,7 @@ import { RepairOrderActivity } from "./repair-order-activity";
 import { DocumentDeliveryStatus } from "@/features/whatsapp/components/document-delivery-status";
 import { RepairDocumentShareActions } from "./repair-document-share-actions";
 import { RepairOrderCollectionActions } from "./repair-order-collection-actions";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type Modal = "rejected" | "revoked" | "part" | "assignment" | "responsibility" | "claim";
 export type WorkshopTechnician = { id: string; name: string };
@@ -503,13 +504,17 @@ export function CoordinationDialog({
   }, [result, router]);
   function close() {
     if (pending) return;
-    if (
-      !result?.success &&
-      initialSnapshot.current !== editableDialogSnapshot(formRef.current) &&
-      !window.confirm("Hay cambios sin guardar. Querés descartarlos y cerrar?")
-    )
-      return;
-    onClose();
+    if (result?.success || initialSnapshot.current === editableDialogSnapshot(formRef.current))
+      return onClose();
+    confirmThen(
+      {
+        title: "¿Descartar los cambios?",
+        description: "Hay cambios sin guardar en la coordinación.",
+        confirmLabel: "Descartar y cerrar",
+        tone: "danger"
+      },
+      onClose
+    );
   }
   return (
     <DialogShell labelledBy="coordination-title" onClose={close} panelClassName="max-w-xl">
