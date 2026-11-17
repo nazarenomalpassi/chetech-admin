@@ -1,24 +1,31 @@
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
+import { LoaderCircle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
+/**
+ * Jerarquía de botones:
+ * - default: la acción principal de la vista. Uno solo por pantalla o panel.
+ * - secondary: acciones alternativas del mismo nivel.
+ * - ghost: acciones de bajo peso y navegación.
+ * - danger: anular o descartar; siempre con confirmación.
+ */
 const buttonVariants = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-colors duration-150 select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
-        default: "border border-graphite bg-graphite text-white hover:bg-black",
-        secondary:
-          "border border-line bg-white text-graphite hover:border-brand-300 hover:bg-brand-50",
-        ghost: "bg-transparent text-slate-600 hover:bg-brand-100 hover:text-graphite",
-        danger:
-          "border border-rose-200 bg-white text-rose-700 hover:border-rose-300 hover:bg-rose-50"
+        default: "border border-primary bg-primary text-primary-foreground hover:bg-primary-hover",
+        secondary: "border border-border-strong bg-card text-foreground hover:bg-accent",
+        ghost: "bg-transparent text-body hover:bg-accent hover:text-foreground",
+        danger: "border border-danger-border bg-card text-danger hover:bg-danger-soft"
       },
       size: {
-        default: "px-4 py-2.5",
-        sm: "min-h-11 px-3 py-2 text-sm sm:min-h-9",
-        lg: "h-12 px-6 text-[0.95rem]"
+        default: "min-h-11 px-4 py-2.5",
+        sm: "min-h-11 px-3 py-2 sm:min-h-9",
+        lg: "min-h-12 px-6 text-base",
+        icon: "size-11 sm:size-9"
       }
     },
     defaultVariants: {
@@ -29,12 +36,24 @@ const buttonVariants = cva(
 );
 
 export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {}
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  /** Muestra un indicador de carga y deshabilita el botón. */
+  loading?: boolean;
+}
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, ...props }, ref) => {
+  ({ className, variant, size, loading = false, disabled, children, ...props }, ref) => {
     return (
-      <button className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
+      <button
+        aria-busy={loading || undefined}
+        className={cn(buttonVariants({ variant, size, className }))}
+        disabled={disabled || loading}
+        ref={ref}
+        {...props}
+      >
+        {loading ? <LoaderCircle aria-hidden="true" className="size-4 animate-spin" /> : null}
+        {children}
+      </button>
     );
   }
 );

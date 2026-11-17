@@ -97,7 +97,7 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
   return (
     <div
       role="status"
-      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${offline ? "border-amber-200 bg-amber-50 text-amber-900" : "border-sky-200 bg-sky-50 text-sky-900"}`}
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-3 text-sm ${offline ? "border-warning-border bg-warning-soft text-warning" : "border-info-border bg-info-soft text-info"}`}
     >
       <span className="flex items-center gap-2">
         {offline ? <WifiOff className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}

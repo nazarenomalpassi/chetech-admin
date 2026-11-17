@@ -33,7 +33,7 @@ export function Sidebar({ role }: { role: AppRole }) {
         <div className="mt-3 flex min-h-0 flex-1 flex-col">
           <nav
             aria-label="Navegación principal"
-            className="min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+            className="min-h-0 flex-1 scrollbar-gutter-stable space-y-1 overflow-y-auto overscroll-contain pr-1"
           >
             {groups.map((group) => (
               <section key={group.label} className="space-y-1 pb-3">

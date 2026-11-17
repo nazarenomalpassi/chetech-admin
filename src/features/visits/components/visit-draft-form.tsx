@@ -118,7 +118,7 @@ export function VisitDraftForm({
       <input type="hidden" name="draftToken" value={draftToken} readOnly />
       <input type="hidden" name="draftVisitId" value={visitId} />
       {pendingDraft ? (
-        <div className="col-span-full rounded-xl bg-amber-50 p-3 text-sm">
+        <div className="col-span-full rounded-xl bg-warning-soft p-3 text-sm">
           <p>
             {stale
               ? "La visita cambio desde este borrador. No se puede restaurar sobre la version nueva; revisa el texto anterior."
@@ -177,7 +177,7 @@ export function VisitDraftForm({
               <summary className="min-h-11 cursor-pointer py-3">
                 Consultar texto del borrador anterior
               </summary>
-              <pre className="mt-2 whitespace-pre-wrap break-words">
+              <pre className="mt-2 wrap-break-word whitespace-pre-wrap">
                 {Object.entries(pendingDraft.fields)
                   .map(([key, value]) => `${key}: ${value}`)
                   .join("\n")}
@@ -190,7 +190,7 @@ export function VisitDraftForm({
         {children}
       </fieldset>
       {notice ? (
-        <p role="status" aria-live="polite" className="col-span-full text-sm text-slate-500">
+        <p role="status" aria-live="polite" className="col-span-full text-sm text-muted-foreground">
           {notice}
         </p>
       ) : null}

@@ -17,7 +17,7 @@ import { RepairAccessStatusBadge } from "./repair-access-status-badge";
 import { WorkshopForm } from "./workshop-form";
 
 const disclosureClass =
-  "min-h-11 cursor-pointer rounded-lg px-3 py-3 text-sm font-semibold text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40";
+  "min-h-11 cursor-pointer rounded-lg px-3 py-3 text-sm font-semibold text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40";
 
 function actionData(data: FormData) {
   const form = new FormData();
@@ -65,7 +65,7 @@ export function WarrantyReturnPanel({
   return (
     <section
       aria-label="Garantia de la orden"
-      className="min-w-0 space-y-3 rounded-xl border border-slate-300 bg-slate-50 p-4"
+      className="min-w-0 space-y-3 rounded-xl border border-border-strong bg-muted p-4"
     >
       {active ? <WarrantyReturnCase key={active.id} record={active} canManage={canManage} /> : null}
       {canStart ? (
@@ -83,14 +83,14 @@ export function WarrantyReturnPanel({
               <>
                 <input name="id" type="hidden" value={order.id} />
                 <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-muted-foreground">
                   Se registra otra visita con el mismo REP. El presupuesto, los cobros, el estado y
                   el retiro original no cambian.
                 </p>
                 {!coverageActive ? (
                   <div
                     role="note"
-                    className="space-y-3 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950"
+                    className="space-y-3 rounded-lg border border-warning-border bg-warning-soft p-3 text-sm text-warning"
                   >
                     <p>
                       La cobertura original no esta vigente o requiere revision. Este reingreso no
@@ -109,7 +109,7 @@ export function WarrantyReturnPanel({
                     required
                   />
                 </WarrantyField>
-                <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+                <div className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">
                   <input
                     id={`${fieldId}-coverage`}
                     name="acknowledgeCoverage"
@@ -124,7 +124,7 @@ export function WarrantyReturnPanel({
                     renueva)
                   </label>
                 </div>
-                <p className="text-sm text-slate-500">
+                <p className="text-sm text-muted-foreground">
                   Si elegis otra fecha, se verifica la cobertura de ese dia. Si hace falta
                   autorizarla, tus datos se conservan para reintentar.
                 </p>
@@ -162,7 +162,7 @@ export function WarrantyReturnPanel({
           summary={`Historial de reingresos (${history.length})`}
           summaryClassName={disclosureClass}
         >
-          <div className="space-y-4 border-t border-slate-200 pt-3">
+          <div className="space-y-4 border-t border-border pt-3">
             {history.map((record) => (
               <WarrantyReturnCase key={record.id} record={record} canManage={canManage} />
             ))}
@@ -194,40 +194,40 @@ export function WarrantyReturnCase({
   return (
     <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-base font-semibold text-slate-950">
+        <h3 className="text-base font-semibold text-foreground">
           {closed ? "Reingreso por garantia retirado" : "Reingreso por garantia activo"}
         </h3>
         <RepairAccessStatusBadge status={record.status} />
       </div>
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Ingreso de garantia:{" "}
         <time dateTime={record.receivedOn}>{formatDate(record.receivedOn)}</time>
       </p>
-      <p className="whitespace-pre-wrap break-words text-sm font-medium leading-6 text-slate-950">
+      <p className="text-sm leading-6 font-medium wrap-break-word whitespace-pre-wrap text-foreground">
         {record.issueReported}
       </p>
       {record.accessories ? (
-        <p className="whitespace-pre-wrap break-words text-sm text-slate-600">
+        <p className="text-sm wrap-break-word whitespace-pre-wrap text-muted-foreground">
           Accesorios: {record.accessories}
         </p>
       ) : null}
       {record.conditionNotes ? (
-        <p className="whitespace-pre-wrap break-words text-sm text-slate-600">
+        <p className="text-sm wrap-break-word whitespace-pre-wrap text-muted-foreground">
           Estado al recibir: {record.conditionNotes}
         </p>
       ) : null}
       {record.progress ? (
-        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+        <p className="text-sm leading-6 wrap-break-word whitespace-pre-wrap text-body">
           Avance: {record.progress}
         </p>
       ) : null}
       {record.resolution ? (
-        <p className="whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+        <p className="text-sm leading-6 wrap-break-word whitespace-pre-wrap text-body">
           Resolucion: {record.resolution}
         </p>
       ) : null}
       {closed ? (
-        <p className="break-words text-sm text-slate-600">
+        <p className="text-sm wrap-break-word text-muted-foreground">
           Retirado el {formatDate(record.closedAt!)}
           {record.recipient ? ` por ${record.recipient}` : ""}. La orden original conserva su
           historial.
@@ -295,7 +295,7 @@ export function WarrantyReturnCase({
                           required
                         />
                       </WarrantyField>
-                      <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+                      <div className="flex items-center gap-3 rounded-lg border border-border p-3 text-sm">
                         <input
                           id={`${fieldId}-delivery`}
                           name="confirmDelivery"
@@ -310,18 +310,18 @@ export function WarrantyReturnCase({
                           Confirmo la devolucion del equipo de este reingreso.
                         </label>
                       </div>
-                      <p className="text-sm text-slate-500">
+                      <p className="text-sm text-muted-foreground">
                         Esta entrega cierra solo el reingreso. No modifica cobros ni fechas de la
                         orden original.
                       </p>
-                      <p className="text-sm text-slate-600">
+                      <p className="text-sm text-muted-foreground">
                         Podes guardar la resolucion y el retiro en un solo paso, sin cambiar antes a
                         Listo para retirar.
                       </p>
                     </>
                   ) : null}
                   {!canManage ? (
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground">
                       Mostrador registra el retiro del equipo.
                     </p>
                   ) : null}
@@ -349,7 +349,7 @@ function WarrantyField({
 }) {
   return (
     <div>
-      <label htmlFor={htmlFor} className="mb-2 block text-sm font-medium text-slate-700">
+      <label htmlFor={htmlFor} className="mb-2 block text-sm font-medium text-body">
         {label}
       </label>
       {children}

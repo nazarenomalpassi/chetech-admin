@@ -7,10 +7,10 @@ import { formatCurrency } from "@/lib/utils";
 export function PurchaseCommitmentsNotice({ commitments }: { commitments: PurchaseCommitments }) {
   return (
     <section
-      className="rounded-xl border border-graphite/10 bg-brand-50 p-4 text-sm text-slate-700"
+      className="rounded-xl border border-border bg-muted p-4 text-sm text-body"
       aria-label="Compromisos de compras"
     >
-      <h2 className="font-semibold text-slate-950">Compras de taller pendientes de pago</h2>
+      <h2 className="font-semibold text-foreground">Compras de taller pendientes de pago</h2>
       {commitments.ready ? (
         <>
           <p className="mt-2">
@@ -18,7 +18,7 @@ export function PurchaseCommitmentsNotice({ commitments }: { commitments: Purcha
             <strong>{formatCurrency(commitments.knownOutstanding ?? 0)}</strong>.
           </p>
           {commitments.unknownCostCount ? (
-            <p className="mt-2 text-amber-800">
+            <p className="mt-2 text-warning">
               {commitments.unknownCostCount} compras sin costo conocido: no se descuentan. El
               disponible sugerido es incompleto hasta cotizarlas.
             </p>
@@ -30,7 +30,7 @@ export function PurchaseCommitmentsNotice({ commitments }: { commitments: Purcha
           </p>
         </>
       ) : (
-        <p className="mt-2 text-amber-800" role="alert">
+        <p className="mt-2 text-warning" role="alert">
           El sugerido no incluye compromisos: falta la migracion de vinculos o no se pudo consultar.
           Revisa las compras antes de retirar.
         </p>

@@ -5,20 +5,20 @@ import { cn, formatCurrency } from "@/lib/utils";
 export type MetricTone = "income" | "expense" | "service" | "success" | "warning" | "neutral";
 
 const tones: Record<MetricTone, { icon: string; value: string; accent: string }> = {
-  income: { icon: "bg-blue-50 text-blue-800", value: "text-blue-900", accent: "bg-blue-500/60" },
-  expense: { icon: "bg-rose-50 text-rose-800", value: "text-rose-800", accent: "bg-rose-500/60" },
-  service: { icon: "bg-teal-50 text-teal-800", value: "text-teal-900", accent: "bg-teal-500/60" },
+  income: { icon: "bg-info-soft text-info", value: "text-info", accent: "bg-info/60" },
+  expense: { icon: "bg-danger-soft text-danger", value: "text-danger", accent: "bg-danger/60" },
+  service: { icon: "bg-success-soft text-success", value: "text-success", accent: "bg-success/60" },
   success: {
-    icon: "bg-emerald-50 text-emerald-800",
-    value: "text-emerald-800",
-    accent: "bg-emerald-500/60"
+    icon: "bg-success-soft text-success",
+    value: "text-success",
+    accent: "bg-success/60"
   },
   warning: {
-    icon: "bg-amber-50 text-amber-900",
-    value: "text-amber-900",
-    accent: "bg-amber-500/60"
+    icon: "bg-warning-soft text-warning",
+    value: "text-warning",
+    accent: "bg-warning/60"
   },
-  neutral: { icon: "bg-brand-100 text-graphite", value: "text-slate-950", accent: "bg-graphite/30" }
+  neutral: { icon: "bg-accent text-foreground", value: "text-foreground", accent: "bg-primary/30" }
 };
 
 export function MetricCard({
@@ -48,17 +48,17 @@ export function MetricCard({
       <span aria-hidden="true" className={cn("absolute inset-x-0 top-0 h-0.5", colors.accent)} />
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium leading-5 text-slate-600">{label}</p>
+          <p className="text-sm leading-5 font-medium text-muted-foreground">{label}</p>
           <p
             className={cn(
-              "mt-2 break-words text-2xl font-semibold tabular-nums leading-tight tracking-tight min-[1440px]:text-[1.75rem]",
+              "mt-2 text-2xl leading-tight font-semibold tracking-tight wrap-break-word tabular-nums min-[1440px]:text-[1.75rem]",
               colors.value
             )}
           >
             {format === "currency" ? formatCurrency(value) : value.toLocaleString("es-AR")}
           </p>
           {description ? (
-            <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">{description}</p>
           ) : null}
         </div>
         <span

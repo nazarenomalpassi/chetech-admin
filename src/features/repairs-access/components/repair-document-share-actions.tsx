@@ -70,12 +70,12 @@ export function RepairDocumentShareActions({
   return (
     <section
       aria-label="Comprobantes por WhatsApp"
-      className="min-w-0 space-y-2 border-t border-slate-200 pt-3"
+      className="min-w-0 space-y-2 border-t border-border pt-3"
     >
-      <p className="break-words text-sm font-medium text-slate-800">
+      <p className="text-sm font-medium wrap-break-word text-foreground">
         Destinatario: {order.customer.fullName} - {order.customer.phone || "Sin telefono principal"}
       </p>
-      <p className="text-xs leading-5 text-slate-600" id={helpId}>
+      <p className="text-xs leading-5 text-muted-foreground" id={helpId}>
         {
           "Usa la sesi\u00f3n de WhatsApp Web del local. Revis\u00e1 el destinatario y confirm\u00e1 Enviar."
         }
@@ -106,25 +106,25 @@ export function RepairDocumentShareActions({
         ))}
       </div>
       {!hasValidPhone ? (
-        <p className="text-xs leading-5 text-amber-800" id={phoneHelpId}>
+        <p className="text-xs leading-5 text-warning" id={phoneHelpId}>
           El cliente no tiene un telefono principal valido para WhatsApp. Corregilo en Editar
           ingreso.
         </p>
       ) : null}
       <details className="min-w-0">
-        <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+        <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
           Enlaces compartidos
         </summary>
         <div className="space-y-2 pb-2">
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-muted-foreground">
             {
               "Los enlaces vencen a los 365 d\u00edas. Cualquier persona con el enlace, incluso reenviado, puede ver solo ese comprobante, no la orden."
             }
           </p>
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-muted-foreground">
             {"La app no puede detectar si el mensaje fue entregado o le\u00eddo."}
           </p>
-          <p className="text-xs leading-5 text-slate-500">
+          <p className="text-xs leading-5 text-muted-foreground">
             Cancela todos los enlaces anteriores de ese comprobante.
           </p>
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
@@ -142,14 +142,14 @@ export function RepairDocumentShareActions({
             ))}
           </div>
           {revoking ? (
-            <p role="status" className="text-xs text-slate-600">
+            <p role="status" className="text-xs text-muted-foreground">
               Cancelando enlaces...
             </p>
           ) : null}
           {feedback ? (
             <p
               role={feedback.success ? "status" : "alert"}
-              className={`text-xs leading-5 ${feedback.success ? "text-emerald-800" : "text-rose-700"}`}
+              className={`text-xs leading-5 ${feedback.success ? "text-success" : "text-danger"}`}
             >
               {feedback.message}
             </p>

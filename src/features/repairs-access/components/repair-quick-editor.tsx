@@ -31,7 +31,7 @@ export function RepairQuickEditor({
     return canManage ? (
       <RepairWarrantyCorrection order={order} defaultWarrantyDays={defaultWarrantyDays} />
     ) : (
-      <p className="p-4 text-sm text-slate-600">
+      <p className="p-4 text-sm text-muted-foreground">
         Esta orden ya fue entregada. La garantia se corrige desde administracion.
       </p>
     );
@@ -104,7 +104,7 @@ export function RepairQuickEditor({
             <input name="id" type="hidden" value={order.id} />
             <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
             <div className={`grid min-w-0 gap-3 ${retiring ? "" : "sm:grid-cols-2"}`}>
-              <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+              <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
                 <span>Estado de la orden</span>
                 <Select
                   id={`quick-${order.id}-status`}
@@ -118,7 +118,7 @@ export function RepairQuickEditor({
                 className={
                   retiring || noFault
                     ? "hidden"
-                    : "grid min-w-0 gap-2 text-sm font-medium text-slate-700"
+                    : "grid min-w-0 gap-2 text-sm font-medium text-body"
                 }
               >
                 <span>Presupuesto</span>
@@ -139,20 +139,20 @@ export function RepairQuickEditor({
               </label>
             </div>
             {noFault ? (
-              <p className="text-sm leading-5 text-slate-600">
+              <p className="text-sm leading-5 text-muted-foreground">
                 No requiere presupuesto ni confirmacion del cliente. Se conservan los importes,
                 cobros y la falla reportada originalmente.
               </p>
             ) : null}
             {order.isPaid && !retiring && !noFault ? (
-              <p className="text-sm leading-5 text-slate-600">
+              <p className="text-sm leading-5 text-muted-foreground">
                 Importe protegido por un cobro informado. Corrige el dinero en Cobros.
               </p>
             ) : null}
             <label
               hidden={retiring || noFault}
               className={
-                retiring || noFault ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"
+                retiring || noFault ? "hidden" : "grid gap-2 text-sm font-medium text-body"
               }
             >
               <span>Detalle del presupuesto</span>
@@ -167,9 +167,7 @@ export function RepairQuickEditor({
                 placeholder="Trabajo a realizar y repuestos incluidos"
               />
             </label>
-            <label
-              className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-slate-700"}
-            >
+            <label className={retiring ? "hidden" : "grid gap-2 text-sm font-medium text-body"}>
               <span>Avance / trabajo realizado</span>
               <Textarea
                 id={`quick-${order.id}-progress`}
@@ -182,7 +180,7 @@ export function RepairQuickEditor({
               />
             </label>
             {!retiring ? (
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="text-xs leading-5 text-muted-foreground">
                 El presupuesto y el avance son visibles para el cliente con cuenta vinculada.
               </p>
             ) : null}
@@ -197,9 +195,9 @@ export function RepairQuickEditor({
               </div>
             ) : null}
             {retiring ? (
-              <div className="grid gap-3 rounded-xl border border-emerald-200 bg-emerald-50/40 p-3">
-                <p className="text-sm font-semibold text-slate-900">Registrar retiro del equipo</p>
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
+              <div className="grid gap-3 rounded-xl border border-success-border bg-success-soft/40 p-3">
+                <p className="text-sm font-semibold text-foreground">Registrar retiro del equipo</p>
+                <label className="grid gap-2 text-sm font-medium text-body">
                   <span>Persona que retira</span>
                   <Input
                     id={`quick-${order.id}-recipient`}
@@ -210,7 +208,7 @@ export function RepairQuickEditor({
                     autoComplete="name"
                   />
                 </label>
-                <label className="grid gap-2 text-sm font-medium text-slate-700">
+                <label className="grid gap-2 text-sm font-medium text-body">
                   <span>Accesorios devueltos y observaciones</span>
                   <Textarea
                     id={`quick-${order.id}-delivery-notes`}
@@ -224,7 +222,7 @@ export function RepairQuickEditor({
                   />
                 </label>
                 {canManage && hasBalance ? (
-                  <label className="flex min-h-11 items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                  <label className="flex min-h-11 items-start gap-3 rounded-xl bg-warning-soft p-3 text-sm text-warning">
                     <input
                       name="allowBalance"
                       type="checkbox"
@@ -234,7 +232,7 @@ export function RepairQuickEditor({
                     Autorizo entrega con saldo pendiente. Indica el motivo en las observaciones.
                   </label>
                 ) : null}
-                <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-slate-900">
+                <label className="flex min-h-11 items-start gap-3 text-sm font-semibold text-foreground">
                   <input
                     name="confirmDelivery"
                     type="checkbox"
@@ -245,13 +243,13 @@ export function RepairQuickEditor({
                   Confirmo que el cliente retiro el equipo
                 </label>
                 {!canDeliver ? (
-                  <p role="status" className="text-sm text-amber-900">
+                  <p role="status" className="text-sm text-warning">
                     Primero guarda como Listo para retirar, No presenta fallas, Sin solucion o
                     Presupuestado y rechazado.
                   </p>
                 ) : null}
                 {hasWorkChanges ? (
-                  <p role="status" className="text-sm text-amber-900">
+                  <p role="status" className="text-sm text-warning">
                     Guarda primero los cambios de presupuesto o trabajo. Vuelve al estado anterior:
                     lo que escribiste se conserva.
                   </p>
@@ -259,10 +257,10 @@ export function RepairQuickEditor({
               </div>
             ) : null}
             {canManage && !retiring && (decisionSelected || state.needsConfirmation) ? (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-3">
+              <div className="rounded-xl border border-warning-border bg-warning-soft/60 p-3">
                 {decisionSelected ? (
                   <>
-                    <p className="text-sm font-semibold text-slate-900">
+                    <p className="text-sm font-semibold text-foreground">
                       {responseNeedsRecording
                         ? rejecting
                           ? "Al guardar se registra que el cliente rechazo este presupuesto."
@@ -274,7 +272,7 @@ export function RepairQuickEditor({
                   </>
                 ) : (
                   <>
-                    <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-slate-900">
+                    <label className="flex min-h-11 items-center gap-3 text-sm font-semibold text-foreground">
                       <input
                         key={`confirmation-${quoteKey}`}
                         name="confirmCustomer"
@@ -284,7 +282,7 @@ export function RepairQuickEditor({
                       />
                       El cliente confirmo este presupuesto
                     </label>
-                    <p className="mt-1 text-sm leading-5 text-slate-600">
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">
                       {confirmSelected
                         ? "Al guardar se registra que el cliente acepto este presupuesto."
                         : "Solo si autorizo este importe y detalle."}
@@ -294,7 +292,7 @@ export function RepairQuickEditor({
                 {responseNeedsRecording ||
                 (!decisionSelected && confirmSelected && needsFreeReason) ? (
                   <div className="mt-3 grid gap-3">
-                    <label className="grid gap-2 text-sm font-medium text-slate-700">
+                    <label className="grid gap-2 text-sm font-medium text-body">
                       <span>
                         {needsRejectionReason
                           ? "Motivo del rechazo"
@@ -319,7 +317,7 @@ export function RepairQuickEditor({
               </div>
             ) : null}
             {canManage && !retiring && !noFault && !state.needsConfirmation && !decisionSelected ? (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 La aceptacion de este presupuesto ya esta registrada. Desmarcar un formulario no la
                 revoca.
               </p>
@@ -336,7 +334,7 @@ export function RepairQuickEditor({
                 className={
                   retiring
                     ? "hidden"
-                    : "flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm font-semibold text-slate-900"
+                    : "flex min-h-11 items-start gap-3 rounded-xl border border-border p-3 text-sm font-semibold text-foreground"
                 }
               >
                 <input
@@ -354,13 +352,13 @@ export function RepairQuickEditor({
               </label>
             ) : null}
             {pendingParts > 0 && !retiring ? (
-              <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
                 Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinacion y
                 repuestos.
               </p>
             ) : null}
-            <details className={retiring ? "hidden" : "border-t border-slate-200 pt-2"}>
-              <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+            <details className={retiring ? "hidden" : "border-t border-border pt-2"}>
+              <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
                 Resultado de las pruebas (opcional)
               </summary>
               <label className="mt-2 grid gap-2 text-sm">
@@ -389,7 +387,7 @@ export function RepairQuickEditor({
                       ? "Guardar y marcar listo"
                       : "Guardar cambios"}
               </Button>
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="text-xs leading-5 text-muted-foreground">
                 {retiring
                   ? "Registra la fecha y la persona que retira. No genera cobros ni modifica importes."
                   : "Guardar no cobra ni entrega el equipo. Esas acciones se registran por separado."}

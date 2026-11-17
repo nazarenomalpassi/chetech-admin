@@ -370,7 +370,7 @@ export function RepairsAccessView({
     <div className="space-y-5">
       {message ? (
         <p
-          className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}
+          className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
         >
           {message.message}
         </p>
@@ -382,7 +382,7 @@ export function RepairsAccessView({
       initialSelectedOrder &&
       activeSection === "ordenes" ? (
         <Card className="space-y-3">
-          <h2 className="break-words text-base font-semibold text-slate-950">
+          <h2 className="text-base font-semibold wrap-break-word text-foreground">
             Ingreso guardado: {initialSelectedOrder.repairNumber}
           </h2>
           <RepairLabelPrintLink orderId={initialSelectedOrder.id} />
@@ -396,7 +396,7 @@ export function RepairsAccessView({
 
       <nav
         aria-label="Secciones de reparaciones"
-        className="flex flex-wrap items-start gap-2 border-b border-slate-200 pb-3"
+        className="flex flex-wrap items-start gap-2 border-b border-border pb-3"
       >
         {primarySections
           .filter(
@@ -409,7 +409,7 @@ export function RepairsAccessView({
           .map((section) => (
             <button
               aria-current={activeSection === section.key ? "page" : undefined}
-              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${activeSection === section.key ? "bg-graphite text-white" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${activeSection === section.key ? "bg-primary text-white" : "text-muted-foreground hover:bg-accent"}`}
               key={section.key}
               onClick={() => navigate(section.key)}
               type="button"
@@ -422,7 +422,7 @@ export function RepairsAccessView({
         {canManageIntake ? (
           <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
             <summary
-              className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 ${secondarySections.some((section) => section.key === activeSection) ? "bg-slate-100 text-graphite" : "text-slate-600 hover:bg-slate-100"}`}
+              className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${secondarySections.some((section) => section.key === activeSection) ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent"}`}
             >
               Mas opciones
             </summary>
@@ -486,7 +486,7 @@ export function RepairsAccessView({
           <form
             action="/reparaciones-access"
             method="get"
-            className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200 bg-white p-4"
+            className="flex flex-wrap items-end gap-3 rounded-xl border border-border bg-card p-4"
           >
             <input name="view" type="hidden" value="metricas" />
             <label className="grid gap-2 text-sm font-medium">
@@ -604,8 +604,8 @@ function RepairAccessQueriesPlaceholder({
     <Card>
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Consultas del taller</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <h2 className="text-xl font-semibold text-foreground">Consultas del taller</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Abri una vista filtrada para revisar esperas, entregas y garantias del taller.
           </p>
         </div>
@@ -615,9 +615,9 @@ function RepairAccessQueriesPlaceholder({
       </div>
       <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {queryCards.map((card) => (
-          <div className="rounded-xl border border-slate-100 bg-slate-50 p-5" key={card.title}>
-            <p className="text-sm font-medium text-slate-600">{card.title}</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-950">{card.value}</p>
+          <div className="rounded-xl border border-border bg-muted p-5" key={card.title}>
+            <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+            <p className="mt-2 text-2xl font-semibold text-foreground">{card.value}</p>
             <Link
               className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4"
               href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}
@@ -638,8 +638,8 @@ function RepairAccessImportPanel({
 }) {
   return (
     <Card>
-      <h2 className="text-xl font-semibold text-slate-950">Trazabilidad del Excel</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+      <h2 className="text-xl font-semibold text-foreground">Trazabilidad del Excel</h2>
+      <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
         Ultimo lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y
         no modifica caja.
       </p>
@@ -653,13 +653,13 @@ function RepairAccessImportPanel({
           <ImportMetric label="Errores" value={String(latestImport.errorCount)} />
         </div>
       ) : (
-        <p className="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-500">
+        <p className="mt-6 rounded-xl bg-muted p-5 text-sm text-muted-foreground">
           Todavia no hay importaciones registradas.
         </p>
       )}
 
       {latestImport ? (
-        <p className="mt-4 text-sm text-slate-500">
+        <p className="mt-4 text-sm text-muted-foreground">
           Ultima importacion: {formatDate(latestImport.createdAt)}
         </p>
       ) : null}
@@ -670,8 +670,8 @@ function RepairAccessImportPanel({
 function ImportMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-base font-semibold text-slate-950">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-semibold wrap-break-word text-foreground">{value}</p>
     </div>
   );
 }

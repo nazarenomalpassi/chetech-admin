@@ -68,15 +68,15 @@ export function RepairAttachments({ orderId }: { orderId: string }) {
   return (
     <details
       onToggle={(event) => setOpened(event.currentTarget.open)}
-      className="min-w-0 border-t border-slate-200 bg-white"
+      className="min-w-0 border-t border-border bg-card"
     >
-      <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+      <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
         <Camera aria-hidden="true" className="h-4 w-4" />
         Fotos del equipo {opened ? `(${photos.length})` : ""}
       </summary>
       <form data-workshop-form onSubmit={upload} className="mt-2 grid gap-3">
         <input name="orderId" value={orderId} type="hidden" />
-        <label className="grid gap-2 text-sm text-slate-700">
+        <label className="grid gap-2 text-sm text-body">
           Foto del ingreso, falla o resultado
           <input
             name="file"
@@ -85,14 +85,14 @@ export function RepairAttachments({ orderId }: { orderId: string }) {
             capture="environment"
             required
             disabled={pending}
-            className="block min-h-11 w-full min-w-0 rounded-lg border border-slate-200 p-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+            className="block min-h-11 w-full min-w-0 rounded-lg border border-border p-2 text-sm focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
           />
         </label>
         <Button type="submit" disabled={pending} variant="secondary">
           {pending ? "Subiendo..." : "Guardar foto privada"}
         </Button>
         {message ? (
-          <p role="status" className="text-sm text-slate-600">
+          <p role="status" className="text-sm text-muted-foreground">
             {message}
           </p>
         ) : null}
@@ -104,7 +104,7 @@ export function RepairAttachments({ orderId }: { orderId: string }) {
             href={`/api/repair-access/attachments/${p.id}`}
             target="_blank"
             rel="noreferrer"
-            className="min-h-11 break-words rounded-lg py-3 text-sm underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+            className="min-h-11 rounded-lg py-3 text-sm wrap-break-word underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
           >
             {p.file_name}
           </a>

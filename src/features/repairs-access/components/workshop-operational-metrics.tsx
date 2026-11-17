@@ -33,12 +33,12 @@ export function WorkshopOperationalMetrics({
     <div className="min-w-0 space-y-4">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-graphite">Metricas operativas</h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <h2 className="text-xl font-semibold text-foreground">Metricas operativas</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Todas las ordenes del taller, no solo las de la pagina actual.
           </p>
         </div>
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           Estado actual al <time dateTime={metrics.asOf}>{date(metrics.asOf)}</time>
         </p>
       </header>
@@ -72,8 +72,8 @@ export function WorkshopOperationalMetrics({
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card role="region" aria-label="Antiguedad de equipos abiertos">
-          <h3 className="text-base font-semibold text-graphite">Antiguedad en el local</h3>
-          <p className="mt-1 text-xs text-slate-500">
+          <h3 className="text-base font-semibold text-foreground">Antiguedad en el local</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
             Dias calendario desde el ingreso. No es tiempo de trabajo tecnico.
           </p>
           <dl className="mt-4 space-y-3">
@@ -85,10 +85,10 @@ export function WorkshopOperationalMetrics({
                 </div>
                 <div
                   aria-hidden="true"
-                  className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100"
+                  className="mt-1 h-1.5 overflow-hidden rounded-full bg-accent"
                 >
                   <div
-                    className="h-full rounded-full bg-graphite"
+                    className="h-full rounded-full bg-primary"
                     style={{
                       width: `${current.openOrders ? Math.min(100, (row.value * 100) / current.openOrders) : 0}%`
                     }}
@@ -97,13 +97,13 @@ export function WorkshopOperationalMetrics({
               </div>
             ))}
           </dl>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-muted-foreground">
             {number(current.age.unknownIntakeOrders)} ordenes con ingreso sin fecha valida o futura.
           </p>
         </Card>
         <Card role="region" aria-label="Repuestos pendientes">
-          <h3 className="text-base font-semibold text-graphite">Repuestos pendientes</h3>
-          <p className="mt-1 text-sm text-slate-600">
+          <h3 className="text-base font-semibold text-foreground">Repuestos pendientes</h3>
+          <p className="mt-1 text-sm text-muted-foreground">
             {number(current.parts.orders)} ordenes / {number(current.parts.requests)} solicitudes
             pendientes de recepcion.
           </p>
@@ -112,7 +112,7 @@ export function WorkshopOperationalMetrics({
             <Datum label="Unidades en camino" value={number(current.parts.unitsInTransit)} />
             <Datum label="Total por recibir" value={number(current.parts.unitsToReceive)} />
           </dl>
-          <p className="mt-4 text-xs text-slate-500">
+          <p className="mt-4 text-xs text-muted-foreground">
             Sin duplicar ordenes con varios repuestos. Las solicitudes canceladas no cuentan.
           </p>
         </Card>
@@ -121,8 +121,8 @@ export function WorkshopOperationalMetrics({
       <Card role="region" aria-label="Movimiento del periodo">
         <div className="flex flex-col justify-between gap-2 sm:flex-row">
           <div>
-            <h3 className="text-base font-semibold text-graphite">Movimiento del periodo</h3>
-            <p className="mt-1 text-xs text-slate-500">
+            <h3 className="text-base font-semibold text-foreground">Movimiento del periodo</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
               {date(metrics.period.from)} al {date(metrics.period.to)}. Los retiros pueden
               corresponder a ingresos de otros meses.
             </p>
@@ -132,8 +132,8 @@ export function WorkshopOperationalMetrics({
             <Datum label="Retiros registrados" value={number(periodFlow.closures)} />
           </dl>
         </div>
-        <details className="mt-4 border-t border-line pt-3">
-          <summary className="min-h-11 cursor-pointer rounded-md py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+        <details className="mt-4 border-t border-border pt-3">
+          <summary className="min-h-11 cursor-pointer rounded-md py-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
             Ver movimiento diario
           </summary>
           <div className="max-h-72 overflow-auto">
@@ -152,7 +152,7 @@ export function WorkshopOperationalMetrics({
               </thead>
               <tbody>
                 {periodFlow.days.map((day) => (
-                  <tr className="border-t border-line" key={day.date}>
+                  <tr className="border-t border-border" key={day.date}>
                     <th scope="row" className="py-2 font-normal">
                       {date(day.date)}
                     </th>
@@ -164,7 +164,7 @@ export function WorkshopOperationalMetrics({
             </table>
           </div>
         </details>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-muted-foreground">
           {number(periodFlow.closuresMissingDate)} retiros sin fecha verificable, excluidos del
           periodo.
         </p>
@@ -172,13 +172,13 @@ export function WorkshopOperationalMetrics({
 
       <div className="grid gap-4 xl:grid-cols-2">
         <Card role="region" aria-label="Tiempos por estado">
-          <h3 className="text-base font-semibold text-graphite">Mediana de tiempo por estado</h3>
-          <p className="mt-1 text-xs leading-5 text-slate-500">
+          <h3 className="text-base font-semibold text-foreground">Mediana de tiempo por estado</h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
             Solo intervalos cerrados entre cambios reales, cuya salida ocurrio en el periodo. No son
             horas trabajadas.
           </p>
           {phaseDurations.length ? (
-            <ul className="mt-4 divide-y divide-line">
+            <ul className="mt-4 divide-y divide-border">
               {phaseDurations.map((phase) => (
                 <li
                   className="flex flex-wrap items-center justify-between gap-2 py-3"
@@ -188,7 +188,7 @@ export function WorkshopOperationalMetrics({
                     <p className="text-sm font-medium">
                       {getRepairAccessStatusLabel(phase.status)}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {number(phase.samples)} intervalos / {number(phase.orders)} ordenes
                     </p>
                   </div>
@@ -199,14 +199,14 @@ export function WorkshopOperationalMetrics({
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-slate-600">
+            <p className="mt-4 text-sm text-muted-foreground">
               Sin intervalos de estados verificables en este periodo.
             </p>
           )}
         </Card>
         <Card role="region" aria-label="Reingresos por garantia">
-          <h3 className="text-base font-semibold text-graphite">Reingresos por garantia</h3>
-          <p className="mt-1 text-xs text-slate-500">
+          <h3 className="text-base font-semibold text-foreground">Reingresos por garantia</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
             Circuito separado del ingreso y retiro de la reparacion original.
           </p>
           <dl className="mt-4 grid grid-cols-3 gap-3">
@@ -214,15 +214,15 @@ export function WorkshopOperationalMetrics({
             <Datum label="Ingresos del periodo" value={number(warranty.openedInPeriod)} />
             <Datum label="Retiros del periodo" value={number(warranty.closedInPeriod)} />
           </dl>
-          <p className="mt-3 text-xs text-slate-500">
+          <p className="mt-3 text-xs text-muted-foreground">
             {number(warranty.uniqueOrdersInPeriod)} ordenes distintas con reingreso en el periodo.
           </p>
-          <div className="mt-4 border-t border-line pt-4">
+          <div className="mt-4 border-t border-border pt-4">
             <p className="text-sm font-medium">Cohorte de entregas con garantia vencida</p>
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               Entregadas en el periodo seleccionado y con plazo de garantia ya vencido.
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               {number(warranty.matureCohort.maturedOrders)} ordenes maduras /{" "}
               {number(warranty.matureCohort.returnedOrders)} con reingresos registrados.
             </p>
@@ -233,7 +233,7 @@ export function WorkshopOperationalMetrics({
                 : `${number(warranty.matureCohort.returnRate)} %`}
             </p>
             {warranty.matureCohort.reason && (
-              <p className="mt-2 text-xs leading-5 text-slate-500">
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
                 {warranty.matureCohort.reason}
               </p>
             )}
@@ -241,8 +241,8 @@ export function WorkshopOperationalMetrics({
         </Card>
       </div>
 
-      <details className="rounded-xl border border-line bg-slate-50 px-4 py-2 text-xs text-slate-600">
-        <summary className="min-h-11 cursor-pointer rounded-md py-3 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+      <details className="rounded-xl border border-border bg-muted px-4 py-2 text-xs text-muted-foreground">
+        <summary className="min-h-11 cursor-pointer rounded-md py-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
           Fuentes y calidad de las fechas
         </summary>
         <div className="space-y-2 pb-3 leading-5">
@@ -289,11 +289,11 @@ function Stat({
     <Card
       role="group"
       aria-label={label}
-      className={warning ? "border-amber-200 bg-amber-50/40" : undefined}
+      className={warning ? "border-warning-border bg-warning-soft/40" : undefined}
     >
-      <p className="text-sm text-slate-600">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tabular-nums text-graphite">{number(value)}</p>
-      <p className="mt-2 text-xs leading-5 text-slate-500">{detail}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-2 text-3xl font-semibold text-foreground tabular-nums">{number(value)}</p>
+      <p className="mt-2 text-xs leading-5 text-muted-foreground">{detail}</p>
     </Card>
   );
 }
@@ -301,8 +301,10 @@ function Stat({
 function Datum({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <dd className="break-words text-xl font-semibold tabular-nums text-graphite">{value}</dd>
-      <dt className="mt-1 text-xs leading-5 text-slate-500">{label}</dt>
+      <dd className="text-xl font-semibold wrap-break-word text-foreground tabular-nums">
+        {value}
+      </dd>
+      <dt className="mt-1 text-xs leading-5 text-muted-foreground">{label}</dt>
     </div>
   );
 }

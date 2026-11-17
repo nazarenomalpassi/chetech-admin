@@ -148,10 +148,10 @@ export function BoardClaimDialog({
     <DialogShell labelledBy={`${id}-title`} onClose={requestClose} panelClassName="max-w-xl">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-slate-950" id={`${id}-title`}>
+          <h2 className="text-xl font-semibold text-foreground" id={`${id}-title`}>
             {title}
           </h2>
-          <p className="mt-2 break-words font-medium text-slate-800">
+          <p className="mt-2 font-medium wrap-break-word text-foreground">
             {board.brand} {board.model}
           </p>
         </div>
@@ -166,12 +166,12 @@ export function BoardClaimDialog({
           <X aria-hidden="true" className="h-5 w-5" />
         </Button>
       </div>
-      <p className="mt-3 max-w-prose text-sm leading-6 text-slate-600">
+      <p className="mt-3 max-w-prose text-sm leading-6 text-muted-foreground">
         Este es un registro interno: no abre ni resuelve un reclamo en MercadoLibre. No registra
         dinero liberado ni genera movimientos de caja.
       </p>
 
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-950">
+      <div className="mt-4 rounded-lg border border-warning-border bg-warning-soft px-3 py-3 text-sm text-warning">
         <p>
           {isStarting ? "Neto que pasara de pendiente a retenido:" : "Neto retenido:"}{" "}
           <strong className="tabular-nums">
@@ -194,7 +194,7 @@ export function BoardClaimDialog({
               .
             </p>
             {board.claimNotes ? (
-              <p className="mt-2 whitespace-pre-wrap break-words">{board.claimNotes}</p>
+              <p className="mt-2 wrap-break-word whitespace-pre-wrap">{board.claimNotes}</p>
             ) : null}
           </>
         )}
@@ -205,10 +205,7 @@ export function BoardClaimDialog({
           <legend className="sr-only">{title}</legend>
           {!isStarting ? (
             <div className="space-y-2">
-              <label
-                className="block text-sm font-medium text-slate-700"
-                htmlFor={`${id}-resolution`}
-              >
+              <label className="block text-sm font-medium text-body" htmlFor={`${id}-resolution`}>
                 Resolucion
               </label>
               <Select
@@ -227,7 +224,7 @@ export function BoardClaimDialog({
                 ]}
                 value={resolution}
               />
-              <p className="text-sm leading-6 text-slate-600" id={`${id}-outcome`}>
+              <p className="text-sm leading-6 text-muted-foreground" id={`${id}-outcome`}>
                 {isCancelling
                   ? "Anular retira este neto de las ventas y de los importes a cobrar. Conserva el historial y no repone stock automaticamente."
                   : "El neto vuelve a pendiente de confirmar. Resolver el reclamo no confirma la liberacion del dinero."}
@@ -236,7 +233,7 @@ export function BoardClaimDialog({
           ) : null}
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-slate-700" htmlFor={`${id}-notes`}>
+            <label className="block text-sm font-medium text-body" htmlFor={`${id}-notes`}>
               {isStarting ? "Notas del reclamo (opcional)" : "Notas de resolucion (opcional)"}
             </label>
             <Textarea
@@ -256,19 +253,19 @@ export function BoardClaimDialog({
               rows={3}
               value={notes}
             />
-            <p className="text-sm text-slate-600" id={`${id}-notes-help`}>
+            <p className="text-sm text-muted-foreground" id={`${id}-notes-help`}>
               Hasta 1000 caracteres. {notes.length}/1000.
             </p>
           </div>
 
           {isCancelling ? (
-            <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2">
+            <div className="rounded-lg border border-danger-border bg-danger-soft px-3 py-2">
               <div className="flex min-h-11 items-center gap-3">
                 <input
                   aria-describedby={invalidField === "confirmation" ? `${id}-error` : undefined}
                   aria-invalid={invalidField === "confirmation"}
                   checked={confirmed}
-                  className="h-5 w-5 shrink-0 accent-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite"
+                  className="h-5 w-5 shrink-0 accent-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
                   disabled={isPending}
                   id={`${id}-confirm`}
                   onChange={(event) => {
@@ -283,7 +280,7 @@ export function BoardClaimDialog({
                   type="checkbox"
                 />
                 <label
-                  className="flex min-h-11 flex-1 cursor-pointer items-center py-2 text-sm font-medium text-rose-900"
+                  className="flex min-h-11 flex-1 cursor-pointer items-center py-2 text-sm font-medium text-danger"
                   htmlFor={`${id}-confirm`}
                 >
                   Confirmo anular esta venta sin reponer stock
@@ -308,7 +305,7 @@ export function BoardClaimDialog({
             Actualizar estado sin perder notas
           </Button>
         ) : null}
-        <div className="flex flex-col-reverse gap-3 border-t border-line pt-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
           <Button disabled={isPending} onClick={requestClose} type="button" variant="secondary">
             Cancelar
           </Button>

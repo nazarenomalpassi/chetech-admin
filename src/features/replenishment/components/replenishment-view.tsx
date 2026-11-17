@@ -28,10 +28,10 @@ function statusLabel(status: ReplenishmentStatus) {
 }
 
 function statusTone(status: ReplenishmentStatus) {
-  if (status === "received") return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (status === "ordered") return "bg-sky-50 text-sky-700 border-sky-200";
-  if (status === "added") return "bg-amber-50 text-amber-800 border-amber-200";
-  return "bg-slate-100 text-slate-700 border-slate-200";
+  if (status === "received") return "bg-success-soft text-success border-success-border";
+  if (status === "ordered") return "bg-info-soft text-info border-info-border";
+  if (status === "added") return "bg-warning-soft text-warning border-warning-border";
+  return "bg-accent text-body border-border";
 }
 
 function ItemForm({
@@ -60,7 +60,7 @@ function ItemForm({
       <input name="periodMonth" type="hidden" value={monthKey} />
       <input name="productId" type="hidden" value={item.productId} />
       <input name="search" type="hidden" value={search} />
-      <label className="grid gap-2 text-sm text-slate-600">
+      <label className="grid gap-2 text-sm text-muted-foreground">
         Cantidad
         <Input
           id={`${controlId}-quantity`}
@@ -71,7 +71,7 @@ function ItemForm({
           type="number"
         />
       </label>
-      <label className="grid gap-2 text-sm text-slate-600">
+      <label className="grid gap-2 text-sm text-muted-foreground">
         Estado
         <Select
           id={`${controlId}-status`}
@@ -81,7 +81,7 @@ function ItemForm({
           options={statusOptions}
         />
       </label>
-      <label className="grid gap-2 text-sm text-slate-600">
+      <label className="grid gap-2 text-sm text-muted-foreground">
         Notas
         <Input
           id={`${controlId}-notes`}
@@ -100,7 +100,7 @@ function ItemNextStep({ item }: { item: ReplenishmentItem }) {
   const href =
     `/productos?${new URLSearchParams({ search: item.sku || item.productName })}` as Route;
   return (
-    <div className="mt-3 text-sm text-slate-600">
+    <div className="mt-3 text-sm text-muted-foreground">
       <p>
         {item.status === "received"
           ? "Verifica la mercaderia y registra la entrada por separado."
@@ -109,7 +109,7 @@ function ItemNextStep({ item }: { item: ReplenishmentItem }) {
             : "Ajusta la cantidad, contacta al proveedor y marca Pedido cuando lo hayas solicitado."}
       </p>
       <Link
-        className="inline-flex min-h-11 items-center font-medium text-slate-900 underline underline-offset-4"
+        className="inline-flex min-h-11 items-center font-medium text-foreground underline underline-offset-4"
         href={href}
       >
         {item.status === "received" ? "Revisar entrada en Productos" : "Consultar producto"}
@@ -143,17 +143,17 @@ export function ReplenishmentView({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Pedidos del mes</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Pedidos del mes</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {data.monthLabel}. Reposicion de productos vendidos en el mes.
             </p>
           </div>
           <form className="grid gap-3 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)_auto]">
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Mes del pedido
               <Input defaultValue={data.monthKey} name="month" type="month" />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Producto o SKU
               <Input defaultValue={search} name="search" placeholder="Buscar en el pedido" />
             </label>
@@ -181,8 +181,8 @@ export function ReplenishmentView({
           </p>
         ) : null}
 
-        <div className="mt-4 space-y-3 border-t border-slate-200 pt-4">
-          <p className="max-w-3xl text-sm text-slate-600">
+        <div className="mt-4 space-y-3 border-t border-border pt-4">
+          <p className="max-w-3xl text-sm text-muted-foreground">
             Ajusta las cantidades de la lista, pedi al proveedor por tu canal habitual y actualiza
             el estado. No envia compras ni registra gastos.
           </p>
@@ -200,40 +200,40 @@ export function ReplenishmentView({
               Ver repuestos de reparaciones
             </Link>
           </div>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Los repuestos de una reparacion se gestionan en su orden, no en este pedido mensual.
           </p>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.map(({ label, value, icon: Icon }) => (
-            <div className="min-w-0 border-t border-slate-200 py-3" key={label}>
+            <div className="min-w-0 border-t border-border py-3" key={label}>
               <div className="flex items-center justify-between gap-3">
-                <p className="text-sm font-semibold text-slate-500">{label}</p>
-                <Icon aria-hidden="true" className="h-4 w-4 text-slate-500" />
+                <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+                <Icon aria-hidden="true" className="h-4 w-4 text-muted-foreground" />
               </div>
-              <p className="mt-3 text-xl font-semibold text-slate-950">{value}</p>
+              <p className="mt-3 text-xl font-semibold text-foreground">{value}</p>
             </div>
           ))}
         </div>
       </Card>
 
       <Card className="p-0">
-        <div className="border-graphite/8 border-b px-4 py-4 sm:px-5">
-          <p className="text-sm text-slate-500">{data.monthLabel}</p>
-          <h2 className="mt-2 text-xl font-semibold text-slate-950">Productos a reponer</h2>
-          <p className="mt-2 text-sm text-slate-500">
+        <div className="border-b border-border px-4 py-4 sm:px-5">
+          <p className="text-sm text-muted-foreground">{data.monthLabel}</p>
+          <h2 className="mt-2 text-xl font-semibold text-foreground">Productos a reponer</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Marcar “Recibido” no suma stock. La entrada se confirma luego desde Productos.
           </p>
         </div>
 
-        <div className="grid divide-y divide-slate-200 px-4 lg:hidden">
+        <div className="grid divide-y divide-border px-4 lg:hidden">
           {data.items.map((item) => (
-            <article className="min-w-0 border-t border-slate-200 py-3" key={item.productId}>
+            <article className="min-w-0 border-t border-border py-3" key={item.productId}>
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h3 className="font-semibold text-slate-950">{item.productName}</h3>
-                  <p className="mt-1 text-xs text-slate-500">{item.sku || "Sin SKU"}</p>
+                  <h3 className="font-semibold text-foreground">{item.productName}</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">{item.sku || "Sin SKU"}</p>
                 </div>
                 <span
                   className={`rounded-full border px-3 py-1 text-sm font-semibold ${statusTone(item.status)}`}
@@ -243,19 +243,19 @@ export function ReplenishmentView({
               </div>
               <dl className="my-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <dt className="text-xs text-slate-500">Vendido</dt>
+                  <dt className="text-xs text-muted-foreground">Vendido</dt>
                   <dd className="mt-1 font-semibold">{item.quantitySold} u.</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Stock actual</dt>
+                  <dt className="text-xs text-muted-foreground">Stock actual</dt>
                   <dd className="mt-1 font-semibold">{item.stock} u.</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Costo actual</dt>
+                  <dt className="text-xs text-muted-foreground">Costo actual</dt>
                   <dd className="mt-1 font-semibold">{formatCurrency(item.currentUnitCost)}</dd>
                 </div>
                 <div>
-                  <dt className="text-xs text-slate-500">Proveedor</dt>
+                  <dt className="text-xs text-muted-foreground">Proveedor</dt>
                   <dd className="mt-1 font-semibold">{item.supplier ?? "Sin configurar"}</dd>
                 </div>
               </dl>
@@ -273,7 +273,7 @@ export function ReplenishmentView({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[1180px] text-sm">
-            <thead className="bg-brand-50/70 text-left text-xs text-slate-500">
+            <thead className="bg-muted/70 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Producto</th>
                 <th className="px-4 py-3">Ventas</th>
@@ -285,23 +285,25 @@ export function ReplenishmentView({
             </thead>
             <tbody>
               {data.items.map((item) => (
-                <tr className="border-graphite/8 border-t align-top" key={item.productId}>
+                <tr className="border-t border-border align-top" key={item.productId}>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-950">{item.productName}</p>
-                    <p className="mt-1 text-xs text-slate-500">{item.sku || "Sin SKU"}</p>
+                    <p className="font-semibold text-foreground">{item.productName}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{item.sku || "Sin SKU"}</p>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-semibold">{item.quantitySold} u.</p>
-                    <p className="mt-1 text-xs text-slate-500">{formatCurrency(item.revenue)}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {formatCurrency(item.revenue)}
+                    </p>
                   </td>
                   <td className="px-4 py-3 font-semibold">{item.stock}</td>
                   <td className="px-4 py-3">
                     <p>{formatCurrency(item.currentUnitCost)} c/u</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Historico {formatCurrency(item.historicalCost)}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {item.supplier ?? "Sin proveedor configurado"}
                   </td>
                   <td className="px-4 py-3">

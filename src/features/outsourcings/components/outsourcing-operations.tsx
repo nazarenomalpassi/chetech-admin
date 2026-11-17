@@ -42,11 +42,11 @@ export function OutsourcingOperations({
   }
   return (
     <div className="space-y-3">
-      <div className="space-y-1 text-sm text-slate-600">
+      <div className="space-y-1 text-sm text-muted-foreground">
         <p>Responsable: {record.responsibleName || "Sin asignar"}</p>
         <p>Fecha prometida: {record.promisedAt ? formatDate(record.promisedAt) : "Sin fecha"}</p>
         {record.overdue ? (
-          <p className="font-semibold text-rose-700">Vencida: consultar al taller externo</p>
+          <p className="font-semibold text-danger">Vencida: consultar al taller externo</p>
         ) : null}
         <p>
           Costo previsto:{" "}
@@ -93,9 +93,9 @@ export function OutsourcingOperations({
           <div className="flex items-start justify-between gap-3">
             <h2
               id={`outsourcing-${record.id}-${mode}`}
-              className="min-w-0 text-xl font-semibold text-slate-950"
+              className="min-w-0 text-xl font-semibold text-foreground"
             >
-              <span className="block break-words">{record.order.repairNumber}</span>
+              <span className="block wrap-break-word">{record.order.repairNumber}</span>
               <span className="mt-1 block text-lg">
                 {mode === "followup"
                   ? "Seguimiento del taller externo"
@@ -113,7 +113,7 @@ export function OutsourcingOperations({
               <X aria-hidden="true" className="h-4 w-4" />
             </Button>
           </div>
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             El retorno no entrega el equipo al cliente ni registra un pago.
           </p>
           <form

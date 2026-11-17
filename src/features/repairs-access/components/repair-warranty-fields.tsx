@@ -20,13 +20,13 @@ export function RepairWarrantyFields({
   return (
     <fieldset
       disabled={disabled}
-      className="grid min-w-0 gap-3 rounded-xl border border-slate-200 p-3"
+      className="grid min-w-0 gap-3 rounded-xl border border-border p-3"
     >
-      <legend className="px-1 text-sm font-semibold text-slate-900">
+      <legend className="px-1 text-sm font-semibold text-foreground">
         Garantia de la reparacion
       </legend>
       <input type="hidden" name="warrantyIncluded" value="1" />
-      <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-slate-700">
+      <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-body">
         <input
           name="hasWarranty"
           type="checkbox"
@@ -35,7 +35,7 @@ export function RepairWarrantyFields({
         />
         Esta reparacion tiene garantia
       </label>
-      <label className="grid gap-2 text-sm font-medium text-slate-700">
+      <label className="grid gap-2 text-sm font-medium text-body">
         <span>Duracion de garantia en dias</span>
         <Input
           name="warrantyDays"
@@ -49,7 +49,7 @@ export function RepairWarrantyFields({
           placeholder="Cantidad de dias"
         />
       </label>
-      <label className="grid gap-2 text-sm font-medium text-slate-700">
+      <label className="grid gap-2 text-sm font-medium text-body">
         <span>Condiciones especiales de garantia</span>
         <Textarea
           name="warrantyConditions"
@@ -58,7 +58,7 @@ export function RepairWarrantyFields({
           className="min-h-20"
         />
       </label>
-      <p className="text-xs leading-5 text-slate-600">
+      <p className="text-xs leading-5 text-muted-foreground">
         Se cuenta desde el retiro original, nunca desde el reingreso. Guardar no renueva la
         cobertura.
       </p>

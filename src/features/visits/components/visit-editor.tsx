@@ -46,7 +46,7 @@ export function VisitEditor({
         action={canManage ? saveVisitAction : updateVisitStatusAction}
         className="grid gap-4 sm:grid-cols-2"
         footer={(blocked) => (
-          <div className="col-span-full flex flex-wrap justify-end gap-2 border-t border-graphite/10 pt-4">
+          <div className="col-span-full flex flex-wrap justify-end gap-2 border-t border-border pt-4">
             <Button onClick={onClose} type="button" variant="secondary">
               Cerrar
             </Button>
@@ -63,12 +63,12 @@ export function VisitEditor({
             {visit ? `Editar visita de ${visit.customerName}` : "Nueva visita"}
           </h2>
           {!visit ? (
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               Se guarda como pendiente. El estado se cambia despues desde la visita.
             </p>
           ) : null}
           {error ? (
-            <p role="alert" className="mt-3 rounded-lg bg-rose-50 p-3 text-sm text-rose-700">
+            <p role="alert" className="mt-3 rounded-lg bg-danger-soft p-3 text-sm text-danger">
               {error}
             </p>
           ) : null}
@@ -78,7 +78,7 @@ export function VisitEditor({
         <input name="returnTo" type="hidden" value={returnTo} />
         {canManage ? (
           <>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Nombre del cliente
               <Input
                 name="customerName"
@@ -87,7 +87,7 @@ export function VisitEditor({
                 required
               />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Celular
               <Input
                 name="customerPhone"
@@ -97,7 +97,7 @@ export function VisitEditor({
                 required
               />
             </label>
-            <label className="col-span-full grid gap-2 text-sm font-medium text-slate-700">
+            <label className="col-span-full grid gap-2 text-sm font-medium text-body">
               Domicilio
               <Input
                 name="address"
@@ -106,7 +106,7 @@ export function VisitEditor({
                 required
               />
             </label>
-            <label className="col-span-full grid gap-2 text-sm font-medium text-slate-700">
+            <label className="col-span-full grid gap-2 text-sm font-medium text-body">
               Motivo de la visita
               <Input
                 name="reason"
@@ -128,7 +128,7 @@ export function VisitEditor({
                 <option key={reason} value={reason} />
               ))}
             </datalist>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Fecha
               <Input
                 name="visitDate"
@@ -138,7 +138,7 @@ export function VisitEditor({
               />
             </label>
             <div className="grid grid-cols-2 gap-3">
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
+              <label className="grid gap-2 text-sm font-medium text-body">
                 Hora desde
                 <Input
                   name="timeFrom"
@@ -147,7 +147,7 @@ export function VisitEditor({
                   required
                 />
               </label>
-              <label className="grid gap-2 text-sm font-medium text-slate-700">
+              <label className="grid gap-2 text-sm font-medium text-body">
                 Hora hasta
                 <Input
                   name="timeTo"
@@ -157,7 +157,7 @@ export function VisitEditor({
                 />
               </label>
             </div>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Herramientas (opcional)
               <Select
                 name="toolsRequired"
@@ -169,7 +169,7 @@ export function VisitEditor({
                 ]}
               />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Cuales herramientas
               <Input
                 name="toolsDetail"
@@ -181,12 +181,12 @@ export function VisitEditor({
             {visit?.repairAccessOrderId && !visit.repairNumber ? (
               <>
                 <input name="repairAccessOrderId" type="hidden" value={visit.repairAccessOrderId} />
-                <p className="col-span-full text-sm text-slate-600">
+                <p className="col-span-full text-sm text-muted-foreground">
                   Se conserva la reparacion vinculada.
                 </p>
               </>
             ) : (
-              <label className="col-span-full grid gap-2 text-sm font-medium text-slate-700">
+              <label className="col-span-full grid gap-2 text-sm font-medium text-body">
                 REP vinculada (opcional)
                 <Input
                   name="repairNumber"
@@ -199,7 +199,7 @@ export function VisitEditor({
         ) : null}
         {visit ? (
           <>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Estado de la visita
               <Select
                 name="status"
@@ -211,12 +211,12 @@ export function VisitEditor({
               />
             </label>
             {!canManage && checklist.toolsRequired ? (
-              <p className="col-span-full whitespace-pre-wrap text-sm text-slate-600">
+              <p className="col-span-full text-sm whitespace-pre-wrap text-muted-foreground">
                 Herramientas:{" "}
                 {checklist.toolsRequired === "yes" ? checklist.toolsDetail : "No hace falta"}
               </p>
             ) : null}
-            <label className="col-span-full grid gap-2 text-sm font-medium text-slate-700">
+            <label className="col-span-full grid gap-2 text-sm font-medium text-body">
               Observaciones
               <Textarea name="notes" defaultValue={checklist.notes} maxLength={2000} />
             </label>

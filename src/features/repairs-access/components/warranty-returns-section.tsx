@@ -57,10 +57,10 @@ export function WarrantyReturnsSection({
   return (
     <section aria-labelledby={`${fieldId}-heading`} className="min-w-0 space-y-4">
       <div>
-        <h2 id={`${fieldId}-heading`} className="text-xl font-semibold text-slate-950">
+        <h2 id={`${fieldId}-heading`} className="text-xl font-semibold text-foreground">
           Reingresos por garantia
         </h2>
-        <p className="mt-1 text-sm leading-6 text-slate-600">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground">
           Otra visita, el mismo REP. Seguimiento separado, sin modificar la orden ni sus cobros
           originales.
         </p>
@@ -93,10 +93,7 @@ export function WarrantyReturnsSection({
         }}
       >
         <div className="w-full">
-          <label
-            htmlFor={`${fieldId}-search`}
-            className="mb-2 block text-sm font-medium text-slate-700"
-          >
+          <label htmlFor={`${fieldId}-search`} className="mb-2 block text-sm font-medium text-body">
             Buscar reingresos
           </label>
           <Input
@@ -118,18 +115,18 @@ export function WarrantyReturnsSection({
       {!data ? (
         <p
           role="status"
-          className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600"
+          className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground"
         >
           Cargando reingresos...
         </p>
       ) : (
         <>
-          <p className="text-sm text-slate-500" aria-live="polite">
+          <p className="text-sm text-muted-foreground" aria-live="polite">
             {data.total} {data.total === 1 ? "reingreso" : "reingresos"}
             {search ? ` para "${search}"` : ""}
           </p>
           {!data.items.length ? (
-            <div className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
+            <div className="space-y-3 rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
               <p>
                 {pageOutOfRange
                   ? "No hay reingresos en esta pagina."
@@ -150,17 +147,17 @@ export function WarrantyReturnsSection({
               {data.items.map((record) => (
                 <article
                   key={record.id}
-                  className="min-w-0 space-y-3 rounded-xl border border-slate-200 bg-white p-4"
+                  className="min-w-0 space-y-3 rounded-xl border border-border bg-card p-4"
                 >
-                  <header className="min-w-0 border-b border-slate-200 pb-3">
-                    <h3 className="break-words text-lg font-semibold text-slate-950">
+                  <header className="min-w-0 border-b border-border pb-3">
+                    <h3 className="text-lg font-semibold wrap-break-word text-foreground">
                       {record.repairNumber}
                     </h3>
-                    <p className="mt-1 break-words text-sm text-slate-600">
+                    <p className="mt-1 text-sm wrap-break-word text-muted-foreground">
                       {record.customerName} - {record.deviceLabel}
                     </p>
                     <Link
-                      className="mt-1 inline-flex min-h-11 items-center rounded-lg text-sm font-medium underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                      className="mt-1 inline-flex min-h-11 items-center rounded-lg text-sm font-medium underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
                       href={
                         `/reparaciones-access?view=${canManage ? "detalle" : "ordenes"}&order=${encodeURIComponent(record.orderId)}` as Route
                       }
@@ -186,7 +183,7 @@ export function WarrantyReturnsSection({
               >
                 Anterior
               </Button>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Pagina {data.page} de {pages}
               </p>
               <Button

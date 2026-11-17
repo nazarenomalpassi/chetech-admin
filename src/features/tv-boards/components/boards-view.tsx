@@ -58,7 +58,7 @@ export function BoardsView({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="panel-heading">Placas de televisores</h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               {summary.activeCount} disponibles, {summary.inactiveCount} dadas de baja. Valor
               publicado: {formatCurrency(summary.activeValue)}.
             </p>
@@ -74,61 +74,63 @@ export function BoardsView({
               Nueva placa
             </Button>
           ) : (
-            <p className="text-sm text-slate-600">Inventario de consulta</p>
+            <p className="text-sm text-muted-foreground">Inventario de consulta</p>
           )}
         </div>
 
-        <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-slate-200 py-3 lg:grid-cols-4">
+        <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-border py-3 lg:grid-cols-4">
           <div className="min-w-0">
-            <dt className="text-sm text-slate-600">Neto de ventas</dt>
-            <dd className="mt-1 break-words">
-              <span className="text-xl font-semibold tabular-nums text-slate-950">
+            <dt className="text-sm text-muted-foreground">Neto de ventas</dt>
+            <dd className="mt-1 wrap-break-word">
+              <span className="text-xl font-semibold text-foreground tabular-nums">
                 {formatCurrency(summary.salesNetAmount)}
               </span>
-              <p className="mt-1 text-xs leading-5 text-slate-600">
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
                 Incluye dinero retenido; excluye ventas anuladas.
               </p>
             </dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-sm text-slate-600">Pendiente de confirmar</dt>
-            <dd className="mt-1 break-words">
-              <span className="text-xl font-semibold tabular-nums text-slate-950">
+            <dt className="text-sm text-muted-foreground">Pendiente de confirmar</dt>
+            <dd className="mt-1 wrap-break-word">
+              <span className="text-xl font-semibold text-foreground tabular-nums">
                 {formatCurrency(summary.pendingAmount)}
               </span>
-              <p className="mt-1 text-xs leading-5 text-slate-600">Ventas sin reclamos abiertos.</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                Ventas sin reclamos abiertos.
+              </p>
             </dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-sm text-amber-900">Dinero retenido</dt>
-            <dd className="mt-1 break-words">
-              <span className="text-xl font-semibold tabular-nums text-amber-900">
+            <dt className="text-sm text-warning">Dinero retenido</dt>
+            <dd className="mt-1 wrap-break-word">
+              <span className="text-xl font-semibold text-warning tabular-nums">
                 {formatCurrency(summary.heldAmount)}
               </span>
-              <p className="mt-1 text-xs leading-5 text-amber-900">
+              <p className="mt-1 text-xs leading-5 text-warning">
                 Reclamos abiertos; no disponible.
               </p>
             </dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-sm text-emerald-800">Liberacion confirmada</dt>
-            <dd className="mt-1 break-words">
-              <span className="text-xl font-semibold tabular-nums text-emerald-800">
+            <dt className="text-sm text-success">Liberacion confirmada</dt>
+            <dd className="mt-1 wrap-break-word">
+              <span className="text-xl font-semibold text-success tabular-nums">
                 {formatCurrency(summary.releasedAmount)}
               </span>
-              <p className="mt-1 text-xs leading-5 text-emerald-800">Confirmada manualmente.</p>
+              <p className="mt-1 text-xs leading-5 text-success">Confirmada manualmente.</p>
             </dd>
           </div>
         </dl>
-        <p className="mt-3 text-sm text-slate-600">
+        <p className="mt-3 text-sm text-muted-foreground">
           Totales globales, independientes de los filtros. Una fecha prevista no confirma un
           deposito ni mueve caja.
         </p>
         <details className="mt-1">
-          <summary className="flex min-h-11 w-fit cursor-pointer items-center rounded-lg px-2 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+          <summary className="flex min-h-11 w-fit cursor-pointer items-center rounded-lg px-2 text-sm font-medium text-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden">
             Ver margen directo
           </summary>
-          <div className="space-y-1 pb-3 text-sm text-slate-600">
+          <div className="space-y-1 pb-3 text-sm text-muted-foreground">
             <p>
               Margen con costos conocidos: {formatCurrency(summary.knownMargin)}. No es utilidad
               neta del local.

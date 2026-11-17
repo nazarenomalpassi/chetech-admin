@@ -75,34 +75,36 @@ export function RepairCustomerLinkCard({
   return (
     <Card>
       <div className="flex items-start gap-3">
-        <span className="mt-1 shrink-0 text-slate-500">
+        <span className="mt-1 shrink-0 text-muted-foreground">
           <Link2 aria-hidden="true" className="h-5 w-5" />
         </span>
         <div>
-          <h2 className="text-lg font-semibold text-slate-950">Cuenta del cliente</h2>
-          <p className="mt-1 text-sm leading-6 text-slate-500">
+          <h2 className="text-lg font-semibold text-foreground">Cuenta del cliente</h2>
+          <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Vincula una cuenta para consultar esta reparacion.
           </p>
         </div>
       </div>
 
-      <div className="mt-4 border-y border-slate-200 py-3">
-        <p className="text-sm font-medium text-slate-500">Vinculación actual</p>
+      <div className="mt-4 border-y border-border py-3">
+        <p className="text-sm font-medium text-muted-foreground">Vinculación actual</p>
         {linkedCustomer ? (
           <div className="mt-3 flex items-start gap-3">
-            <UserRound aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+            <UserRound aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-success" />
             <div className="min-w-0 text-sm">
-              <p className="break-words font-semibold text-slate-900">{linkedCustomer.fullName}</p>
-              <p className="mt-1 break-all text-slate-500">
+              <p className="font-semibold wrap-break-word text-foreground">
+                {linkedCustomer.fullName}
+              </p>
+              <p className="mt-1 break-all text-muted-foreground">
                 {linkedCustomer.email || "Sin email registrado"}
               </p>
-              <p className="mt-1 break-words text-slate-500">
+              <p className="mt-1 wrap-break-word text-muted-foreground">
                 {linkedCustomer.phone || "Sin teléfono registrado"}
               </p>
             </div>
           </div>
         ) : (
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Esta reparación todavía no tiene una cuenta vinculada.
           </p>
         )}
@@ -110,13 +112,13 @@ export function RepairCustomerLinkCard({
 
       <div className="mt-5">
         <label htmlFor={`storefront-customer-search-${orderId}`}>
-          <span className="mb-2 block text-sm font-medium text-slate-700">
+          <span className="mb-2 block text-sm font-medium text-body">
             Buscar por nombre, apellido, email o teléfono
           </span>
           <span className="relative block">
             <Search
               aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+              className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             />
             <Input
               autoComplete="off"
@@ -130,13 +132,13 @@ export function RepairCustomerLinkCard({
           </span>
         </label>
 
-        <div aria-live="polite" className="mt-2 text-xs text-slate-500">
+        <div aria-live="polite" className="mt-2 text-xs text-muted-foreground">
           {loading ? "Buscando cuentas..." : null}
           {!loading && query.trim().length === 1 ? "Escribí un carácter más para buscar." : null}
           {!loading && query.trim().length >= 2 && !error && results.length === 0
             ? "No encontramos cuentas con esos datos."
             : null}
-          {error ? <span className="text-rose-600">{error}</span> : null}
+          {error ? <span className="text-danger">{error}</span> : null}
         </div>
 
         {results.length ? (
@@ -147,18 +149,18 @@ export function RepairCustomerLinkCard({
                 <button
                   className={`w-full rounded-xl border p-3 text-left transition ${
                     isSelected
-                      ? "border-graphite bg-graphite text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-card text-body hover:border-border-strong hover:bg-muted"
                   }`}
                   key={customer.id}
                   onClick={() => setSelected(customer)}
                   type="button"
                 >
-                  <span className="block break-words text-sm font-semibold">
+                  <span className="block text-sm font-semibold wrap-break-word">
                     {customer.fullName}
                   </span>
                   <span
-                    className={`mt-1 block break-all text-xs ${isSelected ? "text-white/70" : "text-slate-500"}`}
+                    className={`mt-1 block text-xs break-all ${isSelected ? "text-white/70" : "text-muted-foreground"}`}
                   >
                     {[customer.email, customer.phone].filter(Boolean).join(" · ") ||
                       "Sin datos de contacto"}

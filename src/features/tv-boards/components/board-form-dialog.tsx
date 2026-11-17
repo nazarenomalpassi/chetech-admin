@@ -58,13 +58,13 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
     <DialogShell labelledBy="board-dialog-title" onClose={requestClose} panelClassName="max-w-3xl">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-slate-950" id="board-dialog-title">
+          <h2 className="text-xl font-semibold text-foreground" id="board-dialog-title">
             {board?.id ? "Editar placa" : "Nueva placa"}
           </h2>
         </div>
         <button
           aria-label="Cerrar formulario de placa"
-          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-muted-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
           onClick={requestClose}
           type="button"
         >
@@ -86,25 +86,21 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="brand">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="brand">
               Marca
             </label>
             <Input {...form.register("brand")} placeholder="Ej: Samsung" />
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.brand?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.brand?.message}</p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="model">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="model">
               Modelo
             </label>
             <Input {...form.register("model")} placeholder="Ej: UN50AU7000" />
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.model?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.model?.message}</p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="boardType">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="boardType">
               Tipo de placa
             </label>
             <Select
@@ -117,24 +113,17 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
                 })
               }
             />
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.boardType?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.boardType?.message}</p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="price">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="price">
               Precio publicado
             </label>
             <Input step="0.01" type="number" {...form.register("price", { valueAsNumber: true })} />
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.price?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.price?.message}</p>
           </div>
           <div>
-            <label
-              className="mb-2 block text-sm font-medium text-slate-700"
-              htmlFor="acquisitionCost"
-            >
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="acquisitionCost">
               Costo de compra / recuperacion
             </label>
             <Input
@@ -151,15 +140,15 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
                 )
               }
             />
-            <p className="mt-1 text-sm text-finance-expense">
+            <p className="mt-1 text-sm text-danger">
               {form.formState.errors.acquisitionCost?.message}
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Vacio: costo desconocido. Cero: costo confirmado. No registra un egreso.
             </p>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="isActive">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="isActive">
               Estado
             </label>
             <Select
@@ -173,7 +162,7 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
                 form.setValue("isActive", event.target.value === "true", { shouldDirty: true })
               }
             />
-            <p className="mt-2 text-sm text-slate-500">La baja conserva el historial.</p>
+            <p className="mt-2 text-sm text-muted-foreground">La baja conserva el historial.</p>
           </div>
         </div>
 
@@ -183,7 +172,7 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
           </div>
         ) : null}
 
-        <div className="border-graphite/8 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
           <Button onClick={requestClose} type="button" variant="secondary">
             Cancelar
           </Button>

@@ -147,17 +147,17 @@ export function RepairOutsourcingsView({
       <Card>
         <div className="space-y-4">
           <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Terciarizaciones</h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Terciarizaciones</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni
               entrega al cliente.
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               Indicadores de todo el resultado filtrado.
             </p>
           </div>
 
-          <dl className="grid grid-cols-2 gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-3 xl:grid-cols-6">
+          <dl className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3 xl:grid-cols-6">
             <SummaryValue label="En talleres externos" value={summary.active} />
             <SummaryValue label="Retornadas al local" value={summary.retrieved} />
             <SummaryValue label="Talleres" value={summary.workshops} />
@@ -186,10 +186,10 @@ export function RepairOutsourcingsView({
           <input name="returnTo" type="hidden" value={returnTo} />
           <input name="repairAccessOrderId" type="hidden" value={selectedOrder?.id ?? ""} />
 
-          <div className="border-t border-graphite/10 pt-4">
+          <div className="border-t border-border pt-4">
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <label>
-                <span className="mb-2 block text-sm font-medium text-slate-700">
+                <span className="mb-2 block text-sm font-medium text-body">
                   Numero de orden REP
                 </span>
                 <Input
@@ -216,19 +216,19 @@ export function RepairOutsourcingsView({
               <p
                 role={lookupStatus.success || lookupStatus.loading ? "status" : "alert"}
                 aria-live="polite"
-                className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "text-slate-700"}`}
+                className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-success-soft text-success" : "text-body"}`}
               >
                 {lookupStatus.message}
               </p>
             ) : (
-              <p className="mt-3 text-sm text-slate-500">
+              <p className="mt-3 text-sm text-muted-foreground">
                 Carga la REP para traer el cliente, equipo y falla.
               </p>
             )}
           </div>
 
           {selectedOrder ? (
-            <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2 xl:grid-cols-4">
               <InfoBlock label="Orden" value={selectedOrder.repairNumber} />
               <InfoBlock
                 label="Cliente"
@@ -248,12 +248,9 @@ export function RepairOutsourcingsView({
             </div>
           ) : null}
 
-          <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2">
+          <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2">
             <div>
-              <label
-                htmlFor="workshopName"
-                className="mb-2 block text-sm font-medium text-slate-700"
-              >
+              <label htmlFor="workshopName" className="mb-2 block text-sm font-medium text-body">
                 Taller externo
               </label>
               <Input
@@ -265,7 +262,7 @@ export function RepairOutsourcingsView({
               />
             </div>
             <div>
-              <label htmlFor="sentAt" className="mb-2 block text-sm font-medium text-slate-700">
+              <label htmlFor="sentAt" className="mb-2 block text-sm font-medium text-body">
                 Fecha de envio
               </label>
               <Input
@@ -300,7 +297,7 @@ export function RepairOutsourcingsView({
               />
             </label>
             <div className="sm:col-span-2">
-              <label htmlFor="notes" className="mb-2 block text-sm font-medium text-slate-700">
+              <label htmlFor="notes" className="mb-2 block text-sm font-medium text-body">
                 Observaciones
               </label>
               <Textarea
@@ -325,16 +322,16 @@ export function RepairOutsourcingsView({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/10 px-4 py-3">
-          <form className="grid items-end gap-3 md:grid-cols-2 min-[1600px]:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto]">
+        <div className="border-b border-border px-4 py-3">
+          <form className="grid items-end gap-3 min-[1600px]:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto] md:grid-cols-2">
             <div className="max-w-lg">
-              <label htmlFor="search" className="mb-2 block text-sm font-medium text-slate-700">
+              <label htmlFor="search" className="mb-2 block text-sm font-medium text-body">
                 Buscar terciarizacion
               </label>
               <div className="relative">
                 <Search
                   aria-hidden="true"
-                  className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                  className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                 />
                 <Input
                   aria-label="Buscar terciarizaciones por orden, cliente, equipo o taller"
@@ -394,42 +391,42 @@ export function RepairOutsourcingsView({
           </form>
         </div>
 
-        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
+        <div className="divide-y divide-border px-4 lg:hidden">
           {filteredRecords.length ? (
             filteredRecords.map((record) => (
               <article className="py-4" key={record.id}>
                 <div className="flex min-w-0 items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-semibold text-brand-700">{record.order.repairNumber}</p>
-                    <p className="mt-1 font-medium text-slate-950">{record.order.customerName}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="font-semibold text-body">{record.order.repairNumber}</p>
+                    <p className="mt-1 font-medium text-foreground">{record.order.customerName}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {record.order.customerPhone || record.order.customerDni || "-"}
                     </p>
                   </div>
                   <StatusPill status={record.status} />
                 </div>
                 <div className="mt-4 min-w-0">
-                  <p className="text-sm text-slate-600">Equipo / falla</p>
-                  <p className="mt-1 font-semibold text-slate-800">{record.order.deviceLabel}</p>
+                  <p className="text-sm text-muted-foreground">Equipo / falla</p>
+                  <p className="mt-1 font-semibold text-foreground">{record.order.deviceLabel}</p>
                   {record.order.serialNumber ? (
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Serie: {record.order.serialNumber}
                     </p>
                   ) : null}
-                  <p className="mt-1 text-sm leading-5 text-slate-500">
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground">
                     {record.order.issueReported}
                   </p>
                 </div>
                 <div className="mt-3 min-w-0">
-                  <p className="text-sm text-slate-600">Taller externo</p>
-                  <p className="mt-1 font-semibold text-slate-950">{record.workshopName}</p>
+                  <p className="text-sm text-muted-foreground">Taller externo</p>
+                  <p className="mt-1 font-semibold text-foreground">{record.workshopName}</p>
                   {record.notes ? (
-                    <p className="mt-1 whitespace-pre-line text-sm leading-5 text-slate-500">
+                    <p className="mt-1 text-sm leading-5 whitespace-pre-line text-muted-foreground">
                       {record.notes}
                     </p>
                   ) : null}
                 </div>
-                <p className="mt-3 text-sm text-slate-500">
+                <p className="mt-3 text-sm text-muted-foreground">
                   Enviado: {formatDate(record.sentAt)} / Retorno:{" "}
                   {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
                 </p>
@@ -469,7 +466,7 @@ export function RepairOutsourcingsView({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white/80 text-left text-slate-500">
+            <thead className="bg-white/80 text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Orden</th>
                 <th className="px-4 py-3 font-medium">Cliente</th>
@@ -482,38 +479,36 @@ export function RepairOutsourcingsView({
             </thead>
             <tbody>
               {filteredRecords.map((record) => (
-                <tr className="border-t border-graphite/10 align-top" key={record.id}>
-                  <td className="px-4 py-3 font-semibold text-brand-700">
-                    {record.order.repairNumber}
-                  </td>
+                <tr className="border-t border-border align-top" key={record.id}>
+                  <td className="px-4 py-3 font-semibold text-body">{record.order.repairNumber}</td>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-950">{record.order.customerName}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-medium text-foreground">{record.order.customerName}</p>
+                    <p className="text-sm text-muted-foreground">
                       {record.order.customerPhone || record.order.customerDni || "-"}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
-                    <p className="font-medium text-slate-800">{record.order.deviceLabel}</p>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    <p className="font-medium text-foreground">{record.order.deviceLabel}</p>
                     {record.order.serialNumber ? (
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Serie: {record.order.serialNumber}
                       </p>
                     ) : null}
-                    <p className="mt-1 max-w-sm text-sm leading-5 text-slate-500">
+                    <p className="mt-1 max-w-sm text-sm leading-5 text-muted-foreground">
                       {record.order.issueReported}
                     </p>
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-950">{record.workshopName}</p>
+                    <p className="font-semibold text-foreground">{record.workshopName}</p>
                     {record.notes ? (
-                      <p className="mt-1 max-w-xs whitespace-pre-line text-sm leading-5 text-slate-500">
+                      <p className="mt-1 max-w-xs text-sm leading-5 whitespace-pre-line text-muted-foreground">
                         {record.notes}
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     <p>Enviado: {formatDate(record.sentAt)}</p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Retorno: {record.retrievedAt ? formatDate(record.retrievedAt) : "Pendiente"}
                     </p>
                   </td>
@@ -552,7 +547,7 @@ export function RepairOutsourcingsView({
             </tbody>
           </table>
           {!filteredRecords.length ? (
-            <div className="empty-panel border-graphite/8 border-t">
+            <div className="empty-panel border-t border-border">
               No encontre terciarizaciones para esa busqueda o filtro.
             </div>
           ) : null}
@@ -566,8 +561,8 @@ export function RepairOutsourcingsView({
 function SummaryValue({ label, value }: { label: string; value: number }) {
   return (
     <div>
-      <dt className="text-sm text-slate-600">{label}</dt>
-      <dd className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{value}</dd>
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className="mt-1 text-xl font-semibold text-foreground tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -575,9 +570,11 @@ function SummaryValue({ label, value }: { label: string; value: number }) {
 function InfoBlock({ label, value, helper }: { label: string; value: string; helper?: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-sm text-slate-600">{label}</p>
-      <p className="mt-1 font-semibold text-slate-950">{value || "-"}</p>
-      {helper ? <p className="mt-1 break-words text-sm text-slate-500">{helper}</p> : null}
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 font-semibold text-foreground">{value || "-"}</p>
+      {helper ? (
+        <p className="mt-1 text-sm wrap-break-word text-muted-foreground">{helper}</p>
+      ) : null}
     </div>
   );
 }

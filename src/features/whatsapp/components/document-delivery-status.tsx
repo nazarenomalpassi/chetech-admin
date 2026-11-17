@@ -93,21 +93,21 @@ export function DocumentDeliveryStatus({
   return (
     <div
       ref={root}
-      className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm"
+      className="mt-3 rounded-lg border border-border bg-muted p-3 text-sm"
       aria-live="polite"
     >
-      <p className="font-medium text-slate-800">Automatización con API (opcional)</p>
+      <p className="font-medium text-foreground">Automatización con API (opcional)</p>
       {error ? (
-        <p className="mt-1 text-amber-800">No se pudo consultar el estado del envío.</p>
+        <p className="mt-1 text-warning">No se pudo consultar el estado del envío.</p>
       ) : state ? (
         <>
           {!state.enabled ? (
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-muted-foreground">
               La API está desactivada. Podés usar los botones de WhatsApp Web para enviar
               manualmente un enlace protegido, sin cargos de API.
             </p>
           ) : !consent ? (
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-muted-foreground">
               Registrá en Editar ingreso si el cliente acepta recibir los comprobantes por WhatsApp.
             </p>
           ) : null}
@@ -116,7 +116,9 @@ export function DocumentDeliveryStatus({
               <span>{job.kind === "intake" ? "Ingreso de equipo" : "Pago y garantía"}</span>
               <span
                 className={
-                  ["read", "delivered"].includes(job.status) ? "text-emerald-700" : "text-slate-600"
+                  ["read", "delivered"].includes(job.status)
+                    ? "text-success"
+                    : "text-muted-foreground"
                 }
               >
                 {labels[job.status] || "Estado pendiente"}
@@ -125,7 +127,7 @@ export function DocumentDeliveryStatus({
               </span>
               {state.enabled && job.canRetry ? (
                 <button
-                  className="min-h-11 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium disabled:opacity-50"
+                  className="min-h-11 rounded-lg border border-border-strong bg-card px-3 py-2 text-xs font-medium disabled:opacity-50"
                   type="button"
                   disabled={busyJob !== null}
                   onClick={() => void retry(job.id)}
@@ -136,19 +138,19 @@ export function DocumentDeliveryStatus({
             </div>
           ))}
           {retryMessage ? (
-            <p role="status" className="mt-2 text-slate-700">
+            <p role="status" className="mt-2 text-body">
               {retryMessage}
             </p>
           ) : null}
           {state.enabled && consent && !state.jobs.length ? (
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-muted-foreground">
               No hay envíos registrados. Los comprobantes anteriores a la activación no se envían de
               forma retroactiva.
             </p>
           ) : null}
         </>
       ) : (
-        <p className="mt-1 text-slate-500">Consultando estado...</p>
+        <p className="mt-1 text-muted-foreground">Consultando estado...</p>
       )}
     </div>
   );

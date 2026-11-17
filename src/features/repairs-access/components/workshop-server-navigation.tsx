@@ -122,8 +122,8 @@ export function WorkshopServerNavigation({
     router.push(`/reparaciones-access?${p}` as Route, { scroll: false });
   }
   return (
-    <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3">
-      <label className="grid w-full min-w-0 gap-2 text-sm font-medium text-slate-700 sm:w-auto sm:min-w-48">
+    <div className="flex min-w-0 flex-wrap items-end justify-between gap-3 border-b border-border pb-3">
+      <label className="grid w-full min-w-0 gap-2 text-sm font-medium text-body sm:w-auto sm:min-w-48">
         <span>Vista de trabajo</span>
         <Select
           aria-label="Vista de trabajo"
@@ -142,7 +142,7 @@ export function WorkshopServerNavigation({
           ]}
         />
       </label>
-      <p className="py-3 text-sm text-slate-500">
+      <p className="py-3 text-sm text-muted-foreground">
         {pageInfo.total} ordenes · {pageInfo.pageSize} por pagina
       </p>
       <div className="flex flex-wrap gap-2">

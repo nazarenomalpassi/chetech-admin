@@ -85,13 +85,13 @@ export function RepairAccessCustomersSection({
     <Card className="space-y-5">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-slate-950">Clientes</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <h2 className="text-xl font-semibold text-foreground">Clientes</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Ultimos 40 clientes. Escribi al menos 2 caracteres para buscar en toda la base.
           </p>
         </div>
         <div className="w-full lg:max-w-sm">
-          <label className="grid gap-2 text-sm font-medium text-slate-700">
+          <label className="grid gap-2 text-sm font-medium text-body">
             <span>Buscar cliente</span>
             <Input
               onChange={(event) => onSearchChange(event.target.value)}
@@ -100,57 +100,59 @@ export function RepairAccessCustomersSection({
             />
           </label>
           {isSearching ? (
-            <p className="mt-2 text-xs text-slate-500">Buscando en toda la base...</p>
+            <p className="mt-2 text-xs text-muted-foreground">Buscando en toda la base...</p>
           ) : null}
         </div>
       </div>
 
       {searchError ? (
-        <p role="alert" className="rounded-xl bg-rose-50 p-3 text-sm text-rose-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           No se pudo completar la busqueda de clientes. Intenta de nuevo; no se confirmo si hay
           coincidencias.
         </p>
       ) : null}
       <div className="min-w-0">
-        <div className="divide-y divide-slate-200 lg:hidden">
+        <div className="divide-y divide-border lg:hidden">
           {filteredCustomers.length ? (
             filteredCustomers.map((customer) => (
               <article className="min-w-0 py-3 text-sm" key={customer.id}>
-                <p className="font-semibold text-slate-950">{customer.fullName}</p>
-                <p className="mt-1 text-sm text-slate-600">
+                <p className="font-semibold text-foreground">{customer.fullName}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
                   {customer.phone || customer.alternatePhone || "-"}
                 </p>
                 <div className="mt-2 grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <span className="text-slate-500">DNI</span>
-                    <p className="mt-1 font-semibold text-slate-700">{customer.dni || "-"}</p>
+                    <span className="text-muted-foreground">DNI</span>
+                    <p className="mt-1 font-semibold text-body">{customer.dni || "-"}</p>
                   </div>
                   <div>
-                    <span className="text-slate-500">Alta</span>
-                    <p className="mt-1 font-semibold text-slate-700">
-                      {formatDate(customer.createdAt)}
-                    </p>
+                    <span className="text-muted-foreground">Alta</span>
+                    <p className="mt-1 font-semibold text-body">{formatDate(customer.createdAt)}</p>
                   </div>
                 </div>
                 {customer.email ? (
-                  <p className="mt-2 break-words text-sm text-slate-500">{customer.email}</p>
+                  <p className="mt-2 text-sm wrap-break-word text-muted-foreground">
+                    {customer.email}
+                  </p>
                 ) : null}
                 {customer.address ? (
-                  <p className="mt-1 break-words text-sm leading-5 text-slate-500">
+                  <p className="mt-1 text-sm leading-5 wrap-break-word text-muted-foreground">
                     {customer.address}
                   </p>
                 ) : null}
-                <p className="mt-2 text-xs text-slate-500">{customer.source}</p>
+                <p className="mt-2 text-xs text-muted-foreground">{customer.source}</p>
               </article>
             ))
           ) : (
-            <div className="px-4 py-8 text-center text-sm text-slate-500">{emptyMessage}</div>
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+              {emptyMessage}
+            </div>
           )}
         </div>
 
-        <div className="hidden overflow-x-auto rounded-xl border border-slate-200 lg:block">
+        <div className="hidden overflow-x-auto rounded-xl border border-border lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-500">
+            <thead className="bg-muted text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Telefono</th>
@@ -163,23 +165,27 @@ export function RepairAccessCustomersSection({
             <tbody>
               {filteredCustomers.length ? (
                 filteredCustomers.map((customer) => (
-                  <tr className="border-t border-slate-100" key={customer.id}>
+                  <tr className="border-t border-border" key={customer.id}>
                     <td className="px-4 py-3">
-                      <p className="font-semibold text-slate-950">{customer.fullName}</p>
-                      <p className="text-xs text-slate-500">{customer.email || "Sin email"}</p>
+                      <p className="font-semibold text-foreground">{customer.fullName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {customer.email || "Sin email"}
+                      </p>
                     </td>
-                    <td className="px-4 py-3 text-slate-600">
+                    <td className="px-4 py-3 text-muted-foreground">
                       {customer.phone || customer.alternatePhone || "-"}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{customer.dni || "-"}</td>
-                    <td className="px-4 py-3 text-slate-600">{customer.address || "-"}</td>
-                    <td className="px-4 py-3 text-slate-600">{customer.source}</td>
-                    <td className="px-4 py-3 text-slate-600">{formatDate(customer.createdAt)}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{customer.dni || "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{customer.address || "-"}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{customer.source}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDate(customer.createdAt)}
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td className="px-4 py-8 text-center text-slate-500" colSpan={6}>
+                  <td className="px-4 py-8 text-center text-muted-foreground" colSpan={6}>
                     {emptyMessage}
                   </td>
                 </tr>

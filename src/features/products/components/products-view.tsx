@@ -63,10 +63,10 @@ export function ProductsView({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h1 className="panel-heading">Productos</h1>
-            <p aria-live="polite" className="mt-1 text-sm text-slate-600">
+            <p aria-live="polite" className="mt-1 text-sm text-muted-foreground">
               Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos.
             </p>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.
               {unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}
             </p>
@@ -83,7 +83,7 @@ export function ProductsView({
               Nuevo producto
             </Button>
           ) : (
-            <p className="text-sm text-slate-600">Catalogo de consulta</p>
+            <p className="text-sm text-muted-foreground">Catalogo de consulta</p>
           )}
         </div>
         <div className="mt-4">

@@ -31,7 +31,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
             href="/dashboard"
             onClick={() => setOpen(false)}
           >
-            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/[0.06]">
+            <span className="flex h-10 w-10 flex-none items-center justify-center rounded-lg bg-white/6">
               <img
                 alt=""
                 className="h-6 w-6"
@@ -115,7 +115,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
 
             <form
               action="/auth/sign-out"
-              className="border-white/8 mt-3 border-t pt-3"
+              className="mt-3 border-t border-white/8 pt-3"
               method="post"
             >
               <button

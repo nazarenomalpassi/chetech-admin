@@ -14,7 +14,7 @@ export function OperationsPagination({
   return (
     <nav
       aria-label="Paginacion de historial"
-      className="flex flex-wrap items-center justify-between gap-3 border-t border-graphite/10 p-4 text-sm"
+      className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-sm"
     >
       <p>
         Pagina {pagination.page} de {pagination.totalPages} | {pagination.total} registros

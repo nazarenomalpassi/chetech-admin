@@ -64,16 +64,16 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-slate-950" id="board-sale-dialog-title">
+          <h2 className="text-xl font-semibold text-foreground" id="board-sale-dialog-title">
             Registrar venta de placa
           </h2>
-          <p className="mt-2 break-words text-sm font-medium text-slate-950">
-            {board.brand} <span className="text-slate-500">{board.model}</span>
+          <p className="mt-2 text-sm font-medium wrap-break-word text-foreground">
+            {board.brand} <span className="text-muted-foreground">{board.model}</span>
           </p>
         </div>
         <button
           aria-label="Cerrar registro de venta"
-          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-slate-500 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+          className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-muted-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
           onClick={requestClose}
           type="button"
         >
@@ -94,15 +94,15 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
           })
         )}
       >
-        <p className="border-y border-slate-200 py-3 text-sm text-slate-600">
+        <p className="border-y border-border py-3 text-sm text-muted-foreground">
           Precio publicado:{" "}
-          <span className="font-medium text-slate-950">{formatCurrency(board.price)}</span>. Solo de
-          referencia; el neto se informa abajo.
+          <span className="font-medium text-foreground">{formatCurrency(board.price)}</span>. Solo
+          de referencia; el neto se informa abajo.
         </p>
 
         <div className="grid gap-4 md:grid-cols-2">
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="netAmount">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="netAmount">
               Neto de venta
             </label>
             <Input
@@ -112,30 +112,26 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
               type="number"
               {...form.register("netAmount", { valueAsNumber: true })}
             />
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               Importe a recibir despues de comisiones y retenciones. No es ganancia.
             </p>
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.netAmount?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.netAmount?.message}</p>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="releaseDate">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="releaseDate">
               Fecha prevista de liberacion
             </label>
             <Input id="releaseDate" type="date" {...form.register("releaseDate")} />
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               La fecha no confirma el deposito. Confirma la liberacion cuando Mercado Pago la
               informe.
             </p>
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.releaseDate?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.releaseDate?.message}</p>
           </div>
 
           <div className="md:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">
+            <label className="mb-2 block text-sm font-medium text-body" htmlFor="notes">
               Observaciones
             </label>
             <Textarea
@@ -144,9 +140,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
               placeholder="Nota interna (opcional)"
               {...form.register("notes")}
             />
-            <p className="mt-1 text-sm text-finance-expense">
-              {form.formState.errors.notes?.message}
-            </p>
+            <p className="mt-1 text-sm text-danger">{form.formState.errors.notes?.message}</p>
           </div>
         </div>
 
@@ -156,7 +150,7 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
           </div>
         ) : null}
 
-        <div className="border-graphite/8 flex flex-col-reverse gap-3 border-t pt-5 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
           <Button onClick={requestClose} type="button" variant="secondary">
             Cancelar
           </Button>

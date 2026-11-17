@@ -329,10 +329,10 @@ export function RepairAccessNewOrderWizard({
     <Card className="space-y-4 [&_button]:min-h-11">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 className="break-words text-xl font-semibold text-slate-950 [overflow-wrap:anywhere]">
+          <h2 className="text-xl font-semibold wrap-anywhere wrap-break-word text-foreground">
             {editing ? `Editar ingreso ${editing.repairNumber}` : "Nueva orden"}
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Cliente, equipo y falla. Presupuesto y cobro se cargan despues.
           </p>
         </div>
@@ -461,9 +461,9 @@ export function RepairAccessNewOrderWizard({
               value={customerForm.address}
             />
           </Field>
-          <label className="col-span-full flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700">
+          <label className="col-span-full flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border border-border bg-muted px-3 py-3 text-sm text-body">
             <input
-              className="mt-0.5 h-4 w-4 shrink-0 accent-slate-900"
+              className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
               type="checkbox"
               data-whatsapp-consent
               checked={documentConsent}
@@ -600,14 +600,14 @@ export function RepairAccessNewOrderWizard({
               placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones"
             />
           </Field>
-          <p className="text-sm leading-6 text-slate-600 lg:col-span-6">
+          <p className="text-sm leading-6 text-muted-foreground lg:col-span-6">
             Si elegis un cliente existente, solo se copian sus datos personales. El equipo, la falla
             y la reparacion siempre se cargan como una orden nueva.
           </p>
         </OptionalFields>
 
-        <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-sm text-slate-500">
+        <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-sm text-muted-foreground">
             {editing
               ? `Se conserva el numero de orden ${editing.repairNumber}.`
               : "El numero REP se genera al guardar."}
@@ -631,7 +631,7 @@ export function RepairAccessNewOrderWizard({
           </div>
         </div>
         {draft.lastSavedAt && hasUnsavedChanges ? (
-          <p aria-live="polite" className="text-right text-xs text-slate-500">
+          <p aria-live="polite" className="text-right text-xs text-muted-foreground">
             Borrador guardado en este dispositivo.
           </p>
         ) : null}
@@ -684,7 +684,7 @@ function CustomerSuggestions({
   return (
     <div
       aria-label="Clientes sugeridos"
-      className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-slate-300 bg-white"
+      className="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-lg border border-border-strong bg-card"
       id={id}
       role="listbox"
     >
@@ -692,7 +692,7 @@ function CustomerSuggestions({
         suggestions.map((customer, index) => (
           <button
             aria-selected={index === activeIndex}
-            className="block min-h-11 w-full px-4 py-3 text-left text-sm transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/30 aria-selected:bg-slate-50"
+            className="block min-h-11 w-full px-4 py-3 text-left text-sm transition hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden focus-visible:ring-inset aria-selected:bg-muted"
             id={`${optionIdPrefix}-${customer.id}`}
             key={customer.id}
             onPointerDown={(event) => {
@@ -705,8 +705,8 @@ function CustomerSuggestions({
             role="option"
             type="button"
           >
-            <span className="block font-semibold text-slate-950">{customer.fullName}</span>
-            <span className="mt-1 block text-xs text-slate-500">
+            <span className="block font-semibold text-foreground">{customer.fullName}</span>
+            <span className="mt-1 block text-xs text-muted-foreground">
               {[customer.phone, customer.dni ? `DNI ${customer.dni}` : ""]
                 .filter(Boolean)
                 .join(" - ")}
@@ -714,7 +714,7 @@ function CustomerSuggestions({
           </button>
         ))
       ) : (
-        <div className="px-4 py-3 text-sm text-slate-500" role="status">
+        <div className="px-4 py-3 text-sm text-muted-foreground" role="status">
           {isSearching
             ? "Buscando cliente..."
             : "Sin coincidencias. Podes cargarlo como cliente nuevo."}
@@ -726,12 +726,12 @@ function CustomerSuggestions({
 
 function OptionalFields({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <details className="border-t border-slate-200">
-      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-graphite focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/30">
+    <details className="border-t border-border">
+      <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
         {label}
       </summary>
       {/* Keep fields mounted so closed sections still contribute to FormData and drafts. */}
-      <div className="grid gap-4 pb-4 pt-2 lg:grid-cols-6">{children}</div>
+      <div className="grid gap-4 pt-2 pb-4 lg:grid-cols-6">{children}</div>
     </details>
   );
 }
@@ -754,7 +754,7 @@ function Field({
   if (htmlFor) {
     return (
       <div className={className} onBlur={onBlur} onKeyDown={onKeyDown}>
-        <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor={htmlFor}>
+        <label className="mb-2 block text-sm font-medium text-body" htmlFor={htmlFor}>
           {label}
         </label>
         {children}
@@ -764,7 +764,7 @@ function Field({
 
   return (
     <label className={className}>
-      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-body">{label}</span>
       {children}
     </label>
   );

@@ -57,25 +57,25 @@ export function SalariesView({
       label: "Saldo disponible actual",
       value: formatCurrency(data.totalAvailable),
       icon: Landmark,
-      tone: "text-slate-950"
+      tone: "text-foreground"
     },
     {
       label: "Reservas fijas",
       value: formatCurrency(reserveTotal),
       icon: PiggyBank,
-      tone: "text-amber-700"
+      tone: "text-warning"
     },
     {
       label: "Reposicion del mes",
       value: formatCurrency(data.merchandise.currentReplacementCost),
       icon: Boxes,
-      tone: "text-slate-950"
+      tone: "text-foreground"
     },
     {
       label: "Disponible sugerido",
       value: formatCurrency(data.suggestedSalaryAmount),
       icon: TrendingUp,
-      tone: "text-emerald-700"
+      tone: "text-success"
     }
   ];
 
@@ -84,15 +84,15 @@ export function SalariesView({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Liquidacion de sueldos</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Liquidacion de sueldos</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {data.monthLabel}: caja, compromisos y retiros confirmados.
             </p>
           </div>
           <form className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <div>
               <label
-                className="mb-2 block text-xs font-semibold text-slate-500"
+                className="mb-2 block text-xs font-semibold text-muted-foreground"
                 htmlFor="salary-month"
               >
                 Mes analizado
@@ -120,10 +120,10 @@ export function SalariesView({
         ) : null}
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {kpis.map(({ label, value, icon: Icon, tone }) => (
-            <div className="min-w-0 border-t border-slate-200 py-3" key={label}>
+            <div className="min-w-0 border-t border-border py-3" key={label}>
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold text-slate-500">{label}</p>
-                <Icon className="h-4 w-4 text-slate-500" />
+                <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+                <Icon className="h-4 w-4 text-muted-foreground" />
               </div>
               <p className={`mt-3 text-xl font-semibold ${tone}`}>{value}</p>
             </div>
@@ -133,18 +133,18 @@ export function SalariesView({
 
       <div className="grid gap-4 xl:grid-cols-[0.85fr_1.15fr]">
         <Card className="p-4 sm:p-5">
-          <h2 className="text-xl font-semibold text-slate-950">Saldo disponible por cuenta</h2>
+          <h2 className="text-xl font-semibold text-foreground">Saldo disponible por cuenta</h2>
           <div className="mt-4 grid gap-3">
             {data.accounts.map((account) => (
-              <div className="border-b border-slate-200 py-3" key={account.method}>
+              <div className="border-b border-border py-3" key={account.method}>
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold text-slate-500">{account.label}</p>
-                    <p className="mt-1 text-xs text-slate-400">
+                    <p className="text-xs font-semibold text-muted-foreground">{account.label}</p>
+                    <p className="mt-1 text-xs text-subtle-foreground">
                       Disponible actual; no depende del mes seleccionado
                     </p>
                   </div>
-                  <p className="text-lg font-semibold text-slate-950">
+                  <p className="text-lg font-semibold text-foreground">
                     {formatCurrency(account.balance)}
                   </p>
                 </div>
@@ -156,7 +156,7 @@ export function SalariesView({
         <Card className="p-4 sm:p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Costo real de reposicion</h2>
+              <h2 className="text-xl font-semibold text-foreground">Costo real de reposicion</h2>
             </div>
             <Link
               className={cn(buttonVariants({ variant: "secondary" }), "w-full sm:w-auto")}
@@ -166,32 +166,32 @@ export function SalariesView({
             </Link>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="border-t border-slate-200 py-3">
-              <p className="text-xs text-slate-500">Facturacion de productos</p>
+            <div className="border-t border-border py-3">
+              <p className="text-xs text-muted-foreground">Facturacion de productos</p>
               <p className="mt-2 text-lg font-semibold">
                 {formatCurrency(data.merchandise.revenue)}
               </p>
             </div>
-            <div className="border-t border-slate-200 py-3">
-              <p className="text-xs text-slate-500">Costo historico vendido</p>
+            <div className="border-t border-border py-3">
+              <p className="text-xs text-muted-foreground">Costo historico vendido</p>
               <p className="mt-2 text-lg font-semibold">
                 {formatCurrency(data.merchandise.historicalCost)}
               </p>
             </div>
-            <div className="border-t border-slate-200 py-3">
-              <p className="text-xs text-amber-700">Reposicion a costo actual</p>
-              <p className="mt-2 text-lg font-semibold text-amber-900">
+            <div className="border-t border-border py-3">
+              <p className="text-xs text-warning">Reposicion a costo actual</p>
+              <p className="mt-2 text-lg font-semibold text-warning">
                 {formatCurrency(data.merchandise.currentReplacementCost)}
               </p>
             </div>
-            <div className="border-t border-slate-200 py-3">
-              <p className="text-xs text-emerald-700">Margen bruto historico</p>
-              <p className="mt-2 text-lg font-semibold text-emerald-800">
+            <div className="border-t border-border py-3">
+              <p className="text-xs text-success">Margen bruto historico</p>
+              <p className="mt-2 text-lg font-semibold text-success">
                 {formatCurrency(data.merchandise.grossMargin)}
               </p>
             </div>
           </div>
-          <p className="mt-4 text-xs leading-5 text-slate-500">
+          <p className="mt-4 text-xs leading-5 text-muted-foreground">
             Calculado con cantidad vendida por costo unitario guardado en cada venta y costo actual
             del producto. Las ventas eliminadas no se incluyen.
           </p>
@@ -209,22 +209,22 @@ export function SalariesView({
 
       <Card className="p-4 sm:p-5">
         <details>
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid">
             <div>
-              <h2 className="text-xl font-semibold text-slate-950">Objetivos y reservas</h2>
+              <h2 className="text-xl font-semibold text-foreground">Objetivos y reservas</h2>
             </div>
-            <Settings2 className="h-5 w-5 text-slate-500" />
+            <Settings2 className="h-5 w-5 text-muted-foreground" />
           </summary>
           <form action={saveSalaryPlanningConfigAction} className="mt-6 space-y-5">
             <input name="periodMonth" type="hidden" value={data.monthKey} />
             <input name="membersJson" type="hidden" value={JSON.stringify(membersJson)} />
             <input name="reservesJson" type="hidden" value={JSON.stringify(reservesJson)} />
             <div>
-              <h3 className="font-semibold text-slate-950">Sueldos objetivo</h3>
+              <h3 className="font-semibold text-foreground">Sueldos objetivo</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {data.members.map((member) => (
-                  <label className="min-w-0 border-t border-slate-200 py-3 text-sm" key={member.id}>
-                    <span className="mb-2 block font-semibold text-slate-800">{member.name}</span>
+                  <label className="min-w-0 border-t border-border py-3 text-sm" key={member.id}>
+                    <span className="mb-2 block font-semibold text-foreground">{member.name}</span>
                     <MoneyInput
                       min={0.01}
                       onValueChange={(value) =>
@@ -235,21 +235,18 @@ export function SalariesView({
                   </label>
                 ))}
               </div>
-              <p className="mt-3 text-sm text-slate-500">
+              <p className="mt-3 text-sm text-muted-foreground">
                 Masa salarial configurada:{" "}
                 {formatCurrency(membersJson.reduce((total, item) => total + item.targetAmount, 0))}.
                 Actual: {formatCurrency(salaryMass)}.
               </p>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-950">Reservas previas al sueldo</h3>
+              <h3 className="font-semibold text-foreground">Reservas previas al sueldo</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {data.reserves.map((reserve) => (
-                  <label
-                    className="min-w-0 border-t border-slate-200 py-3 text-sm"
-                    key={reserve.id}
-                  >
-                    <span className="mb-2 block font-semibold text-slate-800">{reserve.name}</span>
+                  <label className="min-w-0 border-t border-border py-3 text-sm" key={reserve.id}>
+                    <span className="mb-2 block font-semibold text-foreground">{reserve.name}</span>
                     <MoneyInput
                       min={0}
                       onValueChange={(value) =>
@@ -273,10 +270,10 @@ export function SalariesView({
 
       <Card className="p-4 sm:p-5">
         <div className="flex items-start gap-3">
-          <Banknote className="mt-1 h-5 w-5 text-slate-500" />
+          <Banknote className="mt-1 h-5 w-5 text-muted-foreground" />
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Retiro extraordinario</h2>
-            <p className="mt-2 text-sm text-slate-600">
+            <h2 className="text-xl font-semibold text-foreground">Retiro extraordinario</h2>
+            <p className="mt-2 text-sm text-muted-foreground">
               Usalo para un retiro que no forma parte de la liquidacion proporcional mensual.
             </p>
           </div>
@@ -287,7 +284,7 @@ export function SalariesView({
             className="mt-5 grid gap-3 xl:grid-cols-[160px_170px_180px_minmax(0,1fr)_auto]"
           >
             <input name="id" type="hidden" value={editing?.id ?? ""} />
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Fecha
               <Input
                 aria-label="Fecha de retiro"
@@ -297,7 +294,7 @@ export function SalariesView({
                 type="date"
               />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Monto
               <Input
                 aria-label="Monto retirado"
@@ -310,7 +307,7 @@ export function SalariesView({
                 type="number"
               />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Cuenta de salida
               <Select
                 aria-label="Cuenta de salida"
@@ -320,7 +317,7 @@ export function SalariesView({
                 options={getCashMethodOptions("salary")}
               />
             </label>
-            <label className="grid gap-2 text-sm font-medium text-slate-700">
+            <label className="grid gap-2 text-sm font-medium text-body">
               Observaciones
               <Textarea
                 aria-label="Observaciones"
@@ -346,76 +343,76 @@ export function SalariesView({
 
       <Card className="p-4 sm:p-5">
         <div>
-          <p className="text-sm text-slate-500">Liquidaciones de {data.monthLabel}</p>
-          <h2 className="text-xl font-semibold text-slate-950">Retiros de sueldos confirmados</h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">Liquidaciones de {data.monthLabel}</p>
+          <h2 className="text-xl font-semibold text-foreground">Retiros de sueldos confirmados</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
             Cada registro separa lo pagado a las personas del origen financiero del retiro.
           </p>
         </div>
         <div className="mt-5 space-y-3">
           {data.liquidations.map((liquidation) => (
-            <details className="min-w-0 border-t border-slate-200 py-3" key={liquidation.id}>
-              <summary className="flex min-h-11 cursor-pointer list-none flex-col gap-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500 sm:flex-row sm:items-center sm:justify-between">
+            <details className="min-w-0 border-t border-border py-3" key={liquidation.id}>
+              <summary className="flex min-h-11 cursor-pointer list-none flex-col gap-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-700">
+                    <span className="rounded-full bg-success-soft px-3 py-1 text-sm font-semibold text-success">
                       Liquidacion salarial
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       {formatDate(liquidation.withdrawalDate)}
                     </span>
                   </div>
-                  <p className="mt-3 font-semibold text-slate-950">
+                  <p className="mt-3 font-semibold text-foreground">
                     Cobertura mensual {liquidation.coveragePercentage.toFixed(1)}%
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
-                  <p className="text-xs text-slate-500">Total retirado</p>
-                  <p className="mt-1 text-xl font-semibold text-slate-950">
+                  <p className="text-xs text-muted-foreground">Total retirado</p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">
                     {formatCurrency(liquidation.totalAmount)}
                   </p>
                 </div>
               </summary>
               <div className="mt-5 grid gap-3 sm:grid-cols-3">
                 <div className="py-3">
-                  <p className="text-xs text-slate-500">Sueldos</p>
+                  <p className="text-xs text-muted-foreground">Sueldos</p>
                   <p className="mt-1 font-semibold">{formatCurrency(liquidation.salaryAmount)}</p>
                 </div>
                 <div className="py-3">
-                  <p className="text-xs text-amber-700">Excedente</p>
-                  <p className="mt-1 font-semibold text-amber-900">
+                  <p className="text-xs text-warning">Excedente</p>
+                  <p className="mt-1 font-semibold text-warning">
                     {formatCurrency(liquidation.profitShareAmount)}
                   </p>
                 </div>
                 <div className="py-3">
-                  <p className="text-xs text-emerald-700">Total</p>
-                  <p className="mt-1 font-semibold text-emerald-800">
+                  <p className="text-xs text-success">Total</p>
+                  <p className="mt-1 font-semibold text-success">
                     {formatCurrency(liquidation.totalAmount)}
                   </p>
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {liquidation.members.map((member) => (
-                  <div className="border-t border-slate-200 py-3" key={member.memberId}>
-                    <p className="font-semibold text-slate-950">{member.memberName}</p>
-                    <p className="mt-2 text-xs text-slate-500">
+                  <div className="border-t border-border py-3" key={member.memberId}>
+                    <p className="font-semibold text-foreground">{member.memberName}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
                       Sueldo {formatCurrency(member.salaryAmount)}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Excedente {formatCurrency(member.profitShareAmount)}
                     </p>
-                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                    <p className="mt-2 text-lg font-semibold text-foreground">
                       {formatCurrency(member.totalAmount)}
                     </p>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 border-t border-slate-200 pt-4">
-                <p className="text-xs font-semibold text-slate-500">Origen del dinero</p>
+              <div className="mt-4 border-t border-border pt-4">
+                <p className="text-xs font-semibold text-muted-foreground">Origen del dinero</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {liquidation.funding.map((funding) => (
                     <span
-                      className="border-graphite/8 rounded-full border bg-white px-3 py-2 text-sm font-semibold text-slate-800"
+                      className="rounded-full border border-border bg-card px-3 py-2 text-sm font-semibold text-foreground"
                       key={funding.paymentMethod}
                     >
                       {formatCashMethod(funding.paymentMethod)} · {formatCurrency(funding.amount)}
@@ -424,7 +421,7 @@ export function SalariesView({
                 </div>
               </div>
               {liquidation.notes ? (
-                <p className="mt-4 text-sm text-slate-600">{liquidation.notes}</p>
+                <p className="mt-4 text-sm text-muted-foreground">{liquidation.notes}</p>
               ) : null}
             </details>
           ))}
@@ -437,37 +434,37 @@ export function SalariesView({
       </Card>
 
       <Card className="p-0">
-        <div className="border-graphite/8 border-b px-4 py-4 sm:px-5">
-          <p className="text-sm text-slate-500">Historial de {data.monthLabel}</p>
+        <div className="border-b border-border px-4 py-4 sm:px-5">
+          <p className="text-sm text-muted-foreground">Historial de {data.monthLabel}</p>
           <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
-            <h2 className="text-xl font-semibold text-slate-950">Retiros extraordinarios</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-xl font-semibold text-foreground">Retiros extraordinarios</h2>
+            <p className="text-sm text-muted-foreground">
               Sueldos pagados: {formatCurrency(paidTotal)} de {formatCurrency(salaryMass)}
             </p>
           </div>
         </div>
-        <div className="grid divide-y divide-slate-200 px-4 lg:hidden">
+        <div className="grid divide-y divide-border px-4 lg:hidden">
           {data.withdrawals.map((withdrawal) => (
-            <article className="min-w-0 border-t border-slate-200 py-3" key={withdrawal.id}>
+            <article className="min-w-0 border-t border-border py-3" key={withdrawal.id}>
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <span
-                    className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
+                    className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-success-soft text-success" : "bg-accent text-body"}`}
                   >
                     {withdrawal.withdrawalType === "salary" ? "Liquidacion" : "Extraordinario"}
                   </span>
-                  <p className="mt-3 font-semibold text-slate-950">
+                  <p className="mt-3 font-semibold text-foreground">
                     {withdrawal.memberName ?? formatCashMethod(withdrawal.paymentMethod)}
                   </p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {formatDate(withdrawal.withdrawalDate)} ·{" "}
                     {formatCashMethod(withdrawal.paymentMethod)}
                   </p>
                 </div>
-                <p className="font-semibold text-slate-950">{formatCurrency(withdrawal.amount)}</p>
+                <p className="font-semibold text-foreground">{formatCurrency(withdrawal.amount)}</p>
               </div>
               {withdrawal.notes ? (
-                <p className="mt-3 text-sm text-slate-600">{withdrawal.notes}</p>
+                <p className="mt-3 text-sm text-muted-foreground">{withdrawal.notes}</p>
               ) : null}
               {withdrawal.withdrawalType === "extraordinary" && canManage ? (
                 <ActionMenu label="Más acciones">
@@ -492,7 +489,7 @@ export function SalariesView({
         </div>
         <div className="hidden overflow-x-auto lg:block">
           <table className="w-full min-w-[850px] text-sm">
-            <thead className="bg-brand-50/70 text-left text-xs text-slate-500">
+            <thead className="bg-muted/70 text-left text-xs text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">Tipo</th>
                 <th className="px-4 py-3">Fecha</th>
@@ -504,27 +501,29 @@ export function SalariesView({
             </thead>
             <tbody>
               {data.withdrawals.map((withdrawal) => (
-                <tr className="border-graphite/8 border-t" key={withdrawal.id}>
+                <tr className="border-t border-border" key={withdrawal.id}>
                   <td className="px-4 py-3">
                     <span
-                      className={`rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}`}
+                      className={`rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-success-soft text-success" : "bg-accent text-body"}`}
                     >
                       {withdrawal.withdrawalType === "salary" ? "Liquidacion" : "Extraordinario"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {formatDate(withdrawal.withdrawalDate)}
                   </td>
                   <td className="px-4 py-3">
-                    <p className="font-semibold text-slate-950">
+                    <p className="font-semibold text-foreground">
                       {withdrawal.memberName ?? "Retiro manual"}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       {formatCashMethod(withdrawal.paymentMethod)}
                     </p>
                   </td>
                   <td className="px-4 py-3 font-semibold">{formatCurrency(withdrawal.amount)}</td>
-                  <td className="max-w-xs px-4 py-3 text-slate-600">{withdrawal.notes || "-"}</td>
+                  <td className="max-w-xs px-4 py-3 text-muted-foreground">
+                    {withdrawal.notes || "-"}
+                  </td>
                   <td className="px-4 py-3">
                     {withdrawal.withdrawalType === "extraordinary" && canManage ? (
                       <ActionMenu label="Más acciones">
@@ -544,7 +543,7 @@ export function SalariesView({
                         </form>
                       </ActionMenu>
                     ) : (
-                      <p className="text-right text-xs text-slate-400">Protegido</p>
+                      <p className="text-right text-xs text-subtle-foreground">Protegido</p>
                     )}
                   </td>
                 </tr>

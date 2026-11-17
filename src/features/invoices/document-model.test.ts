@@ -46,7 +46,7 @@ describe("decimal invoice amounts", () => {
       });
     }
   );
-  it("sums rounded lines before validating and subtracting the discount in cents", () => {
+  it("sums rounded-sm lines before validating and subtracting the discount in cents", () => {
     expect(
       calculateInvoiceAmounts(
         [

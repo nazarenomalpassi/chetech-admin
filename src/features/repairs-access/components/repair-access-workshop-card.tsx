@@ -69,25 +69,25 @@ export function RepairAccessWorkshopCard({
   const activeReturn = summary.activeReturn;
 
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <header className="grid min-w-0 gap-2 border-b border-slate-200 p-4">
+    <article className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
+      <header className="grid min-w-0 gap-2 border-b border-border p-4">
         <div className="min-w-0">
           {canManageIntake ? (
             <button
               aria-label={`Abrir orden ${order.repairNumber}`}
-              className="block min-h-11 w-full whitespace-normal break-words rounded-lg text-left text-xl font-semibold leading-tight text-slate-950 [overflow-wrap:anywhere] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+              className="block min-h-11 w-full rounded-lg text-left text-xl leading-tight font-semibold wrap-anywhere wrap-break-word whitespace-normal text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
               onClick={() => onOpenDetail(order)}
               type="button"
             >
               {order.repairNumber}
             </button>
           ) : (
-            <p className="block w-full whitespace-normal break-words text-xl font-semibold leading-tight text-slate-950 [overflow-wrap:anywhere]">
+            <p className="block w-full text-xl leading-tight font-semibold wrap-anywhere wrap-break-word whitespace-normal text-foreground">
               {order.repairNumber}
             </p>
           )}
         </div>
-        <div className="flex min-w-0 max-w-full flex-wrap items-start gap-2">
+        <div className="flex max-w-full min-w-0 flex-wrap items-start gap-2">
           <RepairAccessStatusBadge status={summary.status} />
           <RepairAccessWarrantyBadge warranty={order.warranty} />
         </div>
@@ -97,13 +97,13 @@ export function RepairAccessWorkshopCard({
         <WorkshopOrderNextStep repairNumber={order.repairNumber} summary={summary} />
         <WarrantyReturnPanel order={order} canManage={canManageIntake} />
         <section>
-          <div className="flex items-center gap-2 text-slate-500">
+          <div className="flex items-center gap-2 text-muted-foreground">
             <Wrench aria-hidden="true" className="h-4 w-4" />
             <p className="text-sm font-medium">
               {activeReturn ? "Falla original" : "Falla reportada"}
             </p>
           </div>
-          <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-900">
+          <p className="mt-1 text-sm leading-6 wrap-break-word whitespace-pre-wrap text-foreground">
             {order.issueReported || "Sin falla declarada"}
           </p>
         </section>
@@ -117,7 +117,7 @@ export function RepairAccessWorkshopCard({
           <WorkshopInfo icon={UserRound} label="Cliente" value={order.customer.fullName} />
         </div>
 
-        <div className="border-graphite/8 grid grid-cols-2 gap-x-4 gap-y-3 border-y py-3 text-sm">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-border py-3 text-sm">
           <WorkshopMeta
             icon={CircleDollarSign}
             label={activeReturn ? "Monto original" : "Monto actual"}
@@ -148,8 +148,8 @@ export function RepairAccessWorkshopCard({
 
         {!activeReturn && (!delivered || (canManageIntake && order.workflow)) ? (
           <LazyDisclosure
-            className="group overflow-hidden rounded-xl border border-slate-300 bg-white"
-            summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-950 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
+            className="group overflow-hidden rounded-xl border border-border-strong bg-card"
+            summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-muted px-3 py-3 text-sm font-semibold text-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
             summary={
               <>
                 <span className="flex items-center gap-2">
@@ -180,7 +180,7 @@ export function RepairAccessWorkshopCard({
                 />
 
                 <label>
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-body">
                     Estado de la orden
                   </span>
                   <Select
@@ -196,7 +196,7 @@ export function RepairAccessWorkshopCard({
                 </label>
 
                 <label>
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-body">
                     Presupuesto · visible para el cliente
                   </span>
                   <Input
@@ -210,7 +210,7 @@ export function RepairAccessWorkshopCard({
                     step="0.01"
                     type="number"
                   />
-                  <span className="mt-1.5 block text-xs leading-5 text-slate-500">
+                  <span className="mt-1.5 block text-xs leading-5 text-muted-foreground">
                     {order.isPaid
                       ? "El monto queda protegido porque la orden ya fue cobrada."
                       : "Importe presupuestado o acordado con el cliente."}
@@ -218,7 +218,7 @@ export function RepairAccessWorkshopCard({
                 </label>
 
                 <label>
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-body">
                     Detalle del presupuesto · visible para el cliente
                   </span>
                   <Textarea
@@ -232,7 +232,7 @@ export function RepairAccessWorkshopCard({
                 </label>
 
                 <label>
-                  <span className="mb-2 block text-sm font-medium text-slate-700">
+                  <span className="mb-2 block text-sm font-medium text-body">
                     Avance de reparacion · visible para el cliente
                   </span>
                   <Textarea
@@ -245,13 +245,13 @@ export function RepairAccessWorkshopCard({
                   />
                 </label>
 
-                <label className="flex min-h-11 items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm">
+                <label className="flex min-h-11 items-start gap-3 rounded-xl border border-border p-3 text-sm">
                   <input className="mt-1" type="checkbox" name="qualityChecked" />
                   Verifique la falla reparada, el funcionamiento y los accesorios antes de marcar
                   listo.
                 </label>
                 <label>
-                  <span className="mb-2 block text-xs font-medium text-slate-500">
+                  <span className="mb-2 block text-xs font-medium text-muted-foreground">
                     Resultado de las pruebas (opcional)
                   </span>
                   <Textarea name="qualityNotes" maxLength={2000} />
@@ -286,8 +286,8 @@ export function RepairAccessWorkshopCard({
         ) : null}
         {order.workflow ? (
           <LazyDisclosure
-            className="border-t border-slate-200"
-            summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+            className="border-t border-border"
+            summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40"
             summary={delivered ? "Historial de la orden original" : "Coordinacion y repuestos"}
           >
             <OrderCoordinationPanel
@@ -301,8 +301,8 @@ export function RepairAccessWorkshopCard({
         {order.workflow ? <RepairAttachments orderId={order.id} /> : null}
 
         <LazyDisclosure
-          className="group border-t border-slate-200"
-          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-medium text-slate-600 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40 [&::-webkit-details-marker]:hidden"
+          className="group border-t border-border"
+          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-medium text-muted-foreground hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
           summary={
             <>
               <span className="flex items-center gap-2">
@@ -355,7 +355,7 @@ export function RepairAccessWorkshopCard({
         </div>
 
         {canManageIntake ? (
-          <div className="flex justify-end border-t border-slate-200 pt-2">
+          <div className="flex justify-end border-t border-border pt-2">
             <ActionMenu label="Mas acciones">
               <a
                 className={buttonVariants({ variant: "secondary" })}
@@ -411,7 +411,7 @@ function WorkshopCardForm({
     <form
       action={updateRepairAccessWorkshopAction}
       data-workshop-form
-      className="grid gap-4 border-t border-graphite/10 p-4"
+      className="grid gap-4 border-t border-border p-4"
     >
       {children}
     </form>
@@ -429,11 +429,13 @@ function WorkshopInfo({
 }) {
   return (
     <div className="min-w-0">
-      <div className="flex items-center gap-2 text-slate-500">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Icon aria-hidden="true" className="h-4 w-4" />
         <p className="text-sm font-medium">{label}</p>
       </div>
-      <p className="mt-1.5 break-words text-sm font-semibold leading-5 text-slate-900">{value}</p>
+      <p className="mt-1.5 text-sm leading-5 font-semibold wrap-break-word text-foreground">
+        {value}
+      </p>
     </div>
   );
 }
@@ -451,11 +453,11 @@ function WorkshopMeta({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <div className="flex items-center gap-2 text-slate-500">
+      <div className="flex items-center gap-2 text-muted-foreground">
         <Icon aria-hidden="true" className="h-3.5 w-3.5" />
         <p className="text-sm font-medium">{label}</p>
       </div>
-      <p className="mt-1 break-words font-medium leading-5 text-slate-800">{value}</p>
+      <p className="mt-1 leading-5 font-medium wrap-break-word text-foreground">{value}</p>
     </div>
   );
 }

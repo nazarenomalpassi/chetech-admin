@@ -26,7 +26,7 @@ export function ReadyForPickupRequirements({
     <div
       role="note"
       aria-label="Antes de marcar listo para retirar"
-      className="min-w-0 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950"
+      className="min-w-0 rounded-lg border border-warning-border bg-warning-soft p-3 text-sm text-warning"
     >
       <p className="font-semibold">Antes de marcar listo para retirar</p>
       <ul className="mt-2 space-y-2 leading-5">
@@ -37,7 +37,7 @@ export function ReadyForPickupRequirements({
               : "Confirmacion del cliente pendiente"}
           </p>
           {workflow.approvalStatus !== "accepted" ? (
-            <p className="mt-1 text-amber-900">
+            <p className="mt-1 text-warning">
               {canManage
                 ? 'Usa "Cliente confirmo" en la coordinacion de esta orden si el cliente ya autorizo el presupuesto.'
                 : 'Pedile a mostrador que registre "Cliente confirmo" para este presupuesto.'}
@@ -51,7 +51,7 @@ export function ReadyForPickupRequirements({
               : "Control de calidad pendiente"}
           </p>
           {!workflow.qualityCheckedAt ? (
-            <p className="mt-1 text-amber-900">
+            <p className="mt-1 text-warning">
               Prueba el equipo y marca el control de calidad al guardar.
             </p>
           ) : null}
@@ -59,13 +59,13 @@ export function ReadyForPickupRequirements({
         {pendingParts ? (
           <li>
             <p className="font-medium">Repuestos pendientes de recibir</p>
-            <p className="mt-1 text-amber-900">
+            <p className="mt-1 text-warning">
               Mostrador debe registrar la recepcion o cancelar la solicitud.
             </p>
           </li>
         ) : null}
       </ul>
-      <p className="mt-3 text-xs leading-5 text-amber-900">
+      <p className="mt-3 text-xs leading-5 text-warning">
         Si cambia el presupuesto o su detalle, se necesita una nueva confirmacion. Guardar no
         autoriza al cliente ni registra un cobro.
       </p>

@@ -105,7 +105,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
   return (
     <div aria-busy={pending} className="space-y-3">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-        <label className="space-y-1 text-sm font-medium text-slate-700">
+        <label className="space-y-1 text-sm font-medium text-body">
           <span>Buscar productos</span>
           <Input
             aria-label="Buscar productos"
@@ -115,7 +115,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
             value={search}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-slate-700">
+        <label className="space-y-1 text-sm font-medium text-body">
           <span>Categoria</span>
           <Select
             aria-label="Filtrar productos por categoria"
@@ -127,7 +127,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
             ]}
           />
         </label>
-        <label className="space-y-1 text-sm font-medium text-slate-700">
+        <label className="space-y-1 text-sm font-medium text-body">
           <span>Estado</span>
           <Select
             aria-label="Filtrar productos por estado"
@@ -143,17 +143,17 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
       </div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <details className="min-w-0 flex-1">
-          <summary className="flex min-h-11 w-fit cursor-pointer flex-wrap items-center gap-2 rounded-lg px-2 text-sm font-medium text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400">
+          <summary className="flex min-h-11 w-fit cursor-pointer flex-wrap items-center gap-2 rounded-lg px-2 text-sm font-medium text-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden">
             <span>Mas opciones</span>
             {state.sort !== "name" || state.pageSize !== 25 ? (
-              <span className="text-xs text-slate-600">
+              <span className="text-xs text-muted-foreground">
                 Orden: {{ name: "Nombre", sku: "SKU", stock: "Stock", price: "Precio" }[state.sort]}{" "}
                 · {state.pageSize} por página
               </span>
             ) : null}
           </summary>
           <div className="mt-2 grid max-w-xl gap-3 sm:grid-cols-2">
-            <label className="space-y-1 text-sm font-medium text-slate-700">
+            <label className="space-y-1 text-sm font-medium text-body">
               <span>Ordenar por</span>
               <Select
                 value={state.sort}
@@ -166,7 +166,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
                 ]}
               />
             </label>
-            <label className="space-y-1 text-sm font-medium text-slate-700">
+            <label className="space-y-1 text-sm font-medium text-body">
               <span>Productos por pagina</span>
               <Select
                 value={String(state.pageSize)}
@@ -193,7 +193,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
           >
             Limpiar filtros
           </Button>
-          <span role="status" className="text-sm text-slate-500">
+          <span role="status" className="text-sm text-muted-foreground">
             {pending ? "Actualizando..." : ""}
           </span>
         </div>

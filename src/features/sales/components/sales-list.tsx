@@ -265,7 +265,7 @@ export function SalesList({
           <h1 className="panel-heading">
             {editing ? `Editar venta ${editing.saleNumber}` : "Nueva venta"}
           </h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Agrega productos y completa el cobro antes de guardar.
           </p>
         </div>
@@ -302,7 +302,7 @@ export function SalesList({
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_100px_140px_160px_auto]">
             <div className="min-w-0 sm:col-span-2 xl:col-span-1">
               <label
-                className="mb-2 block text-sm font-medium text-slate-500"
+                className="mb-2 block text-sm font-medium text-muted-foreground"
                 htmlFor="sale-product-search"
               >
                 Producto
@@ -362,12 +362,12 @@ export function SalesList({
                     id="sale-product-options"
                     role="listbox"
                     aria-label="Productos disponibles"
-                    className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+                    className="absolute z-20 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-border bg-card p-1 shadow-xs"
                   >
                     {filteredProducts.length ? (
                       filteredProducts.map((product, index) => (
                         <button
-                          className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 ${activeProductIndex === index ? "bg-slate-100" : ""}`}
+                          className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-accent ${activeProductIndex === index ? "bg-accent" : ""}`}
                           id={`sale-product-option-${product.id}`}
                           role="option"
                           aria-selected={activeProductIndex === index}
@@ -380,34 +380,34 @@ export function SalesList({
                           type="button"
                         >
                           <div className="min-w-0">
-                            <p className="break-words font-medium text-slate-950">
+                            <p className="font-medium wrap-break-word text-foreground">
                               {product.label}
                             </p>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="mt-1 text-sm text-muted-foreground">
                               Precio sugerido {formatCurrency(product.salePrice)}
                             </p>
                           </div>
-                          <span className="shrink-0 text-sm text-slate-500">
+                          <span className="shrink-0 text-sm text-muted-foreground">
                             Disponible {product.stock}
                           </span>
                         </button>
                       ))
                     ) : (
-                      <p className="px-3 py-3 text-sm text-slate-500">
+                      <p className="px-3 py-3 text-sm text-muted-foreground">
                         Sin resultados. Proba otro nombre o SKU.
                       </p>
                     )}
                   </div>
                 ) : null}
               </div>
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Stock disponible: {selectedProduct?.stock ?? 0}
               </p>
             </div>
 
             <div>
               <label
-                className="mb-2 block text-sm font-medium text-slate-500"
+                className="mb-2 block text-sm font-medium text-muted-foreground"
                 htmlFor="sale-quantity"
               >
                 Cantidad
@@ -423,7 +423,7 @@ export function SalesList({
 
             <div>
               <label
-                className="mb-2 block text-sm font-medium text-slate-500"
+                className="mb-2 block text-sm font-medium text-muted-foreground"
                 htmlFor="sale-unit-price"
               >
                 Precio unitario
@@ -432,11 +432,14 @@ export function SalesList({
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="saleDate">
+              <label
+                className="mb-2 block text-sm font-medium text-muted-foreground"
+                htmlFor="saleDate"
+              >
                 Fecha
               </label>
               <div className="relative">
-                <CalendarRange className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <CalendarRange className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
                 <Input
                   className="pl-10"
                   id="saleDate"
@@ -461,34 +464,36 @@ export function SalesList({
           </div>
 
           <div className="table-shell">
-            <div className="border-graphite/8 flex items-center justify-between border-b bg-slate-50 px-4 py-3">
-              <h2 className="text-base font-semibold text-slate-950">Carrito</h2>
-              <p className="text-lg font-semibold tabular-nums text-slate-950">
-                <span className="mr-2 text-sm font-normal text-slate-500">Total</span>
+            <div className="flex items-center justify-between border-b border-border bg-muted px-4 py-3">
+              <h2 className="text-base font-semibold text-foreground">Carrito</h2>
+              <p className="text-lg font-semibold text-foreground tabular-nums">
+                <span className="mr-2 text-sm font-normal text-muted-foreground">Total</span>
                 {formatCurrency(cartTotal)}
               </p>
             </div>
             {cart.length ? (
-              <div className="divide-y divide-slate-200 xl:hidden">
+              <div className="divide-y divide-border xl:hidden">
                 {cart.map((item) => (
-                  <article className="bg-white p-4" key={item.productId}>
+                  <article className="bg-card p-4" key={item.productId}>
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-950">{item.label}</p>
-                        <p className="mt-1 text-sm text-slate-500">Stock visible {item.stock}</p>
+                        <p className="font-semibold text-foreground">{item.label}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Stock visible {item.stock}
+                        </p>
                       </div>
-                      <p className="shrink-0 font-semibold text-slate-950">
+                      <p className="shrink-0 font-semibold text-foreground">
                         {formatCurrency(item.quantity * item.unitPrice)}
                       </p>
                     </div>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
                       <div>
-                        <span className="text-sm text-slate-500">Cantidad</span>
-                        <p className="font-semibold text-slate-800">{item.quantity}</p>
+                        <span className="text-sm text-muted-foreground">Cantidad</span>
+                        <p className="font-semibold text-foreground">{item.quantity}</p>
                       </div>
                       <div>
-                        <span className="text-sm text-slate-500">Precio</span>
-                        <p className="font-semibold text-slate-800">
+                        <span className="text-sm text-muted-foreground">Precio</span>
+                        <p className="font-semibold text-foreground">
                           {formatCurrency(item.unitPrice)}
                         </p>
                       </div>
@@ -509,7 +514,7 @@ export function SalesList({
             {cart.length ? (
               <div className="hidden overflow-x-auto xl:block">
                 <table className="min-w-full text-sm">
-                  <thead className="bg-white text-left text-slate-500">
+                  <thead className="bg-card text-left text-muted-foreground">
                     <tr>
                       <th className="px-4 py-3 font-medium">Producto</th>
                       <th className="px-4 py-3 font-medium">Cantidad</th>
@@ -520,20 +525,20 @@ export function SalesList({
                   </thead>
                   <tbody>
                     {cart.map((item) => (
-                      <tr className="border-graphite/8 border-t bg-white" key={item.productId}>
+                      <tr className="border-t border-border bg-card" key={item.productId}>
                         <td className="px-4 py-3">
                           <div>
-                            <p className="font-medium text-slate-950">{item.label}</p>
-                            <p className="mt-1 text-sm text-slate-500">
+                            <p className="font-medium text-foreground">{item.label}</p>
+                            <p className="mt-1 text-sm text-muted-foreground">
                               Stock visible {item.stock}
                             </p>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
-                        <td className="px-4 py-3 text-slate-600">
+                        <td className="px-4 py-3 text-muted-foreground">{item.quantity}</td>
+                        <td className="px-4 py-3 text-muted-foreground">
                           {formatCurrency(item.unitPrice)}
                         </td>
-                        <td className="px-4 py-3 font-semibold text-slate-950">
+                        <td className="px-4 py-3 font-semibold text-foreground">
                           {formatCurrency(item.quantity * item.unitPrice)}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -565,7 +570,10 @@ export function SalesList({
               title="Cobro de la venta"
             />
             <div className="min-w-0">
-              <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="notes">
+              <label
+                className="mb-2 block text-sm font-medium text-muted-foreground"
+                htmlFor="notes"
+              >
                 Observaciones (opcional)
               </label>
               <Textarea
@@ -589,7 +597,7 @@ export function SalesList({
                 ) : null}
               </div>
               {draft.lastSavedAt && hasUnsavedChanges ? (
-                <p aria-live="polite" className="mt-3 text-sm text-slate-500">
+                <p aria-live="polite" className="mt-3 text-sm text-muted-foreground">
                   Borrador de venta guardado en este dispositivo.
                 </p>
               ) : null}
@@ -599,47 +607,49 @@ export function SalesList({
       </Card>
 
       <div className="table-shell">
-        <div className="border-graphite/8 space-y-2 border-b px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-950">Historial de ventas</h2>
-          <p className="text-sm text-slate-600">
+        <div className="space-y-2 border-b border-border px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">Historial de ventas</h2>
+          <p className="text-sm text-muted-foreground">
             En esta pagina: ventas {formatCurrency(totalRevenue)}, margen con costos conocidos{" "}
             {formatCurrency(totalProfit)}. No es utilidad neta del local.
           </p>
           {incompleteCostCount ? (
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               {incompleteCostCount} venta(s) con costo desconocido, excluidas del margen.
             </p>
           ) : null}
         </div>
-        <div className="divide-y divide-slate-200 xl:hidden">
+        <div className="divide-y divide-border xl:hidden">
           {sales.map((sale) => (
-            <article className="bg-white p-4" key={sale.id}>
+            <article className="bg-card p-4" key={sale.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">{sale.saleNumber}</p>
-                  <p className="mt-1 text-sm text-slate-500">{formatDate(sale.soldAt)}</p>
+                  <p className="font-semibold text-foreground">{sale.saleNumber}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{formatDate(sale.soldAt)}</p>
                 </div>
-                <p className="shrink-0 text-lg font-semibold text-slate-950">
+                <p className="shrink-0 text-lg font-semibold text-foreground">
                   {formatCurrency(sale.subtotal)}
                 </p>
               </div>
-              <p className="mt-3 break-words text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 wrap-break-word text-muted-foreground">
                 {sale.items.length
                   ? sale.items
                       .map((item) => `${item.productName ?? "Producto"} x${item.quantity}`)
                       .join(", ")
                   : "Sin producto vinculado"}
               </p>
-              <p className="mt-2 text-sm leading-5 text-slate-500">{renderPaymentSummary(sale)}</p>
+              <p className="mt-2 text-sm leading-5 text-muted-foreground">
+                {renderPaymentSummary(sale)}
+              </p>
               {sale.costTotal == null || sale.profitTotal == null ? (
-                <p className="mt-2 text-sm text-slate-600">
+                <p className="mt-2 text-sm text-muted-foreground">
                   Costo desconocido; margen no calculado
                 </p>
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 {sale.tvBoardId ? (
                   <Link
-                    className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-graphite underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite"
+                    className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
                     href="/placas-tv"
                   >
                     Ver placa
@@ -670,7 +680,7 @@ export function SalesList({
                     </ActionMenu>
                   </>
                 ) : (
-                  <p className="text-sm text-slate-500">Historial protegido</p>
+                  <p className="text-sm text-muted-foreground">Historial protegido</p>
                 )}
               </div>
             </article>
@@ -679,7 +689,7 @@ export function SalesList({
 
         <div className="hidden overflow-x-auto xl:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white text-left text-slate-500">
+            <thead className="bg-card text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Venta</th>
                 <th className="px-4 py-3 font-medium">Productos</th>
@@ -691,30 +701,30 @@ export function SalesList({
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr className="border-graphite/8 border-t bg-white hover:bg-slate-50" key={sale.id}>
-                  <td className="px-4 py-3 font-medium text-slate-950">{sale.saleNumber}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                <tr className="border-t border-border bg-card hover:bg-muted" key={sale.id}>
+                  <td className="px-4 py-3 font-medium text-foreground">{sale.saleNumber}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
                     {sale.items.length
                       ? sale.items
                           .map((item) => `${item.productName ?? "Producto"} x${item.quantity}`)
                           .join(", ")
                       : "Sin producto vinculado"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(sale.soldAt)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-950">
+                  <td className="px-4 py-3 text-muted-foreground">{formatDate(sale.soldAt)}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(sale.subtotal)}
                     {sale.costTotal == null || sale.profitTotal == null ? (
-                      <p className="mt-1 text-sm font-normal text-slate-600">
+                      <p className="mt-1 text-sm font-normal text-muted-foreground">
                         Costo desconocido; margen no calculado
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{renderPaymentSummary(sale)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{renderPaymentSummary(sale)}</td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-2">
                       {sale.tvBoardId ? (
                         <Link
-                          className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-graphite underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite"
+                          className="inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-semibold text-foreground underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
                           href="/placas-tv"
                         >
                           Ver placa
@@ -750,7 +760,7 @@ export function SalesList({
                           </ActionMenu>
                         </>
                       ) : (
-                        <p className="text-sm text-slate-500">Historial protegido</p>
+                        <p className="text-sm text-muted-foreground">Historial protegido</p>
                       )}
                     </div>
                   </td>
@@ -760,7 +770,7 @@ export function SalesList({
           </table>
         </div>
         {!sales.length ? (
-          <div className="empty-panel border-graphite/8 border-t">
+          <div className="empty-panel border-t border-border">
             Cuando registres una venta, la vas a ver aca con sus productos y medios de cobro.
           </div>
         ) : null}

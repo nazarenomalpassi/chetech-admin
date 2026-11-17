@@ -33,8 +33,8 @@ export default async function ConfiguracionPage({
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold text-slate-950">Configuracion</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        <h1 className="text-2xl font-semibold text-foreground">Configuracion</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Exportaciones, objetivos del negocio, garantia y estado fiscal.
         </p>
       </header>
@@ -43,7 +43,7 @@ export default async function ConfiguracionPage({
         <Card>
           <p
             role={message.success ? "status" : "alert"}
-            className={`text-sm ${message.success ? "text-graphite" : "text-rose-600"}`}
+            className={`text-sm ${message.success ? "text-foreground" : "text-danger"}`}
           >
             {message.message}
           </p>
@@ -54,8 +54,8 @@ export default async function ConfiguracionPage({
         <>
           {whatsappSetup ? <WhatsAppSettings status={whatsappSetup} /> : null}
           <Card>
-            <h2 className="text-lg font-semibold text-slate-950">Exportar datos del sistema</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h2 className="text-lg font-semibold text-foreground">Exportar datos del sistema</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               El Excel es una exportacion parcial para consulta. El JSON incluye los registros y un
               manifiesto para comprobar cantidades e integridad. Ninguno reemplaza el respaldo
               tecnico de PostgreSQL, usuarios y archivos privados.
@@ -74,8 +74,8 @@ export default async function ConfiguracionPage({
           </Card>
 
           <Card>
-            <h2 className="text-lg font-semibold text-slate-950">Objetivos mensuales</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h2 className="text-lg font-semibold text-foreground">Objetivos mensuales</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               Se comparan con el avance real del mes en Reportes.
             </p>
 
@@ -84,10 +84,7 @@ export default async function ConfiguracionPage({
               className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
             >
               <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                  htmlFor="salesTarget"
-                >
+                <label className="mb-2 block text-sm font-medium text-body" htmlFor="salesTarget">
                   Meta de ventas
                 </label>
                 <Input
@@ -99,10 +96,7 @@ export default async function ConfiguracionPage({
                 />
               </div>
               <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                  htmlFor="profitTarget"
-                >
+                <label className="mb-2 block text-sm font-medium text-body" htmlFor="profitTarget">
                   Meta de ganancia
                 </label>
                 <Input
@@ -114,10 +108,7 @@ export default async function ConfiguracionPage({
                 />
               </div>
               <div>
-                <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                  htmlFor="repairsTarget"
-                >
+                <label className="mb-2 block text-sm font-medium text-body" htmlFor="repairsTarget">
                   Meta de reparaciones
                 </label>
                 <Input
@@ -130,7 +121,7 @@ export default async function ConfiguracionPage({
               </div>
               <div>
                 <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-body"
                   htmlFor="invoicingTarget"
                 >
                   Meta de facturacion
@@ -151,8 +142,8 @@ export default async function ConfiguracionPage({
             </form>
           </Card>
           <Card>
-            <h2 className="text-lg font-semibold text-slate-950">Garantia predeterminada</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h2 className="text-lg font-semibold text-foreground">Garantia predeterminada</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               Se propone al asignar una garantia nueva. Cada orden puede conservar una duracion
               diferente y la cobertura empieza unicamente en la fecha efectiva de retiro.
             </p>
@@ -163,7 +154,7 @@ export default async function ConfiguracionPage({
             >
               <div className="w-full sm:max-w-xs">
                 <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
+                  className="mb-2 block text-sm font-medium text-body"
                   htmlFor="repair-warranty-default-days"
                 >
                   Duracion en dias
@@ -187,8 +178,8 @@ export default async function ConfiguracionPage({
         </>
       ) : (
         <Card>
-          <h2 className="text-lg font-semibold text-slate-950">Ajustes protegidos</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+          <h2 className="text-lg font-semibold text-foreground">Ajustes protegidos</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             Las exportaciones y los ajustes sensibles estan disponibles solo para administradores.
           </p>
         </Card>

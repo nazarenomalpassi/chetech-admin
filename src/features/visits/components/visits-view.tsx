@@ -26,16 +26,16 @@ const statusOptions = visitStatusValues.map((status) => ({
 function VisitNotes({ notes }: { notes: string }) {
   const checklist = parseVisitNotes(notes);
   return (
-    <div className="space-y-1 whitespace-pre-wrap break-words text-sm text-slate-600">
+    <div className="space-y-1 text-sm wrap-break-word whitespace-pre-wrap text-muted-foreground">
       {checklist.toolsRequired ? (
         <p>
-          <span className="font-medium text-slate-900">Herramientas:</span>{" "}
+          <span className="font-medium text-foreground">Herramientas:</span>{" "}
           {checklist.toolsRequired === "yes" ? checklist.toolsDetail : "No hace falta"}
         </p>
       ) : null}
       {checklist.notes ? (
         <p>
-          <span className="font-medium text-slate-900">Obs.:</span> {checklist.notes}
+          <span className="font-medium text-foreground">Obs.:</span> {checklist.notes}
         </p>
       ) : null}
     </div>
@@ -95,7 +95,7 @@ function VisitActions({
         <input name="id" type="hidden" value={visit.id} />
         <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />
         <input name="returnTo" type="hidden" value={returnTo} />
-        <label className="grid min-w-0 flex-1 gap-1 text-sm text-slate-600">
+        <label className="grid min-w-0 flex-1 gap-1 text-sm text-muted-foreground">
           <span className="sr-only">Estado de {visit.customerName}</span>
           <Select
             id={statusId}
@@ -118,7 +118,7 @@ function VisitActions({
 function VisitLocation({ address }: { address: string }) {
   return (
     <a
-      className="inline-flex min-h-11 items-center text-sm font-medium text-slate-950 underline underline-offset-4"
+      className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4"
       href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
       rel="noreferrer"
       target="_blank"
@@ -196,8 +196,8 @@ export function VisitsView({
       <Card>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Visitas</h1>
-            <p className="mt-1 text-sm text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Visitas</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Retiros, revisiones y reparaciones a domicilio.
             </p>
           </div>
@@ -211,27 +211,27 @@ export function VisitsView({
             </Button>
           ) : null}
         </div>
-        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-graphite/10 pt-3 text-sm">
+        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3 text-sm">
           <div>
-            <dt className="inline text-slate-600">Hoy: </dt>
+            <dt className="inline text-muted-foreground">Hoy: </dt>
             <dd className="inline font-semibold">
               {data.summary.todayCount} ({data.summary.pendingTodayCount} pendientes)
             </dd>
           </div>
           <div>
-            <dt className="inline text-slate-600">Abiertas: </dt>
+            <dt className="inline text-muted-foreground">Abiertas: </dt>
             <dd className="inline font-semibold">{data.summary.openCount}</dd>
           </div>
           <div>
-            <dt className="inline text-slate-600">Proximas: </dt>
+            <dt className="inline text-muted-foreground">Proximas: </dt>
             <dd className="inline font-semibold">{data.summary.upcomingCount}</dd>
           </div>
         </dl>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Indicadores de esta pagina, no del historial completo.
         </p>
         {!data.migrationReady ? (
-          <p role="alert" className="mt-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <p role="alert" className="mt-4 rounded-xl bg-warning-soft p-3 text-sm text-warning">
             Falta activar Visitas para guardar cambios.
           </p>
         ) : null}
@@ -241,20 +241,20 @@ export function VisitsView({
             role={message.success ? "status" : "alert"}
             className={cn(
               "mt-4 rounded-xl p-3 text-sm",
-              message.success ? "bg-brand-100 text-graphite" : "bg-rose-50 text-rose-700"
+              message.success ? "bg-accent text-foreground" : "bg-danger-soft text-danger"
             )}
           >
             {message.message}
           </p>
         ) : null}
         {data.summary.nextVisit ? (
-          <div className="mt-3 border-t border-graphite/10 pt-3 text-sm">
-            <p className="font-medium text-slate-600">Proxima salida de esta pagina</p>
+          <div className="mt-3 border-t border-border pt-3 text-sm">
+            <p className="font-medium text-muted-foreground">Proxima salida de esta pagina</p>
             <p className="mt-1 font-semibold">
               {data.summary.nextVisit.customerName} | {formatDate(data.summary.nextVisit.visitDate)}{" "}
               | {getVisitTimeLabel(data.summary.nextVisit.timeFrom, data.summary.nextVisit.timeTo)}
             </p>
-            <p className="mt-1 text-slate-600">
+            <p className="mt-1 text-muted-foreground">
               {data.summary.nextVisit.reason} | {data.summary.nextVisit.address}
             </p>
           </div>
@@ -318,23 +318,23 @@ export function VisitsView({
           </div>
         </form>
 
-        <div className="mt-4 divide-y divide-graphite/10 lg:hidden">
+        <div className="mt-4 divide-y divide-border lg:hidden">
           {data.visits.map((visit) => (
             <article className="space-y-3 py-4" key={visit.id}>
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h3 className="break-words font-semibold">{visit.customerName}</h3>
-                  <p className="mt-1 text-sm text-slate-600">{visit.customerPhone}</p>
+                  <h3 className="font-semibold wrap-break-word">{visit.customerName}</h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{visit.customerPhone}</p>
                 </div>
                 <VisitStatus status={visit.status} />
               </div>
               <p className="text-sm font-medium">
                 {formatDate(visit.visitDate)} | {getVisitTimeLabel(visit.timeFrom, visit.timeTo)}
               </p>
-              <div className="text-sm text-slate-600">
-                <p className="break-words">{visit.address}</p>
+              <div className="text-sm text-muted-foreground">
+                <p className="wrap-break-word">{visit.address}</p>
                 <VisitLocation address={visit.address} />
-                <p className="break-words">{visit.reason}</p>
+                <p className="wrap-break-word">{visit.reason}</p>
               </div>
               {visit.repairNumber ? <p className="text-sm">{visit.repairNumber}</p> : null}
               <VisitNotes notes={visit.notes} />
@@ -353,7 +353,7 @@ export function VisitsView({
         </div>
         <div className="mt-4 hidden overflow-x-auto lg:block">
           <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="bg-muted text-left text-muted-foreground">
               <tr>
                 <th scope="col" className="px-3 py-3 font-medium">
                   Cliente y domicilio
@@ -371,21 +371,21 @@ export function VisitsView({
             </thead>
             <tbody>
               {data.visits.map((visit) => (
-                <tr className="border-t border-slate-100 align-top" key={visit.id}>
+                <tr className="border-t border-border align-top" key={visit.id}>
                   <td className="px-3 py-3">
                     <p className="font-semibold">{visit.customerName}</p>
-                    <p className="mt-1 text-slate-600">{visit.customerPhone}</p>
-                    <p className="mt-2 break-words text-slate-600">{visit.address}</p>
+                    <p className="mt-1 text-muted-foreground">{visit.customerPhone}</p>
+                    <p className="mt-2 wrap-break-word text-muted-foreground">{visit.address}</p>
                     <VisitLocation address={visit.address} />
                   </td>
-                  <td className="whitespace-nowrap px-3 py-3">
+                  <td className="px-3 py-3 whitespace-nowrap">
                     <p>{formatDate(visit.visitDate)}</p>
-                    <p className="mt-1 text-slate-600">
+                    <p className="mt-1 text-muted-foreground">
                       {getVisitTimeLabel(visit.timeFrom, visit.timeTo)}
                     </p>
                   </td>
                   <td className="max-w-sm space-y-2 px-3 py-3">
-                    <p className="break-words">{visit.reason}</p>
+                    <p className="wrap-break-word">{visit.reason}</p>
                     {visit.repairNumber ? <p>{visit.repairNumber}</p> : null}
                     <VisitNotes notes={visit.notes} />
                   </td>

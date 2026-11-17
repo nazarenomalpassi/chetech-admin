@@ -152,8 +152,8 @@ export function DashboardOverview({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Resumen del local</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Resumen del local</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               {range.isToday
                 ? `Movimientos del ${formatDate(range.today)}.`
                 : `Movimientos del ${formatDate(range.from)} al ${formatDate(range.to)}.`}
@@ -162,13 +162,19 @@ export function DashboardOverview({
 
           <form className="grid w-full gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto] xl:w-auto">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-500" htmlFor="from">
+              <label
+                className="mb-2 block text-sm font-semibold text-muted-foreground"
+                htmlFor="from"
+              >
                 Desde
               </label>
               <Input defaultValue={range.from} id="from" name="from" type="date" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-slate-500" htmlFor="to">
+              <label
+                className="mb-2 block text-sm font-semibold text-muted-foreground"
+                htmlFor="to"
+              >
                 Hasta
               </label>
               <Input defaultValue={range.to} id="to" name="to" type="date" />
@@ -224,50 +230,54 @@ export function DashboardOverview({
               </>
             }
           >
-            <p className="text-sm text-slate-600">Saldos actuales, no del periodo filtrado.</p>
+            <p className="text-sm text-muted-foreground">
+              Saldos actuales, no del periodo filtrado.
+            </p>
 
             <div className="mt-4 space-y-3">
               {accountBalances.map((account) => (
-                <div key={account.method} className="border-t border-slate-200 py-3">
+                <div key={account.method} className="border-t border-border py-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-500">
+                      <p className="text-sm font-semibold text-muted-foreground">
                         {getDashboardAccountLabel(account.method)}
                       </p>
                     </div>
-                    <p className="text-xl font-semibold tabular-nums text-slate-950">
+                    <p className="text-xl font-semibold text-foreground tabular-nums">
                       {formatCurrency(account.balance)}
                     </p>
                   </div>
                 </div>
               ))}
-              <div className="border-t border-amber-200 py-3">
+              <div className="border-t border-warning-border py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-500">MP de placas pendiente</p>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="text-sm font-semibold text-muted-foreground">
+                      MP de placas pendiente
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Sin confirmar liberacion; excluye reclamos
                     </p>
                   </div>
-                  <p className="text-xl font-semibold text-finance-caution">
+                  <p className="text-xl font-semibold text-warning">
                     {formatCurrency(pendingMercadoPagoReleaseAmount)}
                   </p>
                 </div>
               </div>
-              <div className="border-t border-amber-200 py-3">
+              <div className="border-t border-warning-border py-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
                     <Link
-                      className="text-sm font-semibold text-amber-800 underline-offset-4 hover:underline"
+                      className="text-sm font-semibold text-warning underline-offset-4 hover:underline"
                       href={"/placas-tv?status=claim_open" as Route}
                     >
                       MP retenido por reclamos
                     </Link>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Separado del pendiente y de la caja disponible
                     </p>
                   </div>
-                  <p className="text-xl font-semibold tabular-nums text-amber-800">
+                  <p className="text-xl font-semibold text-warning tabular-nums">
                     {formatCurrency(heldMercadoPagoClaimAmount)}
                   </p>
                 </div>
@@ -289,23 +299,23 @@ export function DashboardOverview({
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="border-t border-slate-200 py-3">
-                <p className="text-sm font-semibold text-slate-500">Visitas hoy</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">
+              <div className="border-t border-border py-3">
+                <p className="text-sm font-semibold text-muted-foreground">Visitas hoy</p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">
                   {visitsDashboard.todayCount}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Pendientes hoy: {visitsDashboard.pendingCount}
                 </p>
               </div>
-              <div className="border-t border-slate-200 py-3">
-                <p className="text-sm font-semibold text-slate-500">Proxima visita</p>
+              <div className="border-t border-border py-3">
+                <p className="text-sm font-semibold text-muted-foreground">Proxima visita</p>
                 {visitsDashboard.nextVisit ? (
                   <>
-                    <p className="mt-2 text-base font-semibold text-slate-950">
+                    <p className="mt-2 text-base font-semibold text-foreground">
                       {visitsDashboard.nextVisit.customerName}
                     </p>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {getVisitTimeLabel(
                         visitsDashboard.nextVisit.timeFrom,
                         visitsDashboard.nextVisit.timeTo
@@ -314,7 +324,9 @@ export function DashboardOverview({
                     </p>
                   </>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-500">No hay salidas agendadas por ahora.</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No hay salidas agendadas por ahora.
+                  </p>
                 )}
               </div>
             </div>
@@ -334,21 +346,21 @@ export function DashboardOverview({
             </div>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="border-t border-slate-200 py-3">
-                <p className="text-sm font-semibold text-slate-500">Cuotas por cobrar hoy</p>
-                <p className="mt-2 text-2xl font-semibold text-slate-950">
+              <div className="border-t border-border py-3">
+                <p className="text-sm font-semibold text-muted-foreground">Cuotas por cobrar hoy</p>
+                <p className="mt-2 text-2xl font-semibold text-foreground">
                   {installmentsDashboard.dueTodayCount}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {formatCurrency(installmentsDashboard.dueTodayTotal)}
                 </p>
               </div>
-              <div className="border-t border-amber-200 py-3">
-                <p className="text-sm font-semibold text-slate-500">Cuotas vencidas</p>
-                <p className="mt-2 text-2xl font-semibold text-finance-caution">
+              <div className="border-t border-warning-border py-3">
+                <p className="text-sm font-semibold text-muted-foreground">Cuotas vencidas</p>
+                <p className="mt-2 text-2xl font-semibold text-warning">
                   {installmentsDashboard.overdueCount}
                 </p>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm text-muted-foreground">
                   {formatCurrency(installmentsDashboard.overdueTotal)}
                 </p>
               </div>
@@ -356,14 +368,14 @@ export function DashboardOverview({
 
             <div className="mt-4 grid gap-4 xl:grid-cols-2">
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-slate-950">Cobros de hoy</p>
+                <p className="text-sm font-semibold text-foreground">Cobros de hoy</p>
                 {installmentsDashboard.dueToday.length ? (
                   installmentsDashboard.dueToday.map((installment) => (
-                    <div key={installment.id} className="border-t border-slate-200 py-3">
-                      <p className="font-medium text-slate-950">
+                    <div key={installment.id} className="border-t border-border py-3">
+                      <p className="font-medium text-foreground">
                         {installment.customerName} | {installment.productName}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Cuota {installment.installmentLabel} | {formatCurrency(installment.amount)}{" "}
                         | {getDashboardAccountLabel(installment.paymentMethod)}
                       </p>
@@ -375,14 +387,14 @@ export function DashboardOverview({
               </div>
 
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-slate-950">Cuotas vencidas</p>
+                <p className="text-sm font-semibold text-foreground">Cuotas vencidas</p>
                 {installmentsDashboard.overdue.length ? (
                   installmentsDashboard.overdue.map((installment) => (
-                    <div key={installment.id} className="border-t border-amber-200 py-3">
-                      <p className="font-medium text-slate-950">
+                    <div key={installment.id} className="border-t border-warning-border py-3">
+                      <p className="font-medium text-foreground">
                         {installment.customerName} | {installment.productName}
                       </p>
-                      <p className="mt-1 text-sm text-slate-500">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         Cuota {installment.installmentLabel} | Vencia{" "}
                         {formatDate(installment.dueDate)} | {formatCurrency(installment.amount)} |{" "}
                         {getDashboardAccountLabel(installment.paymentMethod)}
@@ -409,16 +421,16 @@ export function DashboardOverview({
                 topProducts.map((product, index) => (
                   <div
                     key={product.name}
-                    className="flex items-center gap-4 border-t border-slate-200 py-3"
+                    className="flex items-center gap-4 border-t border-border py-3"
                   >
-                    <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm font-medium text-slate-500">
+                    <div className="inline-flex h-8 w-8 shrink-0 items-center justify-center text-sm font-medium text-muted-foreground">
                       {String(index + 1).padStart(2, "0")}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="break-words text-sm font-medium text-slate-950">
+                      <p className="text-sm font-medium wrap-break-word text-foreground">
                         {product.name}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
+                      <p className="mt-1 text-xs text-muted-foreground">
                         {product.quantity} unidades registradas
                       </p>
                     </div>

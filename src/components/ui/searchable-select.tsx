@@ -44,7 +44,7 @@ export function SearchableSelect({ options, searchLabel, value, ...props }: Prop
       />
       <Select {...props} value={value} options={matches} />
       {search ? (
-        <p className="text-xs text-slate-600" role="status">
+        <p className="text-xs text-muted-foreground" role="status">
           {matchCount ? `${matchCount} coincidencias` : "Sin coincidencias. Cambiá la búsqueda."}
         </p>
       ) : null}

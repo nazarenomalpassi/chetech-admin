@@ -13,7 +13,7 @@ export function Topbar() {
   const dateLabel = getArgentinaDateLabel();
 
   return (
-    <header className="flex min-h-11 items-center justify-between gap-3 border-b border-line pb-3 text-sm text-slate-600">
+    <header className="flex min-h-11 items-center justify-between gap-3 border-b border-border pb-3 text-sm text-muted-foreground">
       <p>Gestión del local</p>
       <time className="flex shrink-0 items-center gap-2">
         <CalendarDays aria-hidden="true" className="h-4 w-4" />

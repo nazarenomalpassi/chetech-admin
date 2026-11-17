@@ -30,7 +30,9 @@ export function RepairAccessWarrantyBadge({
         {detail ? ` · ${detail}` : ""}
       </Badge>
       {showDetail ? (
-        <span className="max-w-xs text-xs leading-5 text-slate-500">{warranty.description}</span>
+        <span className="max-w-xs text-xs leading-5 text-muted-foreground">
+          {warranty.description}
+        </span>
       ) : null}
     </span>
   );

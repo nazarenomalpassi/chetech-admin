@@ -18,7 +18,7 @@ export function LoginForm() {
   return (
     <form action={formAction} className="space-y-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="email">
+        <label className="text-sm font-medium text-body" htmlFor="email">
           Email
         </label>
         <Input
@@ -33,7 +33,7 @@ export function LoginForm() {
         />
       </div>
       <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700" htmlFor="password">
+        <label className="text-sm font-medium text-body" htmlFor="password">
           Contraseña
         </label>
         <div className="flex items-center gap-2">
@@ -61,7 +61,7 @@ export function LoginForm() {
         <p
           role={state.success ? "status" : "alert"}
           aria-live="polite"
-          className={`text-sm ${state.success ? "text-graphite" : "text-rose-600"}`}
+          className={`text-sm ${state.success ? "text-foreground" : "text-danger"}`}
         >
           {state.message}
         </p>

@@ -64,7 +64,7 @@ export function ReconciliationPanel({
 
   return (
     <div className="mt-4 space-y-4">
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Compara el efectivo contado y los saldos verificados en cada cuenta. Una diferencia exige
         motivo y no ajusta el balance del sistema.
       </p>
@@ -106,7 +106,7 @@ export function ReconciliationPanel({
               ? (Math.round(Number(physical) * 100) - Math.round(account.balance * 100)) / 100
               : null;
           return (
-            <fieldset key={account.method} className="border-t border-slate-200 py-4">
+            <fieldset key={account.method} className="border-t border-border py-4">
               <legend className="pr-2 text-sm font-semibold">
                 {formatCashMethod(account.method)}
               </legend>
@@ -162,16 +162,16 @@ export function ReconciliationPanel({
         </Button>
       </form>
       {message ? (
-        <p role="status" aria-live="polite" className="rounded-2xl bg-brand-50 p-3 text-sm">
+        <p role="status" aria-live="polite" className="rounded-2xl bg-muted p-3 text-sm">
           {message}
         </p>
       ) : null}
       <div className="space-y-3">
         <h3 className="font-semibold">Arqueos auditados</h3>
         {records.map((record) => (
-          <article key={record.id} className="border-t border-slate-200 py-4 text-sm">
+          <article key={record.id} className="border-t border-border py-4 text-sm">
             <p className="font-semibold">{formatDate(record.business_date)}: cierre inmutable</p>
-            <p className="mt-1 break-all text-xs text-slate-500">
+            <p className="mt-1 text-xs break-all text-muted-foreground">
               Registrado:{" "}
               {new Date(record.created_at).toLocaleString("es-AR", {
                 timeZone: "America/Argentina/Buenos_Aires"
@@ -186,20 +186,20 @@ export function ReconciliationPanel({
                   {formatCurrency(account.physical)} | Diferencia{" "}
                   {formatCurrency(account.difference)}
                 </p>
-                {account.reason ? <p className="text-slate-500">{account.reason}</p> : null}
+                {account.reason ? <p className="text-muted-foreground">{account.reason}</p> : null}
               </div>
             ))}
             {record.observations ? (
-              <p className="mt-2 text-slate-600">{record.observations}</p>
+              <p className="mt-2 text-muted-foreground">{record.observations}</p>
             ) : null}
             {record.amendments?.map((amendment, index) => (
-              <div key={amendment.id} className="mt-3 border-l-2 border-slate-200 pl-3">
+              <div key={amendment.id} className="mt-3 border-l-2 border-border pl-3">
                 <p className="font-semibold">
                   Revision {index + 1}:{" "}
                   {amendment.kind === "reopened" ? "Reapertura" : "Cierre corregido"}
                 </p>
                 <p>Motivo: {amendment.reason}</p>
-                <p className="break-all text-xs text-slate-500">
+                <p className="text-xs break-all text-muted-foreground">
                   Usuario: {amendment.created_by} |{" "}
                   {new Date(amendment.created_at).toLocaleString("es-AR", {
                     timeZone: "America/Argentina/Buenos_Aires"
@@ -227,7 +227,7 @@ export function ReconciliationPanel({
           </article>
         ))}
         {ready && !records.length ? (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Todavia no hay arqueos por cuenta. Los cierres anteriores permanecen abajo.
           </p>
         ) : null}

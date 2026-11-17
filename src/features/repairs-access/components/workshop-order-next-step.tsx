@@ -17,16 +17,14 @@ export function WorkshopOrderNextStep({
       className={cn(
         "min-w-0 space-y-2 rounded-lg border-l-4 p-3 text-sm",
         blocked
-          ? "border-amber-400 bg-amber-50 text-amber-950"
-          : "border-slate-300 bg-slate-50 text-slate-900"
+          ? "border-warning-border bg-warning-soft text-warning"
+          : "border-border-strong bg-muted text-foreground"
       )}
     >
       <p className="text-xs font-medium">
         Proximo paso{summary.activeReturn ? " del reingreso" : ""}
       </p>
-      <p className="break-words font-semibold leading-5 [overflow-wrap:anywhere]">
-        {summary.nextAction}
-      </p>
+      <p className="leading-5 font-semibold wrap-anywhere wrap-break-word">{summary.nextAction}</p>
       {blocked ? (
         <ul className="space-y-1 text-xs leading-5">
           {summary.blockers.map((blocker) => (
@@ -35,14 +33,14 @@ export function WorkshopOrderNextStep({
         </ul>
       ) : null}
       {summary.location || summary.nextActionDate ? (
-        <dl className="border-current/10 grid min-w-0 gap-2 border-t pt-2 text-xs">
+        <dl className="grid min-w-0 gap-2 border-t border-current/10 pt-2 text-xs">
           {summary.location ? (
             <div className="min-w-0">
               <dt className="flex items-center gap-1.5">
                 <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 Ubicacion registrada
               </dt>
-              <dd className="mt-1 whitespace-pre-wrap break-words font-medium [overflow-wrap:anywhere]">
+              <dd className="mt-1 font-medium wrap-anywhere wrap-break-word whitespace-pre-wrap">
                 {summary.location}
               </dd>
             </div>

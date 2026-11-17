@@ -345,7 +345,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
         ) : null}
       </div>
       {!mode && error ? (
-        <p role="alert" className="text-sm text-rose-800">
+        <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       ) : null}
@@ -359,7 +359,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
               Cerrar
             </Button>
           </div>
-          <p className="mt-2 break-words text-sm text-slate-600">{order.repairNumber}</p>
+          <p className="mt-2 text-sm wrap-break-word text-muted-foreground">{order.repairNumber}</p>
           {loading ? (
             <p role="status" className="mt-4 text-sm">
               Actualizando saldo de la orden...
@@ -367,7 +367,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
           ) : null}
           {error ? (
             <div className="mt-4 space-y-3">
-              <p role="alert" className="text-sm text-rose-800">
+              <p role="alert" className="text-sm text-danger">
                 {error}
               </p>
               <Button
@@ -381,7 +381,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
             </div>
           ) : null}
           {saved ? (
-            <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+            <p role="status" className="mt-4 rounded-xl bg-success-soft p-3 text-sm text-success">
               {saved.message}
             </p>
           ) : null}
@@ -405,7 +405,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
                   onSaved={onSaved}
                 />
               ) : (
-                <p role="alert" className="mt-4 text-sm text-rose-800">
+                <p role="alert" className="mt-4 text-sm text-danger">
                   La orden ya no permite registrar esta entrega. Revisa su estado.
                 </p>
               )}
@@ -428,7 +428,7 @@ function LedgerSummary({ snapshot }: { snapshot: Lookup }) {
     <section
       aria-label="Saldo de la orden"
       aria-live="polite"
-      className="mt-4 grid min-w-0 grid-cols-3 gap-2 rounded-xl bg-slate-50 p-3"
+      className="mt-4 grid min-w-0 grid-cols-3 gap-2 rounded-xl bg-muted p-3"
     >
       {[
         ["Total", ledger.total],
@@ -436,8 +436,8 @@ function LedgerSummary({ snapshot }: { snapshot: Lookup }) {
         ["Saldo", ledger.balance]
       ].map(([label, amount]) => (
         <div key={label} className="min-w-0">
-          <p className="text-xs text-slate-600">{label}</p>
-          <p className="mt-1 break-words text-sm font-semibold tabular-nums">
+          <p className="text-xs text-muted-foreground">{label}</p>
+          <p className="mt-1 text-sm font-semibold wrap-break-word tabular-nums">
             {formatCurrency(Number(amount))}
           </p>
         </div>
@@ -548,7 +548,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
     setError("");
   }
   const recovery = draft.pendingDraft ? (
-    <div className="space-y-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm">
+    <div className="space-y-2 rounded-xl border border-warning-border bg-warning-soft p-3 text-sm">
       <p>Hay un borrador local. No es un cobro registrado.</p>
       <div className="flex flex-wrap gap-2">
         <Button
@@ -586,13 +586,13 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
       <div className="mt-4 grid gap-3">
         <p
           role="status"
-          className="rounded-xl bg-emerald-50 p-3 text-sm font-medium text-emerald-800"
+          className="rounded-xl bg-success-soft p-3 text-sm font-medium text-success"
         >
           Sin saldo pendiente
         </p>
         {recovery}
         {error ? (
-          <p role="alert" className="text-sm text-rose-800">
+          <p role="alert" className="text-sm text-danger">
             {error}
           </p>
         ) : null}
@@ -635,7 +635,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
     >
       {recovery}
       {recovered ? (
-        <p className="text-sm text-amber-800">
+        <p className="text-sm text-warning">
           Borrador recuperado. Se conserva el intento original; revisa los datos y confirma para
           reintentarlo.
         </p>
@@ -668,7 +668,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
           onChange={(payments) => update({ paymentsJson: JSON.stringify(payments) })}
         />
         {storageUnavailable ? (
-          <div className="space-y-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <div className="space-y-2 rounded-xl bg-warning-soft p-3 text-sm text-warning">
             <p>
               Sin almacenamiento local, cerrar o recargar pierde el intento. Verifica el saldo antes
               de volver a cobrar.
@@ -685,15 +685,15 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
           </div>
         ) : null}
       </fieldset>
-      <p className="text-xs leading-5 text-slate-500">
+      <p className="text-xs leading-5 text-muted-foreground">
         Registra solo el dinero recibido. Cobrar no entrega el equipo ni cambia el presupuesto o la
         garantia.
       </p>
       {draft.lastSavedAt ? (
-        <p className="text-xs text-slate-500">Borrador guardado en este dispositivo.</p>
+        <p className="text-xs text-muted-foreground">Borrador guardado en este dispositivo.</p>
       ) : null}
       {error || result?.message ? (
-        <p role="alert" className="text-sm text-rose-800">
+        <p role="alert" className="text-sm text-danger">
           {error || result?.message}
         </p>
       ) : null}
@@ -778,7 +778,7 @@ function DeliveryForm({
       <fieldset disabled={pending} className="grid min-w-0 gap-4">
         <input type="hidden" name="id" value={snapshot.order.id} />
         <input type="hidden" name="version" value={snapshot.order.workflowVersion ?? ""} />
-        <p className="rounded-xl bg-slate-50 p-3 text-sm">
+        <p className="rounded-xl bg-muted p-3 text-sm">
           Comprobar equipo y accesorios antes de entregar. Accesorios de ingreso:{" "}
           {order.device.accessoryDetails || "Sin accesorios declarados"}
         </p>
@@ -802,7 +802,7 @@ function DeliveryForm({
           />
         </Field>
         {requiresAuthorization ? (
-          <label className="flex min-h-11 items-start gap-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+          <label className="flex min-h-11 items-start gap-3 rounded-xl bg-warning-soft p-3 text-sm text-warning">
             <input
               className="mt-1"
               name="allowBalance"
@@ -829,7 +829,7 @@ function DeliveryForm({
         </label>
       </fieldset>
       {error || result?.message ? (
-        <p role="alert" className="text-sm text-rose-800">
+        <p role="alert" className="text-sm text-danger">
           {error || result?.message}
         </p>
       ) : null}
@@ -843,7 +843,7 @@ function DeliveryForm({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="grid gap-2 text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
+      <span className="font-medium text-body">{label}</span>
       {children}
     </label>
   );

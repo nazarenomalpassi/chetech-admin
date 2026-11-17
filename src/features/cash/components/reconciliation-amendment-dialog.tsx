@@ -68,7 +68,7 @@ export function ReconciliationAmendmentDialog({
             {isOpenRevision ? "Correccion del conteo" : "Reapertura auditada"}:{" "}
             {formatDate(record.business_date)}
           </h2>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             El saldo esperado sigue siendo el del cierre historico. Esto no corrige balances ni
             registra pagos posteriores. El original y cada revision se conservan.
           </p>
@@ -118,7 +118,7 @@ export function ReconciliationAmendmentDialog({
             {isOpenRevision ? (
               <>
                 {accounts.map((account) => (
-                  <fieldset className="border-t border-slate-200 py-3" key={account.method}>
+                  <fieldset className="border-t border-border py-3" key={account.method}>
                     <legend className="pr-2 font-semibold">
                       {formatCashMethod(account.method)}
                     </legend>

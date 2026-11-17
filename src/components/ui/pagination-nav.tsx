@@ -28,10 +28,10 @@ export function PaginationNav({
   return (
     <nav
       aria-label="Paginación del historial"
-      className="border-graphite/8 flex flex-col gap-3 border-t bg-brand-50/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
+      className="flex flex-col gap-3 border-t border-border bg-muted/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between"
     >
-      <p aria-live="polite" className="text-sm text-slate-600">
-        Página <strong className="text-slate-950">{meta.page}</strong> de {meta.totalPages} ·{" "}
+      <p aria-live="polite" className="text-sm text-muted-foreground">
+        Página <strong className="text-foreground">{meta.page}</strong> de {meta.totalPages} ·{" "}
         {meta.total} registros
       </p>
       <div className="grid grid-cols-2 gap-2">

@@ -137,10 +137,10 @@ export function BoardReleaseDialog({
     <DialogShell labelledBy={`${id}-title`} onClose={requestClose} panelClassName="max-w-xl">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <h2 className="text-xl font-semibold text-slate-950" id={`${id}-title`}>
+          <h2 className="text-xl font-semibold text-foreground" id={`${id}-title`}>
             Confirmar liberacion
           </h2>
-          <p className="mt-2 break-words font-medium text-slate-800">
+          <p className="mt-2 font-medium wrap-break-word text-foreground">
             {board.brand} {board.model}
           </p>
         </div>
@@ -155,7 +155,7 @@ export function BoardReleaseDialog({
           <X aria-hidden="true" className="h-5 w-5" />
         </Button>
       </div>
-      <p className="mt-3 text-sm leading-6 text-slate-600" id={`${id}-outcome`}>
+      <p className="mt-3 text-sm leading-6 text-muted-foreground" id={`${id}-outcome`}>
         Registra el neto recibido despues de las retenciones de MercadoLibre. Se crea una venta
         numerada con el detalle de la placa y un movimiento de caja en la cuenta elegida, sin
         descontar stock de productos.
@@ -163,7 +163,7 @@ export function BoardReleaseDialog({
 
       <form aria-busy={isPending} className="mt-4 space-y-4" noValidate onSubmit={handleSubmit}>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700" htmlFor={`${id}-net`}>
+          <label className="block text-sm font-medium text-body" htmlFor={`${id}-net`}>
             Neto a registrar
           </label>
           <Input
@@ -174,7 +174,7 @@ export function BoardReleaseDialog({
           />
         </div>
         <div className="space-y-2">
-          <label className="block text-sm font-medium text-slate-700" htmlFor={`${id}-method`}>
+          <label className="block text-sm font-medium text-body" htmlFor={`${id}-method`}>
             Cuenta de destino
           </label>
           <Select
@@ -199,12 +199,12 @@ export function BoardReleaseDialog({
             value={method}
           />
         </div>
-        <div className="flex items-start gap-3 border-t border-line pt-3">
+        <div className="flex items-start gap-3 border-t border-border pt-3">
           <input
             aria-describedby={invalidField === "confirmation" ? `${id}-error` : undefined}
             aria-invalid={invalidField === "confirmation"}
             checked={confirmed}
-            className="mt-3 h-5 w-5 shrink-0 accent-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-graphite"
+            className="mt-3 h-5 w-5 shrink-0 accent-graphite focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
             disabled={isPending}
             id={`${id}-confirm`}
             onChange={(event) => {
@@ -219,7 +219,7 @@ export function BoardReleaseDialog({
             type="checkbox"
           />
           <label
-            className="flex min-h-11 cursor-pointer items-center py-2 text-sm leading-6 text-slate-700"
+            className="flex min-h-11 cursor-pointer items-center py-2 text-sm leading-6 text-body"
             htmlFor={`${id}-confirm`}
           >
             Confirmo que el dinero ya fue transferido a la cuenta seleccionada y quiero registrar la
@@ -228,7 +228,7 @@ export function BoardReleaseDialog({
         </div>
         {errorMessage ? (
           <p
-            className="status-banner status-banner--error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-graphite"
+            className="status-banner status-banner--error focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
             id={`${id}-error`}
             ref={errorRef}
             role="alert"
@@ -242,7 +242,7 @@ export function BoardReleaseDialog({
             Actualizar estado
           </Button>
         ) : null}
-        <div className="flex flex-col-reverse gap-3 border-t border-line pt-4 sm:flex-row sm:justify-end">
+        <div className="flex flex-col-reverse gap-3 border-t border-border pt-4 sm:flex-row sm:justify-end">
           <Button disabled={isPending} onClick={requestClose} type="button" variant="secondary">
             Cancelar
           </Button>

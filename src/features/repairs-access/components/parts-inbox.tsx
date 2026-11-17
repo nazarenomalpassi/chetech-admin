@@ -30,17 +30,19 @@ export function PartsInbox({ items }: { items: PartInboxItem[] }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="flex items-center gap-2 text-xl font-semibold">
-            <PackageSearch aria-hidden="true" className="h-5 w-5 text-slate-500" />
+            <PackageSearch aria-hidden="true" className="h-5 w-5 text-muted-foreground" />
             Repuestos del taller
           </h2>
-          <p className="mt-1 text-sm text-slate-500">Mostrador registra compras y recepciones.</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Mostrador registra compras y recepciones.
+          </p>
         </div>
-        <span className="rounded-lg bg-amber-50 px-2 py-1 text-sm text-amber-800">
+        <span className="rounded-lg bg-warning-soft px-2 py-1 text-sm text-warning">
           {items.length} por gestionar
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+        <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
           <span>Buscar repuesto u orden</span>
           <Input
             aria-label="Buscar repuesto u orden"
@@ -49,7 +51,7 @@ export function PartsInbox({ items }: { items: PartInboxItem[] }) {
             onChange={(e) => setSearch(e.target.value)}
           />
         </label>
-        <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+        <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
           <span>Estado del pedido</span>
           <Select
             aria-label="Filtrar pedidos del taller"
@@ -66,45 +68,45 @@ export function PartsInbox({ items }: { items: PartInboxItem[] }) {
       </div>
       <div className="grid gap-3 lg:grid-cols-2">
         {visible.map((p) => (
-          <article key={p.id} className="min-w-0 rounded-xl border border-slate-200 p-4">
+          <article key={p.id} className="min-w-0 rounded-xl border border-border p-4">
             <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
               <Link
                 href={`/reparaciones-access?order=${p.orderId}`}
-                className="inline-flex min-h-11 max-w-full items-center break-words rounded-lg text-sm font-semibold underline underline-offset-4 [overflow-wrap:anywhere] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                className="inline-flex min-h-11 max-w-full items-center rounded-lg text-sm font-semibold wrap-anywhere wrap-break-word underline underline-offset-4 focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
               >
                 {p.repairNumber}
               </Link>
               <span
-                className={`rounded-lg px-2 py-1 text-xs ${p.expectedDate && p.expectedDate < today && getPartOutstandingQuantity(p) > 0 ? "bg-rose-50 text-rose-800" : "bg-slate-100 text-slate-700"}`}
+                className={`rounded-lg px-2 py-1 text-xs ${p.expectedDate && p.expectedDate < today && getPartOutstandingQuantity(p) > 0 ? "bg-danger-soft text-danger" : "bg-accent text-body"}`}
               >
                 {p.expectedDate && p.expectedDate < today && getPartOutstandingQuantity(p) > 0
                   ? "Llegada vencida"
                   : PART_STATUS_LABELS[p.status]}
               </span>
             </div>
-            <h3 className="mt-2 break-words text-sm font-semibold text-slate-900">
+            <h3 className="mt-2 text-sm font-semibold wrap-break-word text-foreground">
               {p.description}
             </h3>
-            <p className="mt-1 break-words text-sm text-slate-500">{p.customerName}</p>
+            <p className="mt-1 text-sm wrap-break-word text-muted-foreground">{p.customerName}</p>
             <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-xs text-slate-500">Recibidos</dt>
+                <dt className="text-xs text-muted-foreground">Recibidos</dt>
                 <dd className="mt-1">
                   {p.receivedQuantity} de {p.quantity}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Fecha esperada</dt>
+                <dt className="text-xs text-muted-foreground">Fecha esperada</dt>
                 <dd className="mt-1">
                   {p.expectedDate ? formatDate(p.expectedDate) : "Sin fecha"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Proveedor</dt>
+                <dt className="text-xs text-muted-foreground">Proveedor</dt>
                 <dd className="mt-1">{p.supplier || "Por definir"}</dd>
               </div>
               <div>
-                <dt className="text-xs text-slate-500">Costo por unidad</dt>
+                <dt className="text-xs text-muted-foreground">Costo por unidad</dt>
                 <dd className="mt-1">
                   {p.unitCost === null ? "Sin informar" : formatCurrency(p.unitCost)}
                 </dd>
@@ -122,7 +124,7 @@ export function PartsInbox({ items }: { items: PartInboxItem[] }) {
         ))}
       </div>
       {!visible.length ? (
-        <p className="rounded-xl border border-dashed p-6 text-center text-sm text-slate-500">
+        <p className="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground">
           No hay solicitudes pendientes para este filtro.
         </p>
       ) : null}

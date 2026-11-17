@@ -72,30 +72,30 @@ export function RepairOrderActivity({ orderId }: { orderId: string }) {
   }
 
   return (
-    <div className="mt-4 border-t border-slate-100 pt-3">
+    <div className="mt-4 border-t border-border pt-3">
       <button
         type="button"
         aria-expanded={open}
         aria-controls={regionId}
         onClick={toggle}
-        className="flex min-h-11 w-full items-center gap-2 rounded-lg text-left text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+        className="flex min-h-11 w-full items-center gap-2 rounded-lg text-left text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
       >
         <History aria-hidden="true" className="h-4 w-4" />
         Historial de trabajo
       </button>
       {open ? (
         <div id={regionId} aria-busy={loading}>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-muted-foreground">
             {page && page.events.length > 20
               ? `${page.events.length} movimientos cargados, del mas reciente al mas antiguo.`
               : "Ultimos 20 movimientos, del mas reciente al mas antiguo."}
           </p>
           {page?.events.length ? (
-            <ol className="mt-3 space-y-3 border-l border-slate-200 pl-3">
+            <ol className="mt-3 space-y-3 border-l border-border pl-3">
               {page.events.map((event) => (
                 <li key={event.id} className="text-sm">
-                  <p className="whitespace-pre-wrap break-words text-slate-700">{event.message}</p>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="wrap-break-word whitespace-pre-wrap text-body">{event.message}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {event.actorName} ·{" "}
                     <time dateTime={event.createdAt}>
                       {new Date(event.createdAt).toLocaleString("es-AR", {
@@ -109,16 +109,16 @@ export function RepairOrderActivity({ orderId }: { orderId: string }) {
               ))}
             </ol>
           ) : page && !loading ? (
-            <p className="mt-3 text-xs text-slate-500">No hay movimientos registrados.</p>
+            <p className="mt-3 text-xs text-muted-foreground">No hay movimientos registrados.</p>
           ) : null}
           {loading ? (
-            <p role="status" className="mt-3 text-xs text-slate-500">
+            <p role="status" className="mt-3 text-xs text-muted-foreground">
               Cargando historial...
             </p>
           ) : null}
           {failed ? (
-            <div className="mt-3 rounded-xl bg-rose-50 p-3">
-              <p role="alert" className="text-xs text-rose-800">
+            <div className="mt-3 rounded-xl bg-danger-soft p-3">
+              <p role="alert" className="text-xs text-danger">
                 No se pudo cargar el historial. Intenta de nuevo.
               </p>
               <Button
@@ -144,7 +144,7 @@ export function RepairOrderActivity({ orderId }: { orderId: string }) {
             </Button>
           ) : null}
           {page && page.events.length > 0 && !page.nextCursor ? (
-            <p className="mt-3 text-xs text-slate-500">Inicio del historial alcanzado.</p>
+            <p className="mt-3 text-xs text-muted-foreground">Inicio del historial alcanzado.</p>
           ) : null}
         </div>
       ) : null}

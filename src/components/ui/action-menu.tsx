@@ -98,7 +98,7 @@ export function ActionMenu({
       {position
         ? createPortal(
             <div
-              className="fixed z-[70] grid w-56 gap-1 overflow-y-auto rounded-xl border border-line bg-white p-2 shadow-pop [&_button]:w-full [&_button]:justify-start [&_form]:w-full"
+              className="fixed z-70 grid w-56 gap-1 overflow-y-auto rounded-xl border border-border bg-card p-2 shadow-pop [&_button]:w-full [&_button]:justify-start [&_form]:w-full"
               id={id}
               role="group"
               aria-label={label}

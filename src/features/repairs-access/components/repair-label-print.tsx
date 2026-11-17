@@ -109,24 +109,24 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
   return (
     <main className="mx-auto min-h-dvh max-w-3xl space-y-5 px-4 py-6 sm:px-6">
       <header className="space-y-2">
-        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+        <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase">
           CHETECH / Taller
         </p>
-        <h1 className="text-2xl font-semibold text-graphite">Etiqueta de la orden</h1>
-        <p className="text-sm leading-6 text-slate-600">
+        <h1 className="text-2xl font-semibold text-foreground">Etiqueta de la orden</h1>
+        <p className="text-sm leading-6 text-muted-foreground">
           Selecciona papel de <strong>80 x 50 mm</strong>, escala <strong>100%</strong>, sin ajustar
           a pagina. Confirma la salida en la impresora.
         </p>
-        <p className="text-sm leading-6 text-slate-600">
+        <p className="text-sm leading-6 text-muted-foreground">
           Revisa el tipo y la vista previa. Solo se imprime cuando tocas Imprimir etiqueta.
         </p>
       </header>
       <section
         aria-label="Opciones de etiqueta"
-        className="space-y-4 rounded-xl border border-line bg-white p-4"
+        className="space-y-4 rounded-xl border border-border bg-card p-4"
       >
         <div className="space-y-1.5">
-          <label htmlFor={`${fieldId}-variant`} className="text-sm font-medium text-graphite">
+          <label htmlFor={`${fieldId}-variant`} className="text-sm font-medium text-foreground">
             Tipo de etiqueta
           </label>
           <Select
@@ -171,7 +171,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
               <div className="space-y-1.5">
                 <label
                   htmlFor={`${fieldId}-description`}
-                  className="text-sm font-medium text-graphite"
+                  className="text-sm font-medium text-foreground"
                 >
                   Descripcion del accesorio
                 </label>
@@ -188,7 +188,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
                 />
               </div>
               <div className="space-y-1.5">
-                <label htmlFor={`${fieldId}-index`} className="text-sm font-medium text-graphite">
+                <label htmlFor={`${fieldId}-index`} className="text-sm font-medium text-foreground">
                   Numero de accesorio
                 </label>
                 <Input
@@ -206,7 +206,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
                 />
               </div>
             </div>
-            <p className="text-xs leading-5 text-slate-500">
+            <p className="text-xs leading-5 text-muted-foreground">
               A1, A2, etc. identifican accesorios de la misma REP; no son nuevas ordenes. Usa una
               descripcion breve (maximo 120 caracteres) y revisa que entre en la etiqueta. Este
               texto solo se usa para imprimir y no se guarda en la ficha.
@@ -216,12 +216,12 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
             </Button>
           </form>
         ) : variant === "warranty" ? (
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             Usa la falla, la fecha y los accesorios del reingreso activo. Conserva la REP y el QR de
             la ficha original.
           </p>
         ) : (
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             Usa la falla y los datos guardados en el ingreso original.
           </p>
         )}
@@ -230,7 +230,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
         <p
           role="note"
           aria-label="Descripcion del accesorio recortada"
-          className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-950"
+          className="rounded-xl border border-warning-border bg-warning-soft p-3 text-sm leading-6 text-warning"
         >
           Descripcion recortada: acorta el texto y prepara la etiqueta de nuevo para que se lea
           completo. El QR no recupera este texto temporal.
@@ -273,7 +273,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
       {error ? (
         <div
           role="alert"
-          className="space-y-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800"
+          className="space-y-3 rounded-xl border border-danger-border bg-danger-soft p-4 text-sm text-danger"
         >
           <p>{error}</p>
           <Button type="button" variant="secondary" onClick={() => setRetry((value) => value + 1)}>
@@ -286,21 +286,21 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
           ref={frame}
           src={pdf}
           title="Vista previa de la etiqueta de taller"
-          className="h-[min(65dvh,540px)] min-h-72 w-full rounded-xl border border-line bg-white"
+          className="h-[min(65dvh,540px)] min-h-72 w-full rounded-xl border border-border bg-card"
         />
       ) : (
-        <p role="status" className="py-12 text-sm text-slate-600">
+        <p role="status" className="py-12 text-sm text-muted-foreground">
           {payload === null
             ? "Completa el accesorio y prepara su etiqueta."
             : "Preparando etiqueta..."}
         </p>
       )}
       {printHelp ? (
-        <p role="status" className="text-sm text-slate-600">
+        <p role="status" className="text-sm text-muted-foreground">
           {printHelp}
         </p>
       ) : null}
-      <p className="text-xs leading-5 text-slate-500">
+      <p className="text-xs leading-5 text-muted-foreground">
         Imprimir o reimprimir no crea otra orden ni cambia su numero, cobros o historial. El QR abre
         la misma ficha privada. La vista previa no confirma que la impresora haya terminado.
       </p>

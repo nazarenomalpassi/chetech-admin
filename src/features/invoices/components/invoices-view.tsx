@@ -266,15 +266,15 @@ export function InvoicesView({
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Facturacion interna</h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Facturacion interna</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Comprobantes de ventas y reparaciones. No son facturas fiscales autorizadas por ARCA.
             </p>
           </div>
 
-          <div className="shrink-0 text-sm text-slate-600">
+          <div className="shrink-0 text-sm text-muted-foreground">
             <p>Total del comprobante</p>
-            <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+            <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
               {formatCurrency(total)}
             </p>
           </div>
@@ -284,7 +284,7 @@ export function InvoicesView({
           <div className="status-banner mt-5">
             Estas editando el comprobante {editingInvoice.invoiceNumber}.{" "}
             <Link
-              className="font-semibold underline decoration-graphite/30 underline-offset-4"
+              className="font-semibold underline decoration-border-strong underline-offset-4"
               href="/facturacion"
             >
               Salir de edicion
@@ -316,7 +316,7 @@ export function InvoicesView({
           />
           <input name="itemsJson" type="hidden" value={JSON.stringify(items)} />
           <input name="discount" type="hidden" value={discount} />
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Crear o reimprimir no cobra ni mueve stock. Pagado y saldo provienen de los cobros
             vinculados, no de este formulario.
           </p>
@@ -327,9 +327,9 @@ export function InvoicesView({
             </p>
           ) : null}
 
-          <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2 xl:grid-cols-4">
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="sourceType">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="sourceType">
                 Origen
               </label>
               <Select
@@ -353,7 +353,7 @@ export function InvoicesView({
             </div>
             <div>
               <label
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="mb-2 block text-sm font-medium text-body"
                 htmlFor="repairAccessOrderId"
               >
                 REP principal
@@ -370,12 +370,12 @@ export function InvoicesView({
                   ...options.primaryOrders.map((order) => ({ label: order.label, value: order.id }))
                 ]}
               />
-              <p className="mt-2 text-sm text-slate-500">
+              <p className="mt-2 text-sm text-muted-foreground">
                 Disponible antes del cobro. No requiere un registro financiero historico.
               </p>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="repairId">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="repairId">
                 Reparación historica
               </label>
               <SearchableSelect
@@ -392,7 +392,7 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="saleId">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="saleId">
                 Venta
               </label>
               <SearchableSelect
@@ -409,16 +409,13 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="discount">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="discount">
                 Descuento
               </label>
               <MoneyInput id="discount" onValueChange={setDiscount} value={discount} />
             </div>
             <div>
-              <label
-                className="mb-2 block text-sm font-medium text-slate-700"
-                htmlFor="customerName"
-              >
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="customerName">
                 Cliente
               </label>
               <Input
@@ -429,10 +426,7 @@ export function InvoicesView({
               />
             </div>
             <div>
-              <label
-                className="mb-2 block text-sm font-medium text-slate-700"
-                htmlFor="customerPhone"
-              >
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="customerPhone">
                 Teléfono
               </label>
               <Input
@@ -443,7 +437,7 @@ export function InvoicesView({
               />
             </div>
             <div className="xl:col-span-2">
-              <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="notes">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="notes">
                 Observaciones
               </label>
               <Input
@@ -455,7 +449,7 @@ export function InvoicesView({
             </div>
           </div>
 
-          <details className="border-t border-graphite/10 pt-2" open={documentLocked || undefined}>
+          <details className="border-t border-border pt-2" open={documentLocked || undefined}>
             <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
               Referencia fiscal externa opcional
             </summary>
@@ -495,17 +489,17 @@ export function InvoicesView({
                   defaultValue={editingInvoice?.fiscalIssuedAt?.slice(0, 10) ?? ""}
                 />
               </div>
-              <p className="text-sm text-slate-500 md:col-span-3">
+              <p className="text-sm text-muted-foreground md:col-span-3">
                 Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se
                 bloquea la edicion del documento interno.
               </p>
             </fieldset>
           </details>
 
-          <div className="border-t border-graphite/10 pt-4">
+          <div className="border-t border-border pt-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Detalle del comprobante</h2>
+                <h2 className="text-lg font-semibold text-foreground">Detalle del comprobante</h2>
               </div>
               <Button
                 onClick={() => setItems((current) => [...current, { ...emptyItem }])}
@@ -519,10 +513,10 @@ export function InvoicesView({
             <div className="mt-4 space-y-3">
               {items.map((item, index) => (
                 <div
-                  className="grid items-end gap-3 border-b border-graphite/10 pb-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_100px_130px_120px_auto]"
+                  className="grid items-end gap-3 border-b border-border pb-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_100px_130px_120px_auto]"
                   key={index}
                 >
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     Producto opcional
                     <Select
                       aria-label={`Producto opcional del ítem ${index + 1}`}
@@ -540,7 +534,7 @@ export function InvoicesView({
                       value={item.productId ?? ""}
                     />
                   </label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     Descripcion
                     <Input
                       aria-label={`Descripción del ítem ${index + 1}`}
@@ -549,7 +543,7 @@ export function InvoicesView({
                       value={item.description}
                     />
                   </label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     Cantidad
                     <Input
                       aria-label={`Cantidad del ítem ${index + 1}`}
@@ -562,7 +556,7 @@ export function InvoicesView({
                       value={item.quantity}
                     />
                   </label>
-                  <label className="grid min-w-0 gap-2 text-sm text-slate-600">
+                  <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
                     Precio unitario
                     <MoneyInput
                       aria-label={`Precio unitario del ítem ${index + 1}`}
@@ -571,8 +565,8 @@ export function InvoicesView({
                     />
                   </label>
                   <div>
-                    <p className="mb-2 text-sm text-slate-600">Importe</p>
-                    <div className="flex min-h-11 items-center text-sm font-semibold tabular-nums text-slate-950">
+                    <p className="mb-2 text-sm text-muted-foreground">Importe</p>
+                    <div className="flex min-h-11 items-center text-sm font-semibold text-foreground tabular-nums">
                       {formatCurrency(amounts.lineTotals[index])}
                     </div>
                   </div>
@@ -591,29 +585,29 @@ export function InvoicesView({
             </div>
           </div>
 
-          <div className="grid gap-3 border-t border-graphite/10 pt-3 sm:grid-cols-3">
+          <div className="grid gap-3 border-t border-border pt-3 sm:grid-cols-3">
             <div className="py-2">
-              <p className="text-sm text-slate-600">Subtotal</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+              <p className="text-sm text-muted-foreground">Subtotal</p>
+              <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
                 {formatCurrency(subtotal)}
               </p>
             </div>
             <div className="py-2">
-              <p className="text-sm text-slate-600">Descuento</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+              <p className="text-sm text-muted-foreground">Descuento</p>
+              <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
                 {formatCurrency(discount)}
               </p>
             </div>
             <div className="py-2">
-              <p className="text-sm text-slate-600">Total</p>
-              <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+              <p className="text-sm text-muted-foreground">Total</p>
+              <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
                 {formatCurrency(total)}
               </p>
             </div>
           </div>
 
           {amounts.error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {amounts.error}
             </p>
           ) : null}
@@ -626,56 +620,58 @@ export function InvoicesView({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/10 px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Comprobantes internos</h2>
+              <h2 className="text-lg font-semibold text-foreground">Comprobantes internos</h2>
             </div>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {pagination.total} comprobantes. El estado indica el cobro, no la autorizacion fiscal.
             </p>
           </div>
         </div>
-        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
+        <div className="divide-y divide-border px-4 lg:hidden">
           {invoices.map((invoice) => (
             <article className="py-4" key={invoice.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">{invoice.invoiceNumber}</p>
-                  <p className="mt-1 text-sm text-slate-500">{formatDate(invoice.createdAt)}</p>
+                  <p className="font-semibold text-foreground">{invoice.invoiceNumber}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(invoice.createdAt)}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <p className="mb-1 text-sm text-slate-500">Cobro / estado</p>
+                  <p className="mb-1 text-sm text-muted-foreground">Cobro / estado</p>
                   <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>
                 </div>
               </div>
               <div className="mt-4 grid gap-2 text-sm">
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-600">Cliente</p>
-                  <p className="mt-1 font-semibold text-slate-800">
+                  <p className="text-sm text-muted-foreground">Cliente</p>
+                  <p className="mt-1 font-semibold text-foreground">
                     {invoice.customerName || "Sin cliente"}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="min-w-0">
-                    <p className="text-sm text-slate-600">Origen</p>
-                    <p className="mt-1 font-semibold text-slate-800">
+                    <p className="text-sm text-muted-foreground">Origen</p>
+                    <p className="mt-1 font-semibold text-foreground">
                       {formatInvoiceSource(invoice.sourceType)}
                     </p>
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm text-slate-600">Total</p>
-                    <p className="mt-1 font-semibold text-slate-950">
+                    <p className="text-sm text-muted-foreground">Total</p>
+                    <p className="mt-1 font-semibold text-foreground">
                       {formatCurrency(invoice.total)}
                     </p>
-                    <p className="mt-1 text-sm text-slate-600">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       Pagado {formatCurrency(invoice.paidTotal)} / Saldo{" "}
                       {formatCurrency(invoice.balance)}
                     </p>
                   </div>
                 </div>
               </div>
-              <p className="mt-2 text-sm text-slate-600">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {invoice.fiscalReference
                   ? "Referencia fiscal externa vinculada"
                   : invoice.fiscalLockedAt
@@ -730,7 +726,7 @@ export function InvoicesView({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="bg-muted text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Numero</th>
                 <th className="px-4 py-3 font-medium">Fecha</th>
@@ -743,10 +739,10 @@ export function InvoicesView({
             </thead>
             <tbody>
               {invoices.map((invoice) => (
-                <tr className="border-t border-graphite/10 align-top" key={invoice.id}>
-                  <td className="px-4 py-3 font-medium text-slate-950">
+                <tr className="border-t border-border align-top" key={invoice.id}>
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {invoice.invoiceNumber}
-                    <p className="mt-1 text-sm font-normal text-slate-600">
+                    <p className="mt-1 text-sm font-normal text-muted-foreground">
                       {invoice.fiscalReference
                         ? "Referencia fiscal externa"
                         : invoice.fiscalLockedAt
@@ -754,14 +750,16 @@ export function InvoicesView({
                           : "Sin vinculo fiscal"}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(invoice.createdAt)}</td>
-                  <td className="px-4 py-3 text-slate-600">{invoice.customerName}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(invoice.createdAt)}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{invoice.customerName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
                     {formatInvoiceSource(invoice.sourceType)}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-950">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(invoice.total)}
-                    <p className="mt-1 text-sm font-normal text-slate-600">
+                    <p className="mt-1 text-sm font-normal text-muted-foreground">
                       Pagado {formatCurrency(invoice.paidTotal)}
                       <br />
                       Saldo {formatCurrency(invoice.balance)}
@@ -826,7 +824,7 @@ export function InvoicesView({
           </table>
         </div>
         {!invoices.length ? (
-          <div className="empty-panel border-graphite/8 border-t">
+          <div className="empty-panel border-t border-border">
             Todavia no emitiste comprobantes internos en este modulo.
           </div>
         ) : null}

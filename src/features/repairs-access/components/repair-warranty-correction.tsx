@@ -26,7 +26,7 @@ export function RepairWarrantyCorrection({
         <>
           <input name="id" type="hidden" value={order.id} />
           <input name="expectedVersion" type="hidden" value={order.workflow?.version ?? 1} />
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-muted-foreground">
             Esta orden ya fue entregada. Solo se corrige la garantia; no se reabre ni se modifica el
             retiro o los cobros.
           </p>
@@ -36,7 +36,7 @@ export function RepairWarrantyCorrection({
             defaultWarrantyDays={defaultWarrantyDays}
             disabled={missingPickup}
           />
-          <label className="grid gap-2 text-sm font-medium text-slate-700">
+          <label className="grid gap-2 text-sm font-medium text-body">
             <span>Motivo de la correccion de garantia</span>
             <Textarea
               name="reason"
@@ -46,7 +46,7 @@ export function RepairWarrantyCorrection({
               defaultValue={fields.reason ?? ""}
             />
           </label>
-          <label className="flex min-h-11 items-start gap-3 text-sm font-medium text-slate-700">
+          <label className="flex min-h-11 items-start gap-3 text-sm font-medium text-body">
             <input
               name="confirmCorrection"
               type="checkbox"
@@ -57,7 +57,7 @@ export function RepairWarrantyCorrection({
             Confirmo la correccion desde el retiro original
           </label>
           {missingPickup ? (
-            <p role="alert" className="text-sm text-amber-900">
+            <p role="alert" className="text-sm text-warning">
               Falta la fecha efectiva del retiro original. No se puede iniciar la garantia con la
               fecha de hoy.
             </p>

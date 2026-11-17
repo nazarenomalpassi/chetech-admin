@@ -188,16 +188,16 @@ export function RepairAccessOrderDetail({
 
   return (
     <div className="min-w-0 space-y-4">
-      <Card className="overflow-hidden bg-white">
+      <Card className="overflow-hidden bg-card">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <h1 className="w-full break-words text-2xl font-semibold text-slate-950 [overflow-wrap:anywhere]">
+              <h1 className="w-full text-2xl font-semibold wrap-anywhere wrap-break-word text-foreground">
                 {order.repairNumber}
               </h1>
               <RepairAccessStatusBadge status={status} />
             </div>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
               {order.customer.fullName} - {order.customer.phone || "sin telefono"} -{" "}
               {deviceLabel || "Equipo"} - ingreso {formatDate(order.intakeDate)}
             </p>
@@ -223,7 +223,7 @@ export function RepairAccessOrderDetail({
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-4 grid gap-4 border-t border-border pt-4 sm:grid-cols-2 xl:grid-cols-5">
           <HeaderMetric label="Presupuesto" value={formatCurrency(liveOrder.budgetAmount)} />
           <HeaderMetric label="Total final" value={formatCurrency(liveOrder.finalAmount)} />
           <HeaderMetric label="Medio" value={getRepairAccessPaymentLabel(order.paymentMethod)} />
@@ -232,7 +232,7 @@ export function RepairAccessOrderDetail({
             value={order.isPaid ? "Informado" : "Sin informar"}
           />
           <div className="min-w-0">
-            <p className="text-sm text-slate-500">Garantia</p>
+            <p className="text-sm text-muted-foreground">Garantia</p>
             <div className="mt-2">
               <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
             </div>
@@ -253,8 +253,8 @@ export function RepairAccessOrderDetail({
           <Card>
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-xl font-semibold text-slate-950">Actualizar trabajo</h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <h2 className="text-xl font-semibold text-foreground">Actualizar trabajo</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Presupuesto, avance y estado en un solo guardado.
                 </p>
               </div>
@@ -275,7 +275,7 @@ export function RepairAccessOrderDetail({
                 defaultWarrantyDays={defaultWarrantyDays}
               />
             ) : (
-              <p className="mt-3 text-sm text-slate-500">
+              <p className="mt-3 text-sm text-muted-foreground">
                 El formulario administrativo esta debajo de los datos del equipo.
               </p>
             )}
@@ -319,11 +319,11 @@ export function RepairAccessOrderDetail({
             ]}
           />
           <Card>
-            <h2 className="text-lg font-semibold text-slate-950">Retiro y garantia</h2>
+            <h2 className="text-lg font-semibold text-foreground">Retiro y garantia</h2>
             <div className="mt-3">
               <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
             </div>
-            <div className="mt-3 divide-y divide-slate-200 text-sm">
+            <div className="mt-3 divide-y divide-border text-sm">
               <WarrantyInfoRow
                 label="Retiro efectivo"
                 value={pickedUpAt ? formatDate(pickedUpAt) : "Sin fecha registrada"}
@@ -345,18 +345,18 @@ export function RepairAccessOrderDetail({
               ) : null}
             </div>
             {order.warrantyConditions ? (
-              <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+              <p className="mt-4 rounded-xl bg-muted p-4 text-sm leading-6 text-muted-foreground">
                 {order.warrantyConditions}
               </p>
             ) : null}
           </Card>
           <Card>
-            <h2 className="text-lg font-semibold text-slate-950">Falla declarada</h2>
-            <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+            <h2 className="text-lg font-semibold text-foreground">Falla declarada</h2>
+            <p className="mt-2 text-sm leading-6 wrap-break-word whitespace-pre-wrap text-body">
               {order.issueReported}
             </p>
             {order.notes ? (
-              <p className="mt-3 text-sm leading-6 text-slate-500">{order.notes}</p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{order.notes}</p>
             ) : null}
           </Card>
         </div>
@@ -364,8 +364,8 @@ export function RepairAccessOrderDetail({
         {!order.workflow || advanced ? (
           <Card className="self-start">
             <div>
-              <h2 className="text-lg font-semibold text-slate-950">Campos administrativos</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
+              <h2 className="text-lg font-semibold text-foreground">Campos administrativos</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
                 Presupuesto y avance son visibles para el cliente vinculado. Los demas datos son
                 internos.
               </p>
@@ -425,7 +425,7 @@ export function RepairAccessOrderDetail({
                   value={budgetAmount}
                 />
               </Field>
-              <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
+              <label className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-body lg:col-span-2">
                 <input
                   checked={status === "sin_solucion"}
                   onChange={(event) =>
@@ -473,7 +473,7 @@ export function RepairAccessOrderDetail({
                 />
               </Field>
 
-              <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm lg:col-span-6">
+              <label className="flex items-start gap-3 rounded-xl border border-border p-4 text-sm lg:col-span-6">
                 <input
                   className="mt-1"
                   type="checkbox"
@@ -491,11 +491,11 @@ export function RepairAccessOrderDetail({
                 />
               </Field>
 
-              <div className="border-t border-slate-200 pt-4 lg:col-span-6">
-                <h3 className="text-base font-semibold text-slate-900">
+              <div className="border-t border-border pt-4 lg:col-span-6">
+                <h3 className="text-base font-semibold text-foreground">
                   Cobro informativo y garantia
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-500">
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
                   No modifica caja ni balances. Registra el cobro real en Pagos de reparaciones con
                   este REP.
                 </p>
@@ -527,7 +527,7 @@ export function RepairAccessOrderDetail({
                       ]}
                     />
                   </Field>
-                  <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
+                  <label className="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm text-body lg:col-span-2">
                     <input
                       disabled={Boolean(order.workflow)}
                       defaultChecked={
@@ -541,7 +541,7 @@ export function RepairAccessOrderDetail({
                       ? "Cobro registrado desde Pagos"
                       : "Registrar cobro informado en ficha"}
                   </label>
-                  <label className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 lg:col-span-2">
+                  <label className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 text-sm text-body lg:col-span-2">
                     <input
                       disabled={Boolean(
                         order.workflow && (order.deliveredAt || order.status === "retirado")
@@ -586,29 +586,29 @@ export function RepairAccessOrderDetail({
                     />
                   </Field>
                   <p
-                    className="text-xs leading-5 text-slate-500 lg:col-span-6"
+                    className="text-xs leading-5 text-muted-foreground lg:col-span-6"
                     id="pickup-date-help"
                   >
                     La garantia comienza con el retiro efectivo. Al elegir Retirado se propone la
                     fecha de hoy.
                   </p>
-                  <div className="text-sm text-slate-600 lg:col-span-2">
-                    <span className="block text-sm text-slate-500">Estado de garantia</span>
+                  <div className="text-sm text-muted-foreground lg:col-span-2">
+                    <span className="block text-sm text-muted-foreground">Estado de garantia</span>
                     <div className="mt-2">
                       <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
                     </div>
                   </div>
-                  <div className="text-sm text-slate-600 lg:col-span-2">
-                    <span className="block text-sm text-slate-500">Inicio garantia</span>
-                    <span className="mt-1 block text-slate-800">
+                  <div className="text-sm text-muted-foreground lg:col-span-2">
+                    <span className="block text-sm text-muted-foreground">Inicio garantia</span>
+                    <span className="mt-1 block text-foreground">
                       {liveWarranty.startsOn
                         ? formatDate(liveWarranty.startsOn)
                         : "Pendiente de retiro"}
                     </span>
                   </div>
-                  <div className="text-sm text-slate-600 lg:col-span-2">
-                    <span className="block text-sm text-slate-500">Garantia hasta</span>
-                    <span className="mt-1 block text-slate-800">
+                  <div className="text-sm text-muted-foreground lg:col-span-2">
+                    <span className="block text-sm text-muted-foreground">Garantia hasta</span>
+                    <span className="mt-1 block text-foreground">
                       {liveWarranty.expiresOn
                         ? formatDate(liveWarranty.expiresOn)
                         : "Todavia no comenzo"}
@@ -645,13 +645,16 @@ export function RepairAccessOrderDetail({
                 />
               </div>
               {order.workflow && (order.deliveredAt || order.status === "retirado") ? (
-                <p className="text-sm text-slate-600 lg:col-span-6">
+                <p className="text-sm text-muted-foreground lg:col-span-6">
                   La orden original esta cerrada. Usa la correccion de garantia de arriba o registra
                   un reingreso en esta misma REP.
                 </p>
               ) : null}
               {draft.lastSavedAt && hasUnsavedChanges ? (
-                <p aria-live="polite" className="text-right text-xs text-slate-500 lg:col-span-6">
+                <p
+                  aria-live="polite"
+                  className="text-right text-xs text-muted-foreground lg:col-span-6"
+                >
                   Borrador técnico guardado en este dispositivo.
                 </p>
               ) : null}
@@ -668,8 +671,8 @@ export function RepairAccessOrderDetail({
 function HeaderMetric({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-0">
-      <p className="text-sm text-slate-500">{label}</p>
-      <p className="mt-1 break-words text-base font-semibold text-slate-950">{value}</p>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-semibold wrap-break-word text-foreground">{value}</p>
     </div>
   );
 }
@@ -677,8 +680,10 @@ function HeaderMetric({ label, value }: { label: string; value: string }) {
 function WarrantyInfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex min-w-0 items-start justify-between gap-4 py-2">
-      <span className="text-slate-500">{label}</span>
-      <span className="min-w-0 break-words text-right font-medium text-slate-800">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="min-w-0 text-right font-medium wrap-break-word text-foreground">
+        {value}
+      </span>
     </div>
   );
 }
@@ -692,15 +697,15 @@ function InfoBlock({
 }) {
   return (
     <Card>
-      <h2 className="text-lg font-semibold text-slate-950">{title}</h2>
-      <dl className="mt-3 divide-y divide-slate-200">
+      <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+      <dl className="mt-3 divide-y divide-border">
         {rows.map(([label, value]) => (
           <div
             className="flex min-w-0 flex-col gap-1 py-2 text-sm sm:flex-row sm:gap-3"
             key={label}
           >
-            <dt className="shrink-0 text-slate-500 sm:w-32">{label}</dt>
-            <dd className="min-w-0 break-words text-slate-700">{value || "-"}</dd>
+            <dt className="shrink-0 text-muted-foreground sm:w-32">{label}</dt>
+            <dd className="min-w-0 wrap-break-word text-body">{value || "-"}</dd>
           </div>
         ))}
       </dl>
@@ -719,7 +724,7 @@ function Field({
 }) {
   return (
     <label className={className}>
-      <span className="mb-2 block text-sm font-medium text-slate-700">{label}</span>
+      <span className="mb-2 block text-sm font-medium text-body">{label}</span>
       {children}
     </label>
   );

@@ -129,37 +129,37 @@ export function RepairPaymentsPanel({
         <h2 className="text-lg font-semibold">
           Cobros de la reparacion
           {orderNumber ? (
-            <span className="mt-1 block break-words text-base">{orderNumber}</span>
+            <span className="mt-1 block text-base wrap-break-word">{orderNumber}</span>
           ) : null}
         </h2>
         <dl className="mt-3 grid gap-4 sm:grid-cols-2">
           <div>
-            <dt className="text-sm text-slate-600">Saldo pendiente</dt>
+            <dt className="text-sm text-muted-foreground">Saldo pendiente</dt>
             <dd className="text-2xl font-semibold tabular-nums">
               {formatCurrency(repair.balance)}
             </dd>
           </div>
           <div>
-            <dt className="text-sm text-slate-600">Pagado real</dt>
+            <dt className="text-sm text-muted-foreground">Pagado real</dt>
             <dd className="text-xl font-semibold tabular-nums">
               {formatCurrency(repair.paidTotal)}
             </dd>
           </div>
         </dl>
-        <p className="mt-3 text-sm text-slate-500">
+        <p className="mt-3 text-sm text-muted-foreground">
           Cobrar o corregir un pago no cambia la entrega ni la garantia.
         </p>
         {feedback ? (
           <p
             role={feedback.success ? "status" : "alert"}
-            className={`mt-3 rounded-xl p-3 text-sm ${feedback.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+            className={`mt-3 rounded-xl p-3 text-sm ${feedback.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
           >
             {feedback.message}
           </p>
         ) : null}
         {repair.balance > 0 || draft.pendingDraft || recovered ? (
           <form
-            className="mt-4 space-y-3 border-t border-graphite/10 pt-4"
+            className="mt-4 space-y-3 border-t border-border pt-4"
             onSubmit={async (event) => {
               event.preventDefault();
               if (savingRef.current || saved) return;
@@ -235,7 +235,7 @@ export function RepairPaymentsPanel({
               />
             ) : null}
             {recovered ? (
-              <p className="text-sm text-amber-800">
+              <p className="text-sm text-warning">
                 Se recupero el intento original. Confirmar con los mismos datos verifica ese cobro
                 sin volver a registrarlo si ya se habia guardado.
               </p>
@@ -254,7 +254,7 @@ export function RepairPaymentsPanel({
                 totalAmount={recovered ? getPaymentTotal(payments) : repair.balance}
                 syncAmountWithTotal={false}
               />
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-muted-foreground">
                 Indica solo el importe recibido. Puede ser menor al saldo pendiente.
               </p>
               <label className="block text-sm">
@@ -285,24 +285,24 @@ export function RepairPaymentsPanel({
               />
             </fieldset>
             {dirty && draft.lastSavedAt ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Borrador local. Solo se registra dinero al confirmar el cobro.
               </p>
             ) : null}
           </form>
         ) : (
-          <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-800">
+          <p className="mt-4 rounded-xl bg-success-soft p-3 text-sm text-success">
             Esta reparacion ya esta cobrada. Los pagos incorrectos se corrigen desde el historial.
           </p>
         )}
-        <h3 className="mt-5 border-t border-graphite/10 pt-4 font-semibold">Pagos registrados</h3>
+        <h3 className="mt-5 border-t border-border pt-4 font-semibold">Pagos registrados</h3>
         {!repair.payments.length ? (
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-sm text-muted-foreground">
             Todavia no hay pagos registrados. Elegi la cuenta y el importe recibido para cargar el
             primer cobro.
           </p>
         ) : null}
-        <div className="mt-2 divide-y divide-graphite/10">
+        <div className="mt-2 divide-y divide-border">
           {repair.payments.map((payment, index) => (
             <div
               className="flex flex-wrap items-start justify-between gap-3 py-3"
@@ -315,7 +315,7 @@ export function RepairPaymentsPanel({
                 </p>
                 <p className="mt-1 font-semibold tabular-nums">{formatCurrency(payment.amount)}</p>
                 {payment.source === "repair_access" ? (
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     Cobro de la REP. Se corrige desde esa orden.
                   </p>
                 ) : null}
@@ -362,11 +362,11 @@ export function RepairPaymentsPanel({
               {formatCashMethod(removingPayment.method)} /{" "}
               <strong>{formatCurrency(removingPayment.amount)}</strong>
             </p>
-            <p className="mt-3 text-sm text-slate-600">
+            <p className="mt-3 text-sm text-muted-foreground">
               Se corregira este importe en caja y quedara registrado el motivo. La orden y los demas
               pagos no se eliminan.
             </p>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-muted-foreground">
               La correccion usa la fecha actual y conserva el historial. No es una devolucion al
               cliente. Los pagos historicos sin respaldo requieren conciliacion.
             </p>

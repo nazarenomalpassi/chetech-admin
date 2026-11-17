@@ -43,7 +43,7 @@ export function BoardFilters() {
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-1 text-sm font-medium text-slate-700">
+      <div className="space-y-1 text-sm font-medium text-body">
         <label className="block" htmlFor={`${id}-search`}>
           Buscar placas
         </label>
@@ -56,7 +56,7 @@ export function BoardFilters() {
         />
       </div>
 
-      <div className="space-y-1 text-sm font-medium text-slate-700">
+      <div className="space-y-1 text-sm font-medium text-body">
         <label className="block" htmlFor={`${id}-type`}>
           Tipo de placa
         </label>
@@ -72,7 +72,7 @@ export function BoardFilters() {
         />
       </div>
 
-      <div className="space-y-1 text-sm font-medium text-slate-700">
+      <div className="space-y-1 text-sm font-medium text-body">
         <label className="block" htmlFor={`${id}-status`}>
           Estado
         </label>

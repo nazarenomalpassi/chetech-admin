@@ -74,11 +74,11 @@ export function RepairAccessWhatsAppPanel({ order }: { order: RepairAccessOrderR
   const phone = order.customer.phone || order.customer.alternatePhone;
 
   return (
-    <div className="mt-4 hidden border-t border-slate-200 pt-3 lg:block">
+    <div className="mt-4 hidden border-t border-border pt-3 lg:block">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-700">WhatsApp del cliente</p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm font-medium text-body">WhatsApp del cliente</p>
+          <p className="mt-1 text-sm text-muted-foreground">
             {phone ? `Mensaje preparado para ${phone}.` : "Carga un telefono para enviar avisos."}
           </p>
         </div>

@@ -73,7 +73,7 @@ export function ExpensesList({
       <Card>
         <div>
           <h1 className="panel-heading">{editing ? "Editar gasto" : "Nuevo gasto"}</h1>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             Registra el importe, la fecha y el medio de egreso.
           </p>
         </div>
@@ -101,11 +101,14 @@ export function ExpensesList({
         >
           <input name="id" type="hidden" value={editing?.id ?? ""} />
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="expenseDate">
+            <label
+              className="mb-2 block text-sm font-medium text-muted-foreground"
+              htmlFor="expenseDate"
+            >
               Fecha
             </label>
             <div className="relative">
-              <CalendarRange className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <CalendarRange className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-subtle-foreground" />
               <Input
                 className="pl-10"
                 name="expenseDate"
@@ -116,7 +119,7 @@ export function ExpensesList({
             </div>
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="type">
+            <label className="mb-2 block text-sm font-medium text-muted-foreground" htmlFor="type">
               Categoría
             </label>
             <Input
@@ -127,7 +130,10 @@ export function ExpensesList({
             />
           </div>
           <div className="sm:col-span-2 xl:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="description">
+            <label
+              className="mb-2 block text-sm font-medium text-muted-foreground"
+              htmlFor="description"
+            >
               Descripción
             </label>
             <Input
@@ -138,7 +144,10 @@ export function ExpensesList({
             />
           </div>
           <div>
-            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="amount">
+            <label
+              className="mb-2 block text-sm font-medium text-muted-foreground"
+              htmlFor="amount"
+            >
               Monto
             </label>
             <Input
@@ -152,7 +161,7 @@ export function ExpensesList({
           </div>
           <div>
             <label
-              className="mb-2 block text-sm font-medium text-slate-500"
+              className="mb-2 block text-sm font-medium text-muted-foreground"
               htmlFor="paymentMethod"
             >
               Medio de egreso
@@ -168,7 +177,10 @@ export function ExpensesList({
             />
           </div>
           <div className="sm:col-span-2 xl:col-span-6">
-            <label className="mb-2 block text-sm font-medium text-slate-500" htmlFor="observations">
+            <label
+              className="mb-2 block text-sm font-medium text-muted-foreground"
+              htmlFor="observations"
+            >
               Observaciones (opcional)
             </label>
             <Textarea
@@ -181,14 +193,14 @@ export function ExpensesList({
           </div>
           <div className="sm:col-span-2 xl:col-span-6">
             {editing ? (
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Para cambiar solo el destino, usa Vincular pago en el historial.
               </p>
             ) : (
               <ExpenseLinkSelector key="new-expense-link" prefix="new-expense" />
             )}
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 pt-4 sm:col-span-2 xl:col-span-6">
+          <div className="flex flex-wrap items-center justify-end gap-2 border-t border-border pt-4 sm:col-span-2 xl:col-span-6">
             <FormSubmitButton
               className="w-full sm:w-auto"
               idleLabel={editing ? "Actualizar gasto" : "Guardar gasto"}
@@ -205,15 +217,15 @@ export function ExpensesList({
 
       {linking ? (
         <section
-          className="rounded-2xl border border-graphite/10 bg-white p-4"
+          className="rounded-2xl border border-border bg-card p-4"
           aria-label="Enlace de gasto existente"
         >
-          <h2 className="text-xl font-semibold text-slate-950">Vincular gasto existente</h2>
-          <p className="mt-2 break-words text-sm text-slate-700">
+          <h2 className="text-xl font-semibold text-foreground">Vincular gasto existente</h2>
+          <p className="mt-2 text-sm wrap-break-word text-body">
             {linking.description} · {formatCurrency(linking.amount)} ·{" "}
             {formatDate(linking.expenseDate)}
           </p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             Cambia el destino sin volver a registrar dinero ni modificar el gasto.
           </p>
           <form action={linkExpensePurchaseAction} className="mt-4 space-y-4">
@@ -240,44 +252,48 @@ export function ExpensesList({
       ) : null}
 
       <div className="table-shell">
-        <div className="border-graphite/8 space-y-2 border-b px-4 py-3">
-          <h2 className="text-base font-semibold text-slate-950">Historial de gastos</h2>
-          <p className="text-sm text-slate-600">
+        <div className="space-y-2 border-b border-border px-4 py-3">
+          <h2 className="text-base font-semibold text-foreground">Historial de gastos</h2>
+          <p className="text-sm text-muted-foreground">
             En esta pagina: gastos {formatCurrency(totalExpenses)}, egresos de caja{" "}
             {formatCurrency(cashImpact)}.
           </p>
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-muted-foreground">
             Vincula un pago existente para no registrarlo dos veces.
           </p>
         </div>
-        <div className="divide-y divide-slate-200 xl:hidden">
+        <div className="divide-y divide-border xl:hidden">
           {expenses.map((expense) => (
-            <article className="bg-white p-4" key={expense.id}>
+            <article className="bg-card p-4" key={expense.id}>
               <div className="flex min-w-0 items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">{expense.type}</p>
-                  <p className="mt-1 text-sm text-slate-500">{formatDate(expense.expenseDate)}</p>
+                  <p className="font-semibold text-foreground">{expense.type}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {formatDate(expense.expenseDate)}
+                  </p>
                 </div>
-                <p className="shrink-0 text-lg font-semibold text-slate-950">
+                <p className="shrink-0 text-lg font-semibold text-foreground">
                   {formatCurrency(expense.amount)}
                 </p>
               </div>
-              <p className="mt-3 break-words text-sm leading-6 text-slate-600">
+              <p className="mt-3 text-sm leading-6 wrap-break-word text-muted-foreground">
                 {expense.description}
               </p>
               {expense.linkLabel ? (
-                <p className="mt-2 break-words text-sm font-semibold text-slate-800">
+                <p className="mt-2 text-sm font-semibold wrap-break-word text-foreground">
                   {expense.linkLabel}
                 </p>
               ) : null}
               <div className="mt-3 text-sm">
-                <span className="text-sm font-medium text-slate-400">Cuenta</span>
-                <p className="mt-1 font-semibold text-slate-800">
+                <span className="text-sm font-medium text-subtle-foreground">Cuenta</span>
+                <p className="mt-1 font-semibold text-foreground">
                   {formatCashMethod(expense.paymentMethod)}
                 </p>
               </div>
               {expense.observations ? (
-                <p className="mt-3 text-sm leading-5 text-slate-500">{expense.observations}</p>
+                <p className="mt-3 text-sm leading-5 text-muted-foreground">
+                  {expense.observations}
+                </p>
               ) : null}
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button
@@ -322,7 +338,7 @@ export function ExpensesList({
 
         <div className="hidden overflow-x-auto xl:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white text-left text-slate-500">
+            <thead className="bg-card text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Categoria</th>
@@ -334,22 +350,21 @@ export function ExpensesList({
             </thead>
             <tbody>
               {expenses.map((expense) => (
-                <tr
-                  className="border-graphite/8 border-t bg-white hover:bg-slate-50"
-                  key={expense.id}
-                >
-                  <td className="px-4 py-3 text-slate-600">{formatDate(expense.expenseDate)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-950">{expense.type}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                <tr className="border-t border-border bg-card hover:bg-muted" key={expense.id}>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(expense.expenseDate)}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-foreground">{expense.type}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
                     {expense.description}
                     {expense.linkLabel ? (
-                      <p className="mt-1 font-semibold text-slate-800">{expense.linkLabel}</p>
+                      <p className="mt-1 font-semibold text-foreground">{expense.linkLabel}</p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-950">
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(expense.amount)}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {formatCashMethod(expense.paymentMethod)}
                   </td>
                   <td className="px-4 py-3">
@@ -399,7 +414,7 @@ export function ExpensesList({
           </table>
         </div>
         {!expenses.length ? (
-          <div className="empty-panel border-graphite/8 border-t">
+          <div className="empty-panel border-t border-border">
             Cuando registres gastos del local, van a aparecer aca con fecha, categoria y cuenta
             usada.
           </div>

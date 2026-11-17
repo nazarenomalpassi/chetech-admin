@@ -150,19 +150,19 @@ export function FiscalInvoicePanel({
     <Card className={className}>
       <section aria-label="Facturacion fiscal ARCA">
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h2 className="text-lg font-semibold text-graphite">
+          <h2 className="text-lg font-semibold text-foreground">
             {invoiceId ? "Factura C (ARCA)" : "Estado fiscal (ARCA)"}
           </h2>
-          <span className="text-sm font-medium text-slate-600">
+          <span className="text-sm font-medium text-muted-foreground">
             {state ? environmentLabel(state.readiness.environment) : "Consultando configuracion"}
           </span>
         </div>
-        <p className="mt-2 max-w-[75ch] text-sm leading-6 text-slate-600">
+        <p className="mt-2 max-w-[75ch] text-sm leading-6 text-muted-foreground">
           Solo se emite con vista previa y confirmacion manual. No registra cobros ni mueve stock.
           Una factura fiscal requiere CAE autorizado por ARCA.
         </p>
         {!invoiceId ? (
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-muted-foreground">
             La emision se inicia desde un comprobante interno vinculado a una venta o reparacion.
           </p>
         ) : null}
@@ -176,14 +176,14 @@ export function FiscalInvoicePanel({
                 : "sin configurar"}
             </p>
             {state.readiness.ready ? (
-              <p className="text-sm text-slate-700">
+              <p className="text-sm text-body">
                 Configuracion local validada. La habilitacion de CUIT, PV y receptor se verifica con
                 ARCA al confirmar.
               </p>
             ) : (
-              <div className="border-l-2 border-graphite/35 pl-4">
+              <div className="border-l-2 border-border-strong pl-4">
                 <p className="font-semibold">Integracion pendiente: todavia no puede emitir</p>
-                <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-slate-700">
+                <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-body">
                   {state.readiness.issues.map((issue) => (
                     <li key={issue}>{issue}</li>
                   ))}
@@ -248,16 +248,16 @@ export function FiscalInvoicePanel({
           <p
             role="status"
             aria-live="polite"
-            className="mt-4 rounded-xl border border-graphite/15 bg-white p-3 text-sm leading-6"
+            className="mt-4 rounded-xl border border-border bg-card p-3 text-sm leading-6"
           >
             {message}
           </p>
         ) : null}
         {state?.records.length ? (
-          <div className="mt-5 divide-y divide-graphite/10 border-t border-graphite/10">
+          <div className="mt-5 divide-y divide-border border-t border-border">
             {state.records.map((record) => (
               <article key={record.id} className="py-4">
-                <p className="text-sm font-medium text-slate-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   {environmentLabel(record.snapshot.environment)}
                 </p>
                 <p className="mt-2 font-semibold">
@@ -297,7 +297,7 @@ export function FiscalInvoicePanel({
                     </div>
                   </div>
                 ) : (
-                  <p className="mt-2 text-sm text-slate-600">
+                  <p className="mt-2 text-sm text-muted-foreground">
                     Sin CAE confirmado: no hay PDF ni QR fiscal.
                     {record.errorCodes.length
                       ? ` Codigos ARCA: ${record.errorCodes.join(", ")}.`
@@ -312,7 +312,7 @@ export function FiscalInvoicePanel({
           <DialogShell labelledBy={dialogId} onClose={requestClose} panelClassName="max-w-3xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <p className="text-sm font-medium text-slate-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   {environmentLabel(state.readiness.environment)}
                 </p>
                 <h3 id={dialogId} className="mt-2 text-xl font-semibold">
@@ -335,23 +335,23 @@ export function FiscalInvoicePanel({
                   produccion es irreversible: no elimina ni anula el comprobante. Una nota de
                   credito debe gestionarse por separado.
                 </p>
-                <dl className="grid gap-4 border-y border-graphite/10 py-4 text-sm sm:grid-cols-2">
+                <dl className="grid gap-4 border-y border-border py-4 text-sm sm:grid-cols-2">
                   <div>
-                    <dt className="text-slate-600">Emisor / CUIT / PV</dt>
+                    <dt className="text-muted-foreground">Emisor / CUIT / PV</dt>
                     <dd className="font-semibold">
                       {preview.snapshot.issuer.name} / {preview.snapshot.issuer.cuit} /{" "}
                       {String(preview.snapshot.pointOfSale).padStart(5, "0")}
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-slate-600">Receptor / documento</dt>
+                    <dt className="text-muted-foreground">Receptor / documento</dt>
                     <dd className="font-semibold">
                       {preview.snapshot.receiver.name} / {preview.snapshot.receiver.documentNumber}
                     </dd>
                     <dd>{preview.snapshot.receiver.address}</dd>
                   </div>
                   <div>
-                    <dt className="text-slate-600">Concepto / condicion IVA</dt>
+                    <dt className="text-muted-foreground">Concepto / condicion IVA</dt>
                     <dd>
                       {preview.snapshot.concept === 1
                         ? "Productos"
@@ -367,7 +367,7 @@ export function FiscalInvoicePanel({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-slate-600">Fecha / periodo / vencimiento</dt>
+                    <dt className="text-muted-foreground">Fecha / periodo / vencimiento</dt>
                     <dd>{preview.snapshot.issuedOn}</dd>
                     {preview.snapshot.concept !== 1 ? (
                       <dd>
@@ -377,10 +377,10 @@ export function FiscalInvoicePanel({
                     ) : null}
                   </div>
                 </dl>
-                <ul className="divide-y divide-graphite/10 text-sm">
+                <ul className="divide-y divide-border text-sm">
                   {preview.snapshot.items.map((item, index) => (
                     <li key={index} className="flex flex-wrap justify-between gap-2 py-3">
-                      <span className="min-w-0 flex-1 whitespace-pre-wrap break-words">
+                      <span className="min-w-0 flex-1 wrap-break-word whitespace-pre-wrap">
                         {item.quantity} x {item.description}
                       </span>
                       <strong>{formatCurrency(item.totalCents / 100)}</strong>
@@ -394,7 +394,7 @@ export function FiscalInvoicePanel({
                 <p className="text-2xl font-semibold">
                   Total: {formatCurrency(preview.snapshot.totalCents / 100)}
                 </p>
-                <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-graphite/15 bg-white p-4 text-sm">
+                <label className="flex min-h-11 cursor-pointer items-start gap-3 rounded-xl border border-border bg-card p-4 text-sm">
                   <input
                     type="checkbox"
                     className="mt-1 h-4 w-4 accent-graphite"
@@ -463,7 +463,7 @@ export function FiscalInvoicePanel({
                   pending={pending}
                   sourceType={state.sourceType}
                 />
-                <p className="text-sm leading-6 text-slate-600">
+                <p className="text-sm leading-6 text-muted-foreground">
                   La vista previa no envia comprobantes a ARCA. El total se toma del documento
                   interno guardado, no del formulario.
                 </p>
@@ -497,7 +497,7 @@ function FiscalFields({
 }) {
   const [concept, setConcept] = useState("");
   const selectClass =
-    "h-11 min-w-0 w-full rounded-lg border border-line bg-white px-3 py-2 text-base text-graphite outline-none focus:border-graphite focus:ring-2 focus:ring-graphite/15 disabled:bg-brand-50 sm:text-sm";
+    "h-11 min-w-0 w-full rounded-lg border border-border bg-card px-3 py-2 text-base text-foreground outline-hidden focus:border-primary focus:ring-2 focus:ring-ring/40 disabled:bg-muted sm:text-sm";
   return (
     <fieldset disabled={pending} className="grid gap-4 sm:grid-cols-2">
       <label className="grid gap-2 text-sm">

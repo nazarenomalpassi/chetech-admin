@@ -49,8 +49,8 @@ export function TechnicianDashboard({
       <Card className="overflow-hidden">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-950">Taller de {technicianName}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Taller de {technicianName}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               Ordenes y visitas asignadas.
             </p>
           </div>
@@ -97,17 +97,17 @@ export function TechnicianDashboard({
             {data.recentOrders.length ? (
               data.recentOrders.map((order) => (
                 <Link
-                  className="border-b border-slate-200 py-4 transition-colors hover:bg-slate-50"
+                  className="border-b border-border py-4 transition-colors hover:bg-muted"
                   href={`/reparaciones-access?view=ordenes&order=${order.id}`}
                   key={order.id}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
-                      <p className="text-lg font-semibold text-slate-950">{order.repairNumber}</p>
-                      <p className="mt-1 text-sm text-slate-600">
+                      <p className="text-lg font-semibold text-foreground">{order.repairNumber}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {order.customerName} | {order.device}
                       </p>
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-500">
+                      <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
                         {order.issueReported}
                       </p>
                     </div>
@@ -128,13 +128,13 @@ export function TechnicianDashboard({
           summary={`${data.visits.todayCount} agendadas; ${data.visits.pendingCount} pendientes hoy.`}
         >
           {data.visits.nextVisit ? (
-            <div className="mt-4 border-t border-slate-200 pt-4">
-              <p className="font-semibold text-slate-950">{data.visits.nextVisit.customerName}</p>
-              <p className="mt-2 text-sm text-slate-600">
+            <div className="mt-4 border-t border-border pt-4">
+              <p className="font-semibold text-foreground">{data.visits.nextVisit.customerName}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
                 {getVisitTimeLabel(data.visits.nextVisit.timeFrom, data.visits.nextVisit.timeTo)}
               </p>
-              <p className="mt-1 text-sm text-slate-500">{data.visits.nextVisit.address}</p>
-              <p className="mt-3 text-xs text-slate-400">
+              <p className="mt-1 text-sm text-muted-foreground">{data.visits.nextVisit.address}</p>
+              <p className="mt-3 text-xs text-subtle-foreground">
                 {formatDate(data.visits.nextVisit.visitDate)}
               </p>
             </div>

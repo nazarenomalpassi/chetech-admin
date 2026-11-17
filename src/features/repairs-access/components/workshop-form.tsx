@@ -146,7 +146,7 @@ export function WorkshopForm({
     <form
       ref={formRef}
       data-workshop-form
-      className="grid gap-4 border-t border-graphite/10 p-4"
+      className="grid gap-4 border-t border-border p-4"
       onChange={capture}
       onInput={capture}
       onSubmit={(event) => {
@@ -187,25 +187,27 @@ export function WorkshopForm({
         {typeof children === "function" ? children(fields, pending || refreshing) : children}
       </fieldset>
       {pending ? (
-        <p role="status" className="text-sm text-slate-500">
+        <p role="status" className="text-sm text-muted-foreground">
           Guardando actualizacion...
         </p>
       ) : null}
       {refreshing ? (
-        <p role="status" className="text-sm text-slate-500">
+        <p role="status" className="text-sm text-muted-foreground">
           Guardado. Actualizando la ficha...
         </p>
       ) : null}
       {!pending && result ? (
         <p
           role={result.success ? "status" : "alert"}
-          className={`rounded-xl p-3 text-sm ${result.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+          className={`rounded-xl p-3 text-sm ${result.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
         >
           {result.message}
         </p>
       ) : null}
       {dirty && draft.lastSavedAt ? (
-        <p className="text-xs text-slate-500">Borrador local. Pendiente de guardar en el taller.</p>
+        <p className="text-xs text-muted-foreground">
+          Borrador local. Pendiente de guardar en el taller.
+        </p>
       ) : null}
     </form>
   );

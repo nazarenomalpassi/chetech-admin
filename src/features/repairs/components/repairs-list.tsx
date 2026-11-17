@@ -506,8 +506,8 @@ export function RepairsList({
       <header>
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Cobros de reparaciones</h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Cobros de reparaciones</h1>
+            <p className="mt-2 text-sm text-muted-foreground">
               Selecciona la REP y registra solo el dinero recibido. Cobrar no entrega el equipo ni
               inicia la garantia.
             </p>
@@ -515,11 +515,11 @@ export function RepairsList({
 
           <dl className="grid gap-4 sm:grid-cols-2">
             <div>
-              <dt className="text-sm text-slate-600">Registros en esta pagina</dt>
+              <dt className="text-sm text-muted-foreground">Registros en esta pagina</dt>
               <dd className="mt-1 text-xl font-semibold tabular-nums">{totalRepairs}</dd>
             </div>
             <div>
-              <dt className="text-sm text-slate-600">Cobrado en esta pagina</dt>
+              <dt className="text-sm text-muted-foreground">Cobrado en esta pagina</dt>
               <dd className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(revenue)}</dd>
             </div>
           </dl>
@@ -545,7 +545,7 @@ export function RepairsList({
           tabIndex={-1}
           role="group"
           aria-label={`Cobros de ${currentLedger.repairAccessOrderNumber || currentLedger.orderNumber || "la reparación seleccionada"}`}
-          className="scroll-mt-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4"
+          className="scroll-mt-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-solid"
         >
           <RepairPaymentsPanel
             key={`${currentLedger.id}:${currentLedger.financialVersion}`}
@@ -570,7 +570,7 @@ export function RepairsList({
           {feedback ? (
             <p
               role={feedback.success ? "status" : "alert"}
-              className={`my-3 rounded-xl p-3 text-sm ${feedback.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+              className={`my-3 rounded-xl p-3 text-sm ${feedback.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
             >
               {feedback.message}
             </p>
@@ -608,10 +608,10 @@ export function RepairsList({
               <input name="paymentsJson" type="hidden" value={JSON.stringify(payments)} />
               <input name="amount" type="hidden" value={amount} />
 
-              <div className="border-t border-graphite/10 pt-4">
+              <div className="border-t border-border pt-4">
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                   <label>
-                    <span className="mb-2 block text-sm font-medium text-slate-700">
+                    <span className="mb-2 block text-sm font-medium text-body">
                       Numero de orden REP
                     </span>
                     <Input
@@ -638,23 +638,23 @@ export function RepairsList({
                 {lookupStatus.message ? (
                   <p
                     aria-live="polite"
-                    className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}
+                    className={`mt-3 rounded-xl px-3 py-2 text-sm ${lookupStatus.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
                     role={lookupStatus.success ? "status" : "alert"}
                   >
                     {lookupStatus.message}
                   </p>
                 ) : (
-                  <p className="mt-3 text-sm text-slate-500">
+                  <p className="mt-3 text-sm text-muted-foreground">
                     La orden de Reparaciones trae cliente, telefono, equipo y falla. El saldo se
                     modifica recien cuando guardas el cobro en esta pantalla.
                   </p>
                 )}
               </div>
 
-              <div className="grid gap-4 border-t border-graphite/10 pt-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 border-t border-border pt-4 sm:grid-cols-2 xl:grid-cols-3">
                 <div>
                   <label
-                    className="mb-2 block text-sm font-medium text-slate-700"
+                    className="mb-2 block text-sm font-medium text-body"
                     htmlFor="customerName"
                   >
                     Cliente
@@ -667,7 +667,7 @@ export function RepairsList({
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="device">
+                  <label className="mb-2 block text-sm font-medium text-body" htmlFor="device">
                     Equipo
                   </label>
                   <Input
@@ -678,10 +678,7 @@ export function RepairsList({
                   />
                 </div>
                 <div>
-                  <label
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                    htmlFor="orderNumber"
-                  >
+                  <label className="mb-2 block text-sm font-medium text-body" htmlFor="orderNumber">
                     Número de orden
                   </label>
                   <Input
@@ -692,7 +689,7 @@ export function RepairsList({
                   />
                 </div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-slate-700" htmlFor="amount">
+                  <label className="mb-2 block text-sm font-medium text-body" htmlFor="amount">
                     Precio de reparacion
                   </label>
                   <MoneyInput
@@ -703,16 +700,13 @@ export function RepairsList({
                   />
                 </div>
                 <div>
-                  <label
-                    className="mb-2 block text-sm font-medium text-slate-700"
-                    htmlFor="entryDate"
-                  >
+                  <label className="mb-2 block text-sm font-medium text-body" htmlFor="entryDate">
                     Fecha de ingreso
                   </label>
                   <div className="relative">
                     <CalendarRange
                       aria-hidden="true"
-                      className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                      className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
                       className="pl-10"
@@ -727,13 +721,13 @@ export function RepairsList({
 
               <div className="space-y-4">
                 {editing ? (
-                  <p className="text-sm text-slate-600">
+                  <p className="text-sm text-muted-foreground">
                     Estos cambios actualizan datos y precio, no reemplazan pagos. Para cobrar o
                     corregir, usa el historial de esta REP.
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-muted-foreground">
                       El precio puede quedar pendiente o cobrarse parcialmente. Registra solo el
                       dinero recibido.
                     </p>
@@ -783,7 +777,7 @@ export function RepairsList({
               </div>
             </fieldset>
             {dirty && draft.lastSavedAt ? (
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Borrador local. No registra un cobro hasta confirmar el guardado.
               </p>
             ) : null}
@@ -792,7 +786,7 @@ export function RepairsList({
       </Card>
 
       <div className="table-shell">
-        <div className="border-b border-graphite/10 px-4 py-3">
+        <div className="border-b border-border px-4 py-3">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <form
               action="/reparaciones"
@@ -815,16 +809,13 @@ export function RepairsList({
                 <input type="hidden" name="rep" value={formValues.accessOrderNumber} />
               ) : null}
               <div className="min-w-0 flex-1">
-                <label
-                  className="mb-2 block text-sm font-medium text-slate-700"
-                  htmlFor="repair-search"
-                >
+                <label className="mb-2 block text-sm font-medium text-body" htmlFor="repair-search">
                   Buscar cobros de reparacion
                 </label>
                 <div className="relative">
                   <Search
                     aria-hidden="true"
-                    className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                    className="pointer-events-none absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                   />
                   <Input
                     key={searchQuery}
@@ -841,48 +832,50 @@ export function RepairsList({
                 Buscar en historial
               </Button>
             </form>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               {searchQuery
                 ? `${pagination.total} coincidencias en todo el historial.`
                 : `Busca en todo el historial. ${pagination.total} registros.`}
             </p>
           </div>
         </div>
-        <div className="divide-y divide-graphite/10 px-4 lg:hidden">
+        <div className="divide-y divide-border px-4 lg:hidden">
           {filteredRepairs.map((repair) => (
             <article className="py-4" key={repair.id}>
               <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-950">{repair.customerName}</p>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="font-semibold text-foreground">{repair.customerName}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {repair.customerPhone || repair.issueDescription || "-"}
                   </p>
                 </div>
-                <p className="text-lg font-semibold tabular-nums text-slate-950">
+                <p className="text-lg font-semibold text-foreground tabular-nums">
                   {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
                 </p>
               </div>
 
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-600">Orden</p>
-                  <p className="mt-1 break-words font-semibold text-slate-800">
+                  <p className="text-sm text-muted-foreground">Orden</p>
+                  <p className="mt-1 font-semibold wrap-break-word text-foreground">
                     {repair.repairAccessOrderNumber || repair.orderNumber || "-"}
                   </p>
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-600">Ingreso</p>
-                  <p className="mt-1 font-semibold text-slate-800">
+                  <p className="text-sm text-muted-foreground">Ingreso</p>
+                  <p className="mt-1 font-semibold text-foreground">
                     {formatDate(repair.entryDate)}
                   </p>
                 </div>
               </div>
-              <p className="mt-3 break-words text-sm leading-6 text-slate-600">{repair.device}</p>
+              <p className="mt-3 text-sm leading-6 wrap-break-word text-muted-foreground">
+                {repair.device}
+              </p>
               <p className="mt-2 text-sm">
                 Pagado {formatCurrency(repair.paidTotal)} / Saldo {formatCurrency(repair.balance)}
               </p>
               {repair.payments.length ? (
-                <p className="mt-2 text-sm leading-5 text-slate-500">
+                <p className="mt-2 text-sm leading-5 text-muted-foreground">
                   {repair.payments
                     .map(
                       (payment) =>
@@ -937,7 +930,7 @@ export function RepairsList({
             </article>
           ))}
           {!filteredRepairs.length ? (
-            <div className="py-6 text-sm text-slate-500">
+            <div className="py-6 text-sm text-muted-foreground">
               No encontre cobros de reparaciones con esa busqueda.
             </div>
           ) : null}
@@ -945,7 +938,7 @@ export function RepairsList({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-slate-50 text-left text-slate-600">
+            <thead className="bg-muted text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Equipo</th>
@@ -957,21 +950,23 @@ export function RepairsList({
             </thead>
             <tbody>
               {filteredRepairs.map((repair) => (
-                <tr className="border-t border-graphite/10 align-top" key={repair.id}>
+                <tr className="border-t border-border align-top" key={repair.id}>
                   <td className="px-4 py-3">
-                    <p className="font-medium text-slate-950">{repair.customerName}</p>
-                    <p className="text-sm text-slate-500">
+                    <p className="font-medium text-foreground">{repair.customerName}</p>
+                    <p className="text-sm text-muted-foreground">
                       {repair.customerPhone || repair.issueDescription || "-"}
                     </p>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{repair.device}</td>
-                  <td className="whitespace-nowrap px-4 py-3 font-medium text-slate-950">
+                  <td className="px-4 py-3 text-muted-foreground">{repair.device}</td>
+                  <td className="px-4 py-3 font-medium whitespace-nowrap text-foreground">
                     {repair.repairAccessOrderNumber || repair.orderNumber || "-"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(repair.entryDate)}</td>
-                  <td className="px-4 py-3 font-medium text-slate-950">
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(repair.entryDate)}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-foreground">
                     {formatCurrency(repair.finalPrice || repair.estimatedPrice)}
-                    <p className="mt-1 text-sm font-normal text-slate-600">
+                    <p className="mt-1 text-sm font-normal text-muted-foreground">
                       Pagado {formatCurrency(repair.paidTotal)} / Saldo{" "}
                       {formatCurrency(repair.balance)}
                     </p>
@@ -1025,7 +1020,7 @@ export function RepairsList({
             </tbody>
           </table>
           {!filteredRepairs.length ? (
-            <div className="empty-panel border-graphite/8 border-t">
+            <div className="empty-panel border-t border-border">
               No encontre pagos de reparaciones con esa busqueda.
             </div>
           ) : null}

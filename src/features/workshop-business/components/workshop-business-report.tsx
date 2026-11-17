@@ -27,16 +27,16 @@ function Metric({
   tone?: "income" | "expense" | "pending" | "neutral";
 }) {
   const tones = {
-    income: "border-t-emerald-600 bg-finance-profitSoft/50",
-    expense: "border-t-rose-600 bg-finance-expenseSoft/50",
-    pending: "border-t-amber-600 bg-finance-cautionSoft/50",
-    neutral: "border-t-sky-700 bg-sky-50/40"
+    income: "border-t-success bg-success-soft/50",
+    expense: "border-t-danger bg-danger-soft/50",
+    pending: "border-t-warning bg-warning-soft/50",
+    neutral: "border-t-info bg-info-soft/40"
   };
   const textTones = {
-    income: "text-finance-profit",
-    expense: "text-finance-expense",
-    pending: "text-finance-caution",
-    neutral: "text-slate-950"
+    income: "text-success",
+    expense: "text-danger",
+    pending: "text-warning",
+    neutral: "text-foreground"
   };
   return (
     <Card
@@ -44,16 +44,16 @@ function Metric({
       aria-label={label}
       className={cn("min-w-0 space-y-2 border-t-2", tones[tone])}
     >
-      <p className="text-sm font-medium text-slate-600">{label}</p>
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
       <p
         className={cn(
-          "break-words text-2xl font-semibold tabular-nums tracking-tight",
+          "text-2xl font-semibold tracking-tight wrap-break-word tabular-nums",
           textTones[tone]
         )}
       >
         {value}
       </p>
-      <p className="text-xs leading-relaxed text-slate-600">{detail}</p>
+      <p className="text-xs leading-relaxed text-muted-foreground">{detail}</p>
     </Card>
   );
 }
@@ -73,10 +73,10 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
       <Card className="space-y-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
           <div className="max-w-2xl">
-            <h2 id="workshop-business-heading" className="text-xl font-semibold text-slate-950">
+            <h2 id="workshop-business-heading" className="text-xl font-semibold text-foreground">
               Negocio del taller
             </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               Estado actual de las ordenes ingresadas en el rango elegido. Los cobros y costos
               incluyen toda su historia registrada, no solo movimientos de esas fechas.
             </p>
@@ -109,7 +109,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
             </Button>
           </form>
         </div>
-        <p className="rounded-lg bg-brand-50 p-3 text-sm text-slate-600">
+        <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
           Ingreso: {formatDate(range.from)} al {formatDate(range.to)}.
           {report && (
             <>
@@ -122,7 +122,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
       </Card>
 
       {!report || !totals ? (
-        <Card role="status" className="border-amber-200">
+        <Card role="status" className="border-warning-border">
           <p>
             Informe no disponible: falta habilitar la migracion de lectura de negocio del taller. No
             se muestran totales ficticios.
@@ -193,7 +193,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
           <Card className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold">Pendientes de estas ordenes</h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {totals.orders} ordenes ingresadas; {totals.activeCustody} siguen en custodia. Las
                 colas pueden superponerse: no se suman. Los enlaces abren las colas actuales
                 completas del taller.
@@ -205,12 +205,12 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                   key={key}
                   href={workshopCategoryHref(key)}
                   className={cn(
-                    "rounded-xl border p-4 text-slate-800 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600",
+                    "rounded-xl border p-4 text-foreground hover:bg-card focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden",
                     key === "ready"
-                      ? "border-emerald-200 bg-emerald-50"
+                      ? "border-success-border bg-success-soft"
                       : key === "parts" || key === "return"
-                        ? "border-amber-200 bg-amber-50"
-                        : "border-sky-200 bg-sky-50"
+                        ? "border-warning-border bg-warning-soft"
+                        : "border-info-border bg-info-soft"
                   )}
                 >
                   <p className="text-xs font-medium">{label}</p>
@@ -228,19 +228,19 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
               <h3 className="text-lg font-semibold">Antiguedad desde ingreso</h3>
               <dl className="grid grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm text-slate-600">Mediana</dt>
+                  <dt className="text-sm text-muted-foreground">Mediana</dt>
                   <dd className="mt-1 text-2xl font-semibold tabular-nums">
                     {days(totals.intakeAgeMedianDays)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm text-slate-600">Percentil 90</dt>
+                  <dt className="text-sm text-muted-foreground">Percentil 90</dt>
                   <dd className="mt-1 text-2xl font-semibold tabular-nums">
                     {days(totals.intakeAgeP90Days)}
                   </dd>
                 </div>
               </dl>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Edad al {formatDate(report.asOf)} de las ordenes que siguen en custodia. No mide
                 esperas por fase. Excluye {totals.futureIntakeOrders} ingresos futuros del calculo
                 de edad.
@@ -255,12 +255,12 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                   ["Por revisar", totals.warrantyReviewOrders]
                 ].map(([label, value]) => (
                   <div key={label}>
-                    <dt className="text-sm text-slate-600">{label}</dt>
+                    <dt className="text-sm text-muted-foreground">{label}</dt>
                     <dd className="mt-1 text-2xl font-semibold tabular-nums">{value}</dd>
                   </div>
                 ))}
               </dl>
-              <p className="text-sm text-slate-600">
+              <p className="text-sm text-muted-foreground">
                 Cuenta ordenes con cobertura, no reingresos ni tasa de retrabajo. No existe aqui
                 evidencia suficiente para esas metricas.
               </p>
@@ -270,7 +270,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
           <Card className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold">Por tecnico asignado</h3>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Agrupa por responsable actual de la REP, no por quien la creo. No atribuye
                 historicamente trabajo o cobros anteriores a una reasignacion.
               </p>
@@ -279,10 +279,10 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
               {report.technicians.map((technician) => (
                 <article
                   key={technician.technicianId ?? "unassigned"}
-                  className="min-w-0 rounded-2xl border border-slate-200 bg-white/70 p-4"
+                  className="min-w-0 rounded-2xl border border-border bg-white/70 p-4"
                 >
-                  <h4 className="break-words font-semibold">{technician.technicianName}</h4>
-                  <p className="mt-1 text-xs text-slate-600">
+                  <h4 className="font-semibold wrap-break-word">{technician.technicianName}</h4>
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {technician.orders} ordenes / {technician.activeCustody} en custodia /{" "}
                     {technician.acceptedCurrent} aceptadas vigentes
                   </p>
@@ -308,7 +308,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                       </dd>
                     </div>
                   </dl>
-                  <p className="mt-3 text-xs text-slate-600">
+                  <p className="mt-3 text-xs text-muted-foreground">
                     Costo registrado conocido: {money(technician.knownDirectCostSubtotal)};{" "}
                     {technician.unknownCostOrders} incompletas. {technician.creatorDifferentOrders}{" "}
                     creadas por otra persona.
@@ -320,26 +320,26 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
 
           <Card className="p-0 sm:p-0">
             <details>
-              <summary className="min-h-14 cursor-pointer rounded-xl p-4 text-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-slate-600">
+              <summary className="min-h-14 cursor-pointer rounded-xl p-4 text-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid">
                 <span className="font-semibold">Calidad y alcance de los datos</span>
-                <span className="mt-1 block text-sm text-slate-600">
+                <span className="mt-1 block text-sm text-muted-foreground">
                   {totals.unknownCostOrders} ordenes con costos por completar;{" "}
                   {totals.unknownChargeOrders} sin importe definido. Ver evidencia y reglas.
                 </span>
               </summary>
-              <div className="space-y-3 border-t border-slate-200 p-4 sm:p-5">
-                <p className="text-sm text-slate-700">
+              <div className="space-y-3 border-t border-border p-4 sm:p-5">
+                <p className="text-sm text-body">
                   {totals.staleAcceptanceOrders} aceptaciones sin evidencia vigente;{" "}
                   {totals.paidFlagWithoutPaymentsOrders} marcas de pagado sin registros de pago;{" "}
                   {totals.unknownCostOrders} ordenes con costo incompleto. No se corrigen saldos ni
                   historia desde este informe.
                 </p>
-                <p className="text-sm text-slate-700">
+                <p className="text-sm text-body">
                   Deuda total: {money(totals.debt)}. Margen conocido parcial:{" "}
                   {money(totals.knownDirectMarginSubtotal)}; solo ordenes con importe y costos
                   conocidos. Nunca se extrapola a las demas ordenes.
                 </p>
-                <p className="text-sm text-slate-700">
+                <p className="text-sm text-body">
                   Aceptacion vigente:{" "}
                   {totals.acceptanceRate === null
                     ? "Sin decisiones"
@@ -348,11 +348,11 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                   evidencia de la version actual. Denominador: esas decisiones vigentes, no todas
                   las ordenes.
                 </p>
-                <details className="rounded-2xl border border-slate-200 bg-white/70 p-4">
-                  <summary className="cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-600">
+                <details className="rounded-2xl border border-border bg-white/70 p-4">
+                  <summary className="cursor-pointer font-medium focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden">
                     Fuentes y reglas de calculo
                   </summary>
-                  <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600">
+                  <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
                     <p>
                       Repuestos consumidos: {numberFormat.format(totals.consumedPartsQuantity)}{" "}
                       unidades; costo registrado {money(totals.consumedPartsCostKnown)}. Se calcula

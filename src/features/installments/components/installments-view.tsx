@@ -22,10 +22,10 @@ import {
 import { generateInstallments } from "@/features/installments/model";
 
 function getBadgeTone(status: string) {
-  if (status === "pagada" || status === "finalizada") return "bg-emerald-50 text-emerald-700";
-  if (status === "vencida") return "bg-amber-50 text-amber-800";
-  if (status === "cancelada") return "bg-rose-50 text-rose-700";
-  return "bg-slate-100 text-slate-700";
+  if (status === "pagada" || status === "finalizada") return "bg-success-soft text-success";
+  if (status === "vencida") return "bg-warning-soft text-warning";
+  if (status === "cancelada") return "bg-danger-soft text-danger";
+  return "bg-accent text-body";
 }
 
 export function InstallmentsView({
@@ -147,34 +147,34 @@ export function InstallmentsView({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Cuotas</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Cuotas</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Ventas financiadas. Cada cobro se registra en caja al pagar la cuota.
             </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:max-w-lg xl:grid-cols-4">
-            <div className="min-w-0 border-l border-slate-200 px-3 py-2">
-              <p className="text-sm font-semibold text-slate-500">Ventas activas</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">
+            <div className="min-w-0 border-l border-border px-3 py-2">
+              <p className="text-sm font-semibold text-muted-foreground">Ventas activas</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {data.summary.activeSales}
               </p>
             </div>
-            <div className="min-w-0 border-l border-slate-200 px-3 py-2">
-              <p className="text-sm font-semibold text-slate-500">Cuotas vencidas</p>
-              <p className="mt-2 text-2xl font-semibold text-finance-caution">
+            <div className="min-w-0 border-l border-border px-3 py-2">
+              <p className="text-sm font-semibold text-muted-foreground">Cuotas vencidas</p>
+              <p className="mt-2 text-2xl font-semibold text-warning">
                 {data.summary.overdueInstallments}
               </p>
             </div>
-            <div className="min-w-0 border-l border-slate-200 px-3 py-2">
-              <p className="text-sm font-semibold text-slate-500">Pendientes</p>
-              <p className="mt-2 text-2xl font-semibold text-slate-950">
+            <div className="min-w-0 border-l border-border px-3 py-2">
+              <p className="text-sm font-semibold text-muted-foreground">Pendientes</p>
+              <p className="mt-2 text-2xl font-semibold text-foreground">
                 {data.summary.pendingInstallments}
               </p>
             </div>
-            <div className="min-w-0 border-l border-slate-200 px-3 py-2">
-              <p className="text-sm font-semibold text-slate-500">Pagadas</p>
-              <p className="mt-2 text-2xl font-semibold text-finance-profit">
+            <div className="min-w-0 border-l border-border px-3 py-2">
+              <p className="text-sm font-semibold text-muted-foreground">Pagadas</p>
+              <p className="mt-2 text-2xl font-semibold text-success">
                 {data.summary.paidInstallments}
               </p>
             </div>
@@ -182,7 +182,7 @@ export function InstallmentsView({
         </div>
 
         {!data.migrationReady ? (
-          <p className="mt-4 rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <p className="mt-4 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
             Falta ejecutar la migracion de cuotas en Supabase para activar este modulo.
           </p>
         ) : null}
@@ -199,8 +199,8 @@ export function InstallmentsView({
           </div>
         ) : null}
 
-        <details className="mt-4 border-t border-slate-200">
-          <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500">
+        <details className="mt-4 border-t border-border">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-semibold text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid">
             Nueva venta en cuotas
           </summary>
           <form action={saveInstallmentSaleAction} className="mt-3 space-y-4">
@@ -210,7 +210,7 @@ export function InstallmentsView({
 
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
               <div className="xl:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Producto vendido
                 </label>
                 <Input
@@ -222,7 +222,9 @@ export function InstallmentsView({
                 />
               </div>
               <div className="xl:col-span-2">
-                <label className="mb-2 block text-sm font-semibold text-slate-500">Cliente</label>
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
+                  Cliente
+                </label>
                 <Input
                   aria-label="Cliente de la venta en cuotas"
                   name="customerName"
@@ -232,7 +234,7 @@ export function InstallmentsView({
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Monto total
                 </label>
                 <MoneyInput
@@ -243,7 +245,7 @@ export function InstallmentsView({
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Cantidad de cuotas
                 </label>
                 <Input
@@ -256,7 +258,7 @@ export function InstallmentsView({
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Primera cuota
                 </label>
                 <Input
@@ -268,7 +270,7 @@ export function InstallmentsView({
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Medio inicial
                 </label>
                 <Select
@@ -280,7 +282,7 @@ export function InstallmentsView({
                 />
               </div>
               <div className="xl:col-span-4">
-                <label className="mb-2 block text-sm font-semibold text-slate-500">
+                <label className="mb-2 block text-sm font-semibold text-muted-foreground">
                   Observaciones
                 </label>
                 <Textarea
@@ -293,16 +295,16 @@ export function InstallmentsView({
               </div>
             </div>
 
-            <div className="border-t border-slate-200 pt-4">
+            <div className="border-t border-border pt-4">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-950">
+                  <h2 className="text-lg font-semibold text-foreground">
                     Detalle editable antes de guardar
                   </h2>
                 </div>
-                <div className="min-w-0 border-l border-slate-200 pl-4">
-                  <p className="text-sm font-semibold text-slate-500">Total cuotas</p>
-                  <p className="mt-2 text-lg font-semibold text-slate-950">
+                <div className="min-w-0 border-l border-border pl-4">
+                  <p className="text-sm font-semibold text-muted-foreground">Total cuotas</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">
                     {formatCurrency(
                       installments.reduce((acc, installment) => acc + Number(installment.amount), 0)
                     )}
@@ -314,9 +316,9 @@ export function InstallmentsView({
                 {installments.map((installment, index) => (
                   <div
                     key={installment.installmentNumber}
-                    className="grid gap-3 border-t border-slate-200 py-3 sm:grid-cols-2 xl:grid-cols-[130px_minmax(0,160px)_minmax(0,160px)_minmax(0,150px)_minmax(0,1fr)]"
+                    className="grid gap-3 border-t border-border py-3 sm:grid-cols-2 xl:grid-cols-[130px_minmax(0,160px)_minmax(0,160px)_minmax(0,150px)_minmax(0,1fr)]"
                   >
-                    <div className="flex items-center py-3 text-sm font-semibold text-slate-900">
+                    <div className="flex items-center py-3 text-sm font-semibold text-foreground">
                       Cuota {installment.installmentNumber}/{installmentsCount}
                     </div>
                     <Input
@@ -363,7 +365,7 @@ export function InstallmentsView({
       <Card className="p-4 sm:p-5">
         <div className="space-y-3">
           <div>
-            <h2 className="text-xl font-semibold text-slate-950">Consultar cuotas</h2>
+            <h2 className="text-xl font-semibold text-foreground">Consultar cuotas</h2>
           </div>
           <form className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             <Input
@@ -437,30 +439,32 @@ export function InstallmentsView({
                     >
                       {sale.displayStatus}
                     </span>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       {sale.paidCount}/{sale.installmentsCount} cobradas
                     </span>
                   </div>
-                  <h3 className="text-xl font-semibold text-slate-950">{sale.productName}</h3>
-                  <p className="text-sm text-slate-600">{sale.customerName}</p>
-                  {sale.notes ? <p className="text-sm text-slate-500">{sale.notes}</p> : null}
+                  <h3 className="text-xl font-semibold text-foreground">{sale.productName}</h3>
+                  <p className="text-sm text-muted-foreground">{sale.customerName}</p>
+                  {sale.notes ? (
+                    <p className="text-sm text-muted-foreground">{sale.notes}</p>
+                  ) : null}
                 </div>
                 <div className="grid min-w-0 gap-3 sm:grid-cols-3 lg:max-w-xl">
-                  <div className="min-w-0 border-l border-slate-200 py-2 pl-3">
-                    <p className="text-sm font-semibold text-slate-500">Total venta</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                  <div className="min-w-0 border-l border-border py-2 pl-3">
+                    <p className="text-sm font-semibold text-muted-foreground">Total venta</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">
                       {formatCurrency(sale.totalAmount)}
                     </p>
                   </div>
-                  <div className="min-w-0 border-l border-slate-200 py-2 pl-3">
-                    <p className="text-sm font-semibold text-slate-500">Cobrado</p>
-                    <p className="mt-2 text-lg font-semibold text-finance-profit">
+                  <div className="min-w-0 border-l border-border py-2 pl-3">
+                    <p className="text-sm font-semibold text-muted-foreground">Cobrado</p>
+                    <p className="mt-2 text-lg font-semibold text-success">
                       {formatCurrency(sale.paidAmount)}
                     </p>
                   </div>
-                  <div className="min-w-0 border-l border-slate-200 py-2 pl-3">
-                    <p className="text-sm font-semibold text-slate-500">Pendiente</p>
-                    <p className="mt-2 text-lg font-semibold text-slate-950">
+                  <div className="min-w-0 border-l border-border py-2 pl-3">
+                    <p className="text-sm font-semibold text-muted-foreground">Pendiente</p>
+                    <p className="mt-2 text-lg font-semibold text-foreground">
                       {formatCurrency(sale.pendingAmount)}
                     </p>
                   </div>
@@ -469,11 +473,11 @@ export function InstallmentsView({
 
               <div className="mt-4 space-y-3">
                 {sale.installments.map((installment) => (
-                  <div key={installment.id} className="border-t border-slate-200 py-4">
+                  <div key={installment.id} className="border-t border-border py-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-sm font-semibold text-slate-950">
+                          <span className="text-sm font-semibold text-foreground">
                             Cuota {installment.installmentNumber}/{sale.installmentsCount}
                           </span>
                           <span
@@ -482,13 +486,13 @@ export function InstallmentsView({
                             {installment.displayStatus}
                           </span>
                         </div>
-                        <p className="mt-2 text-sm text-slate-500">
+                        <p className="mt-2 text-sm text-muted-foreground">
                           Vence {formatDate(installment.dueDate)} - Medio{" "}
                           {formatCashMethod(installment.paymentMethod)}
                           {installment.paidAt ? ` - Cobrada ${formatDate(installment.paidAt)}` : ""}
                         </p>
                       </div>
-                      <p className="text-xl font-semibold text-slate-950">
+                      <p className="text-xl font-semibold text-foreground">
                         {formatCurrency(installment.amount)}
                       </p>
                     </div>
@@ -497,8 +501,8 @@ export function InstallmentsView({
                       {installment.status !== "pagada" &&
                       installment.status !== "cancelada" &&
                       sale.status !== "cancelada" ? (
-                        <details className="self-start border-t border-slate-200">
-                          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-500">
+                        <details className="self-start border-t border-border">
+                          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-body focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid">
                             Editar cuota
                           </summary>
                           <form
@@ -551,7 +555,7 @@ export function InstallmentsView({
                           </form>
                         </details>
                       ) : (
-                        <p className="py-3 text-sm text-slate-600">
+                        <p className="py-3 text-sm text-muted-foreground">
                           Cuota cobrada o cancelada: su importe no se edita retroactivamente.
                         </p>
                       )}
@@ -562,7 +566,7 @@ export function InstallmentsView({
                         sale.status !== "cancelada" ? (
                           <form
                             action={markInstallmentPaidAction}
-                            className="grid gap-3 border-t border-slate-200 pt-3"
+                            className="grid gap-3 border-t border-border pt-3"
                           >
                             <input name="id" type="hidden" value={installment.id} />
                             <Select
@@ -586,7 +590,7 @@ export function InstallmentsView({
                             />
                           </form>
                         ) : (
-                          <div className="py-3 text-sm text-slate-600">
+                          <div className="py-3 text-sm text-muted-foreground">
                             {installment.status === "pagada"
                               ? "Cuota cobrada e impactada en caja."
                               : "No se puede cobrar una cuota cancelada."}

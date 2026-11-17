@@ -39,7 +39,7 @@ describe("report business overview", () => {
     expect(screen.getByRole("figure", { name: "Actividad registrada del periodo" })).toBeTruthy();
     expect(screen.getByRole("figure", { name: "Comparacion mensual por actividad" })).toBeTruthy();
     expect(screen.getByRole("figure", { name: "Categorias con mas ventas" })).toBeTruthy();
-    expect(screen.getByLabelText("Variacion de Gastos").className).toContain("text-rose-700");
+    expect(screen.getByLabelText("Variacion de Gastos").className).toContain("text-danger");
     const links = screen.getAllByRole("link", { name: "Exportar CSV" });
     expect(links).toHaveLength(6);
     expect(links.every((link) => link.getAttribute("href")?.endsWith("from=2026-10-01&to=2026-10-05"))).toBe(true);

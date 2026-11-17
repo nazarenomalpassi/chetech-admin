@@ -82,12 +82,12 @@ export function PwaRegister() {
   return (
     <aside
       aria-live="polite"
-      className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-[100] flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-xl border border-line bg-white p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between"
+      className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] left-1/2 z-100 flex w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-pop sm:flex-row sm:items-center sm:justify-between"
       role="status"
     >
       <div>
-        <p className="text-sm font-semibold text-slate-950">Actualizacion disponible</p>
-        <p className="mt-1 text-xs leading-5 text-slate-600">{notice}</p>
+        <p className="text-sm font-semibold text-foreground">Actualizacion disponible</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">{notice}</p>
       </div>
       <Button className="shrink-0" onClick={installUpdate} type="button">
         Actualizar ahora

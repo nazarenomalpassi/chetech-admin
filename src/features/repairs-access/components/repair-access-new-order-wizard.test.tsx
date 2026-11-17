@@ -783,7 +783,7 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(new FormData(intakeForm()).get("customerId")).toBe("");
   });
 
-  it("closes the dropdown on blur outside the lookup and aborts pending remote work", async () => {
+  it("closes the dropdown on blur-sm outside the lookup and aborts pending remote work", async () => {
     vi.useFakeTimers();
     const response = deferred<Response>();
     const fetchCustomers = vi.fn<(url: string, options: RequestInit) => Promise<Response>>(
@@ -804,7 +804,7 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(new FormData(intakeForm()).get("customerId")).toBe("");
   });
 
-  it("keeps suggestions available when blur moves to a suggestion for keyboard activation", () => {
+  it("keeps suggestions available when blur-sm moves to a suggestion for keyboard activation", () => {
     renderIntake({ customers: [customer] });
     const field = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(field, { target: { value: "Maria" } });
@@ -817,7 +817,7 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(new FormData(intakeForm()).get("customerId")).toBe(customer.id);
   });
 
-  it("keeps touch pointer selection alive until click even when default focus would blur without a related target", () => {
+  it("keeps touch pointer selection alive until click even when default focus would blur-sm without a related target", () => {
     renderIntake({ customers: [customer] });
     const field = screen.getByLabelText("Nombre y apellido");
     act(() => field.focus());

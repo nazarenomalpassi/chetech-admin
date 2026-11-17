@@ -5,9 +5,9 @@ export function SalesPlaceholder() {
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-sm text-slate-500">Ventas</p>
-        <h1 className="text-3xl font-semibold text-slate-950">Nueva venta</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
+        <p className="text-sm text-muted-foreground">Ventas</p>
+        <h1 className="text-3xl font-semibold text-foreground">Nueva venta</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           La base tipada ya está preparada para carrito, pagos múltiples, validación de stock y
           persistencia en `sales`, `sale_items`, `sale_payments` y `stock_movements`.
         </p>

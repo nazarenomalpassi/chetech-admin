@@ -66,8 +66,8 @@ export function ExpenseLinkSelector({
   }
 
   return (
-    <fieldset className="min-w-0 space-y-3 border-t border-slate-200 pt-3">
-      <legend className="pr-2 text-sm font-semibold text-slate-800">
+    <fieldset className="min-w-0 space-y-3 border-t border-border pt-3">
+      <legend className="pr-2 text-sm font-semibold text-foreground">
         Vinculo con REP (opcional)
       </legend>
       <input name="linkKind" type="hidden" value={kind} />
@@ -81,7 +81,7 @@ export function ExpenseLinkSelector({
         type="hidden"
         value={kind === "none" ? "" : (selected?.orderId ?? "")}
       />
-      <label className="block text-sm font-semibold text-slate-700" htmlFor={`${prefix}-kind`}>
+      <label className="block text-sm font-semibold text-body" htmlFor={`${prefix}-kind`}>
         Destino del gasto
       </label>
       <Select
@@ -94,15 +94,12 @@ export function ExpenseLinkSelector({
           { value: "repair", label: "Otro gasto directo de REP" }
         ]}
       />
-      <p className="text-sm text-slate-600">
+      <p className="text-sm text-muted-foreground">
         Vincular no registra otro pago. Solo el pago de un repuesto reduce su pendiente.
       </p>
       {kind !== "none" ? (
         <>
-          <label
-            className="block text-sm font-semibold text-slate-700"
-            htmlFor={`${prefix}-search`}
-          >
+          <label className="block text-sm font-semibold text-body" htmlFor={`${prefix}-search`}>
             {kind === "part" ? "Buscar REP, repuesto o proveedor" : "Buscar numero REP"}
           </label>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -134,14 +131,14 @@ export function ExpenseLinkSelector({
             </Button>
           </div>
           {selected ? (
-            <p className="break-words text-sm font-semibold text-slate-800">
+            <p className="text-sm font-semibold wrap-break-word text-foreground">
               Seleccionado: {selected.repairNumber} / {selected.description}
             </p>
           ) : (
-            <p className="text-sm text-slate-600">Selecciona un destino antes de guardar.</p>
+            <p className="text-sm text-muted-foreground">Selecciona un destino antes de guardar.</p>
           )}
           <div aria-live="polite" aria-busy={loading}>
-            {loading ? <p className="text-sm text-slate-600">Cargando destinos...</p> : null}
+            {loading ? <p className="text-sm text-muted-foreground">Cargando destinos...</p> : null}
             {error ? (
               <p className="status-banner status-banner--error" role="alert">
                 {error}
@@ -149,10 +146,10 @@ export function ExpenseLinkSelector({
             ) : null}
             {!loading && !error && data ? (
               <>
-                <div className="max-h-80 divide-y divide-slate-200 overflow-y-auto">
+                <div className="max-h-80 divide-y divide-border overflow-y-auto">
                   {data.items.map((item) => (
                     <label
-                      className="flex min-h-11 cursor-pointer gap-3 bg-white py-3 text-sm"
+                      className="flex min-h-11 cursor-pointer gap-3 bg-card py-3 text-sm"
                       key={item.id}
                     >
                       <input
@@ -163,12 +160,12 @@ export function ExpenseLinkSelector({
                         value={item.id}
                         className="mt-1 shrink-0"
                       />
-                      <span className="min-w-0 break-words">
-                        <span className="font-semibold text-slate-950">
+                      <span className="min-w-0 wrap-break-word">
+                        <span className="font-semibold text-foreground">
                           {item.repairNumber} / {item.description}
                         </span>
                         {kind === "part" ? (
-                          <span className="mt-1 block text-slate-600">
+                          <span className="mt-1 block text-muted-foreground">
                             {item.supplier ?? "Sin proveedor"} ·{" "}
                             {item.expectedCost == null
                               ? "Costo desconocido; pendiente desconocido"
@@ -180,7 +177,9 @@ export function ExpenseLinkSelector({
                     </label>
                   ))}
                   {!data.items.length ? (
-                    <p className="text-sm text-slate-600">No hay destinos para esta busqueda.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No hay destinos para esta busqueda.
+                    </p>
                   ) : null}
                 </div>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
@@ -192,7 +191,7 @@ export function ExpenseLinkSelector({
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm text-slate-600">
+                  <span className="text-sm text-muted-foreground">
                     Pagina {data.page} de {data.totalPages} · {data.total} destinos
                   </span>
                   <Button

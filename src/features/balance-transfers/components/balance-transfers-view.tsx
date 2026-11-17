@@ -41,8 +41,8 @@ export function BalanceTransfersView({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
           <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold text-slate-950">Transferencias entre cuentas</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
+            <h1 className="text-2xl font-semibold text-foreground">Transferencias entre cuentas</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Mueve dinero entre Efectivo, NX SANTI y NX LOCAL sin alterar ventas, gastos ni
               ganancias.
             </p>
@@ -81,14 +81,14 @@ export function BalanceTransfersView({
 
         <form action={saveBalanceTransferAction} className="mt-6 grid gap-4 lg:grid-cols-3">
           <label>
-            <span className="mb-2 block text-sm font-semibold text-slate-500">
+            <span className="mb-2 block text-sm font-semibold text-muted-foreground">
               Cuenta de origen
             </span>
             <Select name="fromPaymentMethod" options={methodOptions} required />
           </label>
 
           <label>
-            <span className="mb-2 block text-sm font-semibold text-slate-500">
+            <span className="mb-2 block text-sm font-semibold text-muted-foreground">
               Cuenta de destino
             </span>
             <Select
@@ -100,7 +100,7 @@ export function BalanceTransfersView({
           </label>
 
           <label>
-            <span className="mb-2 block text-sm font-semibold text-slate-500">Monto</span>
+            <span className="mb-2 block text-sm font-semibold text-muted-foreground">Monto</span>
             <Input
               min={0.01}
               name="amount"
@@ -112,18 +112,18 @@ export function BalanceTransfersView({
           </label>
 
           <label>
-            <span className="mb-2 block text-sm font-semibold text-slate-500">Fecha</span>
+            <span className="mb-2 block text-sm font-semibold text-muted-foreground">Fecha</span>
             <Input defaultValue={today} name="transferDate" required type="date" />
           </label>
 
           <label className="lg:col-span-2">
-            <span className="mb-2 block text-sm font-semibold text-slate-500">
+            <span className="mb-2 block text-sm font-semibold text-muted-foreground">
               Motivo (opcional)
             </span>
             <Input name="description" placeholder="Ej: cambio de efectivo por transferencia" />
           </label>
 
-          <div className="text-sm leading-6 text-slate-600 lg:col-span-3">
+          <div className="text-sm leading-6 text-muted-foreground lg:col-span-3">
             La transferencia no cambia el saldo total ni la ganancia.
           </div>
 
@@ -134,16 +134,16 @@ export function BalanceTransfersView({
       </Card>
 
       <div className="table-shell">
-        <div className="border-graphite/8 flex items-center justify-between gap-3 border-b bg-brand-50/80 px-4 py-3">
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/80 px-4 py-3">
           <div>
-            <h2 className="mt-1 text-xl font-semibold tabular-nums text-slate-950">
+            <h2 className="mt-1 text-xl font-semibold text-foreground tabular-nums">
               Transferencias realizadas
             </h2>
           </div>
-          <History className="h-5 w-5 text-slate-400" />
+          <History className="h-5 w-5 text-subtle-foreground" />
         </div>
 
-        <div className="grid divide-y divide-slate-200 px-4 lg:hidden">
+        <div className="grid divide-y divide-border px-4 lg:hidden">
           {transfers.length ? (
             transfers.map((transfer) => (
               <TransferMobileCard key={transfer.id} transfer={transfer} />
@@ -157,7 +157,7 @@ export function BalanceTransfersView({
 
         <div className="hidden overflow-x-auto lg:block">
           <table className="min-w-full text-sm">
-            <thead className="bg-white text-left text-slate-500">
+            <thead className="bg-card text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Origen</th>
@@ -172,36 +172,40 @@ export function BalanceTransfersView({
             <tbody>
               {transfers.map((transfer) => (
                 <tr
-                  className="border-graphite/8 border-t bg-white align-top hover:bg-slate-50"
+                  className="border-t border-border bg-card align-top hover:bg-muted"
                   key={transfer.id}
                 >
-                  <td className="px-4 py-3 text-slate-600">{formatDate(transfer.transferDate)}</td>
-                  <td className="px-4 py-3 font-semibold text-slate-950">
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(transfer.transferDate)}
+                  </td>
+                  <td className="px-4 py-3 font-semibold text-foreground">
                     {formatBalanceTransferMethod(transfer.fromPaymentMethod)}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-slate-950">
+                  <td className="px-4 py-3 font-semibold text-foreground">
                     {formatBalanceTransferMethod(transfer.toPaymentMethod)}
                   </td>
-                  <td className="px-4 py-3 text-right font-semibold text-graphite">
+                  <td className="px-4 py-3 text-right font-semibold text-foreground">
                     {formatCurrency(transfer.amount)}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     <p>{transfer.description || "-"}</p>
                     {transfer.isVoided ? (
-                      <p className="mt-1 text-xs font-semibold text-rose-600">
+                      <p className="mt-1 text-xs font-semibold text-danger">
                         Anulado con movimiento inverso.
                       </p>
                     ) : null}
                     {transfer.reversalOfTransferId ? (
-                      <p className="mt-1 text-xs font-semibold text-amber-700">
+                      <p className="mt-1 text-xs font-semibold text-warning">
                         Movimiento inverso de anulacion.
                       </p>
                     ) : null}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-muted-foreground">
                     {transfer.createdBy?.fullName ?? "-"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{formatDate(transfer.createdAt)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(transfer.createdAt)}
+                  </td>
                   <td className="px-4 py-3">
                     <TransferActions transfer={transfer} />
                   </td>
@@ -210,7 +214,7 @@ export function BalanceTransfersView({
             </tbody>
           </table>
           {!transfers.length ? (
-            <div className="empty-panel border-graphite/8 border-t">
+            <div className="empty-panel border-t border-border">
               Todavia no hay transferencias entre cuentas registradas.
             </div>
           ) : null}
@@ -230,14 +234,14 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <div className="min-w-0 border-l border-slate-200 px-3 py-2">
+    <div className="min-w-0 border-l border-border px-3 py-2">
       <div className="flex items-center gap-3">
-        <span className="inline-flex shrink-0 items-center justify-center text-slate-500">
+        <span className="inline-flex shrink-0 items-center justify-center text-muted-foreground">
           {icon}
         </span>
         <div>
-          <p className="text-sm font-semibold text-slate-500">{label}</p>
-          <p className="mt-1 text-xl font-semibold tabular-nums text-slate-950">{value}</p>
+          <p className="text-sm font-semibold text-muted-foreground">{label}</p>
+          <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">{value}</p>
         </div>
       </div>
     </div>
@@ -246,27 +250,27 @@ function MetricCard({
 
 function TransferMobileCard({ transfer }: { transfer: BalanceTransferRecord }) {
   return (
-    <article className="border-b border-slate-200 py-4">
+    <article className="border-b border-border py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs text-slate-500">{formatDate(transfer.transferDate)}</p>
-          <p className="mt-1 font-semibold text-slate-950">
+          <p className="text-xs text-muted-foreground">{formatDate(transfer.transferDate)}</p>
+          <p className="mt-1 font-semibold text-foreground">
             {formatBalanceTransferMethod(transfer.fromPaymentMethod)} a{" "}
             {formatBalanceTransferMethod(transfer.toPaymentMethod)}
           </p>
         </div>
-        <p className="font-semibold text-graphite">{formatCurrency(transfer.amount)}</p>
+        <p className="font-semibold text-foreground">{formatCurrency(transfer.amount)}</p>
       </div>
-      <p className="mt-3 text-sm text-slate-600">{transfer.description || "Sin descripcion"}</p>
+      <p className="mt-3 text-sm text-muted-foreground">
+        {transfer.description || "Sin descripcion"}
+      </p>
       {transfer.isVoided ? (
-        <p className="mt-2 text-xs font-semibold text-rose-600">Anulado con movimiento inverso.</p>
+        <p className="mt-2 text-xs font-semibold text-danger">Anulado con movimiento inverso.</p>
       ) : null}
       {transfer.reversalOfTransferId ? (
-        <p className="mt-2 text-xs font-semibold text-amber-700">
-          Movimiento inverso de anulacion.
-        </p>
+        <p className="mt-2 text-xs font-semibold text-warning">Movimiento inverso de anulacion.</p>
       ) : null}
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-muted-foreground">
         Usuario: {transfer.createdBy?.fullName ?? "-"} - Creado: {formatDate(transfer.createdAt)}
       </p>
       <div className="mt-4">
@@ -284,7 +288,7 @@ function TransferActions({
   mobile?: boolean;
 }) {
   if (transfer.isVoided || transfer.reversalOfTransferId) {
-    return <span className="text-xs font-semibold text-slate-400">Sin acciones</span>;
+    return <span className="text-xs font-semibold text-subtle-foreground">Sin acciones</span>;
   }
 
   return (

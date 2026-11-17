@@ -131,7 +131,7 @@ export function RepairAccessOrdersSection({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2
-              className="text-xl font-semibold text-slate-950 outline-none"
+              className="text-xl font-semibold text-foreground outline-hidden"
               ref={headingRef}
               tabIndex={-1}
             >
@@ -145,7 +145,7 @@ export function RepairAccessOrdersSection({
           </div>
         </div>
         <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+          <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
             <span>Buscar orden</span>
             <Input
               aria-label="Buscar orden de service"
@@ -157,7 +157,7 @@ export function RepairAccessOrdersSection({
               value={search}
             />
           </label>
-          <label className="grid min-w-0 gap-2 text-sm font-medium text-slate-700">
+          <label className="grid min-w-0 gap-2 text-sm font-medium text-body">
             <span>Estado</span>
             <Select
               aria-label="Filtrar ordenes por estado"
@@ -174,7 +174,7 @@ export function RepairAccessOrdersSection({
             className="min-w-0 sm:col-span-2"
             open={warrantyFilter !== "todos" ? true : undefined}
           >
-            <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+            <summary className="flex min-h-11 cursor-pointer items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
               Filtros
             </summary>
             <div className="pt-2 sm:max-w-sm">
@@ -225,16 +225,16 @@ export function RepairAccessOrdersSection({
               />
             ))
           ) : (
-            <div className="rounded-xl border border-dashed border-graphite/15 bg-white px-4 py-6 text-sm leading-6 text-slate-500 md:col-span-2 2xl:col-span-3">
+            <div className="rounded-xl border border-dashed border-border bg-card px-4 py-6 text-sm leading-6 text-muted-foreground md:col-span-2 2xl:col-span-3">
               No hay ordenes para esa busqueda o estado.
             </div>
           )}
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-slate-100">
-          <div className="overflow-x-auto bg-white">
+        <div className="overflow-hidden rounded-xl border border-border">
+          <div className="overflow-x-auto bg-card">
             <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-slate-500">
+              <thead className="bg-muted text-left text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-medium">Orden</th>
                   <th className="px-4 py-3 font-medium">Cliente</th>
@@ -261,11 +261,11 @@ export function RepairAccessOrdersSection({
                     const activeReturn = summary.activeReturn;
 
                     return (
-                      <tr className="border-t border-slate-100 align-top" key={order.id}>
+                      <tr className="border-t border-border align-top" key={order.id}>
                         <td className="px-4 py-4">
                           <button
                             aria-label={`Ficha completa ${order.repairNumber}`}
-                            className="min-h-11 whitespace-nowrap font-semibold text-slate-950 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40"
+                            className="min-h-11 font-semibold whitespace-nowrap text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
                             onClick={() => onOpenDetail(order)}
                             type="button"
                           >
@@ -273,38 +273,40 @@ export function RepairAccessOrdersSection({
                           </button>
                         </td>
                         <td className="px-4 py-4">
-                          <p className="font-semibold text-slate-950">{order.customer.fullName}</p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="font-semibold text-foreground">{order.customer.fullName}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
                             {order.customer.phone || order.customer.dni || "Sin dato extra"}
                           </p>
                         </td>
-                        <td className="px-4 py-4 text-slate-600">
-                          <p className="font-medium text-slate-800">{deviceLabel || "Equipo"}</p>
+                        <td className="px-4 py-4 text-muted-foreground">
+                          <p className="font-medium text-foreground">{deviceLabel || "Equipo"}</p>
                           {order.device.serialNumber ? (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Serie: {order.device.serialNumber}
                             </p>
                           ) : null}
                           {activeReturn ? (
                             <>
-                              <p className="mt-2 text-xs font-semibold text-amber-900">
+                              <p className="mt-2 text-xs font-semibold text-warning">
                                 Reingreso por garantia activo
                               </p>
-                              <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-sm font-medium leading-5 text-slate-900 [overflow-wrap:anywhere]">
+                              <p className="mt-1 max-w-xs text-sm leading-5 font-medium wrap-anywhere wrap-break-word whitespace-pre-wrap text-foreground">
                                 {activeReturn.issueReported}
                               </p>
                             </>
                           ) : null}
-                          <p className="mt-1 max-w-xs whitespace-pre-wrap break-words text-xs leading-5 text-slate-500 [overflow-wrap:anywhere]">
+                          <p className="mt-1 max-w-xs text-xs leading-5 wrap-anywhere wrap-break-word whitespace-pre-wrap text-muted-foreground">
                             {activeReturn
                               ? `Falla original: ${order.issueReported}`
                               : order.issueReported}
                           </p>
                         </td>
-                        <td className="px-4 py-4 text-slate-600">
+                        <td className="px-4 py-4 text-muted-foreground">
                           {formatDate(activeReturn?.receivedOn ?? order.intakeDate)}
                           {activeReturn ? (
-                            <p className="mt-1 text-xs text-slate-500">Reingreso de garantia</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              Reingreso de garantia
+                            </p>
                           ) : null}
                         </td>
                         <td className="px-4 py-4">
@@ -313,22 +315,22 @@ export function RepairAccessOrdersSection({
                         <td className="px-4 py-4">
                           <RepairAccessWarrantyBadge warranty={order.warranty} />
                           {order.warranty.expiresOn ? (
-                            <p className="mt-1 text-xs text-slate-500">
+                            <p className="mt-1 text-xs text-muted-foreground">
                               Hasta {formatDate(order.warranty.expiresOn)}
                             </p>
                           ) : null}
                         </td>
-                        <td className="px-4 py-4 text-slate-600">
+                        <td className="px-4 py-4 text-muted-foreground">
                           {activeReturn ? (
-                            <p className="mb-1 text-xs font-medium text-slate-500">
+                            <p className="mb-1 text-xs font-medium text-muted-foreground">
                               Orden original
                             </p>
                           ) : null}
                           <p>Pres.: {formatCurrency(order.budgetAmount)}</p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-muted-foreground">
                             Final: {formatCurrency(order.finalAmount)}
                           </p>
-                          <p className="mt-1 text-xs text-slate-500">
+                          <p className="mt-1 text-xs text-muted-foreground">
                             {order.isPaid
                               ? `Cobrada - ${getRepairAccessPaymentLabel(order.paymentMethod)}`
                               : "Sin cobrar"}
@@ -351,7 +353,7 @@ export function RepairAccessOrdersSection({
                               Ficha completa
                             </Button>
                             {activeReturn ? (
-                              <div className="w-full min-w-0 rounded-lg border border-slate-200 p-3">
+                              <div className="w-full min-w-0 rounded-lg border border-border p-3">
                                 <WarrantyReturnCase
                                   key={activeReturn.id}
                                   record={activeReturn}
@@ -360,8 +362,8 @@ export function RepairAccessOrdersSection({
                               </div>
                             ) : order.workflow ? (
                               <LazyDisclosure
-                                className="w-full rounded-lg border border-slate-200"
-                                summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-graphite/40"
+                                className="w-full rounded-lg border border-border"
+                                summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
                                 summary={
                                   order.status === "retirado" || order.deliveredAt
                                     ? "Corregir garantia"
@@ -413,7 +415,7 @@ export function RepairAccessOrdersSection({
                   })
                 ) : (
                   <tr>
-                    <td className="px-4 py-8 text-center text-slate-500" colSpan={9}>
+                    <td className="px-4 py-8 text-center text-muted-foreground" colSpan={9}>
                       No hay ordenes para esa busqueda o estado.
                     </td>
                   </tr>
@@ -425,8 +427,8 @@ export function RepairAccessOrdersSection({
       )}
 
       {visibleOrders.length < filteredOrders.length ? (
-        <div className="border-graphite/8 flex flex-col items-center gap-2 border-t pt-4 sm:flex-row sm:justify-between">
-          <p className="text-xs text-slate-500">
+        <div className="flex flex-col items-center gap-2 border-t border-border pt-4 sm:flex-row sm:justify-between">
+          <p className="text-xs text-muted-foreground">
             Mostrando {visibleOrders.length} de {filteredOrders.length} ordenes encontradas.
           </p>
           <Button

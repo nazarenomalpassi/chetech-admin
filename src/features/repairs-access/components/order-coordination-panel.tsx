@@ -75,20 +75,20 @@ export function OrderCoordinationPanel({
 
   return (
     <section
-      className={`min-w-0 bg-white ${compact ? "border-t border-slate-200 p-3" : "rounded-xl border border-slate-200 p-4"}`}
+      className={`min-w-0 bg-card ${compact ? "border-t border-border p-3" : "rounded-xl border border-border p-4"}`}
       aria-label="Coordinacion de la orden"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-slate-500">Proximo paso</p>
-          <p className="mt-1 text-sm font-semibold text-slate-950">{nextAction}</p>
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="text-xs font-medium text-muted-foreground">Proximo paso</p>
+          <p className="mt-1 text-sm font-semibold text-foreground">{nextAction}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             {context.location || "Ubicacion sin informar"}
             {context.nextActionDate ? ` · Revisar ${formatDate(context.nextActionDate)}` : ""}
           </p>
         </div>
         <span
-          className={`max-w-full rounded-lg px-2 py-1 text-sm font-medium ${accepted || noFault ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-800"}`}
+          className={`max-w-full rounded-lg px-2 py-1 text-sm font-medium ${accepted || noFault ? "bg-success-soft text-success" : "bg-warning-soft text-warning"}`}
         >
           {noFault
             ? "No presenta fallas"
@@ -169,8 +169,8 @@ export function OrderCoordinationPanel({
         </div>
       ) : null}
       {canManage ? (
-        <details className="mt-3 border-t border-slate-200 pt-2">
-          <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-graphite/40">
+        <details className="mt-3 border-t border-border pt-2">
+          <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
             Documentos y cobros
           </summary>
           <div className="flex flex-wrap gap-2 pt-2">
@@ -233,15 +233,15 @@ export function OrderCoordinationPanel({
         </details>
       ) : null}
       {context.parts.length > 0 ? (
-        <div className="mt-4 divide-y divide-slate-200 border-t border-slate-200">
+        <div className="mt-4 divide-y divide-border border-t border-border">
           {context.parts.map((part) => (
             <div
               key={part.id}
               className="flex min-w-0 flex-wrap items-center justify-between gap-2 py-3 text-sm"
             >
               <div>
-                <p className="font-semibold text-slate-800">{part.description}</p>
-                <p className="mt-1 text-slate-500">
+                <p className="font-semibold text-foreground">{part.description}</p>
+                <p className="mt-1 text-muted-foreground">
                   {part.receivedQuantity}/{part.quantity} recibidos ·{" "}
                   {PART_STATUS_LABELS[part.status]}
                   {part.expectedDate ? ` · Llegada ${formatDate(part.expectedDate)}` : ""}
@@ -296,24 +296,24 @@ export function OrderCoordinationPanel({
         >
           <input name="id" value={order.id} type="hidden" />
           <input name="version" value={context.version} type="hidden" />
-          <p className="rounded-xl bg-slate-50 p-3 text-sm">
+          <p className="rounded-xl bg-muted p-3 text-sm">
             {order.repairNumber} · {order.customer.fullName}
           </p>
           {modal === "claim" ? (
-            <p className="text-sm leading-6 text-slate-600">
+            <p className="text-sm leading-6 text-muted-foreground">
               La orden quedara a tu cargo. Mostrador puede reasignarla si ya tiene responsable.
             </p>
           ) : null}
           {["rejected", "revoked"].includes(modal) ? (
             <>
               <input name="decision" value={modal} type="hidden" />
-              <div className="border-y border-slate-200 py-3">
-                <p className="text-sm text-slate-500">
+              <div className="border-y border-border py-3">
+                <p className="text-sm text-muted-foreground">
                   Presupuesto{" "}
                   {context.budgetRevision ? `version ${context.budgetRevision}` : "actual"}
                 </p>
                 <p className="mt-1 text-xl font-semibold">{formatCurrency(order.budgetAmount)}</p>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                <p className="mt-2 text-sm whitespace-pre-wrap text-muted-foreground">
                   {order.budgetDetail || "Sin detalle cargado"}
                 </p>
               </div>
@@ -331,7 +331,7 @@ export function OrderCoordinationPanel({
                   maxLength={2000}
                 />
               </DialogField>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 Se registra el usuario, la fecha y el presupuesto exacto. Esta accion no registra un
                 cobro.
               </p>
@@ -382,7 +382,7 @@ export function OrderCoordinationPanel({
                   placeholder="Solo si el repuesto esta en Productos"
                 />
               </DialogField>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 El pedido aparecera en mostrador con esta orden vinculada. Solicitar no descuenta
                 stock ni dinero.
               </p>
@@ -417,7 +417,7 @@ export function OrderCoordinationPanel({
                   defaultValue={context.nextActionDate || ""}
                 />
               </DialogField>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-muted-foreground">
                 No cambia la fecha prometida al cliente. Es un recordatorio interno del taller.
               </p>
             </>
@@ -438,7 +438,7 @@ export function OrderCoordinationPanel({
 export function DialogField({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="grid gap-2 text-sm">
-      <span className="font-medium text-slate-700">{label}</span>
+      <span className="font-medium text-body">{label}</span>
       {children}
     </label>
   );
@@ -544,7 +544,7 @@ export function CoordinationDialog({
         {result ? (
           <p
             role={result.success ? "status" : "alert"}
-            className={`rounded-xl p-3 text-sm ${result.success ? "bg-emerald-50 text-emerald-800" : "bg-rose-50 text-rose-800"}`}
+            className={`rounded-xl p-3 text-sm ${result.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
           >
             {result.message}
           </p>
@@ -585,7 +585,7 @@ export function PartManagementDialog({
     <CoordinationDialog title="Gestionar repuesto" action={manageRepairPart} onClose={onClose}>
       <input name="id" type="hidden" value={part.id} />
       <input name="version" type="hidden" value={part.version} />
-      <p className="rounded-xl bg-slate-50 p-3 text-sm font-medium">
+      <p className="rounded-xl bg-muted p-3 text-sm font-medium">
         {part.description} · {part.receivedQuantity}/{part.quantity} recibidos
       </p>
       <DialogField label="Accion">
@@ -657,12 +657,12 @@ export function PartManagementDialog({
         <Textarea name="notes" maxLength={2000} required={action === "cancel"} />
       </DialogField>
       {action === "order" ? (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           La compra no registra un pago automatico. Registra el egreso real en Gastos cuando
           corresponda.
         </p>
       ) : null}
-      <p className="flex items-center gap-2 text-xs text-slate-500">
+      <p className="flex items-center gap-2 text-xs text-muted-foreground">
         <ClipboardCheck className="h-4 w-4" aria-hidden="true" />
         Cada recepcion y uso quedan vinculados a la orden.
       </p>
