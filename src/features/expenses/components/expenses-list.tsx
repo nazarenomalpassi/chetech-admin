@@ -19,6 +19,7 @@ import type { ActionResult } from "@/lib/form-state";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 import type { PaginationMeta } from "@/lib/pagination";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type Expense = {
   id: string;
@@ -318,11 +319,13 @@ export function ExpensesList({
                   <ActionMenu label="Mas acciones">
                     <form
                       action={deleteExpenseAction}
-                      onSubmit={(event) => {
-                        if (!window.confirm(`Eliminar el gasto "${expense.description}"?`)) {
-                          event.preventDefault();
-                        }
-                      }}
+                      onSubmit={(event) =>
+                        confirmSubmit(event, {
+                          title: `¿Eliminar el gasto "${expense.description}"?`,
+                          confirmLabel: "Eliminar gasto",
+                          tone: "danger"
+                        })
+                      }
                     >
                       <input name="id" type="hidden" value={expense.id} />
                       <Button className="w-full" type="submit" variant="danger">
@@ -393,11 +396,13 @@ export function ExpensesList({
                         <ActionMenu label="Mas acciones">
                           <form
                             action={deleteExpenseAction}
-                            onSubmit={(event) => {
-                              if (!window.confirm(`Eliminar el gasto "${expense.description}"?`)) {
-                                event.preventDefault();
-                              }
-                            }}
+                            onSubmit={(event) =>
+                              confirmSubmit(event, {
+                                title: `¿Eliminar el gasto "${expense.description}"?`,
+                                confirmLabel: "Eliminar gasto",
+                                tone: "danger"
+                              })
+                            }
                           >
                             <input name="id" type="hidden" value={expense.id} />
                             <Button size="sm" type="submit" variant="danger">

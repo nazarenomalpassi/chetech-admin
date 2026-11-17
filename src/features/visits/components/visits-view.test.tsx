@@ -99,7 +99,7 @@ describe("one visit workflow", () => {
     const cancel = screen.getByRole("button", { name: "Cancelar y conservar" });
     const event = new Event("submit", { bubbles: true, cancelable: true });
     cancel.closest("form")!.dispatchEvent(event);
-    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/conservar/i));
+    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/conservan/i));
     expect(event.defaultPrevented).toBe(true);
     confirm.mockRestore();
   });

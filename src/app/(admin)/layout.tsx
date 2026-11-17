@@ -1,6 +1,8 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { MobileNavigation } from "@/components/layout/mobile-navigation";
 import { Topbar } from "@/components/layout/topbar";
+import { ConfirmProvider } from "@/components/ui/confirm-dialog";
+import { Toaster } from "@/components/ui/toaster";
 import { getCurrentProfile } from "@/lib/auth";
 
 export default async function AdminLayout({
@@ -31,6 +33,8 @@ export default async function AdminLayout({
           </main>
         </div>
       </div>
+      <ConfirmProvider />
+      <Toaster />
     </div>
   );
 }

@@ -23,6 +23,7 @@ import type { ActionResult } from "@/lib/form-state";
 import type { PaymentSplit } from "@/lib/payment-splits";
 import type { PaginationMeta } from "@/lib/pagination";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type Repair = {
   id: string;
@@ -908,15 +909,14 @@ export function RepairsList({
                     ) : (
                       <form
                         action={deleteRepairAction}
-                        onSubmit={(event) => {
-                          if (
-                            !window.confirm(
-                              `Eliminar el registro sin cobros de ${repair.customerName}?`
-                            )
-                          ) {
-                            event.preventDefault();
-                          }
-                        }}
+                        onSubmit={(event) =>
+                          confirmSubmit(event, {
+                            title: `¿Eliminar el registro de ${repair.customerName}?`,
+                            description: "El registro no tiene cobros.",
+                            confirmLabel: "Eliminar registro",
+                            tone: "danger"
+                          })
+                        }
                       >
                         <input name="id" type="hidden" value={repair.id} />
                         <Button className="w-full" type="submit" variant="danger">
@@ -995,15 +995,14 @@ export function RepairsList({
                           ) : (
                             <form
                               action={deleteRepairAction}
-                              onSubmit={(event) => {
-                                if (
-                                  !window.confirm(
-                                    `Eliminar el registro sin cobros de ${repair.customerName}?`
-                                  )
-                                ) {
-                                  event.preventDefault();
-                                }
-                              }}
+                              onSubmit={(event) =>
+                                confirmSubmit(event, {
+                                  title: `¿Eliminar el registro de ${repair.customerName}?`,
+                                  description: "El registro no tiene cobros.",
+                                  confirmLabel: "Eliminar registro",
+                                  tone: "danger"
+                                })
+                              }
                             >
                               <input name="id" type="hidden" value={repair.id} />
                               <Button size="sm" type="submit" variant="danger">

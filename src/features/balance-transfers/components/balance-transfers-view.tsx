@@ -23,6 +23,7 @@ import type {
 } from "@/features/balance-transfers/queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 export function BalanceTransfersView({
   message,
@@ -296,15 +297,14 @@ function TransferActions({
       <form
         action={voidBalanceTransferAction}
         className={mobile ? "grid gap-2" : "flex justify-end"}
-        onSubmit={(event) => {
-          if (
-            !window.confirm(
-              "Anular esta transferencia entre cuentas creando un movimiento inverso?"
-            )
-          ) {
-            event.preventDefault();
-          }
-        }}
+        onSubmit={(event) =>
+          confirmSubmit(event, {
+            title: "¿Anular esta transferencia entre cuentas?",
+            description: "Se crea un movimiento inverso por el mismo importe.",
+            confirmLabel: "Anular transferencia",
+            tone: "danger"
+          })
+        }
       >
         <input name="id" type="hidden" value={transfer.id} />
         <Textarea className="hidden" name="reason" />

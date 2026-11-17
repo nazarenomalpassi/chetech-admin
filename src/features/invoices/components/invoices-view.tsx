@@ -19,6 +19,7 @@ import { calculateInvoiceAmounts } from "@/features/invoices/document-model";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import type { PaginationMeta } from "@/lib/pagination";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type Invoice = {
   id: string;
@@ -702,11 +703,13 @@ export function InvoicesView({
                   <ActionMenu label="Más acciones">
                     <form
                       action={voidInvoiceAction}
-                      onSubmit={(event) => {
-                        if (!window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)) {
-                          event.preventDefault();
-                        }
-                      }}
+                      onSubmit={(event) =>
+                        confirmSubmit(event, {
+                          title: `¿Anular el comprobante ${invoice.invoiceNumber}?`,
+                          confirmLabel: "Anular comprobante",
+                          tone: "danger"
+                        })
+                      }
                     >
                       <input name="id" type="hidden" value={invoice.id} />
                       <input name="expectedVersion" type="hidden" value={invoice.documentVersion} />
@@ -793,13 +796,13 @@ export function InvoicesView({
                         <ActionMenu label="Más acciones">
                           <form
                             action={voidInvoiceAction}
-                            onSubmit={(event) => {
-                              if (
-                                !window.confirm(`Anular el comprobante ${invoice.invoiceNumber}?`)
-                              ) {
-                                event.preventDefault();
-                              }
-                            }}
+                            onSubmit={(event) =>
+                              confirmSubmit(event, {
+                                title: `¿Anular el comprobante ${invoice.invoiceNumber}?`,
+                                confirmLabel: "Anular comprobante",
+                                tone: "danger"
+                              })
+                            }
                           >
                             <input name="id" type="hidden" value={invoice.id} />
                             <input

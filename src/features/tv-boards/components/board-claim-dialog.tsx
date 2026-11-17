@@ -12,6 +12,7 @@ import {
 } from "@/features/tv-boards/claim-actions";
 import type { TvBoardRow } from "@/features/tv-boards/model";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type Resolution = "resume_sale" | "cancel_sale";
 
@@ -63,8 +64,22 @@ export function BoardClaimDialog({
   function requestClose() {
     if (isPending || pendingRef.current) return;
     const changed = notes !== "" || resolution !== "resume_sale" || confirmed;
-    if (changed && !window.confirm("Descartar los cambios del reclamo sin guardar?")) return;
-    onClose();
+    const close = () => {
+      onClose();
+    };
+    if (changed) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios del reclamo?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {

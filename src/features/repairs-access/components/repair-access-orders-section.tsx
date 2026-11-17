@@ -30,6 +30,7 @@ import { RepairQuickEditor } from "./repair-quick-editor";
 import { WarrantyReturnCase } from "./warranty-return-panel";
 import { getWorkshopOrderSummary } from "../workshop-order-summary";
 import { WorkshopOrderNextStep } from "./workshop-order-next-step";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 export function RepairAccessOrdersSection({
   orders,
@@ -392,14 +393,14 @@ export function RepairAccessOrdersSection({
                                 </Button>
                                 <form
                                   action={cancelRepairAccessOrderAction}
-                                  onSubmit={(event) => {
-                                    if (
-                                      !window.confirm(
-                                        `Vas a anular la orden ${order.repairNumber}. Esta accion conserva el historial. Continuar?`
-                                      )
-                                    )
-                                      event.preventDefault();
-                                  }}
+                                  onSubmit={(event) =>
+                                    confirmSubmit(event, {
+                                      title: `¿Anular la orden ${order.repairNumber}?`,
+                                      description: "Se conserva todo el historial de la orden.",
+                                      confirmLabel: "Anular orden",
+                                      tone: "danger"
+                                    })
+                                  }
                                 >
                                   <input name="id" type="hidden" value={order.id} />
                                   <Button size="sm" type="submit" variant="danger">

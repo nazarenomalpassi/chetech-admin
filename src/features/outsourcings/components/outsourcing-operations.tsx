@@ -15,6 +15,7 @@ import {
 } from "@/features/outsourcings/actions";
 import type { RepairOutsourcingRecord } from "@/features/outsourcings/queries";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 export function OutsourcingOperations({
   record,
@@ -36,9 +37,23 @@ export function OutsourcingOperations({
     setMode(next);
   }
   function requestClose() {
-    if (dirty && !window.confirm("Descartar los cambios de este seguimiento?")) return;
-    setMode(null);
-    setDirty(false);
+    const close = () => {
+      setMode(null);
+      setDirty(false);
+    };
+    if (dirty) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios del seguimiento?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
   return (
     <div className="space-y-3">

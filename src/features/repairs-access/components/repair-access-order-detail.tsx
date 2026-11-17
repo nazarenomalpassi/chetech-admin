@@ -37,6 +37,7 @@ import { ReadyForPickupRequirements } from "./ready-for-pickup-requirements";
 import { RepairQuickEditor } from "./repair-quick-editor";
 import { WarrantyReturnPanel } from "./warranty-return-panel";
 import { RepairLabelPrintLink } from "./repair-label-print";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 export function RepairAccessOrderDetail({
   order,
@@ -141,12 +142,15 @@ export function RepairAccessOrderDetail({
   }
 
   function confirmSectionChange(action: () => void) {
-    if (
-      (hasUnsavedChanges || document.documentElement.hasAttribute("data-unsaved-changes")) &&
-      !window.confirm(
-        "Hay cambios técnicos sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés continuar?"
-      )
-    ) {
+    if (hasUnsavedChanges || document.documentElement.hasAttribute("data-unsaved-changes")) {
+      confirmThen(
+        {
+          title: "¿Salir sin guardar los cambios técnicos?",
+          description: "El borrador queda disponible para recuperarlo.",
+          confirmLabel: "Continuar"
+        },
+        action
+      );
       return;
     }
     action();

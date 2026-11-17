@@ -40,6 +40,7 @@ import type { SupplierClaimsPage } from "../parts-queries";
 import type { WorkshopOperationalMetricsSnapshot } from "../operational-metrics";
 import { Input } from "@/components/ui/input";
 import { WarrantyObservationControl } from "./warranty-observation-control";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type RepairAccessSection =
   | "panel"
@@ -279,21 +280,25 @@ export function RepairsAccessView({
     )
       return;
     if (activeSection === "nueva" && section === "nueva" && !editing) return;
-    if (
-      activeSection === "nueva" &&
-      (section !== "nueva" || editing) &&
-      intakeDirty &&
-      !window.confirm(
-        "Hay cambios sin guardar. El borrador quedará disponible para recuperarlo. ¿Querés salir?"
-      )
-    ) {
+    const go = () => {
+      setEditing(null);
+      setIntakeDirty(false);
+      setActiveSection(section as RepairAccessSection);
+      if (moreOptionsRef.current) moreOptionsRef.current.open = false;
+      updateSectionUrl(section as RepairAccessSection);
+    };
+    if (activeSection === "nueva" && (section !== "nueva" || editing) && intakeDirty) {
+      confirmThen(
+        {
+          title: "¿Salir sin guardar el ingreso?",
+          description: "El borrador queda disponible para recuperarlo.",
+          confirmLabel: "Salir"
+        },
+        go
+      );
       return;
     }
-    setEditing(null);
-    setIntakeDirty(false);
-    setActiveSection(section as RepairAccessSection);
-    if (moreOptionsRef.current) moreOptionsRef.current.open = false;
-    updateSectionUrl(section as RepairAccessSection);
+    go();
   }
 
   function startEdit(order: RepairAccessOrderRecord) {
@@ -313,16 +318,25 @@ export function RepairsAccessView({
   }
 
   function stopEdit() {
-    if (
-      intakeDirty &&
-      !window.confirm("Hay cambios sin guardar. ¿Querés cancelar y conservar el borrador?")
-    ) {
+    const stop = () => {
+      setEditing(null);
+      setIntakeDirty(false);
+      setActiveSection("ordenes");
+      updateSectionUrl("ordenes");
+    };
+    if (intakeDirty) {
+      confirmThen(
+        {
+          title: "¿Cancelar la edición?",
+          description: "Hay cambios sin guardar. El borrador queda disponible para recuperarlo.",
+          confirmLabel: "Cancelar edición",
+          cancelLabel: "Seguir editando"
+        },
+        stop
+      );
       return;
     }
-    setEditing(null);
-    setIntakeDirty(false);
-    setActiveSection("ordenes");
-    updateSectionUrl("ordenes");
+    stop();
   }
 
   function openStatus(status: string) {

@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { RepairAccessOrderRecord } from "../queries";
 import { normalizeWhatsAppPhone } from "../whatsapp";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type DocumentKind = "intake" | "delivery";
 type ShareOrder = Pick<RepairAccessOrderRecord, "id" | "customer" | "pickedUpAt" | "deliveredAt">;
@@ -32,14 +33,21 @@ export function RepairDocumentShareActions({
   const kinds: DocumentKind[] =
     order.pickedUpAt || order.deliveredAt ? ["intake", "delivery"] : ["intake"];
 
-  async function revoke(kind: DocumentKind) {
-    if (
-      revoking ||
-      !window.confirm(
-        `Cancelar todos los enlaces de ${documents[kind].description}? Los enlaces enviados dejaran de funcionar.`
-      )
-    )
-      return;
+  function revoke(kind: DocumentKind) {
+    if (revoking) return;
+    confirmThen(
+      {
+        title: `¿Cancelar los enlaces de ${documents[kind].description}?`,
+        description: "Los enlaces que ya enviaste dejan de funcionar.",
+        confirmLabel: "Cancelar enlaces",
+        cancelLabel: "Volver",
+        tone: "danger"
+      },
+      () => void runRevoke(kind)
+    );
+  }
+
+  async function runRevoke(kind: DocumentKind) {
     setRevoking(kind);
     setFeedback(null);
     try {

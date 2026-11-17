@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { setRepairCustomerLinkAction } from "@/features/repairs-access/actions";
 import type { StorefrontCustomerSummary } from "@/features/repairs-access/queries";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type SearchResponse = {
   customers?: StorefrontCustomerSummary[];
@@ -180,14 +181,12 @@ export function RepairCustomerLinkCard({
               event.preventDefault();
               return;
             }
-            if (
-              linkedCustomer &&
-              linkedCustomer.id !== selected.id &&
-              !window.confirm(
-                `Vas a cambiar la cuenta vinculada de ${linkedCustomer.fullName} a ${selected.fullName}. ¿Continuar?`
-              )
-            ) {
-              event.preventDefault();
+            if (linkedCustomer && linkedCustomer.id !== selected.id) {
+              confirmSubmit(event, {
+                title: "¿Cambiar la cuenta vinculada?",
+                description: `Pasa de ${linkedCustomer.fullName} a ${selected.fullName}.`,
+                confirmLabel: "Cambiar cuenta"
+              });
             }
           }}
         >
@@ -202,13 +201,13 @@ export function RepairCustomerLinkCard({
         <form
           action={setRepairCustomerLinkAction}
           onSubmit={(event) => {
-            if (
-              linkedCustomer &&
-              !window.confirm(
-                `Vas a desvincular a ${linkedCustomer.fullName}. La reparación conservará su información. ¿Continuar?`
-              )
-            ) {
-              event.preventDefault();
+            if (linkedCustomer) {
+              confirmSubmit(event, {
+                title: `¿Desvincular a ${linkedCustomer.fullName}?`,
+                description: "La reparación conserva su información.",
+                confirmLabel: "Desvincular",
+                tone: "danger"
+              });
             }
           }}
         >

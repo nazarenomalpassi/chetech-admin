@@ -115,7 +115,7 @@ it("keeps deletion confirmation and the correct sale id inside the action menu",
   );
   fireEvent.click(button);
   expect(confirm).toHaveBeenCalledWith(
-    "Eliminar la venta V-001? Esto restaura stock y borra el historial de cobro."
+    "¿Eliminar la venta V-001?\n\nSe restaura el stock y se borra el historial de cobro."
   );
   expect(deleteSaleAction).not.toHaveBeenCalled();
 });

@@ -12,6 +12,7 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { upsertProductAction } from "@/features/products/actions";
 import { productSchema, type ProductFormValues } from "@/features/products/schemas";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type ProductFormDialogProps = {
   categories: { id: string; name: string; skuPrefix?: string | null }[];
@@ -88,8 +89,22 @@ export function ProductFormDialog({ categories, product, open, onClose }: Produc
   }
 
   function requestClose() {
-    if (hasChanges && !window.confirm("Descartar los cambios del producto?")) return;
-    onClose();
+    const close = () => {
+      onClose();
+    };
+    if (hasChanges) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios del producto?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
 
   return (

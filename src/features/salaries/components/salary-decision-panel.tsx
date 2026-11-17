@@ -15,6 +15,7 @@ import { calculateFundingPlan, calculateSalaryPlan } from "@/features/salaries/c
 import type { SalaryAccount, SalaryMember } from "@/features/salaries/types";
 import { formatCashMethod } from "@/lib/cash";
 import { formatCurrency, getLocalDateInputValue } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 function newIdempotencyKey() {
   return globalThis.crypto?.randomUUID?.() ?? "00000000-0000-4000-8000-000000000001";
@@ -63,9 +64,23 @@ export function SalaryDecisionPanel({
     const changed =
       form &&
       JSON.stringify(Array.from(new FormData(form).entries())) !== initialWithdrawalRef.current;
-    if (changed && !window.confirm("Cerrar sin confirmar el retiro? Hay cambios sin guardar."))
+    const close = () => {
+      setDialogOpen(false);
+    };
+    if (changed) {
+      confirmThen(
+        {
+          title: "¿Cerrar sin confirmar el retiro?",
+          description: "Hay cambios sin guardar.",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
       return;
-    setDialogOpen(false);
+    }
+    close();
   }
   const intendedAmount = Number(amount || 0);
   const plan = calculateSalaryPlan(members, intendedAmount);

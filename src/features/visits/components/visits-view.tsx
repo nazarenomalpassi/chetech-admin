@@ -17,6 +17,7 @@ import type { ActionResult } from "@/lib/form-state";
 import { cn, formatDate } from "@/lib/utils";
 import { OperationsPagination } from "./operations-pagination";
 import { VisitEditor } from "./visit-editor";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 const statusOptions = visitStatusValues.map((status) => ({
   label: visitStatusLabels[status],
@@ -67,14 +68,15 @@ function VisitActions({
         <ActionMenu label="Mas acciones">
           <form
             action={deleteVisitAction}
-            onSubmit={(event) => {
-              if (
-                !window.confirm(
-                  "Queres cancelar esta visita? Se conservaran todos los datos y el historial."
-                )
-              )
-                event.preventDefault();
-            }}
+            onSubmit={(event) =>
+              confirmSubmit(event, {
+                title: "¿Cancelar esta visita?",
+                description: "Se conservan todos los datos y el historial.",
+                confirmLabel: "Cancelar visita",
+                cancelLabel: "Volver",
+                tone: "danger"
+              })
+            }
           >
             <input name="id" type="hidden" value={visit.id} />
             <input name="expectedUpdatedAt" type="hidden" value={visit.updatedAt ?? ""} />

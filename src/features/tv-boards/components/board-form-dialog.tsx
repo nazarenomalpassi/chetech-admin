@@ -15,6 +15,7 @@ import {
   tvBoardSchema,
   type TvBoardFormValues
 } from "@/features/tv-boards/schemas";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type BoardFormDialogProps = {
   board?: TvBoardFormValues | null;
@@ -50,8 +51,22 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
   }
 
   function requestClose() {
-    if (hasChanges && !window.confirm("Descartar los cambios de la placa?")) return;
-    onClose();
+    const close = () => {
+      onClose();
+    };
+    if (hasChanges) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios de la placa?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
 
   return (

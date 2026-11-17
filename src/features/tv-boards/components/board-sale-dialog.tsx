@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { markTvBoardSoldAction } from "@/features/tv-boards/actions";
 import { tvBoardSaleSchema, type TvBoardSaleFormValues } from "@/features/tv-boards/schemas";
 import { formatCurrency, getLocalDateInputValue } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type BoardSaleDialogProps = {
   board?: {
@@ -52,8 +53,22 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
   }
 
   function requestClose() {
-    if (hasChanges && !window.confirm("Descartar los cambios de la venta?")) return;
-    onClose();
+    const close = () => {
+      onClose();
+    };
+    if (hasChanges) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios de la venta?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
 
   return (

@@ -14,6 +14,7 @@ import {
   type FiscalRecord
 } from "../model";
 import type { FiscalPanelState, FiscalPreview } from "../service";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 async function api<T>(url: string, body?: unknown): Promise<T> {
   const response = await fetch(url, {
@@ -60,13 +61,23 @@ export function FiscalInvoicePanel({
   function requestClose() {
     if (pending) return;
     const form = formRef.current;
-    if (
-      form &&
-      JSON.stringify(Array.from(new FormData(form))) !== initialFields.current &&
-      !window.confirm("Cerrar sin emitir? Los cambios del formulario fiscal no se guardaron.")
-    )
+    const close = () => {
+      setOpen(false);
+    };
+    if (form && JSON.stringify(Array.from(new FormData(form))) !== initialFields.current) {
+      confirmThen(
+        {
+          title: "¿Cerrar sin emitir?",
+          description: "Los cambios del formulario fiscal no se guardaron.",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
       return;
-    setOpen(false);
+    }
+    close();
   }
 
   useEffect(() => {

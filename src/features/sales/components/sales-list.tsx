@@ -21,6 +21,7 @@ import type { PaymentSplit } from "@/lib/payment-splits";
 import type { PaginationMeta } from "@/lib/pagination";
 import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type ProductOption = {
   id: string;
@@ -662,15 +663,14 @@ export function SalesList({
                     <ActionMenu label="Mas acciones">
                       <form
                         action={deleteSaleAction}
-                        onSubmit={(event) => {
-                          if (
-                            !window.confirm(
-                              `Eliminar la venta ${sale.saleNumber}? Esto restaura stock y borra el historial de cobro.`
-                            )
-                          ) {
-                            event.preventDefault();
-                          }
-                        }}
+                        onSubmit={(event) =>
+                          confirmSubmit(event, {
+                            title: `¿Eliminar la venta ${sale.saleNumber}?`,
+                            description: "Se restaura el stock y se borra el historial de cobro.",
+                            confirmLabel: "Eliminar venta",
+                            tone: "danger"
+                          })
+                        }
                       >
                         <input name="id" type="hidden" value={sale.id} />
                         <Button className="w-full" type="submit" variant="danger">
@@ -742,15 +742,15 @@ export function SalesList({
                           <ActionMenu label="Mas acciones">
                             <form
                               action={deleteSaleAction}
-                              onSubmit={(event) => {
-                                if (
-                                  !window.confirm(
-                                    `Eliminar la venta ${sale.saleNumber}? Esto restaura stock y borra el historial de cobro.`
-                                  )
-                                ) {
-                                  event.preventDefault();
-                                }
-                              }}
+                              onSubmit={(event) =>
+                                confirmSubmit(event, {
+                                  title: `¿Eliminar la venta ${sale.saleNumber}?`,
+                                  description:
+                                    "Se restaura el stock y se borra el historial de cobro.",
+                                  confirmLabel: "Eliminar venta",
+                                  tone: "danger"
+                                })
+                              }
                             >
                               <input name="id" type="hidden" value={sale.id} />
                               <Button size="sm" type="submit" variant="danger">

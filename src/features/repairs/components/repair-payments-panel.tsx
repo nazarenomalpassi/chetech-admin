@@ -21,6 +21,7 @@ import {
   type RepairPaymentSaveResult
 } from "../actions";
 import { usePaymentDraft } from "../use-payment-draft";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 const paymentDraftSchema = z.object({
   requestId: z.string().uuid(),
@@ -119,9 +120,23 @@ export function RepairPaymentsPanel({
     setPayments(next);
   }
   function closeRemoval() {
-    if (removalReason && !window.confirm("Descartar el motivo de esta correccion?")) return;
-    setRemovingPaymentId(null);
-    setRemovalReason("");
+    const close = () => {
+      setRemovingPaymentId(null);
+      setRemovalReason("");
+    };
+    if (removalReason) {
+      confirmThen(
+        {
+          title: "¿Descartar el motivo de la corrección?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
   return (
     <Card>

@@ -10,6 +10,8 @@ import { PaginationNav } from "@/components/ui/pagination-nav";
 import type { PaginationMeta } from "@/lib/pagination";
 import { deleteProductAction, toggleProductStatusAction } from "@/features/products/actions";
 import { formatCurrency } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
+import { toast } from "@/components/ui/toaster";
 
 type Product = {
   id: string;
@@ -78,18 +80,19 @@ export function ProductTable({
   }, [resetKey]);
 
   function handleDelete(product: Product) {
-    const confirmed = window.confirm(
-      `Queres eliminar definitivamente "${product.name}"? Esta accion no se puede deshacer.`
+    confirmThen(
+      {
+        title: `¿Eliminar "${product.name}"?`,
+        description: "Se borra definitivamente y no se puede deshacer.",
+        confirmLabel: "Eliminar producto",
+        tone: "danger"
+      },
+      () =>
+        startTransition(async () => {
+          const result = await deleteProductAction(product.id);
+          if (!result.success) toast.error(result.message);
+        })
     );
-
-    if (!confirmed) return;
-
-    startTransition(async () => {
-      const result = await deleteProductAction(product.id);
-      if (!result.success) {
-        window.alert(result.message);
-      }
-    });
   }
 
   return (

@@ -21,6 +21,7 @@ import { getTvBoardMargin } from "@/features/tv-boards/sales";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod } from "@/lib/cash";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type TvBoard = TvBoardRow;
 
@@ -80,13 +81,15 @@ export function BoardTable({
   }
 
   function handleDelete(board: TvBoard) {
-    const confirmed = window.confirm(
-      `Queres eliminar definitivamente la placa ${board.brand} ${board.model}?`
+    confirmThen(
+      {
+        title: `¿Eliminar la placa ${board.brand} ${board.model}?`,
+        description: "Se borra definitivamente.",
+        confirmLabel: "Eliminar placa",
+        tone: "danger"
+      },
+      () => runMutation(() => deleteTvBoardAction(board.id))
     );
-
-    if (!confirmed) return;
-
-    runMutation(() => deleteTvBoardAction(board.id));
   }
 
   function renderSaleBadge(board: TvBoard) {

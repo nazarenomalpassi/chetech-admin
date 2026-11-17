@@ -11,6 +11,7 @@ import {
   reopenCashReconciliationAction
 } from "./reconciliation-actions";
 import type { CashReconciliationRecord } from "./reconciliation-model";
+import { confirmThen } from "@/components/ui/confirm-dialog";
 
 export function ReconciliationAmendmentDialog({
   record,
@@ -39,8 +40,22 @@ export function ReconciliationAmendmentDialog({
     const form = formRef.current;
     const changed =
       form && JSON.stringify(Array.from(new FormData(form).entries())) !== initialFormRef.current;
-    if (changed && !window.confirm("Descartar los cambios del arqueo sin guardar?")) return;
-    setOpen(false);
+    const close = () => {
+      setOpen(false);
+    };
+    if (changed) {
+      confirmThen(
+        {
+          title: "¿Descartar los cambios del arqueo?",
+          confirmLabel: "Descartar",
+          cancelLabel: "Seguir editando",
+          tone: "danger"
+        },
+        close
+      );
+      return;
+    }
+    close();
   }
   return (
     <div className="mt-3">

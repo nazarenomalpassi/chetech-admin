@@ -29,6 +29,7 @@ import type {
 } from "@/features/outsourcings/queries";
 import type { ActionResult } from "@/lib/form-state";
 import { formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type LookupOrder = {
   id: string;
@@ -436,15 +437,13 @@ export function RepairOutsourcingsView({
                     <ActionMenu label="Más acciones">
                       <form
                         action={cancelRepairOutsourcingAction}
-                        onSubmit={(event) => {
-                          if (
-                            !window.confirm(
-                              `Anular la terciarizacion de ${record.order.repairNumber}?`
-                            )
-                          ) {
-                            event.preventDefault();
-                          }
-                        }}
+                        onSubmit={(event) =>
+                          confirmSubmit(event, {
+                            title: `¿Anular la terciarización de ${record.order.repairNumber}?`,
+                            confirmLabel: "Anular terciarización",
+                            tone: "danger"
+                          })
+                        }
                       >
                         <input name="id" type="hidden" value={record.id} />
                         <input name="returnTo" type="hidden" value={returnTo} />
@@ -522,15 +521,13 @@ export function RepairOutsourcingsView({
                         <ActionMenu label="Más acciones">
                           <form
                             action={cancelRepairOutsourcingAction}
-                            onSubmit={(event) => {
-                              if (
-                                !window.confirm(
-                                  `Anular la terciarizacion de ${record.order.repairNumber}?`
-                                )
-                              ) {
-                                event.preventDefault();
-                              }
-                            }}
+                            onSubmit={(event) =>
+                              confirmSubmit(event, {
+                                title: `¿Anular la terciarización de ${record.order.repairNumber}?`,
+                                confirmLabel: "Anular terciarización",
+                                tone: "danger"
+                              })
+                            }
                           >
                             <input name="id" type="hidden" value={record.id} />
                             <input name="returnTo" type="hidden" value={returnTo} />
