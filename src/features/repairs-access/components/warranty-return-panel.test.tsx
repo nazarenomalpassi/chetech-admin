@@ -182,7 +182,7 @@ describe("warranty return intake", () => {
     render(<WarrantyReturnPanel order={{ ...order, warrantyReturns: [record] }} canManage />);
     expect(screen.getByText("Reingreso por garantía activo")).toBeTruthy();
     expect(screen.getByText(record.issueReported)).toBeTruthy();
-    expect(screen.getByText("En revision")).toBeTruthy();
+    expect(screen.getByText("En revisión")).toBeTruthy();
     expect(screen.queryByText("Registrar reingreso por garantía")).toBeNull();
   });
 

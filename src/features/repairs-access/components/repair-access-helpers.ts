@@ -24,7 +24,7 @@ export const repairAccessStatusMeta: Record<
     tone: "warning",
     lane: "Recepción"
   },
-  en_revision: { label: "En revision", shortLabel: "Revisión", tone: "warning", lane: "Técnica" },
+  en_revision: { label: "En revisión", shortLabel: "Revisión", tone: "warning", lane: "Técnica" },
   presupuestado: {
     label: "Presupuestado",
     shortLabel: "Presupuesto",
@@ -44,7 +44,7 @@ export const repairAccessStatusMeta: Record<
     lane: "Presupuesto"
   },
   en_reparacion: {
-    label: "En reparacion",
+    label: "En reparación",
     shortLabel: "Reparación",
     tone: "default",
     lane: "Técnica"
@@ -69,7 +69,7 @@ export const repairAccessStatusMeta: Record<
     lane: "Cierre"
   },
   sin_solucion: {
-    label: "Sin solucion",
+    label: "Sin solución",
     shortLabel: "Sin solucion",
     tone: "danger",
     lane: "Cierre"

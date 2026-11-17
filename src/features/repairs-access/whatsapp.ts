@@ -139,7 +139,7 @@ export function buildRepairAccessWhatsAppHref(
 
 export function getDefaultWhatsAppKind(status: string): RepairAccessWhatsAppKind {
   if (status === "presupuestado") return "budget";
-  if (status === "listo_para_retirar" || status === "retirado") return "ready";
+  if (status === "listo_para_retirar") return "ready";
   if (status === "sin_solucion") return "no_solution";
   return "general";
 }

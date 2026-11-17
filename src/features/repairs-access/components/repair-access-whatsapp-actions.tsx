@@ -97,7 +97,7 @@ export function RepairAccessWhatsAppPanel({ order }: { order: RepairAccessOrderR
           />
           <RepairAccessWhatsAppButton
             kind="no_solution"
-            label="Sin solucion"
+            label="Sin solución"
             order={order}
             variant="secondary"
           />

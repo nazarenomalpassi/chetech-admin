@@ -28,6 +28,7 @@ import { getPaymentTotal, type PaymentSplit } from "@/lib/payment-splits";
 import { formatCurrency, getLocalDateInputValue } from "@/lib/utils";
 import { deliverRepairOrder } from "../coordination-actions";
 import type { RepairAccessOrderRecord } from "../queries";
+import { hasWorkshopDeliveryBalance } from "../workflow";
 
 const deliveryStatuses = [
   "listo_para_retirar",
@@ -316,11 +317,15 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
     setSaved(null);
   }
   const showDelivery = canDeliver(snapshot?.order ?? order);
+  // El botón principal sigue al próximo paso: cobrar el saldo de un equipo listo, o entregar uno ya cobrado.
+  const collectIsPrimary = hasWorkshopDeliveryBalance(order);
+  const deliveryIsPrimary = showDelivery && !collectIsPrimary && order.isPaid;
   return (
     <div className="min-w-0 space-y-2">
       <div className="flex min-w-0 flex-wrap gap-2">
         <Button
           type="button"
+          variant={collectIsPrimary ? "default" : "secondary"}
           className="min-h-11 flex-1"
           disabled={refreshRequired || Boolean(mode)}
           onClick={() => open("collection")}
@@ -330,7 +335,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
         {showDelivery ? (
           <Button
             type="button"
-            variant="secondary"
+            variant={deliveryIsPrimary ? "default" : "secondary"}
             className="min-h-11 flex-1"
             disabled={refreshRequired || Boolean(mode)}
             onClick={() => open("delivery")}

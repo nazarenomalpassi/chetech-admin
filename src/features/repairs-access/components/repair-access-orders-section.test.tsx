@@ -72,6 +72,7 @@ function makeOrder(index = 1): RepairAccessOrderRecord {
 const orders = [makeOrder()];
 const props = {
   orders,
+  initialPresentation: "cards" as const,
   search: "",
   statusFilter: "todos",
   warrantyFilter: "todos",
@@ -194,7 +195,7 @@ describe("order workspace list", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
     expect(screen.getByText("Reingreso por garantía activo")).toBeTruthy();
     expect(screen.getByText("Falla original: No enciende")).toBeTruthy();
-    expect(within(screen.getByRole("table")).getByText("En revision")).toBeTruthy();
+    expect(within(screen.getByRole("table")).getByText("En revisión")).toBeTruthy();
     expect(screen.queryByText("Actualizar trabajo")).toBeNull();
     expect(
       screen
@@ -253,9 +254,14 @@ describe("order workspace list", () => {
     expect(screen.getByRole("table")).toBeTruthy();
     expect(screen.queryByRole("article", { hidden: true })).toBeNull();
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(0);
-    fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: `Ficha completa ${orders[0].repairNumber}` })
+    );
     expect(props.onOpenDetail).toHaveBeenCalledWith(orders[0]);
-    fireEvent.click(screen.getByText("Más acciones"));
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
+    expect(props.onOpenDetail).toHaveBeenCalledTimes(2);
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
     fireEvent.click(screen.getByRole("button", { name: "Editar ingreso" }));
     expect(props.onEdit).toHaveBeenCalledWith(orders[0]);
     fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
@@ -270,6 +276,15 @@ describe("order workspace list", () => {
     fireEvent.click(screen.getByRole("button", { name: "Ver tarjetas" }));
     expect(screen.queryByRole("table", { hidden: true })).toBeNull();
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
+  });
+
+  it("opens the admin workspace in the compact table by default", () => {
+    const { initialPresentation: _cards, ...defaults } = props;
+    void _cards;
+    render(<RepairAccessOrdersSection {...defaults} />);
+    expect(screen.getByRole("table")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver tarjetas" })).toBeTruthy();
+    expect(screen.getByText(/días?$/)).toBeTruthy();
   });
 
   it("does not offer the table or new intake to technicians", () => {
@@ -304,7 +319,7 @@ describe("order workspace list", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<RepairAccessOrdersSection {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
-    fireEvent.click(screen.getByText("Más acciones"));
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
     const form = screen.getByRole("button", { name: "Anular" }).closest("form")!;
     expect(fireEvent.submit(form)).toBe(false);
     expect(confirm).toHaveBeenCalledOnce();

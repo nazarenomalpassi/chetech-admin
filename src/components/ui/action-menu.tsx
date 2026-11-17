@@ -8,10 +8,13 @@ import { Button } from "@/components/ui/button";
 
 export function ActionMenu({
   children,
-  label = "Más acciones"
+  label = "Más acciones",
+  iconOnly = false
 }: {
   children: ReactNode;
   label?: string;
+  /** Solo el ícono; el nombre queda para lectores de pantalla. */
+  iconOnly?: boolean;
 }) {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -88,12 +91,13 @@ export function ActionMenu({
         aria-label={label}
         ref={triggerRef}
         onClick={toggle}
-        size="sm"
+        size={iconOnly ? "icon" : "sm"}
+        title={iconOnly ? label : undefined}
         type="button"
         variant="ghost"
       >
         <MoreHorizontal aria-hidden="true" className="h-4 w-4" />
-        <span>{label}</span>
+        {iconOnly ? null : <span>{label}</span>}
       </Button>
       {position
         ? createPortal(

@@ -4,10 +4,13 @@ import { cn, formatDate } from "@/lib/utils";
 
 export function WorkshopOrderNextStep({
   repairNumber,
-  summary
+  summary,
+  compact = false
 }: {
   repairNumber: string;
   summary: WorkshopOrderSummary;
+  /** En la tabla el encabezado de la columna ya dice "Próximo paso". */
+  compact?: boolean;
 }) {
   const blocked = summary.blockers.length > 0;
   return (
@@ -15,15 +18,22 @@ export function WorkshopOrderNextStep({
       role="note"
       aria-label={`Próximo paso de ${repairNumber}`}
       className={cn(
-        "min-w-0 space-y-2 rounded-lg border-l-4 p-3 text-sm",
+        "min-w-0 rounded-lg border-l-4 text-sm",
+        compact ? "space-y-1 px-2.5 py-1.5" : "space-y-2 p-3",
         blocked
           ? "border-warning-border bg-warning-soft text-warning"
           : "border-border-strong bg-muted text-foreground"
       )}
     >
-      <p className="text-xs font-medium">
-        Próximo paso{summary.activeReturn ? " del reingreso" : ""}
-      </p>
+      {compact ? (
+        summary.activeReturn ? (
+          <p className="text-xs font-medium">Reingreso</p>
+        ) : null
+      ) : (
+        <p className="text-xs font-medium">
+          Próximo paso{summary.activeReturn ? " del reingreso" : ""}
+        </p>
+      )}
       <p className="leading-5 font-semibold wrap-anywhere wrap-break-word">{summary.nextAction}</p>
       {blocked ? (
         <ul className="space-y-1 text-xs leading-5">
@@ -49,7 +59,7 @@ export function WorkshopOrderNextStep({
             <div className="min-w-0">
               <dt className="flex items-center gap-1.5">
                 <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                Próxima revision
+                Próxima revisión
               </dt>
               <dd className="mt-1 font-medium">
                 <time dateTime={summary.nextActionDate}>{formatDate(summary.nextActionDate)}</time>

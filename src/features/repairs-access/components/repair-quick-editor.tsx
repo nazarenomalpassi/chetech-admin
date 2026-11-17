@@ -244,7 +244,7 @@ export function RepairQuickEditor({
                 </label>
                 {!canDeliver ? (
                   <p role="status" className="text-sm text-warning">
-                    Primero guarda como Listo para retirar, No presenta fallas, Sin solucion o
+                    Primero guarda como Listo para retirar, No presenta fallas, Sin solución o
                     Presupuestado y rechazado.
                   </p>
                 ) : null}

@@ -303,7 +303,7 @@ describe("RepairAccessWorkshopCard", () => {
         />
       );
       const header = container.querySelector("article header")!;
-      expect(header.textContent).toContain("En revision");
+      expect(header.textContent).toContain("En revisión");
       expect(header.textContent).not.toContain("Retirado por cliente");
       expect(screen.getByText(activeReturn.issueReported)).toBeTruthy();
       expect(screen.getByText("Falla original")).toBeTruthy();
