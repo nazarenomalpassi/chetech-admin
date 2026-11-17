@@ -50,11 +50,20 @@ Decisiones del dueño, tomadas el 17/11/2026:
 
 ## Estado del plan
 
-- [ ] Etapa 0: base y red de seguridad
-- [ ] Etapa 1: sistema visual
+- [x] Etapa 0: base y red de seguridad
+- [ ] Etapa 1: sistema visual (casi completa)
 - [ ] Etapa 2: UX del taller
 - [ ] Etapa 3: back
 - [ ] Etapa 4: rendimiento y renderizado
 - [ ] Etapa 5: calidad, monitoreo y operación
 
-Hecho en la rama: CI de GitHub Actions y limpieza del archivo vacío `=` de la raíz.
+### Hecho en la rama
+
+- Etapa 0: CI (formato, lint, tipos, pruebas, build); Next 15.5.29 y parches de node-forge y fast-xml-parser; Prettier en todo el repo; `no-explicit-any` como advertencia; `supabase/README.md` con el estado del historial de migraciones; scripts `db:types` y `db:export-migrations`; migración del índice duplicado (pendiente de aplicar); README real; línea base en `docs/plan-mejora/linea-base.md`.
+- Etapa 1: Tailwind 4 con tokens semánticos en `src/app/globals.css` (sin `slate-*` ni colores sueltos de estado); botón con jerarquía y `loading`; insignia `info`; texto mínimo de 13 px; diálogo de confirmación (`src/components/ui/confirm-dialog.tsx`: `confirmThen`, `confirmSubmit`) y avisos (`src/components/ui/toaster.tsx`) montados en el layout del panel; tildes en palabras con mayúscula y frases visibles; "Cobros de reparaciones"; Cuotas fuera del menú. Hoja visual: `npx tsx scripts/qa/ui-reference.tsx > tmp/qa/ui-reference.html` después de `npm run build`.
+
+### Pendiente
+
+- Dueño: ejecutar `db:export-migrations` y `db:types` con sus credenciales; cuenta de Sentry; protección de contraseñas filtradas en Supabase Auth.
+- Etapa 1: 12 confirmaciones nativas en guardas de navegación con borradores (`use-persistent-form-draft`, `use-payment-draft`, `repairs-list`, `repair-order-collection-actions`, `order-coordination-panel`, `workshop-updates`, `repair-access-orders-section`); tildes en palabras en minúscula dentro de frases (hacerlo por pantalla, nunca en claves, valores internos, SQL, mensajes de PostgreSQL ni PDF); Speed Insights (choca con el peer opcional de Vite de Vitest 3).
+- Zod 4 (aviso de seguridad) en la Etapa 3.
