@@ -1,9 +1,7 @@
 "use client";
 
-import { AlertDialog } from "@base-ui/react/alert-dialog";
+import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-
-import { Button } from "@/components/ui/button";
 
 export type ConfirmOptions = {
   /** Pregunta en una línea: "¿Anular la orden REP-000600?" */
@@ -16,7 +14,11 @@ export type ConfirmOptions = {
   tone?: "default" | "danger";
 };
 
-type ConfirmRequest = ConfirmOptions & { resolve: (confirmed: boolean) => void };
+export type ConfirmRequest = ConfirmOptions & { resolve: (confirmed: boolean) => void };
+
+const loadDialogView = () =>
+  import("./confirm-dialog-view").then((module) => module.ConfirmDialogView);
+const ConfirmDialogView = dynamic(loadDialogView, { ssr: false, loading: () => null });
 type ConfirmHost = (request: ConfirmRequest) => void;
 
 let host: ConfirmHost | null = null;
@@ -70,6 +72,12 @@ export function ConfirmProvider() {
   const settledRef = useRef(false);
 
   useEffect(() => {
+    const idle =
+      window.requestIdleCallback ?? ((callback: () => void) => window.setTimeout(callback, 1500));
+    idle(() => void loadDialogView());
+  }, []);
+
+  useEffect(() => {
     host = (next) => {
       settledRef.current = false;
       setRequest(next);
@@ -90,36 +98,15 @@ export function ConfirmProvider() {
     [request]
   );
 
+  // El diálogo (Base UI, unos 20 kB) se descarga en un momento libre y se monta recién con
+  // el primer pedido de confirmación.
+  if (!request) return null;
   return (
-    <AlertDialog.Root open={open} onOpenChange={(next) => (next ? setOpen(true) : settle(false))}>
-      <AlertDialog.Portal>
-        <AlertDialog.Backdrop className="fixed inset-0 z-50 bg-foreground/30 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0" />
-        <AlertDialog.Popup className="fixed top-1/2 left-1/2 z-50 flex w-[28rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-2xl border border-border bg-card p-5 text-card-foreground shadow-pop transition-[scale,opacity] duration-150 ease-out data-ending-style:scale-[0.98] data-ending-style:opacity-0 data-starting-style:scale-[0.98] data-starting-style:opacity-0">
-          <div className="space-y-2">
-            <AlertDialog.Title className="text-lg leading-snug font-semibold text-foreground">
-              {request?.title}
-            </AlertDialog.Title>
-            {request?.description ? (
-              <AlertDialog.Description className="text-sm leading-6 text-muted-foreground">
-                {request.description}
-              </AlertDialog.Description>
-            ) : null}
-          </div>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" onClick={() => settle(false)}>
-              {request?.cancelLabel ?? "Cancelar"}
-            </Button>
-            <Button
-              type="button"
-              variant={request?.tone === "danger" ? "danger" : "default"}
-              onClick={() => settle(true)}
-              autoFocus
-            >
-              {request?.confirmLabel ?? "Confirmar"}
-            </Button>
-          </div>
-        </AlertDialog.Popup>
-      </AlertDialog.Portal>
-    </AlertDialog.Root>
+    <ConfirmDialogView
+      open={open}
+      onOpen={() => setOpen(true)}
+      onSettle={settle}
+      request={request}
+    />
   );
 }

@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, WifiOff } from "lucide-react";
-import { createClientSupabaseClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 
 export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
@@ -16,8 +15,8 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
     disabledRef.current = disabled;
   }, [disabled]);
   useEffect(() => {
-    const supabase = createClientSupabaseClient();
     let disposed = false;
+    let removeChannel: (() => void) | undefined;
     let lastRefresh = 0;
     let connected = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -55,22 +54,28 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
         schedule();
       }, 25000);
     }
-    const channel = supabase
-      .channel("workshop-updates")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "workshop_events" },
-        () => {
-          if (timer) clearTimeout(timer);
-          timer = setTimeout(() => {
-            refresh();
-            schedule();
-          }, 400);
-        }
-      )
-      .subscribe((status) => {
-        connected = status === "SUBSCRIBED";
-      });
+    // El cliente de Supabase del navegador pesa unos 50 kB: se descarga después de pintar la mesa.
+    void import("@/lib/supabase/client").then(({ createClientSupabaseClient }) => {
+      if (disposed) return;
+      const supabase = createClientSupabaseClient();
+      const channel = supabase
+        .channel("workshop-updates")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "workshop_events" },
+          () => {
+            if (timer) clearTimeout(timer);
+            timer = setTimeout(() => {
+              refresh();
+              schedule();
+            }, 400);
+          }
+        )
+        .subscribe((status) => {
+          connected = status === "SUBSCRIBED";
+        });
+      removeChannel = () => void supabase.removeChannel(channel);
+    });
     document.addEventListener("input", edited);
     document.addEventListener("change", edited);
     document.addEventListener("visibilitychange", refresh);
@@ -83,7 +88,7 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
     return () => {
       disposed = true;
       if (timer) clearTimeout(timer);
-      void supabase.removeChannel(channel);
+      removeChannel?.();
       document.removeEventListener("input", edited);
       document.removeEventListener("change", edited);
       document.removeEventListener("visibilitychange", refresh);

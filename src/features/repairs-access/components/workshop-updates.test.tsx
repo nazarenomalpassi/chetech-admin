@@ -42,8 +42,9 @@ afterEach(() => {
   document.documentElement.removeAttribute("data-unsaved-changes");
 });
 describe("sincronizacion del taller", () => {
-  it("no repite la consulta inicial y actualiza una pantalla sin edicion", () => {
+  it("no repite la consulta inicial y actualiza una pantalla sin edicion", async () => {
     render(<WorkshopUpdates />);
+    await vi.dynamicImportSettled();
     expect(mocks.refresh).not.toHaveBeenCalled();
     act(() => {
       mocks.event?.();
@@ -51,8 +52,9 @@ describe("sincronizacion del taller", () => {
     });
     expect(mocks.refresh).toHaveBeenCalledTimes(1);
   });
-  it("no pisa otro borrador aunque llegue la confirmacion de otro formulario", () => {
+  it("no pisa otro borrador aunque llegue la confirmacion de otro formulario", async () => {
     render(<WorkshopUpdates />);
+    await vi.dynamicImportSettled();
     mocks.refresh.mockClear();
     document.documentElement.setAttribute("data-unsaved-changes", "");
     act(() => {
@@ -63,7 +65,7 @@ describe("sincronizacion del taller", () => {
     expect(mocks.refresh).not.toHaveBeenCalled();
     expect(screen.getByText(/Tus cambios sin guardar/)).toBeTruthy();
   });
-  it("avisa sobre novedades sin reemplazar el formulario editado", () => {
+  it("avisa sobre novedades sin reemplazar el formulario editado", async () => {
     render(
       <>
         <WorkshopUpdates />
@@ -72,6 +74,7 @@ describe("sincronizacion del taller", () => {
         </form>
       </>
     );
+    await vi.dynamicImportSettled();
     mocks.refresh.mockClear();
     fireEvent.input(screen.getByLabelText("Avance"), { target: { value: "Probando" } });
     act(() => {
@@ -80,8 +83,9 @@ describe("sincronizacion del taller", () => {
     });
     expect(mocks.refresh).not.toHaveBeenCalled();
   });
-  it("pausa pestañas ocultas y limpia la suscripcion al desmontar", () => {
+  it("pausa pestañas ocultas y limpia la suscripcion al desmontar", async () => {
     const view = render(<WorkshopUpdates />);
+    await vi.dynamicImportSettled();
     mocks.refresh.mockClear();
     Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
     act(() => vi.advanceTimersByTime(25000));

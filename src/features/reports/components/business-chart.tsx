@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, type CSSProperties } from "react";
-import { Bar, BarChart, CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import dynamic from "next/dynamic";
 import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/utils";
 
@@ -21,7 +21,12 @@ const colors = {
   "--chart-margin": "#11795a",
   "--chart-previous": "#64748b"
 } as CSSProperties;
-const compactMoney = new Intl.NumberFormat("es-AR", { notation: "compact", maximumFractionDigits: 1 });
+// Recharts pesa unos 100 kB: el gráfico se descarga después de pintar la página. El título,
+// la descripción y la tabla de datos se muestran enseguida.
+const BusinessChartPlot = dynamic(
+  () => import("./business-chart-plot").then((module) => module.BusinessChartPlot),
+  { ssr: false, loading: () => null }
+);
 const money = (value: number | null | undefined) => value == null ? "Por determinar" : formatCurrency(value);
 
 export function BusinessChart({ title, description, rows, valueLabel = "Importe", previousLabel }: {
@@ -45,19 +50,7 @@ export function BusinessChart({ title, description, rows, valueLabel = "Importe"
         {hasValues ? <>
           {previousLabel && <p className="mt-3 text-xs text-muted-foreground">Barras de color: {valueLabel}. Barras grises: {previousLabel}.</p>}
           <div className="mt-3 min-w-0" style={{ height: Math.max(200, chartRows.length * (previousLabel ? 56 : 44) + 40) }}>
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} debounce={80}>
-              <BarChart accessibilityLayer aria-label={title} data={chartRows} layout="vertical" margin={{ left: 0, right: 16, top: 8, bottom: 4 }} barGap={3}>
-                <CartesianGrid horizontal={false} stroke="#e2e8f0" strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(value: number) => `$${compactMoney.format(value)}`} tick={{ fontSize: 12, fill: "#475569" }} axisLine={false} tickLine={false} />
-                <YAxis dataKey="label" type="category" width={112} tickFormatter={(label: string) => label.length > 18 ? `${label.slice(0, 17)}...` : label} tick={{ fontSize: 12, fill: "#475569" }} axisLine={false} tickLine={false} />
-                <ReferenceLine x={0} stroke="#94a3b8" />
-                <Tooltip cursor={{ fill: "#f1f5f9" }} formatter={(value: number) => money(value)} contentStyle={{ borderRadius: 10, borderColor: "#cbd5e1", color: "#0f172a" }} />
-                <Bar dataKey="value" name={valueLabel} isAnimationActive={false} maxBarSize={22} radius={[0, 3, 3, 0]}>
-                  {chartRows.map((row) => <Cell key={row.label} fill={`var(--chart-${row.value !== null && row.value < 0 && row.tone === "margin" ? "expense" : row.tone})`} />)}
-                </Bar>
-                {previousLabel && <Bar dataKey="previous" name={previousLabel} fill="var(--chart-previous)" isAnimationActive={false} maxBarSize={22} radius={[0, 3, 3, 0]} />}
-              </BarChart>
-            </ResponsiveContainer>
+            <BusinessChartPlot previousLabel={previousLabel} rows={chartRows} title={title} valueLabel={valueLabel} />
           </div>
           {rows.length > 8 && <p className="text-xs text-muted-foreground">Gráfico: primeras 8 filas. La tabla contiene todos los registros.</p>}
         </> : <p role="status" className="my-4 rounded-lg bg-muted p-4 text-sm text-muted-foreground">{rows.length === 0 ? "No hay registros para este grafico." : rows.every((row) => row.value === null && row.previous == null) ? "Los importes estan por determinar. Consulta el alcance de los datos." : "Sin importes distintos de cero para graficar. Consulta los valores y pendientes en la tabla."}</p>}
