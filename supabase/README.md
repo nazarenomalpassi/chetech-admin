@@ -45,8 +45,9 @@ Genera `src/lib/db/database.types.ts` con las tablas y funciones del esquema `pu
 - Nombre: `migrations/<AAAAMMDDhhmmss>_<nombre>.sql`, idempotentes y aditivas cuando se pueda.
 - Se aplican todas juntas en el pase final del plan de mejora, después de un respaldo completo y verificado (`docs/operations/backup-restore.md`).
 - Si se aplican con la herramienta `apply_migration`, Supabase registra la hora de aplicación como versión: renombrá el archivo con esa versión para que el repo y producción sigan alineados.
-- Pendientes de aplicar en producción:
-  - `20261117200000_drop_duplicate_workshop_order_index.sql`
+- Pendientes de aplicar en producción, en este orden (ninguna modifica datos):
+  - `20261117200000_drop_duplicate_workshop_order_index.sql`: quita un índice idéntico a `repair_access_orders_created_at_id_idx`. Se revierte recreándolo.
+  - `20261117210000_workshop_today.sql`: función de solo lectura `get_workshop_today()` para el inicio "Hoy en el taller". Hasta que se aplique, el inicio muestra un aviso en lugar del resumen por etapa. Se revierte con `drop function public.get_workshop_today(); drop function private.get_workshop_today();`.
 
 ## Ajustes que no son SQL
 

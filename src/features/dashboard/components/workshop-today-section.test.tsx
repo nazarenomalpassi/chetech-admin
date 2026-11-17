@@ -80,7 +80,8 @@ describe("Hoy en el taller", () => {
 
   it("explains what to do when the workshop state is unavailable", () => {
     render(<WorkshopTodaySection canCreateOrder today={null} visits={visits} />);
-    expect(screen.getByRole("status").textContent).toContain("No se pudo consultar");
+    expect(screen.getByRole("status").textContent).toContain("no está disponible");
+    expect(screen.getByRole("link", { name: "Ver pendientes" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Abrir la mesa de trabajo" })).toBeTruthy();
     expect(screen.getByText("Sin visitas agendadas para hoy.")).toBeTruthy();
   });

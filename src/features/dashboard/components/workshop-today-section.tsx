@@ -311,10 +311,20 @@ function VisitsToday({ visits, today }: { visits: VisitsSummary; today: string |
 
 function TodayUnavailable() {
   return (
-    <Card className="border-warning-border bg-warning-soft" role="status">
-      <p className="text-sm text-foreground">
-        No se pudo consultar el estado del taller. Abrí la mesa de trabajo o recargá la página.
+    <Card
+      className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      role="status"
+    >
+      <p className="text-sm text-muted-foreground">
+        El resumen por etapa no está disponible en este momento. Los pendientes siguen en la mesa de
+        trabajo.
       </p>
+      <Link
+        className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "shrink-0")}
+        href={`${workshop}?view=ordenes` as Route}
+      >
+        Ver pendientes
+      </Link>
     </Card>
   );
 }
