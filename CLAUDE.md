@@ -62,8 +62,12 @@ Decisiones del dueño, tomadas el 17/11/2026:
 - Etapa 0: CI (formato, lint, tipos, pruebas, build); Next 15.5.29 y parches de node-forge y fast-xml-parser; Prettier en todo el repo; `no-explicit-any` como advertencia; `supabase/README.md` con el estado del historial de migraciones; scripts `db:types` y `db:export-migrations`; migración del índice duplicado (pendiente de aplicar); README real; línea base en `docs/plan-mejora/linea-base.md`.
 - Etapa 1: Tailwind 4 con tokens semánticos en `src/app/globals.css` (sin `slate-*` ni colores sueltos de estado); botón con jerarquía y `loading`; insignia `info`; texto mínimo de 13 px; diálogo de confirmación (`src/components/ui/confirm-dialog.tsx`: `confirmThen`, `confirmSubmit`) y avisos (`src/components/ui/toaster.tsx`) montados en el layout del panel; tildes en palabras con mayúscula y frases visibles; "Cobros de reparaciones"; Cuotas fuera del menú. Hoja visual: `npx tsx scripts/qa/ui-reference.tsx > tmp/qa/ui-reference.html` después de `npm run build`.
 
+- Etapa 2 (empezada): la mesa de trabajo abre en tabla compacta en escritorio (`initialPresentation`), con días en el local, una acción de WhatsApp según el próximo paso y el resto en "Más acciones" (`ActionMenu iconOnly`); "Cobrar" y "Registrar entrega" son primarios solo cuando corresponden. Vista de control: `npx tsx scripts/qa/workshop-table.tsx > tmp/qa/workshop-table.html`.
+
 ### Pendiente
 
 - Dueño: ejecutar `db:export-migrations` y `db:types` con sus credenciales; cuenta de Sentry; protección de contraseñas filtradas en Supabase Auth.
 - Etapa 1: 12 confirmaciones nativas en guardas de navegación con borradores (`use-persistent-form-draft`, `use-payment-draft`, `repairs-list`, `repair-order-collection-actions`, `order-coordination-panel`, `workshop-updates`, `repair-access-orders-section`); tildes en palabras en minúscula dentro de frases (hacerlo por pantalla, nunca en claves, valores internos, SQL, mensajes de PostgreSQL ni PDF); Speed Insights (choca con el peer opcional de Vite de Vitest 3).
+- Etapa 2, en este orden: ficha con pestañas y panel lateral; rutas `/taller/...` con redirecciones; búsqueda global (Ctrl+K); inicio "Hoy en el taller" (sin la tarjeta de Cuotas); menú con grupos plegables; listado primero en Ventas, Gastos, Cobros, Terciarizaciones y Facturación; guardar sin recargar con avisos; repuestos en un solo lugar; ingreso asistido.
+- Etapas 3, 4 y 5 completas.
 - Zod 4 (aviso de seguridad) en la Etapa 3.
