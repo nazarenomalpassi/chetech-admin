@@ -30,7 +30,7 @@ export type SidebarItem = {
 };
 
 export const sidebarItems: SidebarItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3, permission: "dashboard.view" },
+  { href: "/dashboard", label: "Inicio", icon: BarChart3, permission: "dashboard.view" },
   { href: "/productos", label: "Productos", icon: Boxes, permission: "products.view" },
   { href: "/ventas", label: "Ventas", icon: ShoppingCart, permission: "sales.manage" },
   { href: "/gastos", label: "Gastos", icon: ReceiptText, permission: "expenses.manage" },
@@ -88,7 +88,15 @@ export function getSidebarItemsForRole(role: AppRole) {
   );
 }
 
-export function getSidebarGroupsForRole(role: AppRole) {
+/** Una sección queda activa en su ruta y en cualquier subruta (por ejemplo, una orden abierta). */
+export function isNavItemActive(pathname: string | null, href: string) {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+export type SidebarGroup = { label: string; items: SidebarItem[] };
+
+export function getSidebarGroupsForRole(role: AppRole): SidebarGroup[] {
   const items = getSidebarItemsForRole(role);
   const groups = [
     { label: "Inicio", paths: ["/dashboard"] },

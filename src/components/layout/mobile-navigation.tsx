@@ -7,7 +7,7 @@ import { LogOut, Menu, X } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { NavigationPending } from "@/components/layout/navigation-pending";
-import { getSidebarItemsForRole, getSidebarGroupsForRole } from "@/lib/navigation";
+import { getSidebarItemsForRole, getSidebarGroupsForRole, isNavItemActive } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +16,8 @@ export function MobileNavigation({ role }: { role: AppRole }) {
   const [open, setOpen] = useState(false);
   const sidebarItems = getSidebarItemsForRole(role);
   const groups = getSidebarGroupsForRole(role);
-  const currentSection = sidebarItems.find((item) => item.href === pathname)?.label ?? "Panel";
+  const currentSection =
+    sidebarItems.find((item) => isNavItemActive(pathname, item.href))?.label ?? "Panel";
 
   useEffect(() => {
     setOpen(false);
@@ -84,7 +85,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
                   <div className="grid gap-1 sm:grid-cols-2">
                     {group.items.map((item) => {
                       const Icon = item.icon;
-                      const active = pathname === item.href;
+                      const active = isNavItemActive(pathname, item.href);
 
                       return (
                         <Link

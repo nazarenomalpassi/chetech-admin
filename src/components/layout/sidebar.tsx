@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { NavigationPending } from "@/components/layout/navigation-pending";
+import { SidebarGroups } from "@/components/layout/sidebar-groups";
 import { getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -33,40 +33,9 @@ export function Sidebar({ role }: { role: AppRole }) {
         <div className="mt-3 flex min-h-0 flex-1 flex-col">
           <nav
             aria-label="Navegación principal"
-            className="min-h-0 flex-1 scrollbar-gutter-stable space-y-1 overflow-y-auto overscroll-contain pr-1"
+            className="min-h-0 flex-1 scrollbar-gutter-stable overflow-y-auto overscroll-contain pr-1"
           >
-            {groups.map((group) => (
-              <section key={group.label} className="space-y-1 pb-3">
-                <h2 className="px-3 pt-2 text-xs font-medium text-white/65">{group.label}</h2>
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const active = pathname === item.href;
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      aria-current={active ? "page" : undefined}
-                      className={cn(
-                        "nav-section-link group flex min-h-11 items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium",
-                        active ? "bg-white text-graphite" : "text-white/80"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "nav-section-icon flex h-5 w-5 shrink-0 items-center justify-center",
-                          active ? "text-graphite" : "text-white/75"
-                        )}
-                      >
-                        <Icon aria-hidden="true" className="h-4 w-4" />
-                      </span>
-                      <span className="min-w-0 leading-5">{item.label}</span>
-                      <NavigationPending label={item.label} />
-                    </Link>
-                  );
-                })}
-              </section>
-            ))}
+            <SidebarGroups groups={groups} pathname={pathname} />
           </nav>
         </div>
 

@@ -773,3 +773,21 @@ a:focus-visible {
     max-width: 150px !important;
   }
 }
+
+.nav-group-toggle {
+  transition:
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+}
+
+.nav-group-toggle:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -3px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-group-toggle:hover {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
+  }
+}

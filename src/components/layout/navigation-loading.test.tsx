@@ -28,6 +28,9 @@ describe("section navigation loading", () => {
   it("preserves sidebar destinations, active section and native link behavior", () => {
     render(<Sidebar role="admin" />);
     const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    for (const toggle of within(nav).queryAllByRole("button", { expanded: false })) {
+      fireEvent.click(toggle);
+    }
     for (const item of getSidebarItemsForRole("admin")) {
       const link = within(nav).getByRole("link", { name: item.label });
       expect(link.getAttribute("href")).toBe(item.href);
@@ -38,6 +41,45 @@ describe("section navigation loading", () => {
     expect(
       screen.getByRole("button", { name: "Cerrar sesión" }).closest("form")?.getAttribute("action")
     ).toBe("/auth/sign-out");
+  });
+
+  it("folds menu groups, opens the current one and keeps the active section visible", () => {
+    window.localStorage.clear();
+    route.pathname = "/reparaciones-access/orden/abc";
+    render(<Sidebar role="admin" />);
+    const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    const taller = within(nav).getByRole("button", { name: /Taller/ });
+    const finanzas = within(nav).getByRole("button", { name: /Finanzas/ });
+    expect(taller.getAttribute("aria-expanded")).toBe("true");
+    expect(finanzas.getAttribute("aria-expanded")).toBe("false");
+    expect(within(nav).queryByRole("link", { name: "Caja" })).toBeNull();
+    expect(
+      within(nav).getByRole("link", { name: "Reparaciones" }).getAttribute("aria-current")
+    ).toBe("page");
+
+    fireEvent.click(taller);
+    expect(taller.getAttribute("aria-expanded")).toBe("false");
+    expect(within(nav).getByRole("link", { name: "Reparaciones" })).toBeTruthy();
+    expect(within(nav).queryByRole("link", { name: "Visitas" })).toBeNull();
+
+    fireEvent.click(finanzas);
+    expect(within(nav).getByRole("link", { name: "Caja" })).toBeTruthy();
+    expect(JSON.parse(window.localStorage.getItem("chetech:menu:grupos-abiertos") ?? "[]")).toEqual(
+      ["Finanzas"]
+    );
+  });
+
+  it("restores the groups left open in this browser", () => {
+    window.localStorage.setItem("chetech:menu:grupos-abiertos", JSON.stringify(["Comercial"]));
+    render(<Sidebar role="admin" />);
+    const nav = screen.getByRole("navigation", { name: "Navegación principal" });
+    expect(
+      within(nav)
+        .getByRole("button", { name: /Comercial/ })
+        .getAttribute("aria-expanded")
+    ).toBe("true");
+    expect(within(nav).getByRole("link", { name: "Ventas" })).toBeTruthy();
+    window.localStorage.clear();
   });
 
   it("keeps mobile menu keyboard behavior and the same destinations", () => {
