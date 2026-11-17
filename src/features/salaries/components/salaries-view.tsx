@@ -66,7 +66,7 @@ export function SalariesView({
       tone: "text-warning"
     },
     {
-      label: "Reposicion del mes",
+      label: "Reposición del mes",
       value: formatCurrency(data.merchandise.currentReplacementCost),
       icon: Boxes,
       tone: "text-foreground"
@@ -84,7 +84,7 @@ export function SalariesView({
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">Liquidacion de sueldos</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Liquidación de sueldos</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               {data.monthLabel}: caja, compromisos y retiros confirmados.
             </p>
@@ -167,7 +167,7 @@ export function SalariesView({
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div className="border-t border-border py-3">
-              <p className="text-xs text-muted-foreground">Facturacion de productos</p>
+              <p className="text-xs text-muted-foreground">Facturación de productos</p>
               <p className="mt-2 text-lg font-semibold">
                 {formatCurrency(data.merchandise.revenue)}
               </p>
@@ -179,7 +179,7 @@ export function SalariesView({
               </p>
             </div>
             <div className="border-t border-border py-3">
-              <p className="text-xs text-warning">Reposicion a costo actual</p>
+              <p className="text-xs text-warning">Reposición a costo actual</p>
               <p className="mt-2 text-lg font-semibold text-warning">
                 {formatCurrency(data.merchandise.currentReplacementCost)}
               </p>
@@ -356,7 +356,7 @@ export function SalariesView({
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-success-soft px-3 py-1 text-sm font-semibold text-success">
-                      Liquidacion salarial
+                      Liquidación salarial
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {formatDate(liquidation.withdrawalDate)}
@@ -427,7 +427,7 @@ export function SalariesView({
           ))}
           {!data.liquidations.length ? (
             <div className="empty-panel">
-              Todavia no hay retiros de sueldos confirmados en este mes.
+              Todavía no hay retiros de sueldos confirmados en este mes.
             </div>
           ) : null}
         </div>
@@ -451,7 +451,7 @@ export function SalariesView({
                   <span
                     className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-success-soft text-success" : "bg-accent text-body"}`}
                   >
-                    {withdrawal.withdrawalType === "salary" ? "Liquidacion" : "Extraordinario"}
+                    {withdrawal.withdrawalType === "salary" ? "Liquidación" : "Extraordinario"}
                   </span>
                   <p className="mt-3 font-semibold text-foreground">
                     {withdrawal.memberName ?? formatCashMethod(withdrawal.paymentMethod)}
@@ -506,7 +506,7 @@ export function SalariesView({
                     <span
                       className={`rounded-full px-3 py-1 text-sm font-semibold ${withdrawal.withdrawalType === "salary" ? "bg-success-soft text-success" : "bg-accent text-body"}`}
                     >
-                      {withdrawal.withdrawalType === "salary" ? "Liquidacion" : "Extraordinario"}
+                      {withdrawal.withdrawalType === "salary" ? "Liquidación" : "Extraordinario"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -552,7 +552,7 @@ export function SalariesView({
           </table>
         </div>
         {!data.withdrawals.length ? (
-          <div className="empty-panel m-4">Todavia no hay movimientos registrados en este mes.</div>
+          <div className="empty-panel m-4">Todavía no hay movimientos registrados en este mes.</div>
         ) : null}
       </Card>
     </div>

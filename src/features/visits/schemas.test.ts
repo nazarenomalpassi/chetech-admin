@@ -43,7 +43,7 @@ describe("visitFormSchema", () => {
     visitDate: "2026-10-05",
     timeFrom: "09:00",
     timeTo: "10:00",
-    reason: "Revision"
+    reason: "Revisión"
   };
   it.each(["2026-02-30", "not-a-date"])("rejects invalid calendar date %s", (visitDate) => {
     expect(visitFormSchema.safeParse({ ...base, visitDate }).success).toBe(false);

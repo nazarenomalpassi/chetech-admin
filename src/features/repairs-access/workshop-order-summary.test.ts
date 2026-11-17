@@ -147,7 +147,7 @@ describe("operational summary of the current workshop visit", () => {
     ["en_revision", "Revisar la falla del reingreso"],
     ["en_reparacion", "Registrar avance del reingreso"],
     ["en_pruebas", "Probar el equipo del reingreso"],
-    ["listo_para_retirar", "Coordinar retiro de garantia"],
+    ["listo_para_retirar", "Coordinar retiro de garantía"],
     ["no_presenta_fallas", "Coordinar devolucion del reingreso"],
     ["sin_solucion", "Coordinar devolucion del reingreso"]
   ] as const)(

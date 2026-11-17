@@ -37,7 +37,7 @@ export function RepairWarrantyCorrection({
             disabled={missingPickup}
           />
           <label className="grid gap-2 text-sm font-medium text-body">
-            <span>Motivo de la correccion de garantia</span>
+            <span>Motivo de la correccion de garantía</span>
             <Textarea
               name="reason"
               required
@@ -63,7 +63,7 @@ export function RepairWarrantyCorrection({
             </p>
           ) : null}
           <Button type="submit" disabled={submitting || missingPickup} className="min-h-12">
-            Guardar correccion de garantia
+            Guardar correccion de garantía
           </Button>
         </>
       )}

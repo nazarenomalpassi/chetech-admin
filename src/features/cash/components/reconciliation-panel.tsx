@@ -195,7 +195,7 @@ export function ReconciliationPanel({
             {record.amendments?.map((amendment, index) => (
               <div key={amendment.id} className="mt-3 border-l-2 border-border pl-3">
                 <p className="font-semibold">
-                  Revision {index + 1}:{" "}
+                  Revisión {index + 1}:{" "}
                   {amendment.kind === "reopened" ? "Reapertura" : "Cierre corregido"}
                 </p>
                 <p>Motivo: {amendment.reason}</p>
@@ -228,13 +228,13 @@ export function ReconciliationPanel({
         ))}
         {ready && !records.length ? (
           <p className="text-sm text-muted-foreground">
-            Todavia no hay arqueos por cuenta. Los cierres anteriores permanecen abajo.
+            Todavía no hay arqueos por cuenta. Los cierres anteriores permanecen abajo.
           </p>
         ) : null}
         {pagination ? (
           <nav aria-label="Historial de arqueos" className="flex flex-wrap items-center gap-3">
             <span>
-              Pagina {pagination.page} de {pagination.totalPages}
+              Página {pagination.page} de {pagination.totalPages}
             </span>
             <Button
               type="button"

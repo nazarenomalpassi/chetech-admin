@@ -14,7 +14,7 @@ export default async function SueldosPage({
   const message = params.error
     ? { success: false, message: params.error }
     : params.status === "salary_liquidated"
-      ? { success: true, message: "Liquidacion confirmada e impactada una sola vez en caja." }
+      ? { success: true, message: "Liquidación confirmada e impactada una sola vez en caja." }
       : params.status === "salary_config_updated"
         ? { success: true, message: "Objetivos y reservas actualizados." }
         : getStatusMessage(params.status);

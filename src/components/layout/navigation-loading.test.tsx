@@ -43,7 +43,7 @@ describe("section navigation loading", () => {
   it("keeps mobile menu keyboard behavior and the same destinations", () => {
     render(<MobileNavigation role="admin" />);
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
-    const nav = screen.getByRole("navigation", { name: "Navegacion del local" });
+    const nav = screen.getByRole("navigation", { name: "Navegación del local" });
     for (const item of getSidebarItemsForRole("admin")) {
       expect(within(nav).getByRole("link", { name: item.label }).getAttribute("href")).toBe(
         item.href
@@ -60,7 +60,7 @@ describe("section navigation loading", () => {
     const link = screen.getByRole("link", { name: "Reparaciones" });
     link.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(link);
-    expect(screen.getByRole("navigation", { name: "Navegacion del local" })).not.toBeNull();
+    expect(screen.getByRole("navigation", { name: "Navegación del local" })).not.toBeNull();
     expect(link.querySelector(".nav-link-activity")).not.toBeNull();
     route.pathname = "/reparaciones-access";
     rerender(<MobileNavigation role="admin" />);

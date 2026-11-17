@@ -214,7 +214,7 @@ export function PaymentSplitFields({
                 : Math.abs(difference) < 0.01
                   ? "Importes completos."
                   : difference > 0
-                    ? "Todavia falta asignar parte del cobro."
+                    ? "Todavía falta asignar parte del cobro."
                     : "Hay mas dinero asignado que el declarado."}
             </p>
           </div>

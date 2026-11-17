@@ -17,7 +17,7 @@ export function WarrantyObservationControl({ startedOn }: { startedOn: string | 
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-2xl text-muted-foreground">
-            Las tasas de garantia necesitan un periodo de registro completo. Los casos antiguos sin
+            Las tasas de garantía necesitan un periodo de registro completo. Los casos antiguos sin
             reingresos registrados no se interpretan como cero fallas.
           </p>
           <Button
@@ -48,7 +48,7 @@ export function WarrantyObservationControl({ startedOn }: { startedOn: string | 
               type="checkbox"
               className="mt-1 h-5 w-5 shrink-0 accent-graphite"
             />
-            Confirmo que desde hoy registraremos todos los reingresos por garantia en CHETECH.
+            Confirmo que desde hoy registraremos todos los reingresos por garantía en CHETECH.
           </label>
         </CoordinationDialog>
       ) : null}

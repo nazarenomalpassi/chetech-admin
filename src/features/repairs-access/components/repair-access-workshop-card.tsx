@@ -141,7 +141,7 @@ export function RepairAccessWorkshopCard({
             <WorkshopMeta
               className="col-span-2"
               icon={ClipboardPenLine}
-              label={activeReturn ? "Avance original" : "Ultimo avance"}
+              label={activeReturn ? "Avance original" : "Último avance"}
               value={order.repairProgress}
             />
           ) : null}
@@ -289,7 +289,7 @@ export function RepairAccessWorkshopCard({
           <LazyDisclosure
             className="border-t border-border"
             summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40"
-            summary={delivered ? "Historial de la orden original" : "Coordinacion y repuestos"}
+            summary={delivered ? "Historial de la orden original" : "Coordinación y repuestos"}
           >
             <OrderCoordinationPanel
               compact
@@ -357,7 +357,7 @@ export function RepairAccessWorkshopCard({
 
         {canManageIntake ? (
           <div className="flex justify-end border-t border-border pt-2">
-            <ActionMenu label="Mas acciones">
+            <ActionMenu label="Más acciones">
               <a
                 className={buttonVariants({ variant: "secondary" })}
                 href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}

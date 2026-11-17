@@ -37,7 +37,7 @@ function ProductStockReadout({
   const lowStock = (product.availableStock ?? product.stock) <= product.minStock;
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-      <p className="font-semibold text-foreground">Fisico {product.stock}</p>
+      <p className="font-semibold text-foreground">Físico {product.stock}</p>
       <p className="text-muted-foreground">Reservado {product.reservedStock ?? "sin confirmar"}</p>
       {!secondaryOnly ? (
         <p className="font-semibold text-foreground">
@@ -151,7 +151,7 @@ export function ProductTable({
                     <Pencil aria-hidden="true" className="h-4 w-4" />
                     Editar
                   </Button>
-                  <ActionMenu label="Mas acciones">
+                  <ActionMenu label="Más acciones">
                     <Button
                       disabled={isPending}
                       onClick={() =>
@@ -186,7 +186,7 @@ export function ProductTable({
           <thead className="bg-card text-left text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-medium sm:px-5">Producto</th>
-              <th className="px-4 py-3 font-medium">Categoria</th>
+              <th className="px-4 py-3 font-medium">Categoría</th>
               {canManage ? <th className="px-4 py-3 font-medium">Costo</th> : null}
               <th className="px-4 py-3 font-medium">Precio</th>
               <th className="px-4 py-3 font-medium">Stock</th>
@@ -244,7 +244,7 @@ export function ProductTable({
                           <Pencil className="mr-2 h-4 w-4" />
                           Editar
                         </Button>
-                        <ActionMenu label="Mas acciones">
+                        <ActionMenu label="Más acciones">
                           <Button
                             disabled={isPending}
                             onClick={() =>

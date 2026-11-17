@@ -129,7 +129,7 @@ async function appendCashAmendment(input: unknown, kind: "reopened" | "closed") 
     kind === "reopened" ? cashReconciliationAmendmentSchema : cashReconciliationCorrectionSchema;
   const parsed = schema.safeParse(input);
   if (!parsed.success)
-    return { success: false, message: parsed.error.issues[0]?.message ?? "Correccion invalida" };
+    return { success: false, message: parsed.error.issues[0]?.message ?? "Corrección invalida" };
   const supabase = await createServerSupabaseClient();
   const { data: existing, error: existingError } = await (supabase as any)
     .from("operations_cash_reconciliation_amendments")

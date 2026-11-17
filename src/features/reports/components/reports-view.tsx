@@ -102,7 +102,7 @@ const EXPORT_MODULES = [
   },
   {
     slug: "facturacion",
-    title: "Facturacion",
+    title: "Facturación",
     description: "Comprobantes internos, origen, cliente, total, saldo y estado."
   },
   {
@@ -199,7 +199,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
     { label: "Margen registrado de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Subtotal con costo conocido; no es ganancia total ni utilidad neta." },
     { label: "Importe declarado en reparaciones", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Importes declarados; no equivale a cobros" },
     { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
-    { label: "Facturacion emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
+    { label: "Facturación emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
     { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del periodo" }
   ] as const;
 
@@ -247,12 +247,12 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </div>
         <div className="mt-3 text-sm text-muted-foreground">
           {range.isToday
-            ? `Periodo: ${formatDate(range.today)}.`
-            : `Periodo: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
+            ? `Período: ${formatDate(range.today)}.`
+            : `Período: ${formatDate(range.from)} al ${formatDate(range.to)}.`}
         </div>
       </Card>
 
-      <section aria-label="Metricas del reporte" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <section aria-label="Métricas del reporte" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {metricCards.map((metric) => <MetricCard {...metric} format="currency" key={metric.label} />)}
       </section>
 
@@ -325,7 +325,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
             <p className="text-sm text-muted-foreground">Objetivos mensuales</p>
             <h2 className="text-xl font-semibold text-foreground">Avance contra meta</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              Objetivos tomados desde Configuracion para {monthlyGoals.label}.
+              Objetivos tomados desde Configuración para {monthlyGoals.label}.
             </p>
           </div>
           <Badge variant="default">
@@ -466,13 +466,13 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">Todavia no hay productos vendidos en este rango.</p>
+              <p className="text-sm text-muted-foreground">Todavía no hay productos vendidos en este rango.</p>
             )}
           </div>
         </Card>
 
         <div className="space-y-3">
-          <BusinessChart title="Categorias con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
+          <BusinessChart title="Categorías con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
           <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

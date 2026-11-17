@@ -78,7 +78,7 @@ describe("mapRepairsHistoryRows", () => {
     const [repair] = mapRepairsHistoryRows([
       {
         id: "repair-legacy",
-        customer_name: "Historico",
+        customer_name: "Histórico",
         device: "Radio",
         issue_description: null,
         final_price: null,

@@ -521,7 +521,7 @@ export function SalesList({
                       <th className="px-4 py-3 font-medium">Cantidad</th>
                       <th className="px-4 py-3 font-medium">Precio</th>
                       <th className="px-4 py-3 font-medium">Total</th>
-                      <th className="px-4 py-3 text-right font-medium">Accion</th>
+                      <th className="px-4 py-3 text-right font-medium">Acción</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -559,7 +559,7 @@ export function SalesList({
                 </table>
               </div>
             ) : (
-              <div className="empty-panel">Todavia no agregaste productos a esta venta.</div>
+              <div className="empty-panel">Todavía no agregaste productos a esta venta.</div>
             )}
           </div>
 
@@ -660,7 +660,7 @@ export function SalesList({
                     <Button onClick={() => startEdit(sale)} type="button" variant="secondary">
                       Editar
                     </Button>
-                    <ActionMenu label="Mas acciones">
+                    <ActionMenu label="Más acciones">
                       <form
                         action={deleteSaleAction}
                         onSubmit={(event) =>
@@ -739,7 +739,7 @@ export function SalesList({
                           >
                             Editar
                           </Button>
-                          <ActionMenu label="Mas acciones">
+                          <ActionMenu label="Más acciones">
                             <form
                               action={deleteSaleAction}
                               onSubmit={(event) =>

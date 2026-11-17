@@ -149,13 +149,13 @@ export async function GET(
         warrantyConditions: data.warranty_conditions ?? "",
         observations: [
           `Orden Access: ${data.repair_number}`,
-          customer?.phone ? `Telefono: ${customer.phone}` : "",
+          customer?.phone ? `Teléfono: ${customer.phone}` : "",
           customer?.dni ? `DNI: ${customer.dni}` : "",
-          customer?.address ? `Direccion: ${customer.address}` : "",
+          customer?.address ? `Dirección: ${customer.address}` : "",
           device?.serial_number ? `Serie: ${device.serial_number}` : "",
           device?.accessory_details ? `Accesorios: ${device.accessory_details}` : "",
           data.payment_notes ? `Cobro informado en ficha: ${data.payment_notes}` : "",
-          data.warranty_conditions ? `Garantia: ${data.warranty_conditions}` : ""
+          data.warranty_conditions ? `Garantía: ${data.warranty_conditions}` : ""
         ]
           .filter(Boolean)
           .join("\n")

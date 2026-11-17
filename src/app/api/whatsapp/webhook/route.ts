@@ -11,7 +11,7 @@ export async function GET(request: Request) {
     query.get("hub.mode") !== "subscribe" ||
     !equalSecret(query.get("hub.verify_token"), config.verifyToken)
   )
-    return new Response("Verificacion no autorizada.", { status: 403 });
+    return new Response("Verificación no autorizada.", { status: 403 });
   const challenge = query.get("hub.challenge");
   if (!challenge || !/^\d{1,100}$/.test(challenge))
     return new Response("Solicitud no valida.", { status: 400 });
@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const config = getWhatsAppConfig();
-  if (!config) return new Response("Conexion pendiente.", { status: 503 });
+  if (!config) return new Response("Conexión pendiente.", { status: 503 });
   const reader = request.body?.getReader();
   if (!reader) return new Response("Solicitud vacia.", { status: 400 });
   const chunks: Uint8Array[] = [];

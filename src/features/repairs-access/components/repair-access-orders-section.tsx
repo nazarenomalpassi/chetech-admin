@@ -119,7 +119,7 @@ export function RepairAccessOrdersSection({
     if (
       document.documentElement.hasAttribute("data-unsaved-changes") &&
       !window.confirm(
-        "Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Queres cambiar la vista?"
+        "Hay cambios sin guardar. El borrador queda disponible para recuperarlo. Querés cambiar la vista?"
       )
     )
       return;
@@ -154,7 +154,7 @@ export function RepairAccessOrdersSection({
               onCompositionStart={() => onSearchCompositionChange?.(true)}
               onCompositionEnd={() => onSearchCompositionChange?.(false)}
               maxLength={200}
-              placeholder="Numero de orden, cliente, equipo o falla..."
+              placeholder="Número de orden, cliente, equipo o falla..."
               value={search}
             />
           </label>
@@ -180,15 +180,15 @@ export function RepairAccessOrdersSection({
             </summary>
             <div className="pt-2 sm:max-w-sm">
               <Select
-                aria-label="Filtrar ordenes por garantia"
+                aria-label="Filtrar ordenes por garantía"
                 name="warrantyFilter"
                 onChange={(event) => onWarrantyFilterChange(event.target.value)}
                 options={[
                   { value: "todos", label: "Todas las garantias" },
-                  { value: "active", label: "Garantia vigente" },
-                  { value: "expired", label: "Garantia vencida" },
+                  { value: "active", label: "Garantía vigente" },
+                  { value: "expired", label: "Garantía vencida" },
                   { value: "pending_delivery", label: "Pendiente de retiro" },
-                  { value: "needs_review", label: "Garantia incompleta" },
+                  { value: "needs_review", label: "Garantía incompleta" },
                   { value: "none", label: "Sin garantia" }
                 ]}
                 value={warrantyFilter}
@@ -199,7 +199,7 @@ export function RepairAccessOrdersSection({
       </div>
 
       {canManageIntake ? (
-        <div aria-label="Presentacion de ordenes" className="flex justify-end">
+        <div aria-label="Presentación de ordenes" className="flex justify-end">
           <Button
             aria-pressed={presentation === "table"}
             onClick={togglePresentation}
@@ -242,9 +242,9 @@ export function RepairAccessOrdersSection({
                   <th className="px-4 py-3 font-medium">Equipo / falla</th>
                   <th className="px-4 py-3 font-medium">Ingreso</th>
                   <th className="px-4 py-3 font-medium">Estado</th>
-                  <th className="px-4 py-3 font-medium">Garantia</th>
+                  <th className="px-4 py-3 font-medium">Garantía</th>
                   <th className="px-4 py-3 font-medium">Importes</th>
-                  <th className="px-4 py-3 font-medium">Proximo paso</th>
+                  <th className="px-4 py-3 font-medium">Próximo paso</th>
                   <th className="px-4 py-3 text-right font-medium">Acciones</th>
                 </tr>
               </thead>
@@ -289,7 +289,7 @@ export function RepairAccessOrdersSection({
                           {activeReturn ? (
                             <>
                               <p className="mt-2 text-xs font-semibold text-warning">
-                                Reingreso por garantia activo
+                                Reingreso por garantía activo
                               </p>
                               <p className="mt-1 max-w-xs text-sm leading-5 font-medium wrap-anywhere wrap-break-word whitespace-pre-wrap text-foreground">
                                 {activeReturn.issueReported}
@@ -306,7 +306,7 @@ export function RepairAccessOrdersSection({
                           {formatDate(activeReturn?.receivedOn ?? order.intakeDate)}
                           {activeReturn ? (
                             <p className="mt-1 text-xs text-muted-foreground">
-                              Reingreso de garantia
+                              Reingreso de garantía
                             </p>
                           ) : null}
                         </td>
@@ -382,7 +382,7 @@ export function RepairAccessOrdersSection({
                               <RepairAccessWhatsAppButton order={order} />
                             </span>
                             {canManageIntake ? (
-                              <ActionMenu label="Mas acciones">
+                              <ActionMenu label="Más acciones">
                                 <Button
                                   onClick={() => onEdit(order)}
                                   size="sm"

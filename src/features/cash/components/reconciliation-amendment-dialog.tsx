@@ -80,7 +80,7 @@ export function ReconciliationAmendmentDialog({
           panelClassName="max-w-2xl"
         >
           <h2 className="text-xl font-semibold" id={`cash-amend-${record.id}`}>
-            {isOpenRevision ? "Correccion del conteo" : "Reapertura auditada"}:{" "}
+            {isOpenRevision ? "Corrección del conteo" : "Reapertura auditada"}:{" "}
             {formatDate(record.business_date)}
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">

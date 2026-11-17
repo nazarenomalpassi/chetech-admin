@@ -70,7 +70,7 @@ export async function getSharedAccessTicket(options: {
       /* Never return an unshared ticket or log remote responses. */
     }
     throw new Error(
-      "No se pudo persistir el ticket WSAA compartido. Emision detenida; no se utilizara un ticket solo en memoria."
+      "No se pudo persistir el ticket WSAA compartido. Emisión detenida; no se utilizara un ticket solo en memoria."
     );
   }
 }

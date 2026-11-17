@@ -49,7 +49,7 @@ describe("ConfiguracionPage", () => {
     expect(html).not.toContain("Guardar ajustes de caja");
     expect(mocks.getCashSettings).not.toHaveBeenCalled();
     expect(html).toContain("Objetivos mensuales");
-    expect(html).toContain("Garantia predeterminada");
+    expect(html).toContain("Garantía predeterminada");
     for (const id of ["salesTarget", "profitTarget", "repairsTarget", "invoicingTarget"]) {
       expect(html).toContain(`for="${id}"`);
     }

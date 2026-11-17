@@ -5,7 +5,7 @@ const EVENT_LABELS: Record<TvBoardSaleEventKind, string> = {
   start_claim: "Reclamo iniciado",
   resume_sale: "Venta devuelta a pendiente",
   cancel_sale: "Venta anulada",
-  confirm_release: "Liberacion confirmada"
+  confirm_release: "Liberación confirmada"
 };
 
 export function BoardSaleHistory({ events }: { events: TvBoardRow["events"] }) {

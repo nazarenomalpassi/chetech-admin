@@ -131,7 +131,7 @@ export function ReplenishmentView({
     { label: "Productos vendidos", value: String(data.summary.productCount), icon: Boxes },
     { label: "Unidades vendidas", value: String(data.summary.quantitySold), icon: ShoppingBag },
     {
-      label: "Reposicion sugerida",
+      label: "Reposición sugerida",
       value: formatCurrency(data.summary.suggestedReplacementCost),
       icon: ReceiptText
     },
@@ -145,7 +145,7 @@ export function ReplenishmentView({
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Pedidos del mes</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {data.monthLabel}. Reposicion de productos vendidos en el mes.
+              {data.monthLabel}. Reposición de productos vendidos en el mes.
             </p>
           </div>
           <form className="grid gap-3 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)_auto]">
@@ -300,7 +300,7 @@ export function ReplenishmentView({
                   <td className="px-4 py-3">
                     <p>{formatCurrency(item.currentUnitCost)} c/u</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Historico {formatCurrency(item.historicalCost)}
+                      Histórico {formatCurrency(item.historicalCost)}
                     </p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
@@ -324,7 +324,7 @@ export function ReplenishmentView({
           <div className="empty-panel m-4">
             <p>No hay productos vendidos que coincidan con este mes y busqueda.</p>
             <p className="mt-2">
-              Elegi otro mes o limpia la busqueda. Para faltantes sin ventas, usa Revisar menor
+              Elegí otro mes o limpia la busqueda. Para faltantes sin ventas, usa Revisar menor
               stock; para una reparacion, entra a su orden.
             </p>
           </div>

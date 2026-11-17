@@ -77,7 +77,7 @@ export function MobileNavigation({ role }: { role: AppRole }) {
               }
             }}
           >
-            <nav className="grid gap-3" aria-label="Navegacion del local">
+            <nav className="grid gap-3" aria-label="Navegación del local">
               {groups.map((group) => (
                 <section key={group.label}>
                   <h2 className="mb-2 px-3 text-xs font-medium text-white/65">{group.label}</h2>

@@ -176,7 +176,7 @@ export function WorkshopPartsWorkspace({
                       : overdue
                         ? "Llegada vencida"
                         : partial
-                          ? "Recepcion parcial"
+                          ? "Recepción parcial"
                           : PART_STATUS_LABELS[part.status]}
                   </span>
                 </div>
@@ -290,7 +290,7 @@ export function WorkshopPartsWorkspace({
               <p className="mt-2 text-xs text-muted-foreground">
                 {item.quantity} unidad(es) · {item.supplier || "Proveedor sin informar"} ·{" "}
                 {formatDate(item.createdAt)}
-                {item.warrantyReturnId ? " · Vinculado a reingreso por garantia" : ""}
+                {item.warrantyReturnId ? " · Vinculado a reingreso por garantía" : ""}
               </p>
               {item.resolution ? (
                 <p className="mt-2 text-sm whitespace-pre-wrap">Resolucion: {item.resolution}</p>
@@ -368,7 +368,7 @@ export function WorkshopPartsWorkspace({
                 value={claimPart.warrantyReturnId}
                 className="h-5 w-5 accent-graphite"
               />
-              Vincular al reingreso por garantia activo de esta orden
+              Vincular al reingreso por garantía activo de esta orden
             </label>
           ) : null}
           <DialogField label="Costo adicional conocido (opcional)">
@@ -440,16 +440,16 @@ function Pagination({
   const pages = Math.max(1, Math.ceil(total / size));
   return (
     <nav
-      aria-label={`Paginas de ${name}`}
+      aria-label={`Páginas de ${name}`}
       className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3 text-sm"
     >
       <span>
-        Pagina {page} de {pages} · {total} registros
+        Página {page} de {pages} · {total} registros
       </span>
       <div className="flex gap-4">
         {page > 1 ? (
           <Link
-            aria-label={`Pagina anterior de ${name}`}
+            aria-label={`Página anterior de ${name}`}
             className="inline-flex min-h-11 items-center underline"
             href={link(page - 1)}
           >

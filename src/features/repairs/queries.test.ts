@@ -111,11 +111,11 @@ describe("bounded REP collection navigation", () => {
   it("fails closed on ambiguous linkage and does not perform a broad search for invalid links", async () => {
     mock.linked.mockResolvedValue({ data: [row("one"), row("two")], error: null });
     const ambiguous = await getRepairs(1, "REP-123");
-    expect(ambiguous.collectionTarget?.error).toMatch(/varios|mas de un/i);
+    expect(ambiguous.collectionTarget?.error).toMatch(/varios|m[aá]s de un/i);
     expect(ambiguous.collectionTarget?.order).toBeNull();
     mock.eq.mockClear();
     const invalid = await getRepairs(1, "%bad*query");
-    expect(invalid.collectionTarget?.error).toMatch(/numero|enlace/i);
+    expect(invalid.collectionTarget?.error).toMatch(/n[uú]mero|enlace/i);
     expect(mock.eq).not.toHaveBeenCalled();
   });
 

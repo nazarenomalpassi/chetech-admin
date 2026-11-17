@@ -29,7 +29,7 @@ describe("business chart evidence", () => {
   });
 
   it("shows an honest empty state without losing its accessible table", () => {
-    render(<BusinessChart title="Sin actividad" description="Periodo elegido" rows={[]} />);
+    render(<BusinessChart title="Sin actividad" description="Período elegido" rows={[]} />);
     expect(screen.getByRole("status").textContent).toContain("No hay registros para este grafico");
     fireEvent.click(screen.getByText("Ver tabla de datos"));
     expect(screen.getByRole("table", { name: "Datos de Sin actividad" })).toBeTruthy();

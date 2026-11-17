@@ -61,7 +61,7 @@ describe("professional invoice PDF", () => {
       fiscalReference: null,
       fiscalIssuedAt: null,
       items: Array.from({ length: 30 }, (_, index) => ({
-        description: `Renglon ${index} - ${"Descripcion de servicio y repuestos. ".repeat(50)}`,
+        description: `Renglon ${index} - ${"Descripción de servicio y repuestos. ".repeat(50)}`,
         quantity: 1,
         unitPrice: 10,
         total: 10

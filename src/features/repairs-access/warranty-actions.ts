@@ -22,7 +22,7 @@ export async function correctRepairWarranty(
         reason: z
           .string()
           .trim()
-          .min(3, "Indica el motivo de la correccion de garantia.")
+          .min(3, "Indica el motivo de la correccion de garantía.")
           .max(2000),
         confirmCorrection: z.literal(true, {
           errorMap: () => ({ message: "Confirma la correccion desde el retiro original." })
@@ -49,7 +49,7 @@ export async function correctRepairWarranty(
       p_reason: p.reason,
       p_confirm: p.confirmCorrection
     },
-    "Garantia corregida desde el retiro original. Se conservaron la entrega y los cobros."
+    "Garantía corregida desde el retiro original. Se conservaron la entrega y los cobros."
   );
 }
 
@@ -114,7 +114,7 @@ export async function startWarrantyReturn(
       p_condition_notes: p.conditionNotes,
       p_acknowledge_coverage: p.acknowledgeCoverage
     },
-    "Reingreso por garantia registrado en la misma orden. El taller ya puede verlo."
+    "Reingreso por garantía registrado en la misma orden. El taller ya puede verlo."
   );
 }
 
@@ -153,7 +153,7 @@ export async function saveWarrantyReturn(
       p_recipient: p.status === "retirado" ? p.recipient : ""
     },
     p.status === "retirado"
-      ? "Retiro de garantia registrado. Se conservaron la orden original y los cobros."
-      : "Avance de garantia guardado. El taller y mostrador ya pueden verlo."
+      ? "Retiro de garantía registrado. Se conservaron la orden original y los cobros."
+      : "Avance de garantía guardado. El taller y mostrador ya pueden verlo."
   );
 }

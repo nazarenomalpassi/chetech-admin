@@ -191,7 +191,7 @@ export function RepairOutsourcingsView({
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
               <label>
                 <span className="mb-2 block text-sm font-medium text-body">
-                  Numero de orden REP
+                  Número de orden REP
                 </span>
                 <Input
                   onChange={(event) => setOrderNumber(event.target.value)}
@@ -368,9 +368,9 @@ export function RepairOutsourcingsView({
               />
             </label>
             <label className="grid gap-2 text-sm">
-              Periodo
+              Período
               <Select
-                aria-label="Periodo de envios"
+                aria-label="Período de envios"
                 name="view"
                 defaultValue={filters.view}
                 options={[

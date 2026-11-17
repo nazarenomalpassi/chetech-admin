@@ -51,7 +51,7 @@ export async function loadFiscalCredentials(config: FiscalConfig) {
     (!config.privateKeyPem && (!config.privateKeyPath || !isAbsolute(config.privateKeyPath)))
   )
     throw new Error(
-      "Configuracion fiscal incompleta; indica PEM privado en servidor o rutas absolutas de certificado y clave."
+      "Configuración fiscal incompleta; indica PEM privado en servidor o rutas absolutas de certificado y clave."
     );
   try {
     const certificatePem =
@@ -125,7 +125,7 @@ export async function getAccessTicket(
   repository?: TicketCacheRepository
 ) {
   if (config.issues.length || !config.ticketEncryptionKey)
-    throw new Error("Configuracion del cache WSAA compartido incompleta.");
+    throw new Error("Configuración del cache WSAA compartido incompleta.");
   return getSharedAccessTicket({
     repository: repository ?? createTicketCacheRepository(),
     encryptionKey: config.ticketEncryptionKey,

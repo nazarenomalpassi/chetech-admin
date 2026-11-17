@@ -19,12 +19,12 @@ export const repairAccessStatusMeta: Record<
   { label: string; shortLabel: string; tone: StatusTone; lane: string }
 > = {
   pendiente_revision: {
-    label: "Pendiente de revision",
+    label: "Pendiente de revisión",
     shortLabel: "Pendiente",
     tone: "warning",
-    lane: "Recepcion"
+    lane: "Recepción"
   },
-  en_revision: { label: "En revision", shortLabel: "Revision", tone: "warning", lane: "Tecnica" },
+  en_revision: { label: "En revision", shortLabel: "Revisión", tone: "warning", lane: "Técnica" },
   presupuestado: {
     label: "Presupuestado",
     shortLabel: "Presupuesto",
@@ -45,11 +45,11 @@ export const repairAccessStatusMeta: Record<
   },
   en_reparacion: {
     label: "En reparacion",
-    shortLabel: "Reparacion",
+    shortLabel: "Reparación",
     tone: "default",
-    lane: "Tecnica"
+    lane: "Técnica"
   },
-  en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Tecnica" },
+  en_pruebas: { label: "En pruebas", shortLabel: "Pruebas", tone: "warning", lane: "Técnica" },
   listo_para_retirar: {
     label: "Listo para retirar",
     shortLabel: "Retirar",
@@ -88,14 +88,14 @@ export const repairAccessClosedStatuses = ["retirado"] as const;
 export const repairAccessLanes = [
   {
     key: "recepcion",
-    title: "Recepcion",
+    title: "Recepción",
     description: "Ingreso del equipo, falla declarada y prioridad del mostrador.",
     statuses: ["pendiente_revision"]
   },
   {
     key: "tecnica",
     title: "Mesa tecnica",
-    description: "Revision, diagnostico, avance y decisiones del tecnico.",
+    description: "Revisión, diagnostico, avance y decisiones del tecnico.",
     statuses: ["en_revision", "en_reparacion", "en_pruebas"]
   },
   {
@@ -108,7 +108,7 @@ export const repairAccessLanes = [
     key: "salida",
     title: "Salida",
     description:
-      "Equipos listos, sin fallas, entregados o sin solucion. Los no entregados siguen pendientes de retiro.",
+      "Equipos listos, sin fallas, entregados o sin solución. Los no entregados siguen pendientes de retiro.",
     statuses: ["listo_para_retirar", "no_presenta_fallas", "retirado", "sin_solucion"]
   }
 ] as const;

@@ -62,7 +62,7 @@ export function VisitDraftForm({
       setPendingDraft(draft);
     } catch {
       setNotice(
-        "No hay almacenamiento local disponible. Podes guardar en el servidor, pero el borrador no persistira."
+        "No hay almacenamiento local disponible. Podés guardar en el servidor, pero el borrador no persistira."
       );
     }
   }, [ownerId, visitId, savedDraftToken, savedDraftVisitId]);

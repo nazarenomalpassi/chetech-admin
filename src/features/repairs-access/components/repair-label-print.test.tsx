@@ -165,17 +165,17 @@ it("offers three label variants and posts accessory details privately only after
   expect(Array.from((selector as HTMLSelectElement).options).map((option) => option.text)).toEqual([
     "Equipo",
     "Accesorio",
-    "Reingreso de garantia"
+    "Reingreso de garantía"
   ]);
   const originalSignal = fetchMock.mock.calls[0][1].signal as AbortSignal;
   fireEvent.change(selector, { target: { value: "accessory" } });
   expect(originalSignal.aborted).toBe(true);
   expect(screen.queryByTitle("Vista previa de la etiqueta de taller")).toBeNull();
   expect(screen.queryByRole("link", { name: "Abrir PDF" })).toBeNull();
-  fireEvent.change(screen.getByRole("textbox", { name: "Descripcion del accesorio" }), {
+  fireEvent.change(screen.getByRole("textbox", { name: "Descripción del accesorio" }), {
     target: { value: "Control remoto negro" }
   });
-  fireEvent.change(screen.getByRole("spinbutton", { name: "Numero de accesorio" }), {
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Número de accesorio" }), {
     target: { value: "2" }
   });
   expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -225,13 +225,13 @@ it("shows the no-active-return response without falling back to the original equ
     ok: false,
     status: 409,
     headers: new Headers({ "Content-Type": "application/json" }),
-    json: async () => ({ error: "Esta orden no tiene un reingreso de garantia activo." })
+    json: async () => ({ error: "Esta orden no tiene un reingreso de garantía activo." })
   });
   fireEvent.change(screen.getByRole("combobox", { name: "Tipo de etiqueta" }), {
     target: { value: "warranty" }
   });
   await waitFor(() =>
-    expect(screen.getByRole("alert").textContent).toContain("reingreso de garantia activo")
+    expect(screen.getByRole("alert").textContent).toContain("reingreso de garantía activo")
   );
   expect(screen.queryByRole("link", { name: "Abrir PDF" })).toBeNull();
   expect(screen.queryByTitle("Vista previa de la etiqueta de taller")).toBeNull();
@@ -292,7 +292,7 @@ it("invalidates the prepared accessory when its text changes and offers its own 
   fireEvent.change(screen.getByRole("combobox", { name: "Tipo de etiqueta" }), {
     target: { value: "accessory" }
   });
-  fireEvent.change(screen.getByRole("textbox", { name: "Descripcion del accesorio" }), {
+  fireEvent.change(screen.getByRole("textbox", { name: "Descripción del accesorio" }), {
     target: { value: "Control" }
   });
   fireEvent.click(screen.getByRole("button", { name: "Preparar etiqueta de accesorio" }));
@@ -311,7 +311,7 @@ it("invalidates the prepared accessory when its text changes and offers its own 
   });
   fireEvent.click(screen.getByRole("button", { name: "Imprimir etiqueta" }));
   expect(screen.getByRole("status").textContent).toContain("Usa Descargar PDF");
-  fireEvent.change(screen.getByRole("textbox", { name: "Descripcion del accesorio" }), {
+  fireEvent.change(screen.getByRole("textbox", { name: "Descripción del accesorio" }), {
     target: { value: "Otro accesorio" }
   });
   expect(screen.queryByTitle("Vista previa de la etiqueta de taller")).toBeNull();
@@ -353,7 +353,7 @@ it.each(["accessory", "warranty"])(
       target: { value: variant }
     });
     if (variant === "accessory") {
-      fireEvent.change(screen.getByRole("textbox", { name: "Descripcion del accesorio" }), {
+      fireEvent.change(screen.getByRole("textbox", { name: "Descripción del accesorio" }), {
         target: { value: "Control" }
       });
       fireEvent.click(screen.getByRole("button", { name: "Preparar etiqueta de accesorio" }));
@@ -388,10 +388,10 @@ it("limits temporary accessory input to 120 characters and warns only when the r
     target: { value: "accessory" }
   });
   const input = screen.getByRole("textbox", {
-    name: "Descripcion del accesorio"
+    name: "Descripción del accesorio"
   }) as HTMLInputElement;
   expect(input.maxLength).toBe(120);
-  fireEvent.change(input, { target: { value: "Descripcion temporal muy larga ".repeat(3) } });
+  fireEvent.change(input, { target: { value: "Descripción temporal muy larga ".repeat(3) } });
   fetchMock.mockResolvedValueOnce({
     ok: true,
     headers: new Headers({
@@ -402,7 +402,7 @@ it("limits temporary accessory input to 120 characters and warns only when the r
   });
   fireEvent.click(screen.getByRole("button", { name: "Preparar etiqueta de accesorio" }));
   await waitFor(() =>
-    expect(screen.getByRole("note", { name: "Descripcion del accesorio recortada" })).toBeTruthy()
+    expect(screen.getByRole("note", { name: "Descripción del accesorio recortada" })).toBeTruthy()
   );
   expect(screen.getByRole("note").textContent).toMatch(/acorta/i);
   expect(screen.getByRole("note").textContent).toContain("El QR no recupera este texto temporal");

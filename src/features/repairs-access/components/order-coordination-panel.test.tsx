@@ -135,7 +135,7 @@ function mockLookup(record = order) {
           customerName: record.customer.fullName,
           customerPhone: "",
           device: "TV",
-          issueDescription: "Reparacion",
+          issueDescription: "Reparación",
           amount: total,
           paidTotal: record.isPaid ? total : 0,
           balance: record.isPaid ? 0 : total
@@ -149,9 +149,9 @@ beforeEach(() => mockLookup());
 describe("order collection shortcut", () => {
   it("organiza ubicacion y revision sin pedir asignar un tecnico", () => {
     render(<OrderCoordinationPanel order={order} canManage />);
-    fireEvent.click(screen.getByRole("button", { name: "Ubicacion y revision" }));
-    expect(screen.getByRole("textbox", { name: "Ubicacion del equipo" })).toBeTruthy();
-    expect(screen.queryByRole("combobox", { name: "Tecnico responsable" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ubicación y revision" }));
+    expect(screen.getByRole("textbox", { name: "Ubicación del equipo" })).toBeTruthy();
+    expect(screen.queryByRole("combobox", { name: "Técnico responsable" })).toBeNull();
     expect(screen.getByText(/No cambia la fecha prometida/)).toBeTruthy();
   });
   it("keeps manual receipt forms outside folded administration without nesting forms", async () => {
@@ -373,12 +373,12 @@ describe("coordination dialog close protection", () => {
       render(
         <CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
           <label>
-            Ubicacion
+            Ubicación
             <input name="location" defaultValue="Taller" />
           </label>
         </CoordinationDialog>
       );
-      fireEvent.change(screen.getByRole("textbox", { name: "Ubicacion" }), {
+      fireEvent.change(screen.getByRole("textbox", { name: "Ubicación" }), {
         target: { value: "Estante 2" }
       });
       if (method === "button") fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
@@ -386,7 +386,7 @@ describe("coordination dialog close protection", () => {
       else fireEvent.mouseDown(screen.getByRole("dialog").parentElement!);
       expect(confirm).toHaveBeenCalledOnce();
       expect(onClose).not.toHaveBeenCalled();
-      expect((screen.getByRole("textbox", { name: "Ubicacion" }) as HTMLInputElement).value).toBe(
+      expect((screen.getByRole("textbox", { name: "Ubicación" }) as HTMLInputElement).value).toBe(
         "Estante 2"
       );
       confirm.mockReturnValue(true);
@@ -401,12 +401,12 @@ describe("coordination dialog close protection", () => {
     render(
       <CoordinationDialog title="Editar responsable" action={vi.fn()} onClose={onClose}>
         <label>
-          Ubicacion
+          Ubicación
           <input name="location" defaultValue="Taller" />
         </label>
       </CoordinationDialog>
     );
-    const input = screen.getByRole("textbox", { name: "Ubicacion" });
+    const input = screen.getByRole("textbox", { name: "Ubicación" });
     fireEvent.change(input, { target: { value: "Estante 2" } });
     fireEvent.change(input, { target: { value: "Taller" } });
     fireEvent.keyDown(document, { key: "Escape" });
@@ -430,13 +430,13 @@ describe("coordination dialog close protection", () => {
       unitCost: 100
     } as Parameters<typeof PartManagementDialog>[0]["part"];
     render(<PartManagementDialog part={part} canManage onClose={onClose} />);
-    fireEvent.change(screen.getByRole("combobox", { name: "Accion" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Acción" }), {
       target: { value: "cancel" }
     });
     fireEvent.keyDown(document, { key: "Escape" });
     expect(confirm).toHaveBeenCalledOnce();
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByRole("combobox", { name: "Accion" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Acción" }), {
       target: { value: "order" }
     });
     fireEvent.keyDown(document, { key: "Escape" });

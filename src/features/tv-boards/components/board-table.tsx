@@ -116,10 +116,10 @@ export function BoardTable({
           }
         >
           {board.releaseEvidence === "confirmed" || releasedIds.has(board.id)
-            ? "Liberacion confirmada"
+            ? "Liberación confirmada"
             : board.releaseEvidence === "estimated_due"
               ? "Fecha prevista cumplida; sin confirmar"
-              : "Liberacion sin confirmar"}
+              : "Liberación sin confirmar"}
         </Badge>
       </div>
     );
@@ -183,7 +183,7 @@ export function BoardTable({
             Confirmar liberacion
           </Button>
         ) : null}
-        <ActionMenu label="Mas acciones">
+        <ActionMenu label="Más acciones">
           {!board.isSold ? (
             <Button
               disabled={disabled}
@@ -226,7 +226,7 @@ export function BoardTable({
             {board.linkedSale.method ? ` - ${formatCashMethod(board.linkedSale.method)}` : ""}
           </p>
         ) : board.releasedAt ? (
-          <p>Liberacion historica sin venta vinculada</p>
+          <p>Liberación historica sin venta vinculada</p>
         ) : null}
         {board.saleNotes ? <p className="wrap-break-word">{board.saleNotes}</p> : null}
         <BoardSaleHistory events={board.events} />

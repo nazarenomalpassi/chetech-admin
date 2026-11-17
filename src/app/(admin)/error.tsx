@@ -14,7 +14,7 @@ export default function AdminError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const digest = error.digest ? `Codigo: ${error.digest}` : null;
+  const digest = error.digest ? `Código: ${error.digest}` : null;
 
   return (
     <Card className="mx-auto max-w-2xl p-5 lg:p-6" role="alert">

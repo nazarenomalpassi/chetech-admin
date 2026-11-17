@@ -40,7 +40,7 @@ describe("private paged workshop activity", () => {
             id: eventId,
             kind: "update",
             message: "Estado actualizado",
-            actorName: "Tecnico",
+            actorName: "Técnico",
             createdAt: date,
             actor_id: "private",
             audit_notes: "secret",
@@ -66,7 +66,7 @@ describe("private paged workshop activity", () => {
           id: eventId,
           kind: "update",
           message: "Estado actualizado",
-          actorName: "Tecnico",
+          actorName: "Técnico",
           createdAt: date
         }
       ],

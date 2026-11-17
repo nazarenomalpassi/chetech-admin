@@ -49,7 +49,7 @@ const claims: any = { items: [], total: 0, page: 1, pageSize: 50 };
 describe("bandeja de repuestos y reclamos", () => {
   it("identifica recepciones parciales, costos desconocidos y siguiente pagina", () => {
     render(<WorkshopPartsWorkspace data={page} claims={claims} canManage />);
-    expect(screen.getByText("Recepcion parcial")).toBeTruthy();
+    expect(screen.getByText("Recepción parcial")).toBeTruthy();
     expect(screen.getByText("1 de 3 recibidos · 0 usados")).toBeTruthy();
     expect(screen.getByText("Sin informar")).toBeTruthy();
     expect(

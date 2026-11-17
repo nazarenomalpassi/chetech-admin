@@ -28,12 +28,12 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     settings_saved: { success: true, message: "Ajustes de caja guardados correctamente." },
     warranty_settings_saved: {
       success: true,
-      message: "Duracion predeterminada de garantia guardada correctamente."
+      message: "Duración predeterminada de garantía guardada correctamente."
     },
     goals_saved: { success: true, message: "Metas mensuales guardadas correctamente." },
-    repair_created: { success: true, message: "Reparacion guardada correctamente." },
-    repair_updated: { success: true, message: "Reparacion actualizada correctamente." },
-    repair_deleted: { success: true, message: "Reparacion eliminada correctamente." },
+    repair_created: { success: true, message: "Reparación guardada correctamente." },
+    repair_updated: { success: true, message: "Reparación actualizada correctamente." },
+    repair_deleted: { success: true, message: "Reparación eliminada correctamente." },
     repair_payment_added: {
       success: true,
       message: "Cobro registrado. El saldo y la caja estan actualizados."
@@ -46,7 +46,7 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     visit_updated: { success: true, message: "Visita actualizada correctamente." },
     visit_deleted: { success: true, message: "Visita eliminada correctamente." },
     visit_status_updated: { success: true, message: "Estado de visita actualizado correctamente." },
-    repair_access_created: { success: true, message: "Orden Access guardada correctamente." },
+    repair_access_created: { success: true, message: "Orden guardada correctamente." },
     repair_access_intake_updated: {
       success: true,
       message: "Ingreso de la orden actualizado correctamente."
@@ -69,18 +69,18 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
     },
     repair_customer_portal_updated: {
       success: true,
-      message: "Informacion publicada para el cliente correctamente."
+      message: "Información publicada para el cliente correctamente."
     },
-    repair_access_updated: { success: true, message: "Orden Access actualizada correctamente." },
+    repair_access_updated: { success: true, message: "Orden actualizada correctamente." },
     repair_access_cancelled: {
       success: true,
-      message: "Orden Access anulada correctamente, sin borrar el historial."
+      message: "Orden anulada correctamente, sin borrar el historial."
     },
-    outsourcing_created: { success: true, message: "Terciarizacion guardada correctamente." },
+    outsourcing_created: { success: true, message: "Terciarización guardada correctamente." },
     outsourcing_retrieved: { success: true, message: "Equipo marcado como buscado correctamente." },
     outsourcing_cancelled: {
       success: true,
-      message: "Terciarizacion anulada correctamente, sin borrar el historial."
+      message: "Terciarización anulada correctamente, sin borrar el historial."
     },
     balance_transfer_created: {
       success: true,

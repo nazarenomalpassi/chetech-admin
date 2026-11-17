@@ -70,9 +70,9 @@ describe("board evidence labels", () => {
       />
     );
     expect(screen.getAllByText("Fecha prevista cumplida; sin confirmar")).toHaveLength(2);
-    expect(screen.getAllByRole("button", { name: /Confirmar liberacion/ })).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: /Confirmar liberaci[oó]n/ })).toHaveLength(2);
     expect(screen.queryByText("Dinero disponible")).toBeNull();
-    fireEvent.click(screen.getAllByRole("button", { name: "Mas acciones" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Más acciones" })[0]);
     expect((screen.getByRole("button", { name: "Eliminar" }) as HTMLButtonElement).disabled).toBe(
       true
     );
@@ -205,7 +205,7 @@ describe("board evidence labels", () => {
               {
                 id: "event",
                 kind: "resume_sale",
-                notes: "Revision terminada",
+                notes: "Revisión terminada",
                 netAmount: 80,
                 createdAt: "2026-10-19"
               }
@@ -217,7 +217,7 @@ describe("board evidence labels", () => {
     const history = screen.getAllByText("Ver historial (1)")[0].closest("details")!;
     expect(history).toBeTruthy();
     expect(history.textContent).toContain("Venta devuelta a pendiente");
-    expect(history.textContent).toContain("Revision terminada");
+    expect(history.textContent).toContain("Revisión terminada");
     expect(history.querySelector("time")?.dateTime).toBe("2026-10-19");
   });
 
@@ -309,7 +309,7 @@ describe("board evidence labels", () => {
         boards={[released]}
       />
     );
-    expect(screen.getAllByText("Liberacion historica sin venta vinculada")).toHaveLength(2);
+    expect(screen.getAllByText("Liberación historica sin venta vinculada")).toHaveLength(2);
     expect(screen.queryByText(/NX SANTI/)).toBeNull();
   });
 });

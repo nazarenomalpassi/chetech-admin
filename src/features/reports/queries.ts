@@ -146,7 +146,7 @@ function buildReportsResponse({
     { key: "salesProfit", label: "Ganancia de ventas", current: currentMonthMetrics.salesProfit, previous: previousMonthMetrics.salesProfit },
     { key: "repairsTotal", label: "Reparaciones", current: currentMonthMetrics.repairsTotal, previous: previousMonthMetrics.repairsTotal },
     { key: "expensesTotal", label: "Gastos", current: currentMonthMetrics.expensesTotal, previous: previousMonthMetrics.expensesTotal },
-    { key: "invoicesTotal", label: "Facturacion", current: currentMonthMetrics.invoicesTotal, previous: previousMonthMetrics.invoicesTotal },
+    { key: "invoicesTotal", label: "Facturación", current: currentMonthMetrics.invoicesTotal, previous: previousMonthMetrics.invoicesTotal },
     { key: "netCash", label: "Resultado de caja", current: currentMonthMetrics.netCash, previous: previousMonthMetrics.netCash }
   ].map((item) => ({
     ...item,

@@ -37,7 +37,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/visitas" as Route, label: "Visitas", icon: MapPinned, permission: "visits.view" },
   {
     href: "/placas-tv" as Route,
-    label: "Placas de Televisores",
+    label: "Placas de televisores",
     icon: Monitor,
     permission: "boards.manage"
   },
@@ -59,7 +59,7 @@ export const sidebarItems: SidebarItem[] = [
   { href: "/reportes" as Route, label: "Reportes", icon: LineChart, permission: "reports.manage" },
   {
     href: "/reparaciones",
-    label: "Pagos de reparaciones",
+    label: "Cobros de reparaciones",
     icon: BadgeDollarSign,
     permission: "repairs.manage"
   },
@@ -75,12 +75,17 @@ export const sidebarItems: SidebarItem[] = [
     icon: Truck,
     permission: "outsourcings.manage"
   },
-  { href: "/facturacion", label: "Facturacion", icon: FileText, permission: "invoices.manage" },
-  { href: "/configuracion", label: "Configuracion", icon: Settings, permission: "settings.manage" }
+  { href: "/facturacion", label: "Facturación", icon: FileText, permission: "invoices.manage" },
+  { href: "/configuracion", label: "Configuración", icon: Settings, permission: "settings.manage" }
 ];
 
+/** Secciones que siguen disponibles por enlace directo pero no aparecen en el menú. */
+const hiddenFromMenu = new Set<string>(["/cuotas"]);
+
 export function getSidebarItemsForRole(role: AppRole) {
-  return sidebarItems.filter((item) => hasPermission(role, item.permission));
+  return sidebarItems.filter(
+    (item) => hasPermission(role, item.permission) && !hiddenFromMenu.has(item.href)
+  );
 }
 
 export function getSidebarGroupsForRole(role: AppRole) {
@@ -98,14 +103,13 @@ export function getSidebarGroupsForRole(role: AppRole) {
         "/caja",
         "/cambio-balance",
         "/reparaciones",
-        "/cuotas",
         "/gastos",
         "/sueldos",
         "/facturacion",
         "/reportes"
       ]
     },
-    { label: "Administracion", paths: ["/configuracion"] }
+    { label: "Administración", paths: ["/configuracion"] }
   ];
   return groups
     .map((group) => ({

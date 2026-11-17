@@ -316,7 +316,7 @@ export function ExpensesList({
                   Editar
                 </Button>
                 {canDelete ? (
-                  <ActionMenu label="Mas acciones">
+                  <ActionMenu label="Más acciones">
                     <form
                       action={deleteExpenseAction}
                       onSubmit={(event) =>
@@ -344,8 +344,8 @@ export function ExpensesList({
             <thead className="bg-card text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Fecha</th>
-                <th className="px-4 py-3 font-medium">Categoria</th>
-                <th className="px-4 py-3 font-medium">Descripcion</th>
+                <th className="px-4 py-3 font-medium">Categoría</th>
+                <th className="px-4 py-3 font-medium">Descripción</th>
                 <th className="px-4 py-3 font-medium">Monto</th>
                 <th className="px-4 py-3 font-medium">Cuenta</th>
                 <th className="px-4 py-3 text-right font-medium">Acciones</th>
@@ -393,7 +393,7 @@ export function ExpensesList({
                         Editar
                       </Button>
                       {canDelete ? (
-                        <ActionMenu label="Mas acciones">
+                        <ActionMenu label="Más acciones">
                           <form
                             action={deleteExpenseAction}
                             onSubmit={(event) =>

@@ -86,7 +86,7 @@ export function PwaRegister() {
       role="status"
     >
       <div>
-        <p className="text-sm font-semibold text-foreground">Actualizacion disponible</p>
+        <p className="text-sm font-semibold text-foreground">Actualización disponible</p>
         <p className="mt-1 text-xs leading-5 text-muted-foreground">{notice}</p>
       </div>
       <Button className="shrink-0" onClick={installUpdate} type="button">

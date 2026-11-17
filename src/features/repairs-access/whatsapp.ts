@@ -70,7 +70,7 @@ export function getRepairAccessWhatsAppTemplate(
   const amount = formatAmount(getAmount(order));
   const budgetDetail = order.budgetDetail?.trim();
   const warrantyText = order.warrantyDays
-    ? ` Tiene ${order.warrantyDays} dias de garantia desde el retiro.`
+    ? ` Tiene ${order.warrantyDays} dias de garantía desde el retiro.`
     : "";
 
   if (selectedKind === "budget") {
@@ -82,7 +82,7 @@ export function getRepairAccessWhatsAppTemplate(
         `Le paso el presupuesto de la reparacion de su equipo ${device}.`,
         budgetDetail ? `Detalle del presupuesto: ${budgetDetail}.` : "",
         amount ? `El total final seria ${amount}.` : "",
-        `tiene de garantia ${order.warrantyDays || 0} dias.`
+        `tiene de garantía ${order.warrantyDays || 0} dias.`
       ]
         .filter(Boolean)
         .join(" ")
@@ -107,7 +107,7 @@ export function getRepairAccessWhatsAppTemplate(
   if (selectedKind === "no_solution") {
     return {
       kind: "no_solution",
-      label: "Avisar sin solucion",
+      label: "Avisar sin solución",
       message: [
         customerGreeting(order.customerName, true),
         `lamentamos informarle que su equipo ${device} no va a tener reparacion.`

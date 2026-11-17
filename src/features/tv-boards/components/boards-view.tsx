@@ -113,7 +113,7 @@ export function BoardsView({
             </dd>
           </div>
           <div className="min-w-0">
-            <dt className="text-sm text-success">Liberacion confirmada</dt>
+            <dt className="text-sm text-success">Liberación confirmada</dt>
             <dd className="mt-1 wrap-break-word">
               <span className="text-xl font-semibold text-success tabular-nums">
                 {formatCurrency(summary.releasedAmount)}

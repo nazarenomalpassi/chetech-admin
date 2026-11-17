@@ -17,7 +17,7 @@ export function OperationsPagination({
       className="flex flex-wrap items-center justify-between gap-3 border-t border-border p-4 text-sm"
     >
       <p>
-        Pagina {pagination.page} de {pagination.totalPages} | {pagination.total} registros
+        Página {pagination.page} de {pagination.totalPages} | {pagination.total} registros
       </p>
       <div className="flex gap-2">
         {pagination.hasPreviousPage ? (

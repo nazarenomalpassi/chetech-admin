@@ -116,7 +116,7 @@ it("uses the global financial summary even when inventory filters have no result
     ["Neto de ventas", summary.salesNetAmount],
     ["Pendiente de confirmar", summary.pendingAmount],
     ["Dinero retenido", summary.heldAmount],
-    ["Liberacion confirmada", summary.releasedAmount]
+    ["Liberación confirmada", summary.releasedAmount]
   ] as const) {
     expect(
       within(screen.getByText(label).parentElement!).getByRole("definition").textContent
@@ -260,7 +260,7 @@ it("catches transport failures without losing resolution notes or the chosen out
   openResolution();
   fireEvent.change(screen.getByLabelText("Resolucion"), { target: { value: "cancel_sale" } });
   fireEvent.change(screen.getByLabelText("Notas de resolucion (opcional)"), {
-    target: { value: "Devolucion verificada" }
+    target: { value: "Devolución verificada" }
   });
   fireEvent.click(screen.getByLabelText("Confirmo anular esta venta sin reponer stock"));
   submitClaim();
@@ -268,7 +268,7 @@ it("catches transport failures without losing resolution notes or the chosen out
   expect((screen.getByLabelText("Resolucion") as HTMLSelectElement).value).toBe("cancel_sale");
   expect(
     (screen.getByLabelText("Notas de resolucion (opcional)") as HTMLTextAreaElement).value
-  ).toBe("Devolucion verificada");
+  ).toBe("Devolución verificada");
   expect(
     (screen.getByLabelText("Confirmo anular esta venta sin reponer stock") as HTMLInputElement)
       .checked
@@ -307,7 +307,7 @@ it("resumes a claim only as pending, without confirming release or writing cash"
   });
   openResolution();
   expect((screen.getByLabelText("Resolucion") as HTMLSelectElement).value).toBe("resume_sale");
-  expect(screen.getByRole("dialog").textContent).toMatch(/no confirma.*liberacion/i);
+  expect(screen.getByRole("dialog").textContent).toMatch(/no confirma.*liberaci[oó]n/i);
   expect(screen.getByRole("dialog").textContent).toMatch(/no.*movimientos de caja/i);
   submitClaim();
   await waitFor(() =>

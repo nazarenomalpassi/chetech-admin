@@ -121,7 +121,7 @@ export function VisitEditor({
                 "Buscar TV",
                 "Buscar equipo",
                 "Revisar TV",
-                "Reparacion a domicilio",
+                "Reparación a domicilio",
                 "Visita tecnica",
                 "Otro"
               ].map((reason) => (

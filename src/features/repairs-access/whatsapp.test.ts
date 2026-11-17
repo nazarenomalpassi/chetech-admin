@@ -49,7 +49,7 @@ describe("repair access whatsapp helpers", () => {
     expect(decodeURIComponent(budgetHref ?? "")).toContain("Cambio de leds");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("El total final seria $");
     expect(decodeURIComponent(budgetHref ?? "")).toContain("90.000,00");
-    expect(decodeURIComponent(budgetHref ?? "")).toContain("tiene de garantia 30 dias");
+    expect(decodeURIComponent(budgetHref ?? "")).toContain("tiene de garantía 30 dias");
 
     const noSolutionHref = buildRepairAccessWhatsAppHref(
       { ...baseOrder, deviceLabel: "TV Samsung 43", status: "sin_solucion" },

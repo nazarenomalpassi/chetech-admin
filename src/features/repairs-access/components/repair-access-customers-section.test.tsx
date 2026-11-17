@@ -25,7 +25,7 @@ async function search() {
 describe("customer search feedback", () => {
   it("clearly labels the initial latest-40 cap and does not fetch for short queries", () => {
     render(<RepairAccessCustomersSection customers={[]} search="" onSearchChange={vi.fn()} />);
-    expect(screen.getByText(/ultimos 40 clientes/i)).toBeTruthy();
+    expect(screen.getByText(/[uú]ltimos 40 clientes/i)).toBeTruthy();
     expect(fetchMock).not.toHaveBeenCalled();
   });
   it.each(["http", "network"])(

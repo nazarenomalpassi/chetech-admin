@@ -18,7 +18,7 @@ export function WorkshopOperationalMetrics({
     return (
       <Card>
         <p role="status">
-          Metricas operativas no disponibles. Reintenta cuando se habilite la consulta del taller.
+          Métricas operativas no disponibles. Reintenta cuando se habilite la consulta del taller.
         </p>
       </Card>
     );
@@ -33,7 +33,7 @@ export function WorkshopOperationalMetrics({
     <div className="min-w-0 space-y-4">
       <header className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Metricas operativas</h2>
+          <h2 className="text-xl font-semibold text-foreground">Métricas operativas</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Todas las ordenes del taller, no solo las de la pagina actual.
           </p>
@@ -50,7 +50,7 @@ export function WorkshopOperationalMetrics({
         <Stat
           label="Equipos abiertos"
           value={current.openOrders}
-          detail="En custodia, incluso sin solucion o sin fallas, hasta registrar retiro."
+          detail="En custodia, incluso sin solución o sin fallas, hasta registrar retiro."
         />
         <Stat
           label="Sin movimiento hace 7 dias"
@@ -71,10 +71,10 @@ export function WorkshopOperationalMetrics({
       </section>
 
       <div className="grid gap-4 xl:grid-cols-2">
-        <Card role="region" aria-label="Antiguedad de equipos abiertos">
-          <h3 className="text-base font-semibold text-foreground">Antiguedad en el local</h3>
+        <Card role="region" aria-label="Antigüedad de equipos abiertos">
+          <h3 className="text-base font-semibold text-foreground">Antigüedad en el local</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Dias calendario desde el ingreso. No es tiempo de trabajo tecnico.
+            Días calendario desde el ingreso. No es tiempo de trabajo tecnico.
           </p>
           <dl className="mt-4 space-y-3">
             {ageRows.map((row) => (
@@ -204,8 +204,8 @@ export function WorkshopOperationalMetrics({
             </p>
           )}
         </Card>
-        <Card role="region" aria-label="Reingresos por garantia">
-          <h3 className="text-base font-semibold text-foreground">Reingresos por garantia</h3>
+        <Card role="region" aria-label="Reingresos por garantía">
+          <h3 className="text-base font-semibold text-foreground">Reingresos por garantía</h3>
           <p className="mt-1 text-xs text-muted-foreground">
             Circuito separado del ingreso y retiro de la reparacion original.
           </p>
@@ -220,7 +220,7 @@ export function WorkshopOperationalMetrics({
           <div className="mt-4 border-t border-border pt-4">
             <p className="text-sm font-medium">Cohorte de entregas con garantia vencida</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Entregadas en el periodo seleccionado y con plazo de garantia ya vencido.
+              Entregadas en el periodo seleccionado y con plazo de garantía ya vencido.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               {number(warranty.matureCohort.maturedOrders)} ordenes maduras /{" "}

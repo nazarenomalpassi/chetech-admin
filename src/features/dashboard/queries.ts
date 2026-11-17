@@ -154,7 +154,7 @@ export async function getDashboardData({
 
   for (const [label, result] of [
     ["productos", lowStockProductsRaw],
-    ["productos mas vendidos", topProducts],
+    ["productos más vendidos", topProducts],
     ["facturacion", invoicesInRange],
     ["liberaciones de MercadoLibre", tvBoardSales]
   ] as const) {

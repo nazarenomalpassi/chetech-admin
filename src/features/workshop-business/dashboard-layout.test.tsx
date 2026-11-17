@@ -69,7 +69,7 @@ describe("dashboard headline and inbox placement", () => {
     ).toBeTruthy();
     expect(details.open).toBe(false);
     expect(document.querySelectorAll("details")).toHaveLength(3);
-    expect(screen.getByText("Ordenes activas recientes").closest("summary")).not.toBeNull();
+    expect(screen.getByText("Órdenes activas recientes").closest("summary")).not.toBeNull();
     expect(screen.getByText("Visitas de hoy").closest("summary")?.textContent).toContain(
       "0 agendadas"
     );
@@ -85,7 +85,7 @@ describe("dashboard headline and inbox placement", () => {
     ).toBeTruthy();
     expect(
       details.compareDocumentPosition(
-        screen.getByRole("region", { name: "Metricas del 5 oct 2026 al 5 oct 2026" })
+        screen.getByRole("region", { name: "Métricas del 5 oct 2026 al 5 oct 2026" })
       ) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(details.open).toBe(false);

@@ -119,7 +119,7 @@ export class WsfeClient implements FiscalGateway {
           Number(item.Id) === s.receiver.ivaCondition && String(item.Cmp_Clase).includes("C")
       )
     )
-      throw new Error("Condicion IVA del receptor no habilitada para Factura C.");
+      throw new Error("Condición IVA del receptor no habilitada para Factura C.");
     const optional = await this.request("FEParamGetTiposOpcional", s);
     requireNoErrors(optional);
     if (!list(optional.ResultGet?.OpcionalTipo).some((item: any) => Number(item.Id) === 23))

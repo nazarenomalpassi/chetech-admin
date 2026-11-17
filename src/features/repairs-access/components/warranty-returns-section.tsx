@@ -58,7 +58,7 @@ export function WarrantyReturnsSection({
     <section aria-labelledby={`${fieldId}-heading`} className="min-w-0 space-y-4">
       <div>
         <h2 id={`${fieldId}-heading`} className="text-xl font-semibold text-foreground">
-          Reingresos por garantia
+          Reingresos por garantía
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted-foreground">
           Otra visita, el mismo REP. Seguimiento separado, sin modificar la orden ni sus cobros
@@ -85,7 +85,7 @@ export function WarrantyReturnsSection({
       </div>
       <form
         role="search"
-        aria-label="Buscar reingresos por garantia"
+        aria-label="Buscar reingresos por garantía"
         className="flex flex-col items-end gap-2 sm:flex-row"
         onSubmit={(event) => {
           event.preventDefault();
@@ -172,7 +172,7 @@ export function WarrantyReturnsSection({
           )}
           {pages > 1 && !pageOutOfRange ? (
             <nav
-              aria-label="Paginas de reingresos"
+              aria-label="Páginas de reingresos"
               className="flex flex-wrap items-center justify-between gap-2"
             >
               <Button
@@ -184,7 +184,7 @@ export function WarrantyReturnsSection({
                 Anterior
               </Button>
               <p className="text-sm text-muted-foreground">
-                Pagina {data.page} de {pages}
+                Página {data.page} de {pages}
               </p>
               <Button
                 type="button"

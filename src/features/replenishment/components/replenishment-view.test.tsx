@@ -46,7 +46,7 @@ describe("practical monthly orders", () => {
       screen.getByRole("link", { name: "Ver repuestos de reparaciones" }).getAttribute("href")
     ).toBe("/reparaciones-access?view=ordenes&scope=parts");
     expect(screen.getByText(/No envia compras ni registra gastos/)).toBeTruthy();
-    expect(screen.getByText(/Elegi otro mes/)).toBeTruthy();
+    expect(screen.getByText(/Eleg[ií] otro mes/)).toBeTruthy();
   });
   it("offers a product-specific next step after receipt, without changing the item form", () => {
     render(<ReplenishmentView data={{ ...data, items: [item] }} search="Cable" message={null} />);

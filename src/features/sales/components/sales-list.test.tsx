@@ -106,8 +106,8 @@ it("keeps deletion confirmation and the correct sale id inside the action menu",
   const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
   vi.mocked(deleteSaleAction).mockClear();
   render(<SalesList {...props} sales={[sale]} />);
-  fireEvent.click(screen.getAllByRole("button", { name: "Mas acciones" })[0]);
-  const button = within(screen.getByRole("group", { name: "Mas acciones" })).getByRole("button", {
+  fireEvent.click(screen.getAllByRole("button", { name: "Más acciones" })[0]);
+  const button = within(screen.getByRole("group", { name: "Más acciones" })).getByRole("button", {
     name: "Eliminar"
   });
   expect((button.closest("form")!.querySelector('[name="id"]') as HTMLInputElement).value).toBe(
@@ -136,7 +136,7 @@ it("shows board sales as immutable with a link to boards rather than edit or del
   render(<SalesList {...props} sales={[boardSale]} />);
   expect(screen.getAllByText("Placa Main LG Smart x1")).toHaveLength(2);
   expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();
-  expect(screen.queryByRole("button", { name: "Mas acciones" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Más acciones" })).toBeNull();
   expect(screen.queryByRole("button", { name: "Eliminar" })).toBeNull();
   for (const link of screen.getAllByRole("link", { name: "Ver placa" }))
     expect(link.getAttribute("href")).toBe("/placas-tv");
@@ -145,7 +145,7 @@ it("shows board sales as immutable with a link to boards rather than edit or del
 
 it("totals only known margins and states how many sales were excluded", () => {
   render(<SalesList {...props} sales={[sale, boardSale]} />);
-  const summary = screen.getByText(/En esta pagina:/);
+  const summary = screen.getByText(/En esta p[aá]gina:/);
   expect(summary.textContent).toContain(`margen con costos conocidos ${formatCurrency(70)}`);
   expect(screen.getByText(/1 venta\(s\) con costo desconocido, excluidas del margen/)).toBeTruthy();
 });
@@ -153,7 +153,7 @@ it("totals only known margins and states how many sales were excluded", () => {
 it("keeps known zero board cost distinct from missing cost and protects known-cost board sales too", () => {
   render(<SalesList {...props} sales={[{ ...boardSale, costTotal: 0, profitTotal: 120 }]} />);
   expect(screen.queryByText("Costo desconocido; margen no calculado")).toBeNull();
-  expect(screen.getByText(/En esta pagina:/).textContent).toContain(
+  expect(screen.getByText(/En esta p[aá]gina:/).textContent).toContain(
     `margen con costos conocidos ${formatCurrency(120)}`
   );
   expect(screen.queryByRole("button", { name: "Editar" })).toBeNull();

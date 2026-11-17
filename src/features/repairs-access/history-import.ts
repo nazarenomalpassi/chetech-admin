@@ -557,14 +557,14 @@ export function validateHistoricalOrderNumbers(
     const number = /^\d+$/.test(text) ? Number(text) : Number.NaN;
     if (!Number.isSafeInteger(number) || number <= 0 || number > 999_999) {
       throw new Error(
-        `Numero historico invalido en fila ${row.rowNumber}: "${text || "(vacio)"}".`
+        `Número historico invalido en fila ${row.rowNumber}: "${text || "(vacio)"}".`
       );
     }
 
     const previousRow = seen.get(number);
     if (previousRow) {
       throw new Error(
-        `Numero historico repetido ${number} en las filas ${previousRow} y ${row.rowNumber}.`
+        `Número historico repetido ${number} en las filas ${previousRow} y ${row.rowNumber}.`
       );
     }
     seen.set(number, row.rowNumber);

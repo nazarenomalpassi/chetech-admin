@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { WarrantyReturnsSection } from "./warranty-returns-section";
 const router = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-vi.mock("./warranty-return-panel", () => ({ WarrantyReturnCase: () => <p>Ficha de garantia</p> }));
+vi.mock("./warranty-return-panel", () => ({ WarrantyReturnCase: () => <p>Ficha de garantía</p> }));
 Object.assign(globalThis, { React });
 afterEach(() => {
   cleanup();
@@ -55,7 +55,7 @@ describe("warranty inbox", () => {
   it("paginates within the same warranty filters", () => {
     window.history.replaceState(null, "", "/reparaciones-access?view=garantias&wq=TV&wh=1");
     render(<WarrantyReturnsSection data={page} search="TV" closed canManage />);
-    expect(screen.getByText("Pagina 2 de 3")).toBeTruthy();
+    expect(screen.getByText("Página 2 de 3")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Siguiente" }));
     const url = new URL(router.push.mock.calls[0][0], window.location.origin);
     expect(url.searchParams.get("wp")).toBe("3");

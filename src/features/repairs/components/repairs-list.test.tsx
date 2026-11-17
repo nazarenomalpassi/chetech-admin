@@ -207,7 +207,7 @@ describe("REP collection screen opening", () => {
         await waitFor(() => expect(lookup.value).toBe("REP-000456"));
       } else
         fireEvent.change(container.querySelector<HTMLInputElement>('input[name="customerName"]')!, {
-          target: { value: "Edicion posterior" }
+          target: { value: "Edición posterior" }
         });
       old(
         new Response(
@@ -222,13 +222,13 @@ describe("REP collection screen opening", () => {
         ).toBe(next.id);
       else
         expect(container.querySelector<HTMLInputElement>('input[name="customerName"]')!.value).toBe(
-          "Edicion posterior"
+          "Edición posterior"
         );
     }
   );
   it("preserves the same operation and inputs on a rejected save and clears its draft after confirmation", async () => {
     actions.save
-      .mockResolvedValueOnce({ success: false, message: "Conexion interrumpida" })
+      .mockResolvedValueOnce({ success: false, message: "Conexión interrumpida" })
       .mockResolvedValueOnce({ success: true, repairId: native.id, message: "Guardado" });
     const { container, unmount } = render(
       <RepairsList
@@ -241,7 +241,7 @@ describe("REP collection screen opening", () => {
     fireEvent.submit(
       screen.getByRole("button", { name: "Guardar registro y cobro" }).closest("form")!
     );
-    await screen.findByText("Conexion interrumpida");
+    await screen.findByText("Conexión interrumpida");
     expect((screen.getByLabelText("Monto") as HTMLInputElement).value).toBe("30000");
     fireEvent.submit(
       screen.getByRole("button", { name: "Guardar registro y cobro" }).closest("form")!

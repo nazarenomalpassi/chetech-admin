@@ -46,10 +46,10 @@ describe("editor unico de reparaciones", () => {
       (screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked
     ).toBe(false);
     fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-    expect((screen.getByLabelText("Duracion de garantia en dias") as HTMLInputElement).value).toBe(
+    expect((screen.getByLabelText("Duración de garantía en dias") as HTMLInputElement).value).toBe(
       "90"
     );
-    expect(screen.getByLabelText("Condiciones especiales de garantia")).toBeTruthy();
+    expect(screen.getByLabelText("Condiciones especiales de garantía")).toBeTruthy();
   });
   it("no pide donde ni como se confirmo el presupuesto", () => {
     render(<RepairQuickEditor order={order} canManage />);
@@ -61,10 +61,10 @@ describe("editor unico de reparaciones", () => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
     render(<RepairQuickEditor order={order} canManage defaultWarrantyDays={90} />);
     fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-    fireEvent.change(screen.getByLabelText("Duracion de garantia en dias"), {
+    fireEvent.change(screen.getByLabelText("Duración de garantía en dias"), {
       target: { value: "30" }
     });
-    fireEvent.change(screen.getByLabelText("Condiciones especiales de garantia"), {
+    fireEvent.change(screen.getByLabelText("Condiciones especiales de garantía"), {
       target: { value: "Fuente reparada" }
     });
     fireEvent.submit(screen.getByRole("button", { name: "Guardar cambios" }).closest("form")!);
@@ -77,7 +77,7 @@ describe("editor unico de reparaciones", () => {
     expect(data.has("isPaid")).toBe(false);
     expect(data.has("confirmCustomer")).toBe(false);
   });
-  it("no pierde un cambio de garantia al elegir retiro", () => {
+  it("no pierde un cambio de garantía al elegir retiro", () => {
     render(
       <RepairQuickEditor
         order={{ ...order, status: "listo_para_retirar", isPaid: true }}
@@ -93,7 +93,7 @@ describe("editor unico de reparaciones", () => {
       (screen.getByRole("button", { name: "Registrar retiro" }) as HTMLButtonElement).disabled
     ).toBe(true);
   });
-  it("una orden entregada ofrece solo correccion explicita de garantia sin reabrir trabajo", () => {
+  it("una orden entregada ofrece solo correccion explicita de garantía sin reabrir trabajo", () => {
     render(
       <RepairQuickEditor
         order={{
@@ -106,7 +106,7 @@ describe("editor unico de reparaciones", () => {
       />
     );
     expect(screen.getByLabelText("Esta reparacion tiene garantia")).toBeTruthy();
-    expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
+    expect(screen.getByLabelText("Motivo de la correccion de garantía")).toBeTruthy();
     expect(
       (screen.getByLabelText("Confirmo la correccion desde el retiro original") as HTMLInputElement)
         .checked
@@ -138,7 +138,7 @@ describe("editor unico de reparaciones", () => {
       />
     );
     await waitFor(() =>
-      expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy()
+      expect(screen.getByLabelText("Motivo de la correccion de garantía")).toBeTruthy()
     );
     expect(screen.queryByRole("button", { name: "Recuperar" })).toBeNull();
   });
@@ -234,7 +234,7 @@ describe("editor unico de reparaciones", () => {
           budgetDetail: "Borrador cambiado",
           confirmCustomer: "on",
           decisionChannel: "telefono",
-          decisionNotes: "Autorizacion anterior",
+          decisionNotes: "Autorización anterior",
           qualityChecked: "on"
         })
       )

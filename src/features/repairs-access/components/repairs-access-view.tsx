@@ -55,10 +55,10 @@ type RepairAccessSection =
   | "importar";
 
 const primarySections: { key: RepairAccessSection; label: string }[] = [
-  { key: "ordenes", label: "Ordenes" },
-  { key: "garantias", label: "Garantias" },
+  { key: "ordenes", label: "Órdenes" },
+  { key: "garantias", label: "Garantías" },
   { key: "repuestos", label: "Repuestos" },
-  { key: "metricas", label: "Metricas" },
+  { key: "metricas", label: "Métricas" },
   { key: "nueva", label: "Nueva orden" },
   { key: "clientes", label: "Clientes" }
 ];
@@ -438,7 +438,7 @@ export function RepairsAccessView({
             <summary
               className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${secondarySections.some((section) => section.key === activeSection) ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent"}`}
             >
-              Mas opciones
+              Más opciones
             </summary>
             <div className="flex flex-wrap gap-2 pt-2">
               {secondarySections.map((section) => (
@@ -603,13 +603,13 @@ function RepairAccessQueriesPlaceholder({
 }) {
   const queryCards = [
     {
-      title: "Pendientes de revision",
+      title: "Pendientes de revisión",
       value: summary.statusCounts.pendiente_revision ?? 0,
       action: "Ver ordenes"
     },
     { title: "Esperando cliente", value: summary.waitingCustomer, action: "Filtrar" },
     { title: "Listas para retirar", value: summary.readyToPickup, action: "Ver retiros" },
-    { title: "Garantias vigentes", value: summary.activeWarranties, action: "Ver garantias" },
+    { title: "Garantías vigentes", value: summary.activeWarranties, action: "Ver garantias" },
     { title: "Demoradas", value: summary.delayedOrders, action: "Controlar" },
     { title: "Cobradas hoy", value: summary.collectedToday, action: "Auditar" }
   ];
@@ -634,7 +634,7 @@ function RepairAccessQueriesPlaceholder({
             <p className="mt-2 text-2xl font-semibold text-foreground">{card.value}</p>
             <Link
               className="mt-3 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4"
-              href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantias vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revision" ? "state=pendiente_revision" : "scope=all"}`}
+              href={`/reparaciones-access?view=ordenes&${card.title === "Esperando cliente" ? "scope=waiting_customer" : card.title === "Listas para retirar" ? "scope=ready" : card.title === "Garantías vigentes" ? "warranty=active" : card.title === "Demoradas" ? "scope=overdue" : card.title === "Pendientes de revisión" ? "state=pendiente_revision" : "scope=all"}`}
             >
               {card.action}
             </Link>
@@ -654,7 +654,7 @@ function RepairAccessImportPanel({
     <Card>
       <h2 className="text-xl font-semibold text-foreground">Trazabilidad del Excel</h2>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-        Ultimo lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y
+        Último lote de clientes y ordenes historicas. Conserva las filas originales para auditoria y
         no modifica caja.
       </p>
 
@@ -668,13 +668,13 @@ function RepairAccessImportPanel({
         </div>
       ) : (
         <p className="mt-6 rounded-xl bg-muted p-5 text-sm text-muted-foreground">
-          Todavia no hay importaciones registradas.
+          Todavía no hay importaciones registradas.
         </p>
       )}
 
       {latestImport ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          Ultima importacion: {formatDate(latestImport.createdAt)}
+          Última importacion: {formatDate(latestImport.createdAt)}
         </p>
       ) : null}
     </Card>

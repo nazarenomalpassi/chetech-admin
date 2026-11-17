@@ -107,7 +107,7 @@ export function SalaryDecisionPanel({
     <Card className="p-4 text-foreground sm:p-5">
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Simulacion de retiro</h2>
+          <h2 className="text-xl font-semibold">Simulación de retiro</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
             {monthLabel}. Primero cubre el sueldo pendiente; el excedente se reparte entre los
             cuatro integrantes.

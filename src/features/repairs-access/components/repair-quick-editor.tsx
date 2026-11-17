@@ -353,7 +353,7 @@ export function RepairQuickEditor({
             ) : null}
             {pendingParts > 0 && !retiring ? (
               <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
-                Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinacion y
+                Hay {pendingParts} solicitudes pendientes de recibir. Revisalas en Coordinación y
                 repuestos.
               </p>
             ) : null}

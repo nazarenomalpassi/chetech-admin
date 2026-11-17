@@ -68,19 +68,21 @@ function expectExplicitLabels(container: HTMLElement) {
 describe("warranty return intake", () => {
   it("explicitly labels all intake controls without including control values in label text", () => {
     const { container } = render(<WarrantyReturnPanel order={order} canManage />);
-    open("Registrar reingreso por garantia");
+    open("Registrar reingreso por garantía");
     expectExplicitLabels(container);
   });
   it("warns about inactive coverage and submits only separate intake fields", async () => {
     mocks.start.mockResolvedValue({ success: false, message: "Conflicto" });
     const { container } = render(<WarrantyReturnPanel order={order} canManage />);
-    open("Registrar reingreso por garantia");
+    open("Registrar reingreso por garantía");
     expect(screen.getByText(/no extiende ni renueva/i)).toBeTruthy();
-    expect((screen.getByLabelText(/Autorizar recepcion/i) as HTMLInputElement).required).toBe(true);
+    expect((screen.getByLabelText(/Autorizar recepci[oó]n/i) as HTMLInputElement).required).toBe(
+      true
+    );
     fireEvent.change(screen.getByLabelText("Falla de este reingreso"), {
       target: { value: "Volvio a apagarse" }
     });
-    fireEvent.click(screen.getByLabelText(/Autorizar recepcion/i));
+    fireEvent.click(screen.getByLabelText(/Autorizar recepci[oó]n/i));
     submit("Registrar reingreso");
     await waitFor(() => expect(mocks.start).toHaveBeenCalledTimes(1));
     const data = mocks.start.mock.calls[0][1] as FormData;
@@ -107,8 +109,8 @@ describe("warranty return intake", () => {
           canManage
         />
       );
-      open("Registrar reingreso por garantia");
-      expect((screen.getByLabelText(/Autorizar recepcion/i) as HTMLInputElement).required).toBe(
+      open("Registrar reingreso por garantía");
+      expect((screen.getByLabelText(/Autorizar recepci[oó]n/i) as HTMLInputElement).required).toBe(
         false
       );
       expect(screen.getByText(/otra fecha/i)).toBeTruthy();
@@ -122,7 +124,7 @@ describe("warranty return intake", () => {
         canManage
       />
     );
-    open("Registrar reingreso por garantia");
+    open("Registrar reingreso por garantía");
     const received = screen.getByLabelText("Fecha de reingreso") as HTMLInputElement;
     expect(received.min).toBe("2026-10-02");
     expect(received.max).toBe(getOperationalDate());
@@ -138,7 +140,7 @@ describe("warranty return intake", () => {
         canManage
       />
     );
-    open("Registrar reingreso por garantia");
+    open("Registrar reingreso por garantía");
     fireEvent.change(screen.getByLabelText("Falla de este reingreso"), {
       target: { value: "Volvio a apagarse" }
     });
@@ -150,7 +152,7 @@ describe("warranty return intake", () => {
     expect((screen.getByLabelText("Falla de este reingreso") as HTMLTextAreaElement).value).toBe(
       "Volvio a apagarse"
     );
-    fireEvent.click(screen.getByLabelText(/Autorizar recepcion/i));
+    fireEvent.click(screen.getByLabelText(/Autorizar recepci[oó]n/i));
     submit("Registrar reingreso");
     await waitFor(() => expect(mocks.start).toHaveBeenCalledTimes(2));
     expect(mocks.start.mock.calls[1][1].get("acknowledgeCoverage")).toBe("on");
@@ -178,10 +180,10 @@ describe("warranty return intake", () => {
 
   it("shows the active issue and prevents a second intake", () => {
     render(<WarrantyReturnPanel order={{ ...order, warrantyReturns: [record] }} canManage />);
-    expect(screen.getByText("Reingreso por garantia activo")).toBeTruthy();
+    expect(screen.getByText("Reingreso por garantía activo")).toBeTruthy();
     expect(screen.getByText(record.issueReported)).toBeTruthy();
     expect(screen.getByText("En revision")).toBeTruthy();
-    expect(screen.queryByText("Registrar reingreso por garantia")).toBeNull();
+    expect(screen.queryByText("Registrar reingreso por garantía")).toBeNull();
   });
 
   it("allows another return after pickup while retaining the previous visit", () => {
@@ -196,7 +198,7 @@ describe("warranty return intake", () => {
         canManage
       />
     );
-    expect(screen.getByText("Registrar reingreso por garantia")).toBeTruthy();
+    expect(screen.getByText("Registrar reingreso por garantía")).toBeTruthy();
     open("Historial de reingresos (1)");
     expect(screen.getByText(record.issueReported)).toBeTruthy();
     expect(screen.getByText(/Ana/)).toBeTruthy();
@@ -217,8 +219,8 @@ describe("separate technical cycle", () => {
     expect(screen.getByText(/resolucion y el retiro en un solo paso/i)).toBeTruthy();
     fireEvent.change(resolution, { target: { value: "Se reparo la retroiluminacion" } });
     fireEvent.change(screen.getByLabelText("Quien retira"), { target: { value: "Cliente" } });
-    fireEvent.click(screen.getByLabelText(/Confirmo la devolucion/i));
-    submit("Registrar retiro de garantia");
+    fireEvent.click(screen.getByLabelText(/Confirmo la devoluci[oó]n/i));
+    submit("Registrar retiro de garantía");
     await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
     const data = mocks.save.mock.calls[0][1] as FormData;
     expect(data.get("status")).toBe("retirado");
@@ -247,7 +249,7 @@ describe("separate technical cycle", () => {
     expect(
       container.querySelector('[name="recipient"], [name="confirmDelivery"], [name="repairAmount"]')
     ).toBeNull();
-    expect(screen.queryByText("Registrar reingreso por garantia")).toBeNull();
+    expect(screen.queryByText("Registrar reingreso por garantía")).toBeNull();
   });
 
   it("requires an explicit pickup confirmation and recipient only when returning the equipment", () => {
@@ -258,7 +260,7 @@ describe("separate technical cycle", () => {
       target: { value: "retirado" }
     });
     expect((screen.getByLabelText("Quien retira") as HTMLInputElement).required).toBe(true);
-    expect((screen.getByLabelText(/Confirmo la devolucion/i) as HTMLInputElement).required).toBe(
+    expect((screen.getByLabelText(/Confirmo la devoluci[oó]n/i) as HTMLInputElement).required).toBe(
       true
     );
     fireEvent.change(screen.getByLabelText("Estado del reingreso"), {

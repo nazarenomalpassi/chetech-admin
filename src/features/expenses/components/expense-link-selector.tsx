@@ -192,7 +192,7 @@ export function ExpenseLinkSelector({
                     Anterior
                   </Button>
                   <span className="text-sm text-muted-foreground">
-                    Pagina {data.page} de {data.totalPages} · {data.total} destinos
+                    Página {data.page} de {data.totalPages} · {data.total} destinos
                   </span>
                   <Button
                     type="button"

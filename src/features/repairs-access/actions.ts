@@ -803,7 +803,7 @@ export async function cancelRepairAccessOrderAction(formData: FormData) {
 
   if (previousOrder.data.is_paid) {
     redirectWithError(
-      "La orden ya esta cobrada. Primero reverti el cobro desde Pagos de reparaciones para no desincronizar caja.",
+      "La orden ya esta cobrada. Primero reverti el cobro desde Cobros de reparaciones para no desincronizar caja.",
       id
     );
   }

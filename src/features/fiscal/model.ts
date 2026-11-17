@@ -95,7 +95,7 @@ export const fiscalInputSchema = z
     if (value.concept !== 1 && (!value.serviceFrom || !value.serviceTo || !value.paymentDue))
       issue("Indica periodo del servicio y vencimiento de pago.");
     if (value.serviceFrom && value.serviceTo && value.serviceFrom > value.serviceTo)
-      issue("Periodo de servicio invalido.");
+      issue("Período de servicio invalido.");
     if (value.paymentDue && value.paymentDue < value.issuedOn)
       issue("El vencimiento no puede ser anterior a la emision.");
     if (value.concept === 1 && (value.serviceFrom || value.serviceTo || value.paymentDue))

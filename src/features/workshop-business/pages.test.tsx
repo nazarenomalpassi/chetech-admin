@@ -100,7 +100,7 @@ describe("disjoint page integration", () => {
   it("allows technician operational inbox but never fetches financial report data", async () => {
     mocks.profile.mockResolvedValue({
       user: { id: "tech-a" },
-      profile: { role: "tecnico", full_name: "Tecnico" }
+      profile: { role: "tecnico", full_name: "Técnico" }
     });
     render(await DashboardPage({ searchParams: Promise.resolve({}) }));
     expect(screen.getByText("Original technician dashboard")).toBeTruthy();

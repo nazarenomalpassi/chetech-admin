@@ -53,10 +53,10 @@ it.each([true, false])(
     expect(screen.getByRole("button", { name: "Editar ingreso" })).toBeTruthy();
     if (hasWorkflow) {
       expect(screen.getByText(/Esta orden ya fue entregada/)).toBeTruthy();
-      fireEvent.click(screen.getByRole("button", { name: "Mas campos administrativos" }));
+      fireEvent.click(screen.getByRole("button", { name: "Más campos administrativos" }));
     }
     expect(container.querySelector('[name="finalAmount"]')).toBeTruthy();
-    expect(screen.getByText("Registrar reingreso por garantia")).toBeTruthy();
+    expect(screen.getByText("Registrar reingreso por garantía")).toBeTruthy();
     expect(screen.getByText("Retiro y garantia")).toBeTruthy();
   }
 );
@@ -91,13 +91,13 @@ it("la ficha abre el editor diario y reserva el formulario administrativo para m
     (screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked
   ).toBe(false);
   fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-  expect((screen.getByLabelText("Duracion de garantia en dias") as HTMLInputElement).value).toBe(
+  expect((screen.getByLabelText("Duración de garantía en dias") as HTMLInputElement).value).toBe(
     "90"
   );
   vi.spyOn(window, "confirm").mockReturnValue(true);
   expect(container.querySelector('[name="finalAmount"]')).toBeNull();
   expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
-  fireEvent.click(screen.getByRole("button", { name: "Mas campos administrativos" }));
+  fireEvent.click(screen.getByRole("button", { name: "Más campos administrativos" }));
   expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
   expect(container.querySelector('[name="finalAmount"]')).toBeTruthy();
   expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);

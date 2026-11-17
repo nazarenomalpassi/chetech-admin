@@ -13,7 +13,7 @@ async function read(args: Record<string, unknown>): Promise<WarrantyReturnsPage>
   const { data, error } = await (supabase as any).rpc("workshop_warranty_read", args);
   if (error)
     throw new Error(
-      "No se pudieron consultar los reingresos por garantia. Reintenta en unos instantes."
+      "No se pudieron consultar los reingresos por garantía. Reintenta en unos instantes."
     );
   return data as WarrantyReturnsPage;
 }

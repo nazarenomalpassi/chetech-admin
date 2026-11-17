@@ -33,8 +33,8 @@ export function ReadyForPickupRequirements({
         <li>
           <p className="font-medium">
             {workflow.approvalStatus === "accepted"
-              ? "Confirmacion del cliente registrada"
-              : "Confirmacion del cliente pendiente"}
+              ? "Confirmación del cliente registrada"
+              : "Confirmación del cliente pendiente"}
           </p>
           {workflow.approvalStatus !== "accepted" ? (
             <p className="mt-1 text-warning">

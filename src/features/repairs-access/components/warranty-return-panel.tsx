@@ -64,14 +64,14 @@ export function WarrantyReturnPanel({
 
   return (
     <section
-      aria-label="Garantia de la orden"
+      aria-label="Garantía de la orden"
       className="min-w-0 space-y-3 rounded-xl border border-border-strong bg-muted p-4"
     >
       {active ? <WarrantyReturnCase key={active.id} record={active} canManage={canManage} /> : null}
       {canStart ? (
         <LazyDisclosure
           key={`intake-${history[0]?.id ?? "first"}`}
-          summary="Registrar reingreso por garantia"
+          summary="Registrar reingreso por garantía"
           summaryClassName={disclosureClass}
         >
           <WorkshopForm
@@ -195,12 +195,12 @@ export function WarrantyReturnCase({
     <div className="min-w-0 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-base font-semibold text-foreground">
-          {closed ? "Reingreso por garantia retirado" : "Reingreso por garantia activo"}
+          {closed ? "Reingreso por garantía retirado" : "Reingreso por garantía activo"}
         </h3>
         <RepairAccessStatusBadge status={record.status} />
       </div>
       <p className="text-sm text-muted-foreground">
-        Ingreso de garantia:{" "}
+        Ingreso de garantía:{" "}
         <time dateTime={record.receivedOn}>{formatDate(record.receivedOn)}</time>
       </p>
       <p className="text-sm leading-6 font-medium wrap-break-word whitespace-pre-wrap text-foreground">
@@ -278,7 +278,7 @@ export function WarrantyReturnCase({
                       minLength={needsResolution ? 3 : undefined}
                       placeholder={
                         needsResolution
-                          ? "Indica el resultado: reparado, sin fallas o sin solucion"
+                          ? "Indica el resultado: reparado, sin fallas o sin solución"
                           : undefined
                       }
                     />
@@ -315,7 +315,7 @@ export function WarrantyReturnCase({
                         orden original.
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Podes guardar la resolucion y el retiro en un solo paso, sin cambiar antes a
+                        Podés guardar la resolucion y el retiro en un solo paso, sin cambiar antes a
                         Listo para retirar.
                       </p>
                     </>
@@ -326,7 +326,7 @@ export function WarrantyReturnCase({
                     </p>
                   ) : null}
                   <Button className="min-h-11 w-full" type="submit" disabled={submitting}>
-                    {retiring ? "Registrar retiro de garantia" : "Guardar reingreso"}
+                    {retiring ? "Registrar retiro de garantía" : "Guardar reingreso"}
                   </Button>
                 </>
               );

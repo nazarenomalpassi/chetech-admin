@@ -16,7 +16,7 @@ vi.mock("./workshop-parts-workspace", () => ({
   WorkshopPartsWorkspace: () => <h2>Bandeja de repuestos</h2>
 }));
 vi.mock("./workshop-operational-metrics", () => ({
-  WorkshopOperationalMetrics: () => <h2>Metricas de todas las ordenes</h2>
+  WorkshopOperationalMetrics: () => <h2>Métricas de todas las ordenes</h2>
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 afterEach(() => {
@@ -146,7 +146,7 @@ const pageInfo: WorkshopPageInfo = {
 describe("workshop section navigation", () => {
   it.each([
     ["repuestos", "Bandeja de repuestos"],
-    ["metricas", "Metricas de todas las ordenes"]
+    ["metricas", "Métricas de todas las ordenes"]
   ])("admite acceso directo a %s", (view, heading) => {
     render(<RepairsAccessView {...props} initialView={view} />);
     expect(screen.getByRole("heading", { name: heading })).toBeTruthy();
@@ -154,7 +154,7 @@ describe("workshop section navigation", () => {
   it("permite consultar repuestos sin asignacion de tecnico y reserva metricas a administracion", () => {
     render(<RepairsAccessView {...props} canManageIntake={false} initialView="repuestos" />);
     expect(screen.getByRole("heading", { name: "Bandeja de repuestos" })).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Metricas" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Métricas" })).toBeNull();
   });
   it("offers the newly saved order's receipt beside success while retaining the default listing", () => {
     const other = { ...order, id: "other-order", repairNumber: "REP-999999" };
@@ -246,7 +246,7 @@ describe("workshop section navigation", () => {
       target: { value: "Belén" }
     });
     fireEvent.click(screen.getByRole("button", { name: "Consultas" }));
-    const card = screen.getByText("Pendientes de revision").parentElement!;
+    const card = screen.getByText("Pendientes de revisión").parentElement!;
     const link = within(card).getByRole("link");
     link.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(link);
@@ -350,7 +350,7 @@ describe("workshop section navigation", () => {
     const heading = screen.getByRole("heading", { name: "Mesa de trabajo" });
     expect(document.activeElement).not.toBe(heading);
     expect(screen.queryByRole("button", { name: "Ver presupuestadas" })).toBeNull();
-    expect(screen.getByRole("button", { name: "Ordenes" }).getAttribute("aria-current")).toBe(
+    expect(screen.getByRole("button", { name: "Órdenes" }).getAttribute("aria-current")).toBe(
       "page"
     );
   });
@@ -358,7 +358,7 @@ describe("workshop section navigation", () => {
   it("keeps warranty returns in primary navigation and secondary tools in an accessible disclosure", () => {
     render(<RepairsAccessView {...props} />);
     const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
-    const more = within(nav).getByText("Mas opciones").closest("details");
+    const more = within(nav).getByText("Más opciones").closest("details");
     expect(more).not.toBeNull();
     expect(more?.open).toBe(false);
     // jsdom does not remove closed details contents from the accessibility tree.
@@ -367,8 +367,8 @@ describe("workshop section navigation", () => {
         .getAllByRole("button")
         .filter((button) => !button.closest("details"))
         .map((button) => button.textContent)
-    ).toEqual(["Ordenes", "Garantias (0)", "Repuestos", "Metricas", "Nueva orden", "Clientes"]);
-    fireEvent.click(within(nav).getByText("Mas opciones"));
+    ).toEqual(["Órdenes", "Garantías (0)", "Repuestos", "Métricas", "Nueva orden", "Clientes"]);
+    fireEvent.click(within(nav).getByText("Más opciones"));
     expect(more?.open).toBe(true);
     expect(within(nav).getByRole("button", { name: "Resumen" })).toBeTruthy();
     expect(within(nav).getByRole("button", { name: "Consultas" })).toBeTruthy();
@@ -379,8 +379,8 @@ describe("workshop section navigation", () => {
     render(<RepairsAccessView {...props} canManageIntake={false} />);
     const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
     expect(within(nav).queryByRole("button", { name: "Nueva orden" })).toBeNull();
-    fireEvent.click(within(nav).getByRole("button", { name: "Garantias (0)" }));
-    expect(screen.getByRole("heading", { name: "Reingresos por garantia" })).toBeTruthy();
+    fireEvent.click(within(nav).getByRole("button", { name: "Garantías (0)" }));
+    expect(screen.getByRole("heading", { name: "Reingresos por garantía" })).toBeTruthy();
     expect(router.push.mock.calls.at(-1)?.[0]).toContain("view=garantias");
   });
 
@@ -393,10 +393,10 @@ describe("workshop section navigation", () => {
         warrantyReturnsCount={7}
       />
     );
-    expect(screen.getByRole("button", { name: "Garantias (7)" }).getAttribute("aria-current")).toBe(
+    expect(screen.getByRole("button", { name: "Garantías (7)" }).getAttribute("aria-current")).toBe(
       "page"
     );
-    expect(screen.getByRole("heading", { name: "Reingresos por garantia" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Reingresos por garantía" })).toBeTruthy();
     expect(screen.queryByRole("heading", { name: "Mesa de trabajo" })).toBeNull();
   });
 
@@ -782,7 +782,7 @@ describe("workshop section navigation", () => {
         within(nav)
           .getAllByRole("button")
           .map((button) => button.textContent)
-      ).toEqual(["Ordenes", "Garantias (0)", "Repuestos"]);
+      ).toEqual(["Órdenes", "Garantías (0)", "Repuestos"]);
       expect(screen.queryByRole("button", { name: "Crear desde listado" })).toBeNull();
     }
   );

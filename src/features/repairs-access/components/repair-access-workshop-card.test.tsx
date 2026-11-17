@@ -148,7 +148,7 @@ describe("visible collection and pickup row", () => {
     expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Cobrar" }).closest("details")).toBeNull();
     expect(screen.getByRole("button", { name: "Registrar entrega" }).closest("details")).toBeNull();
-    const coordination = screen.getByText("Coordinacion y repuestos").closest("details")!;
+    const coordination = screen.getByText("Coordinación y repuestos").closest("details")!;
     coordination.open = true;
     fireEvent(coordination, new Event("toggle"));
     expect(screen.getAllByRole("button", { name: "Cobrar" })).toHaveLength(1);
@@ -193,12 +193,12 @@ describe("RepairAccessWorkshopCard", () => {
         }}
       />
     );
-    const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
+    const summary = screen.getByRole("note", { name: `Próximo paso de ${order.repairNumber}` });
     expect(summary.closest("details")).toBeNull();
     expect(within(summary).getByText("Esperando autorizacion del cliente")).toBeTruthy();
     expect(within(summary).getByText("Estante 4 / banco TV")).toBeTruthy();
     expect(summary.querySelector("time")?.dateTime).toBe("2026-11-12");
-    expect(screen.queryByText(/tecnico sin asignar/i)).toBeNull();
+    expect(screen.queryByText(/t[eé]cnico sin asignar/i)).toBeNull();
   });
 
   it("shows missing receipts but never calls received or cancelled parts a blockage", () => {
@@ -232,7 +232,7 @@ describe("RepairAccessWorkshopCard", () => {
       />
     );
     expect(
-      within(screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` })).getByText(
+      within(screen.getByRole("note", { name: `Próximo paso de ${order.repairNumber}` })).getByText(
         "Faltan repuestos por recibir"
       )
     ).toBeTruthy();
@@ -253,7 +253,7 @@ describe("RepairAccessWorkshopCard", () => {
         }}
       />
     );
-    const summary = screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` });
+    const summary = screen.getByRole("note", { name: `Próximo paso de ${order.repairNumber}` });
     expect(summary.textContent).not.toContain("Faltan repuestos");
     expect(summary.textContent).toContain("Continuar trabajo autorizado");
   });
@@ -276,7 +276,7 @@ describe("RepairAccessWorkshopCard", () => {
       />
     );
     expect(
-      screen.getByRole("note", { name: `Proximo paso de ${order.repairNumber}` }).textContent
+      screen.getByRole("note", { name: `Próximo paso de ${order.repairNumber}` }).textContent
     ).toContain(next);
     expect(mocks.save).not.toHaveBeenCalled();
   });
@@ -437,14 +437,14 @@ describe("RepairAccessWorkshopCard", () => {
         />
       );
       expect(screen.queryByText("Actualizar trabajo")).toBeNull();
-      expect(screen.queryByText("Coordinacion y repuestos")).toBeNull();
+      expect(screen.queryByText("Coordinación y repuestos")).toBeNull();
       expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
-      expect(Boolean(screen.queryByText("Registrar reingreso por garantia"))).toBe(canManageIntake);
+      expect(Boolean(screen.queryByText("Registrar reingreso por garantía"))).toBe(canManageIntake);
       if (canManageIntake) {
         const correction = screen.getByText("Corregir garantia").closest("details")!;
         correction.open = true;
         fireEvent(correction, new Event("toggle"));
-        expect(screen.getByLabelText("Motivo de la correccion de garantia")).toBeTruthy();
+        expect(screen.getByLabelText("Motivo de la correccion de garantía")).toBeTruthy();
         expect(screen.queryByLabelText("Estado de la orden")).toBeNull();
       }
       expect(screen.getByText(order.issueReported)).toBeTruthy();
@@ -504,7 +504,7 @@ describe("RepairAccessWorkshopCard", () => {
     details.open = true;
     fireEvent(details, new Event("toggle"));
     const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
-    expect(notice.textContent).toContain("Confirmacion del cliente pendiente");
+    expect(notice.textContent).toContain("Confirmación del cliente pendiente");
     expect(notice.textContent).toContain("Pedile a mostrador");
     expect(notice.textContent).toContain("control de calidad");
     fireEvent.change(screen.getByLabelText("Estado de la orden"), {
@@ -568,7 +568,7 @@ describe("RepairAccessWorkshopCard", () => {
     fireEvent(details, new Event("toggle"));
     const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
     expect(notice.textContent).not.toContain("Repuestos pendientes");
-    expect(notice.textContent).not.toContain("Confirmacion del cliente pendiente");
+    expect(notice.textContent).not.toContain("Confirmación del cliente pendiente");
   });
   it.each(["ordered", "cancelled"] as const)(
     "refleja la guarda de recepcion para una solicitud %s",

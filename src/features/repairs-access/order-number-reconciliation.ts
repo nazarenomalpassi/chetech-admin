@@ -37,12 +37,12 @@ export function parseRepairOrderNumber(value: string | null | undefined) {
     .trim()
     .match(/^(?:REP-)?(\d+)$/i);
   if (!match) {
-    throw new Error(`Numero de orden invalido: ${String(value ?? "") || "(vacio)"}.`);
+    throw new Error(`Número de orden invalido: ${String(value ?? "") || "(vacio)"}.`);
   }
 
   const number = Number(match[1]);
   if (!Number.isSafeInteger(number) || number <= 0) {
-    throw new Error(`Numero de orden fuera de rango: ${String(value)}.`);
+    throw new Error(`Número de orden fuera de rango: ${String(value)}.`);
   }
   return number;
 }
@@ -100,7 +100,7 @@ export function buildRepairOrderRenumberPlan(
     const legacyNumber = parseRepairOrderNumber(order.legacyOrderNumber);
     const previousId = legacyByNumber.get(legacyNumber);
     if (previousId) {
-      throw new Error(`Numero historico repetido ${legacyNumber} en ${previousId} y ${order.id}.`);
+      throw new Error(`Número historico repetido ${legacyNumber} en ${previousId} y ${order.id}.`);
     }
     legacyByNumber.set(legacyNumber, order.id);
     return { ...order, legacyNumber };
@@ -158,7 +158,7 @@ export function buildRepairOrderRenumberPlan(
   const targetNumbers = new Map<number, string>();
   for (const entry of entries) {
     if (entry.newNumber <= 0 || !Number.isSafeInteger(entry.newNumber)) {
-      throw new Error(`Numero final invalido para la orden ${entry.id}.`);
+      throw new Error(`Número final invalido para la orden ${entry.id}.`);
     }
     const previousId = targetNumbers.get(entry.newNumber);
     if (previousId) {

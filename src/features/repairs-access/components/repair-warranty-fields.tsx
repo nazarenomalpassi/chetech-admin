@@ -23,7 +23,7 @@ export function RepairWarrantyFields({
       className="grid min-w-0 gap-3 rounded-xl border border-border p-3"
     >
       <legend className="px-1 text-sm font-semibold text-foreground">
-        Garantia de la reparacion
+        Garantía de la reparacion
       </legend>
       <input type="hidden" name="warrantyIncluded" value="1" />
       <label className="flex min-h-11 items-center gap-3 text-sm font-medium text-body">
@@ -36,7 +36,7 @@ export function RepairWarrantyFields({
         Esta reparacion tiene garantia
       </label>
       <label className="grid gap-2 text-sm font-medium text-body">
-        <span>Duracion de garantia en dias</span>
+        <span>Duración de garantía en dias</span>
         <Input
           name="warrantyDays"
           type="number"
@@ -50,7 +50,7 @@ export function RepairWarrantyFields({
         />
       </label>
       <label className="grid gap-2 text-sm font-medium text-body">
-        <span>Condiciones especiales de garantia</span>
+        <span>Condiciones especiales de garantía</span>
         <Textarea
           name="warrantyConditions"
           maxLength={2000}

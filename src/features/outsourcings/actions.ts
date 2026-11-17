@@ -232,7 +232,7 @@ export async function cancelRepairOutsourcingAction(formData: FormData) {
     status: "cancelado",
     notes: appendNote(
       previous.data.notes,
-      emptyToNull(parsed.data.notes) ?? "Terciarizacion anulada."
+      emptyToNull(parsed.data.notes) ?? "Terciarización anulada."
     ),
     updated_by: user.id,
     updated_at: new Date().toISOString()

@@ -279,7 +279,7 @@ export function RepairsList({
       !savingRef.current &&
       (!(dirty || draft.pendingDraft) ||
         window.confirm(
-          "Hay un borrador de cobro sin resolver. Queres descartarlo para cambiar de registro?"
+          "Hay un borrador de cobro sin resolver. Querés descartarlo para cambiar de registro?"
         ))
     );
   }
@@ -613,7 +613,7 @@ export function RepairsList({
                 <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
                   <label>
                     <span className="mb-2 block text-sm font-medium text-body">
-                      Numero de orden REP
+                      Número de orden REP
                     </span>
                     <Input
                       name="accessOrderNumber"

@@ -68,7 +68,7 @@ export async function changeTvBoardSaleAction(
     start_claim: "Reclamo registrado. El importe paso de pendiente a dinero retenido.",
     resume_sale: "Reclamo resuelto. La venta volvio a pendiente de confirmar liberacion.",
     cancel_sale: "Venta anulada. Se retiro de los importes a cobrar y se conservo el historial.",
-    confirm_release: "Liberacion confirmada. No se generaron movimientos de caja."
+    confirm_release: "Liberación confirmada. No se generaron movimientos de caja."
   };
   return {
     success: true,

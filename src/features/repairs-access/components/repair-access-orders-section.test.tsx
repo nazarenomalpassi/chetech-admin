@@ -46,7 +46,7 @@ vi.mock("./repair-quick-editor", () => ({
 }));
 vi.mock("./warranty-return-panel", () => ({
   WarrantyReturnCase: ({ record }: { record: WarrantyReturnRecord }) => (
-    <form aria-label="Actualizar visita de garantia">
+    <form aria-label="Actualizar visita de garantía">
       <input name="id" type="hidden" value={record.id} />
       <p>{record.issueReported}</p>
       <button>Guardar reingreso</button>
@@ -65,7 +65,7 @@ function makeOrder(index = 1): RepairAccessOrderRecord {
     issueReported: "No enciende",
     isPaid: false,
     customer: { fullName: "Ana Perez", phone: "1155555555", alternatePhone: "", dni: "1234" },
-    device: { deviceType: "Telefono", brand: "Samsung", model: "A10", serialNumber: "serie-1" },
+    device: { deviceType: "Teléfono", brand: "Samsung", model: "A10", serialNumber: "serie-1" },
     warranty: { code: "none", label: "Sin garantia", expiresOn: null }
   } as RepairAccessOrderRecord;
 }
@@ -94,7 +94,7 @@ function warrantyOrder(): RepairAccessOrderRecord {
         orderId: "order-1",
         repairNumber: "REP-000001",
         customerName: "Ana Perez",
-        deviceLabel: "Telefono Samsung A10",
+        deviceLabel: "Teléfono Samsung A10",
         receivedOn: "2026-11-10",
         issueReported: "La pantalla se apaga al calentarse",
         accessories: "Control",
@@ -192,13 +192,13 @@ describe("order workspace list", () => {
     const record = { ...warrantyOrder(), workflow: { version: 8 } } as RepairAccessOrderRecord;
     render(<RepairAccessOrdersSection {...props} orders={[record]} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
-    expect(screen.getByText("Reingreso por garantia activo")).toBeTruthy();
+    expect(screen.getByText("Reingreso por garantía activo")).toBeTruthy();
     expect(screen.getByText("Falla original: No enciende")).toBeTruthy();
     expect(within(screen.getByRole("table")).getByText("En revision")).toBeTruthy();
     expect(screen.queryByText("Actualizar trabajo")).toBeNull();
     expect(
       screen
-        .getByRole("form", { name: "Actualizar visita de garantia" })
+        .getByRole("form", { name: "Actualizar visita de garantía" })
         .querySelector('input[name="id"]')
         ?.getAttribute("value")
     ).toBe("return-1");
@@ -255,10 +255,10 @@ describe("order workspace list", () => {
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(0);
     fireEvent.click(screen.getByRole("button", { name: "Ficha completa" }));
     expect(props.onOpenDetail).toHaveBeenCalledWith(orders[0]);
-    fireEvent.click(screen.getByText("Mas acciones"));
+    fireEvent.click(screen.getByText("Más acciones"));
     fireEvent.click(screen.getByRole("button", { name: "Editar ingreso" }));
     expect(props.onEdit).toHaveBeenCalledWith(orders[0]);
-    fireEvent.click(screen.getByRole("button", { name: "Mas acciones" }));
+    fireEvent.click(screen.getByRole("button", { name: "Más acciones" }));
     expect(
       screen
         .getByRole("button", { name: "Anular" })
@@ -304,7 +304,7 @@ describe("order workspace list", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<RepairAccessOrdersSection {...props} />);
     fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
-    fireEvent.click(screen.getByText("Mas acciones"));
+    fireEvent.click(screen.getByText("Más acciones"));
     const form = screen.getByRole("button", { name: "Anular" }).closest("form")!;
     expect(fireEvent.submit(form)).toBe(false);
     expect(confirm).toHaveBeenCalledOnce();
@@ -336,13 +336,13 @@ describe("order workspace list", () => {
     const search = screen.getByRole("textbox", { name: "Buscar orden de service" });
     const status = screen.getByRole("combobox", { name: "Filtrar ordenes por estado" });
     const advanced = screen
-      .getByRole("combobox", { name: "Filtrar ordenes por garantia" })
+      .getByRole("combobox", { name: "Filtrar ordenes por garantía" })
       .closest("details");
     expect(advanced).not.toBeNull();
     expect(advanced?.open).toBe(false);
     fireEvent.click(screen.getByText("Filtros"));
     expect(advanced?.open).toBe(true);
-    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar ordenes por garantia" }), {
+    fireEvent.change(screen.getByRole("combobox", { name: "Filtrar ordenes por garantía" }), {
       target: { value: "active" }
     });
     expect(props.onWarrantyFilterChange).toHaveBeenCalledWith("active");
@@ -357,7 +357,7 @@ describe("order workspace list", () => {
   it("shows an applied warranty filter without making users discover why orders are missing", () => {
     render(<RepairAccessOrdersSection {...props} warrantyFilter="active" />);
     expect(
-      (screen.getByRole("combobox", { name: "Filtrar ordenes por garantia" }) as HTMLSelectElement)
+      (screen.getByRole("combobox", { name: "Filtrar ordenes por garantía" }) as HTMLSelectElement)
         .value
     ).toBe("active");
   });

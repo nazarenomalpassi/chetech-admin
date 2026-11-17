@@ -19,7 +19,7 @@ function form(color?: string) {
   const values = {
     customerName: "Belén Pérez",
     customerPhone: "3571123456",
-    customerAddress: "Direccion sintetica",
+    customerAddress: "Dirección sintetica",
     customerAlternatePhone: "",
     customerDni: "",
     customerEmail: "",
@@ -52,7 +52,7 @@ describe("complete reception sheet persistence", () => {
       p_payload: expect.objectContaining({
         device_color: "Gris",
         customer_name: "Belén Pérez",
-        customer_address: "Direccion sintetica",
+        customer_address: "Dirección sintetica",
         serial_number: "SERIE-123",
         accessory_details: "Control y cable",
         visual_condition: "Rayas en la base"

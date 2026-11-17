@@ -36,11 +36,11 @@ describe.skipIf(!connectionString)("operations migration on disposable local Pos
       create function auth.role() returns text language sql stable as $$ select 'authenticated'::text $$;
       grant usage on schema auth to authenticated;
       create table public.profiles(id uuid primary key, full_name text, role text);
-      insert into public.profiles values ('${admin}', 'Admin', 'admin'), ('${tech}', 'Tecnico', 'tecnico');
+      insert into public.profiles values ('${admin}', 'Admin', 'admin'), ('${tech}', 'Técnico', 'tecnico');
       grant select on public.profiles to authenticated;
       create table public.repair_access_customers(id uuid primary key, full_name text, phone text, dni text, address text);
       create table public.repair_access_devices(id uuid primary key, device_type text, brand text, model text, serial_number text, accessory_details text);
-      insert into public.repair_access_customers values ('${orderId}', 'Cliente Historico', '341', '', 'Local');
+      insert into public.repair_access_customers values ('${orderId}', 'Cliente Histórico', '341', '', 'Local');
       insert into public.repair_access_devices values ('${orderId}', 'TV', 'BGH', 'Main', 'SERIE', 'Cable');
       create table public.repair_access_orders(id uuid primary key, repair_number text, customer_id uuid, device_id uuid, intake_date date, issue_reported text, status text);
       insert into public.repair_access_orders values ('${orderId}', 'REP-000001', '${orderId}', '${orderId}', '2026-10-01', 'Sin imagen', 'ingresado');
@@ -81,7 +81,7 @@ describe.skipIf(!connectionString)("operations migration on disposable local Pos
 
   function addVisit(timeFrom: string, timeTo: string, technician = tech, status = "pendiente") {
     return client.query(
-      "insert into public.visits(customer_name, customer_phone, address, visit_date, time_from, time_to, reason, technician_id, status) values ('Cliente', '341', 'Local', '2026-10-05', $1, $2, 'Revision', $3, $4) returning id",
+      "insert into public.visits(customer_name, customer_phone, address, visit_date, time_from, time_to, reason, technician_id, status) values ('Cliente', '341', 'Local', '2026-10-05', $1, $2, 'Revisión', $3, $4) returning id",
       [timeFrom, timeTo, technician, status]
     );
   }
@@ -109,7 +109,7 @@ describe.skipIf(!connectionString)("operations migration on disposable local Pos
   it("makes restored new-visit retries unique at the database boundary", async () => {
     const create = () =>
       client.query(
-        "insert into visits(customer_name,customer_phone,address,visit_date,time_from,time_to,reason,client_operation_id) values ('Cliente','341','Local','2026-10-06','09:00','10:00','Revision',$1)",
+        "insert into visits(customer_name,customer_phone,address,visit_date,time_from,time_to,reason,client_operation_id) values ('Cliente','341','Local','2026-10-06','09:00','10:00','Revisión',$1)",
         [id]
       );
     await create();
@@ -208,7 +208,7 @@ describe.skipIf(!connectionString)("operations migration on disposable local Pos
     supersedes: string | null,
     kind: string,
     snapshot = accounts,
-    reason = "Correccion documentada"
+    reason = "Corrección documentada"
   ) {
     return database.query(
       "insert into operations_cash_reconciliation_amendments(id,root_id,supersedes_id,kind,reason,accounts,created_by) values ($1,$2,$3,$4,$5,$6,$7) returning id",
@@ -283,7 +283,7 @@ describe.skipIf(!connectionString)("operations migration on disposable local Pos
     const call = async (page: number) =>
       (
         await client.query(
-          "select get_operations_outsourcings_page('Historico','todos','2026-10-05','2026-10-11',$1) as result",
+          "select get_operations_outsourcings_page('Histórico','todos','2026-10-05','2026-10-11',$1) as result",
           [page]
         )
       ).rows[0].result;

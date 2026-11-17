@@ -40,7 +40,7 @@ export const reportFixture: WorkshopBusinessReport = {
   technicians: [
     {
       technicianId: "tech-a",
-      technicianName: "Tecnico A",
+      technicianName: "Técnico A",
       orders: 2,
       activeCustody: 2,
       creatorDifferentOrders: 2,

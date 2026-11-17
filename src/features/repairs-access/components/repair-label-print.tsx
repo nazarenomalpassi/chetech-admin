@@ -135,7 +135,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
             options={[
               { value: "equipment", label: "Equipo" },
               { value: "accessory", label: "Accesorio" },
-              { value: "warranty", label: "Reingreso de garantia" }
+              { value: "warranty", label: "Reingreso de garantía" }
             ]}
             onChange={(event) => {
               setVariant(event.target.value);
@@ -173,7 +173,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
                   htmlFor={`${fieldId}-description`}
                   className="text-sm font-medium text-foreground"
                 >
-                  Descripcion del accesorio
+                  Descripción del accesorio
                 </label>
                 <Input
                   id={`${fieldId}-description`}
@@ -189,7 +189,7 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
               </div>
               <div className="space-y-1.5">
                 <label htmlFor={`${fieldId}-index`} className="text-sm font-medium text-foreground">
-                  Numero de accesorio
+                  Número de accesorio
                 </label>
                 <Input
                   id={`${fieldId}-index`}
@@ -229,10 +229,10 @@ export function RepairLabelPrintPreview({ orderId }: { orderId: string }) {
       {variant === "accessory" && accessoryDescriptionTruncated ? (
         <p
           role="note"
-          aria-label="Descripcion del accesorio recortada"
+          aria-label="Descripción del accesorio recortada"
           className="rounded-xl border border-warning-border bg-warning-soft p-3 text-sm leading-6 text-warning"
         >
-          Descripcion recortada: acorta el texto y prepara la etiqueta de nuevo para que se lea
+          Descripción recortada: acorta el texto y prepara la etiqueta de nuevo para que se lea
           completo. El QR no recupera este texto temporal.
         </p>
       ) : null}

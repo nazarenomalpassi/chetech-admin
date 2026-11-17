@@ -59,7 +59,7 @@ export function BusinessChart({ title, description, rows, valueLabel = "Importe"
               </BarChart>
             </ResponsiveContainer>
           </div>
-          {rows.length > 8 && <p className="text-xs text-muted-foreground">Grafico: primeras 8 filas. La tabla contiene todos los registros.</p>}
+          {rows.length > 8 && <p className="text-xs text-muted-foreground">Gráfico: primeras 8 filas. La tabla contiene todos los registros.</p>}
         </> : <p role="status" className="my-4 rounded-lg bg-muted p-4 text-sm text-muted-foreground">{rows.length === 0 ? "No hay registros para este grafico." : rows.every((row) => row.value === null && row.previous == null) ? "Los importes estan por determinar. Consulta el alcance de los datos." : "Sin importes distintos de cero para graficar. Consulta los valores y pendientes en la tabla."}</p>}
         <details className="mt-3 border-t border-border">
           <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium text-body focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring">Ver tabla de datos</summary>

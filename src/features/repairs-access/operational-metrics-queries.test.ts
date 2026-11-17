@@ -24,7 +24,7 @@ describe("workshop operational metrics server query", () => {
   it("rejects malformed periods before creating a client", async () => {
     await expect(
       getWorkshopOperationalMetrics({ from: "2026-02-30", to: "2026-11-10" })
-    ).rejects.toThrow(/periodo/i);
+    ).rejects.toThrow(/per[ií]odo/i);
     expect(createClient).not.toHaveBeenCalled();
   });
   it("does not hide authorization errors as zero counters or expose database details", async () => {
@@ -41,7 +41,7 @@ describe("workshop operational metrics server query", () => {
       rpc.mockResolvedValue({ data, error: null });
       await expect(
         getWorkshopOperationalMetrics({ from: "2026-11-01", to: "2026-11-10" })
-      ).rejects.toThrow(/respuesta.*valida/i);
+      ).rejects.toThrow(/respuesta.*v[aá]lida/i);
     }
   });
 });
@@ -213,7 +213,7 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       const afterStart = workshopOperationalMetricsSchema.parse(gate.metrics);
       expect(afterStart.warranty.matureCohort.comparableOrders).toBe(0);
       expect(afterStart.warranty.matureCohort.returnRate).toBeNull();
-      expect(afterStart.warranty.matureCohort.reason).toMatch(/Todavia no hay/);
+      expect(afterStart.warranty.matureCohort.reason).toMatch(/Todav[ií]a no hay/);
     });
     it("rates only complete mature observed warranties, using distinct orders and matching immutable snapshots", () => {
       const readDefinition = metricsSqlSource().match(
@@ -398,7 +398,7 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
         ('ee070001-0000-4000-8000-000000000004','part_request','Repuesto solicitado',now()-interval '9 days'),
         ('ee070001-0000-4000-8000-000000000004','update','Ficha actualizada',now()),
         ('ee070001-0000-4000-8000-000000000005','part_update','Repuesto recibido',now()-interval '1 day'),
-        ('ee070001-0000-4000-8000-000000000006','warranty','Garantia corregida',now()),
+        ('ee070001-0000-4000-8000-000000000006','warranty','Garantía corregida',now()),
         ('ee070001-0000-4000-8000-000000000006','supplier_claim','Reclamo de proveedor registrado',now());
       insert into public.repair_access_status_history(repair_order_id,previous_status,next_status,changed_at,notes) values
         ('ee070001-0000-4000-8000-000000000001','pendiente_revision','en_revision',now()-interval '8 days','Real transition'),
@@ -501,7 +501,7 @@ describe.runIf(process.env.WORKSHOP_METRICS_TEST_CONTAINER === isolatedContainer
       ).toBe(1);
       expect(after.warranty.matureCohort.comparableOrders).toBeNull();
       expect(after.warranty.matureCohort.returnRate).toBeNull();
-      expect(after.warranty.matureCohort.reason).toMatch(/observacion continua/);
+      expect(after.warranty.matureCohort.reason).toMatch(/observaci[oó]n continua/);
     });
   }
 );
@@ -520,7 +520,7 @@ describe("operational metrics SQL static guardrails (not a live SQL test)", () =
     );
     expect(draft).toMatch(/auth\.uid\(\) is null/i);
     expect(draft).toMatch(/private\.can_access_operations\(\)/);
-    expect(draft).toMatch(/role in \('admin',\s*'tecnico'\)/);
+    expect(draft).toMatch(/role in \('admin',\s*'t[eé]cnico'\)/);
     expect(draft).toMatch(
       /revoke all on function[\s\S]*from public, anon, authenticated, service_role/i
     );

@@ -96,7 +96,7 @@ describe("manual repair receipt sharing", () => {
       const explanation = document.getElementById(
         button.getAttribute("aria-describedby")!.split(" ").at(-1)!
       )!;
-      expect(explanation.textContent).toMatch(/telefono principal valido/i);
+      expect(explanation.textContent).toMatch(/tel[eé]fono principal v[aá]lido/i);
     }
   );
 
@@ -113,7 +113,7 @@ describe("manual repair receipt sharing", () => {
     expect((screen.getByRole("button", { name: intakeLabel }) as HTMLButtonElement).disabled).toBe(
       true
     );
-    expect(screen.getByText(/Sin telefono principal/)).toBeTruthy();
+    expect(screen.getByText(/Sin tel[eé]fono principal/)).toBeTruthy();
   });
 
   it("shows the recipient name and stored primary number next to the send controls", () => {

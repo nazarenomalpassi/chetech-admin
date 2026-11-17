@@ -10,7 +10,7 @@ const base = {
   fields: {
     customerName: "Juan",
     visitDate: "2026-10-08",
-    notes: "Revision",
+    notes: "Revisión",
     created_by: "attacker",
     returnTo: "https://bad.example",
     id: "other"
@@ -23,7 +23,7 @@ describe("safe persisted visit drafts", () => {
     expect(draft?.fields).toEqual({
       customerName: "Juan",
       visitDate: "2026-10-08",
-      notes: "Revision"
+      notes: "Revisión"
     });
     expect(parseVisitDraft(serializeVisitDraft(base), "other", "visit", now)).toBeNull();
   });

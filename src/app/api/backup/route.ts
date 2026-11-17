@@ -44,7 +44,7 @@ const excelTables = [
   },
   {
     table: "invoices",
-    sheet: "Facturacion",
+    sheet: "Facturación",
     columns:
       "invoice_number, customer_name, customer_phone, source_type, subtotal, discount, total, status, created_at"
   },
@@ -131,7 +131,7 @@ export async function GET(request: Request) {
       XLSX.utils.json_to_sheet([
         {
           alcance:
-            "Exportacion operativa parcial de siete tablas. NO es un backup completo de PostgreSQL."
+            "Exportación operativa parcial de siete tablas. NO es un backup completo de PostgreSQL."
         },
         {
           alcance:

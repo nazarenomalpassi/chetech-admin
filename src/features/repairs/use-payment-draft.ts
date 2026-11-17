@@ -189,7 +189,7 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
       return;
     if (
       !event[GUARDED_NAVIGATION] &&
-      !window.confirm("Hay cambios sin guardar. Queres continuar?")
+      !window.confirm("Hay cambios sin guardar. Querés continuar?")
     ) {
       event.preventDefault();
       event.stopPropagation();
@@ -215,7 +215,7 @@ function registerDirtyGuard(isDirty: () => boolean, flush: () => void) {
     if (!isDirty()) return;
     if (
       event[GUARDED_HISTORY] === "accepted" ||
-      window.confirm("Hay cambios sin guardar. Queres continuar?")
+      window.confirm("Hay cambios sin guardar. Querés continuar?")
     ) {
       event[GUARDED_HISTORY] = "accepted";
       flush();

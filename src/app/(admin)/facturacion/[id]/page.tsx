@@ -152,7 +152,7 @@ export default async function InvoiceDetailPage({
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-left text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 font-medium">Descripcion</th>
+                <th className="px-4 py-3 font-medium">Descripción</th>
                 <th className="px-4 py-3 font-medium">Cantidad</th>
                 <th className="px-4 py-3 font-medium">Precio</th>
                 <th className="px-4 py-3 font-medium">Total</th>
@@ -177,7 +177,7 @@ export default async function InvoiceDetailPage({
 
         <div className="invoice-section mt-8 grid gap-4 md:grid-cols-[1fr_320px]">
           <div className="rounded-xl border border-border bg-card p-4">
-            <h2 className="font-semibold text-foreground">Operacion registrada</h2>
+            <h2 className="font-semibold text-foreground">Operación registrada</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Emitir o reimprimir este documento no registra dinero ni mueve stock. Los cobros
               provienen de la operacion vinculada. No es una factura fiscal.

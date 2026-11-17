@@ -176,7 +176,7 @@ export function usePersistentFormDraft<T>({
       }
 
       const shouldLeave = window.confirm(
-        "Hay cambios sin guardar. El borrador queda guardado para recuperarlo despues. Queres continuar?"
+        "Hay cambios sin guardar. El borrador queda guardado para recuperarlo despues. Querés continuar?"
       );
       if (!shouldLeave) {
         skipNextPopStateRef.current = true;

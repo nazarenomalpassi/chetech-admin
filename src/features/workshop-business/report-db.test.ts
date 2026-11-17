@@ -31,7 +31,7 @@ describe.skipIf(!connectionString)("synthetic workshop business aggregates and R
       create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub', true),'')::uuid $$;
       grant usage on schema auth to authenticated;
       create table profiles(id uuid primary key, full_name text, role text);
-      insert into profiles values ('${admin}','Creador admin','admin'),('${techA}','Tecnico A','tecnico'),('${techB}','Tecnico B','tecnico');
+      insert into profiles values ('${admin}','Creador admin','admin'),('${techA}','Técnico A','tecnico'),('${techB}','Técnico B','tecnico');
       grant select on profiles to authenticated;
       create table repair_access_orders(id uuid primary key, intake_date date, technician_id uuid, technician_name text, created_by uuid,
         status text, delivered_at timestamptz, final_amount numeric default 0, budget_amount numeric, budget_revision integer default 0,

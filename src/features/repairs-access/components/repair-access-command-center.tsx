@@ -95,7 +95,7 @@ export function RepairAccessCommandCenter({
             {formatCurrency(summary.totalCollected)}
           </p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Los cobros reales se registran en Pagos de reparaciones. Presupuestar o emitir
+            Los cobros reales se registran en Cobros de reparaciones. Presupuestar o emitir
             documentos no modifica caja ni registra una entrega.
           </p>
           <div className="mt-4 border-t border-border pt-3">
@@ -176,7 +176,7 @@ export function RepairAccessCommandCenter({
           </div>
           <div className="mt-4 space-y-3">
             <AlertRow label="Presupuestadas" value={summary.waitingCustomer} />
-            <AlertRow label="Garantias vigentes" value={summary.activeWarranties} />
+            <AlertRow label="Garantías vigentes" value={summary.activeWarranties} />
             <AlertRow label="Entregadas hoy" value={summary.deliveredToday} />
             <AlertRow label="Clientes importados" value={summary.totalCustomers} />
           </div>

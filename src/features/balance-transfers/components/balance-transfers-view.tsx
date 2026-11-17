@@ -151,7 +151,7 @@ export function BalanceTransfersView({
             ))
           ) : (
             <div className="empty-panel">
-              Todavia no hay transferencias entre cuentas registradas.
+              Todavía no hay transferencias entre cuentas registradas.
             </div>
           )}
         </div>
@@ -164,7 +164,7 @@ export function BalanceTransfersView({
                 <th className="px-4 py-3 font-medium">Origen</th>
                 <th className="px-4 py-3 font-medium">Destino</th>
                 <th className="px-4 py-3 text-right font-medium">Monto</th>
-                <th className="px-4 py-3 font-medium">Descripcion</th>
+                <th className="px-4 py-3 font-medium">Descripción</th>
                 <th className="px-4 py-3 font-medium">Usuario</th>
                 <th className="px-4 py-3 font-medium">Creado</th>
                 <th className="px-4 py-3 text-right font-medium">Acciones</th>
@@ -216,7 +216,7 @@ export function BalanceTransfersView({
           </table>
           {!transfers.length ? (
             <div className="empty-panel border-t border-border">
-              Todavia no hay transferencias entre cuentas registradas.
+              Todavía no hay transferencias entre cuentas registradas.
             </div>
           ) : null}
         </div>

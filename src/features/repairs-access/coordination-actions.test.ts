@@ -554,7 +554,7 @@ describe("guardado breve del taller", () => {
     data.set("status", "presupuestado_aceptado");
     data.set("operationId", "10000000-0000-4000-8000-000000000002");
     data.set("repairAmount", "0");
-    data.set("budgetDetail", "Reparacion de cortesia");
+    data.set("budgetDetail", "Reparación de cortesia");
     data.set("decisionNotes", "Cortesia autorizada");
     mocks.rpc.mockResolvedValue({
       data: { id: data.get("id"), version: 4, status: "presupuestado_aceptado", replayed: false },
@@ -568,7 +568,7 @@ describe("guardado breve del taller", () => {
         p_decision_notes: "Cortesia autorizada",
         p_payload: expect.objectContaining({
           budget_amount: 0,
-          budget_detail: "Reparacion de cortesia"
+          budget_detail: "Reparación de cortesia"
         })
       })
     );
@@ -580,7 +580,7 @@ describe("guardado breve del taller", () => {
     data.set("operationId", "10000000-0000-4000-8000-000000000002");
     data.set("repairAmount", "150");
     mocks.rpc
-      .mockResolvedValueOnce({ error: { code: "08006", message: "Conexion interrumpida" } })
+      .mockResolvedValueOnce({ error: { code: "08006", message: "Conexión interrumpida" } })
       .mockResolvedValueOnce({
         data: { id: data.get("id"), version: 6, status: "presupuestado_aceptado", replayed: true },
         error: null

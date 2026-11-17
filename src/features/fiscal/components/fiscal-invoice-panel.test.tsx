@@ -50,7 +50,7 @@ describe("manual fiscal panel", () => {
       vi.fn().mockResolvedValue(new Response(JSON.stringify({ readiness: ready, records: [] })))
     );
     render(<FiscalInvoicePanel />);
-    await screen.findByText(/Configuracion local validada/);
+    await screen.findByText(/Configuraci[oó]n local validada/);
     expect(screen.queryByRole("button", { name: "Emitir factura C manualmente" })).toBeNull();
   });
   it("allows a native repair_access invoice and limits its fiscal concept to services", async () => {
@@ -68,7 +68,7 @@ describe("manual fiscal panel", () => {
       )
     );
     render(<FiscalInvoicePanel invoiceId={snapshotFixture().invoiceId} />);
-    await screen.findByText(/Configuracion local validada/);
+    await screen.findByText(/Configuraci[oó]n local validada/);
     const button = screen.getByRole("button", { name: "Emitir factura C manualmente" });
     expect((button as HTMLButtonElement).disabled).toBe(false);
     fireEvent.click(button);
@@ -93,7 +93,7 @@ describe("manual fiscal panel", () => {
     );
     vi.stubGlobal("fetch", fetcher);
     render(<FiscalInvoicePanel invoiceId={snapshotFixture().invoiceId} />);
-    await screen.findByText(/Configuracion local validada/);
+    await screen.findByText(/Configuraci[oó]n local validada/);
     fireEvent.click(screen.getByRole("button", { name: "Emitir factura C manualmente" }));
     fireEvent.change(screen.getByLabelText("Domicilio del receptor"), {
       target: { value: "Domicilio nuevo" }
@@ -145,16 +145,16 @@ describe("manual fiscal panel", () => {
     );
     vi.stubGlobal("fetch", fetcher);
     render(<FiscalInvoicePanel invoiceId={snapshotFixture().invoiceId} />);
-    await screen.findByText(/Configuracion local validada/);
+    await screen.findByText(/Configuraci[oó]n local validada/);
     fireEvent.click(screen.getByRole("button", { name: "Emitir factura C manualmente" }));
     fireEvent.change(screen.getByLabelText("Concepto fiscal"), { target: { value: "2" } });
     fireEvent.change(screen.getByLabelText("Domicilio del receptor"), {
       target: { value: "Domicilio" }
     });
-    fireEvent.change(screen.getByLabelText("Numero de documento"), {
+    fireEvent.change(screen.getByLabelText("Número de documento"), {
       target: { value: "12345678" }
     });
-    fireEvent.change(screen.getByLabelText("Condicion frente al IVA"), { target: { value: "5" } });
+    fireEvent.change(screen.getByLabelText("Condición frente al IVA"), { target: { value: "5" } });
     fireEvent.change(screen.getByLabelText("Servicio desde"), { target: { value: "2026-10-01" } });
     fireEvent.change(screen.getByLabelText("Servicio hasta"), { target: { value: "2026-10-05" } });
     fireEvent.change(screen.getByLabelText("Vencimiento de pago"), {

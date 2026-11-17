@@ -65,10 +65,10 @@ describe("workshop operational metrics", () => {
   });
   it("uses the complete snapshot and distinguishes current custody from the period flow", () => {
     render(<WorkshopOperationalMetrics metrics={snapshot} />);
-    expect(screen.getByRole("heading", { name: /metricas operativas/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /m[eé]tricas operativas/i })).toBeTruthy();
     expect(screen.getByText("84")).toBeTruthy();
     expect(screen.getByText(/todas las ordenes/i)).toBeTruthy();
-    const flow = screen.getByRole("region", { name: /movimiento del periodo/i });
+    const flow = screen.getByRole("region", { name: /movimiento del per[ií]odo/i });
     expect(within(flow).getByText("31")).toBeTruthy();
     expect(within(flow).getByText("24")).toBeTruthy();
     expect(flow.textContent).toContain("01/11/2026");
@@ -78,7 +78,7 @@ describe("workshop operational metrics", () => {
     render(<WorkshopOperationalMetrics metrics={snapshot} />);
     expect(screen.getByText(/9 ordenes sin actividad verificable/i)).toBeTruthy();
     expect(screen.getByText(/3 equipos sin fecha de listo verificable/i)).toBeTruthy();
-    expect(screen.getByText(/no se usa la ultima edicion de la ficha/i)).toBeTruthy();
+    expect(screen.getByText(/no se usa la [uú]ltima edici[oó]n de la ficha/i)).toBeTruthy();
     expect(screen.getByText(/4 intervalos.*3 ordenes/i)).toBeTruthy();
     expect(screen.getByText(/10 eventos reconstruidos/i)).toBeTruthy();
   });
@@ -114,7 +114,7 @@ describe("workshop operational metrics", () => {
     const parts = screen.getByRole("region", { name: /repuestos pendientes/i });
     expect(parts.textContent).toMatch(/13 ordenes[\s\S]*20 solicitudes/);
     expect(parts.textContent).toMatch(/15[\s\S]*por comprar/);
-    const warranty = screen.getByRole("region", { name: /reingresos por garantia/i });
+    const warranty = screen.getByRole("region", { name: /reingresos por garantía/i });
     expect(warranty.textContent).toMatch(/4[\s\S]*Ingresos/);
     expect(warranty.textContent).toMatch(/3 ordenes distintas/);
     expect(warranty.textContent).toMatch(/8[\s\S]*maduras[\s\S]*2[\s\S]*reingresos registrados/);
@@ -122,7 +122,7 @@ describe("workshop operational metrics", () => {
   it("keeps the longest pickup wait with ready equipment, not with parts purchasing", () => {
     render(<WorkshopOperationalMetrics metrics={snapshot} />);
     expect(screen.getByRole("group", { name: "Listos sin retirar" }).textContent).toMatch(
-      /mayor espera: 12 dias/i
+      /mayor espera: 12 d[ií]as/i
     );
     expect(screen.getByRole("region", { name: /repuestos pendientes/i }).textContent).not.toMatch(
       /espera de retiro/i

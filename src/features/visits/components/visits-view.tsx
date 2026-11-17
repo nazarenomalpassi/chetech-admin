@@ -65,7 +65,7 @@ function VisitActions({
         {canManage ? "Editar" : "Actualizar visita"}
       </Button>
       {canDelete ? (
-        <ActionMenu label="Mas acciones">
+        <ActionMenu label="Más acciones">
           <form
             action={deleteVisitAction}
             onSubmit={(event) =>
@@ -225,7 +225,7 @@ export function VisitsView({
             <dd className="inline font-semibold">{data.summary.openCount}</dd>
           </div>
           <div>
-            <dt className="inline text-muted-foreground">Proximas: </dt>
+            <dt className="inline text-muted-foreground">Próximas: </dt>
             <dd className="inline font-semibold">{data.summary.upcomingCount}</dd>
           </div>
         </dl>
@@ -251,7 +251,7 @@ export function VisitsView({
         ) : null}
         {data.summary.nextVisit ? (
           <div className="mt-3 border-t border-border pt-3 text-sm">
-            <p className="font-medium text-muted-foreground">Proxima salida de esta pagina</p>
+            <p className="font-medium text-muted-foreground">Próxima salida de esta pagina</p>
             <p className="mt-1 font-semibold">
               {data.summary.nextVisit.customerName} | {formatDate(data.summary.nextVisit.visitDate)}{" "}
               | {getVisitTimeLabel(data.summary.nextVisit.timeFrom, data.summary.nextVisit.timeTo)}
@@ -287,7 +287,7 @@ export function VisitsView({
             <Input defaultValue={data.filters.date} name="date" type="date" />
           </label>
           <label className="grid gap-2 text-sm">
-            Periodo
+            Período
             <Select
               name="view"
               defaultValue={data.filters.view}

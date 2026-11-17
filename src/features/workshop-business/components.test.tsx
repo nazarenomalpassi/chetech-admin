@@ -80,7 +80,7 @@ describe("workshop business UI", () => {
         data={{ range: reportFixture, report: null, migrationReady: false }}
       />
     );
-    expect(screen.getByRole("status").textContent).toMatch(/migracion de lectura/);
+    expect(screen.getByRole("status").textContent).toMatch(/migraci[oó]n de lectura/);
     expect(screen.queryByRole("group", { name: "Cobrado real" })).toBeNull();
   });
   it("reuses the operational inbox and explains its independent current-queue scope", () => {
@@ -104,7 +104,7 @@ describe("workshop business UI", () => {
     fireEvent.click(disclosure.querySelector("summary")!);
     expect(disclosure.open).toBe(true);
     expect(screen.getByRole("heading", { name: "Pendientes del taller" })).toBeTruthy();
-    expect(screen.getByText(/No depende del periodo financiero/)).toBeTruthy();
+    expect(screen.getByText(/No depende del per[ií]odo financiero/)).toBeTruthy();
     expect(screen.getByRole("link", { name: /Sin responsable/ }).getAttribute("href")).toContain(
       "scope=unassigned"
     );

@@ -138,7 +138,7 @@ export function WorkshopServerNavigation({
             { value: "waiting_customer", label: "Esperando cliente" },
             { value: "ready", label: "Listas para retirar" },
             { value: "return", label: "Pendientes de devolver" },
-            { value: "overdue", label: "Revision vencida" }
+            { value: "overdue", label: "Revisión vencida" }
           ]}
         />
       </label>

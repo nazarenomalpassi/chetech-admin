@@ -513,8 +513,8 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
         isDirty &&
         !window.confirm(
           storageUnavailable
-            ? "Hay cambios sin guardar y no se pudo conservar el borrador. Queres cerrar? Verifica el saldo antes de volver a cobrar."
-            : "Hay cambios sin guardar. Queres conservar el borrador y cerrar?"
+            ? "Hay cambios sin guardar y no se pudo conservar el borrador. Querés cerrar? Verifica el saldo antes de volver a cobrar."
+            : "Hay cambios sin guardar. Querés conservar el borrador y cerrar?"
         )
       )
         return false;
@@ -623,7 +623,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
           setStorageUnavailable(true);
           if (!allowWithoutDraft) {
             setError(
-              "No se pudo guardar el borrador local. Podes continuar conservando el mismo intento solo en esta ventana."
+              "No se pudo guardar el borrador local. Podés continuar conservando el mismo intento solo en esta ventana."
             );
             return;
           }
@@ -744,7 +744,7 @@ function DeliveryForm({
     closeForm.current = () =>
       !submitting.current &&
       !pending &&
-      (!dirty || window.confirm("Hay cambios sin guardar. Queres descartarlos y cerrar?"));
+      (!dirty || window.confirm("Hay cambios sin guardar. Querés descartarlos y cerrar?"));
     return () => {
       closeForm.current = null;
     };

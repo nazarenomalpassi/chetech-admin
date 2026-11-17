@@ -86,10 +86,10 @@ export function BoardFilters() {
             { label: "Disponibles", value: "active" },
             { label: "Dadas de baja", value: "inactive" },
             { label: "Vendidas", value: "sold" },
-            { label: "Liberacion sin confirmar", value: "pending_release" },
+            { label: "Liberación sin confirmar", value: "pending_release" },
             { label: "Reclamo abierto / dinero retenido", value: "claim_open" },
             { label: "Venta anulada", value: "cancelled" },
-            { label: "Liberacion confirmada", value: "released" }
+            { label: "Liberación confirmada", value: "released" }
           ]}
         />
       </div>

@@ -28,10 +28,10 @@ export function TechnicianDashboard({
   workshopInbox
 }: TechnicianDashboardProps) {
   const metrics = [
-    { label: "Ordenes activas", value: data.summary.active, icon: Wrench, tone: "service" },
+    { label: "Órdenes activas", value: data.summary.active, icon: Wrench, tone: "service" },
     { label: "Asignadas a mi", value: data.summary.assigned, icon: UserRoundCheck, tone: "income" },
     {
-      label: "Pendientes de revision",
+      label: "Pendientes de revisión",
       value: data.summary.pendingReview,
       icon: ClipboardList,
       tone: "warning"
@@ -51,7 +51,7 @@ export function TechnicianDashboard({
           <div>
             <h1 className="text-2xl font-semibold text-foreground">Taller de {technicianName}</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Ordenes y visitas asignadas.
+              Órdenes y visitas asignadas.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row">
@@ -81,7 +81,7 @@ export function TechnicianDashboard({
 
       <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.65fr)]">
         <DashboardDisclosure
-          title="Ordenes activas recientes"
+          title="Órdenes activas recientes"
           summary={`${data.summary.active} ordenes activas; ${data.recentOrders.length} recientes en esta lista.`}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">

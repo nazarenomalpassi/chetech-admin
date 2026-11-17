@@ -267,7 +267,7 @@ export function InvoicesView({
       <Card>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-foreground">Facturacion interna</h1>
+            <h1 className="text-2xl font-semibold text-foreground">Facturación interna</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Comprobantes de ventas y reparaciones. No son facturas fiscales autorizadas por ARCA.
             </p>
@@ -346,7 +346,7 @@ export function InvoicesView({
                 options={[
                   { label: "Manual", value: "manual" },
                   { label: "REP (orden principal)", value: "repair_access" },
-                  { label: "Reparacion (registro historico)", value: "repair" },
+                  { label: "Reparación (registro historico)", value: "repair" },
                   { label: "Venta", value: "sale" }
                 ]}
                 value={sourceType}
@@ -536,7 +536,7 @@ export function InvoicesView({
                     />
                   </label>
                   <label className="grid min-w-0 gap-2 text-sm text-muted-foreground">
-                    Descripcion
+                    Descripción
                     <Input
                       aria-label={`Descripción del ítem ${index + 1}`}
                       onChange={(event) => updateItem(index, { description: event.target.value })}
@@ -731,7 +731,7 @@ export function InvoicesView({
           <table className="min-w-full text-sm">
             <thead className="bg-muted text-left text-muted-foreground">
               <tr>
-                <th className="px-4 py-3 font-medium">Numero</th>
+                <th className="px-4 py-3 font-medium">Número</th>
                 <th className="px-4 py-3 font-medium">Fecha</th>
                 <th className="px-4 py-3 font-medium">Cliente</th>
                 <th className="px-4 py-3 font-medium">Origen</th>
@@ -828,7 +828,7 @@ export function InvoicesView({
         </div>
         {!invoices.length ? (
           <div className="empty-panel border-t border-border">
-            Todavia no emitiste comprobantes internos en este modulo.
+            Todavía no emitiste comprobantes internos en este modulo.
           </div>
         ) : null}
         <PaginationNav meta={pagination} pathname="/facturacion" />

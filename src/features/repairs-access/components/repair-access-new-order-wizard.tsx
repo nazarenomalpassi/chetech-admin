@@ -415,7 +415,7 @@ export function RepairAccessNewOrderWizard({
           <Field
             className="relative min-w-0 sm:col-span-3"
             htmlFor="customerPhone"
-            label="Telefono"
+            label="Teléfono"
             onBlur={handleLookupBlur}
             onKeyDown={handleLookupKeyDown}
           >
@@ -453,7 +453,7 @@ export function RepairAccessNewOrderWizard({
               suggestions={suggestions}
             />
           </Field>
-          <Field className="min-w-0 sm:col-span-4" label="Direccion">
+          <Field className="min-w-0 sm:col-span-4" label="Dirección">
             <Input
               name="customerAddress"
               onChange={(event) => updateCustomerField("address", event.target.value)}
@@ -509,7 +509,7 @@ export function RepairAccessNewOrderWizard({
             <Input
               defaultValue={restoredValue("serialNumber", editing?.device.serialNumber ?? "")}
               name="serialNumber"
-              placeholder="Numero de serie"
+              placeholder="Número de serie"
             />
           </Field>
           <Field className="min-w-0 sm:col-span-2" label="Accesorios entregados">
@@ -540,7 +540,7 @@ export function RepairAccessNewOrderWizard({
         </section>
 
         <OptionalFields label="Otros datos (opcionales)">
-          <Field className="lg:col-span-2" label="Telefono alternativo">
+          <Field className="lg:col-span-2" label="Teléfono alternativo">
             <Input
               name="customerAlternatePhone"
               onChange={(event) => updateCustomerField("alternatePhone", event.target.value)}
@@ -597,7 +597,7 @@ export function RepairAccessNewOrderWizard({
             <Textarea
               defaultValue={restoredValue("notes", editing?.notes ?? "")}
               name="notes"
-              placeholder="Condicion de ingreso, accesorios, charla con el cliente o aclaraciones"
+              placeholder="Condición de ingreso, accesorios, charla con el cliente o aclaraciones"
             />
           </Field>
           <p className="text-sm leading-6 text-muted-foreground lg:col-span-6">
@@ -717,7 +717,7 @@ function CustomerSuggestions({
         <div className="px-4 py-3 text-sm text-muted-foreground" role="status">
           {isSearching
             ? "Buscando cliente..."
-            : "Sin coincidencias. Podes cargarlo como cliente nuevo."}
+            : "Sin coincidencias. Podés cargarlo como cliente nuevo."}
         </div>
       )}
     </div>

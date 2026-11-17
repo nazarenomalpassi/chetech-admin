@@ -35,7 +35,7 @@ describe("operational metrics reference formulas", () => {
     { from: "2000-01-01", to: "2026-11-10" }
   ])("rejects impossible, inverted or unbounded expensive ranges: %j", (range) => {
     expect(() => getOperationalMetricsRange(range, new Date("2026-11-10T12:00:00Z"))).toThrow(
-      /periodo/i
+      /per[ií]odo/i
     );
   });
   it.each([

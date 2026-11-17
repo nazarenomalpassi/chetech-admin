@@ -33,7 +33,7 @@ const visit: VisitRecord = {
 const data = {
   migrationReady: true,
   today: "2026-10-05",
-  technicians: [{ id: "tech", full_name: "Tecnico anterior" }],
+  technicians: [{ id: "tech", full_name: "Técnico anterior" }],
   filters: {
     search: "cliente",
     status: "confirmada",
@@ -87,7 +87,7 @@ describe("one visit workflow", () => {
     );
     expect(
       screen.queryByRole("button", {
-        name: /Editar|Actualizar|Nueva visita|Cambiar estado|Mas acciones/
+        name: /Editar|Actualizar|Nueva visita|Cambiar estado|Más acciones/
       })
     ).toBeNull();
     expect(screen.queryByRole("combobox", { name: "Estado de Juan" })).toBeNull();
@@ -95,7 +95,7 @@ describe("one visit workflow", () => {
   it("keeps administrative cancellation behind More actions and confirmation", () => {
     const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
     render(<VisitsView canManage canDelete data={{ ...data, visits: [visit] }} message={null} />);
-    fireEvent.click(screen.getAllByRole("button", { name: "Mas acciones" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Más acciones" })[0]);
     const cancel = screen.getByRole("button", { name: "Cancelar y conservar" });
     const event = new Event("submit", { bubbles: true, cancelable: true });
     cancel.closest("form")!.dispatchEvent(event);
@@ -107,7 +107,7 @@ describe("one visit workflow", () => {
     render(<VisitsView canManage canDelete data={data} message={null} />);
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.queryByRole("textbox", { name: "Nombre del cliente" })).toBeNull();
-    expect(screen.queryByRole("combobox", { name: /tecnico/i })).toBeNull();
+    expect(screen.queryByRole("combobox", { name: /t[eé]cnico/i })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Nueva visita" }));
     const dialog = screen.getByRole("dialog", { name: "Nueva visita" });
     expect(within(dialog).getByRole("textbox", { name: "Nombre del cliente" })).toBe(
@@ -126,7 +126,7 @@ describe("one visit workflow", () => {
     render(<VisitsView canManage canDelete data={{ ...data, visits: [visit] }} message={null} />);
     fireEvent.click(screen.getAllByRole("button", { name: "Editar" })[0]);
     const dialog = screen.getByRole("dialog");
-    expect(within(dialog).queryByRole("combobox", { name: /tecnico/i })).toBeNull();
+    expect(within(dialog).queryByRole("combobox", { name: /t[eé]cnico/i })).toBeNull();
     expect(dialog.querySelector('[name="technicianId"]')).toBeNull();
     expect((within(dialog).getByLabelText("Estado de la visita") as HTMLSelectElement).value).toBe(
       "confirmada"

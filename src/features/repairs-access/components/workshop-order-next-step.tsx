@@ -13,7 +13,7 @@ export function WorkshopOrderNextStep({
   return (
     <aside
       role="note"
-      aria-label={`Proximo paso de ${repairNumber}`}
+      aria-label={`Próximo paso de ${repairNumber}`}
       className={cn(
         "min-w-0 space-y-2 rounded-lg border-l-4 p-3 text-sm",
         blocked
@@ -22,7 +22,7 @@ export function WorkshopOrderNextStep({
       )}
     >
       <p className="text-xs font-medium">
-        Proximo paso{summary.activeReturn ? " del reingreso" : ""}
+        Próximo paso{summary.activeReturn ? " del reingreso" : ""}
       </p>
       <p className="leading-5 font-semibold wrap-anywhere wrap-break-word">{summary.nextAction}</p>
       {blocked ? (
@@ -38,7 +38,7 @@ export function WorkshopOrderNextStep({
             <div className="min-w-0">
               <dt className="flex items-center gap-1.5">
                 <MapPin aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                Ubicacion registrada
+                Ubicación registrada
               </dt>
               <dd className="mt-1 font-medium wrap-anywhere wrap-break-word whitespace-pre-wrap">
                 {summary.location}
@@ -49,7 +49,7 @@ export function WorkshopOrderNextStep({
             <div className="min-w-0">
               <dt className="flex items-center gap-1.5">
                 <CalendarDays aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
-                Proxima revision
+                Próxima revision
               </dt>
               <dd className="mt-1 font-medium">
                 <time dateTime={summary.nextActionDate}>{formatDate(summary.nextActionDate)}</time>

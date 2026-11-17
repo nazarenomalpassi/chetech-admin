@@ -124,7 +124,7 @@ export async function deleteProductAction(id: string) {
       success: false,
       message:
         error.code === "23503"
-          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podes desactivarlo."
+          ? "No se puede eliminar porque el producto ya tiene movimientos o ventas. Podés desactivarlo."
           : error.message
     };
   }
@@ -188,6 +188,6 @@ export async function createCategoryAction(input: unknown) {
 
   return {
     success: true,
-    message: `Categoria ${data.name} creada`
+    message: `Categoría ${data.name} creada`
   };
 }

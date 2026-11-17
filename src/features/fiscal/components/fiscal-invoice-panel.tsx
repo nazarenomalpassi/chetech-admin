@@ -134,7 +134,7 @@ export function FiscalInvoicePanel({
           onIssued?.(record);
         } else if (record.status === "rejected") {
           setMessage(
-            `No hay CAE autorizado. Revisa los datos antes de una nueva vista previa.${record.errorCodes.length ? ` Codigos ARCA: ${record.errorCodes.join(", ")}.` : " Verifica certificado, habilitacion y disponibilidad del servicio."}`
+            `No hay CAE autorizado. Revisa los datos antes de una nueva vista previa.${record.errorCodes.length ? ` Códigos ARCA: ${record.errorCodes.join(", ")}.` : " Verifica certificado, habilitacion y disponibilidad del servicio."}`
           );
           setPreview(null);
         } else
@@ -159,7 +159,7 @@ export function FiscalInvoicePanel({
 
   return (
     <Card className={className}>
-      <section aria-label="Facturacion fiscal ARCA">
+      <section aria-label="Facturación fiscal ARCA">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-foreground">
             {invoiceId ? "Factura C (ARCA)" : "Estado fiscal (ARCA)"}
@@ -188,7 +188,7 @@ export function FiscalInvoicePanel({
             </p>
             {state.readiness.ready ? (
               <p className="text-sm text-body">
-                Configuracion local validada. La habilitacion de CUIT, PV y receptor se verifica con
+                Configuración local validada. La habilitacion de CUIT, PV y receptor se verifica con
                 ARCA al confirmar.
               </p>
             ) : (
@@ -276,7 +276,7 @@ export function FiscalInvoicePanel({
                     ? `Factura C ${String(record.snapshot.pointOfSale).padStart(5, "0")}-${String(record.number).padStart(8, "0")}`
                     : record.status === "rejected"
                       ? "Intento rechazado / no autorizado"
-                      : "Emision pendiente: reserva conservada"}
+                      : "Emisión pendiente: reserva conservada"}
                 </p>
                 <p className="mt-1 text-sm">
                   {formatCurrency(record.snapshot.totalCents / 100)} |{" "}
@@ -311,7 +311,7 @@ export function FiscalInvoicePanel({
                   <p className="mt-2 text-sm text-muted-foreground">
                     Sin CAE confirmado: no hay PDF ni QR fiscal.
                     {record.errorCodes.length
-                      ? ` Codigos ARCA: ${record.errorCodes.join(", ")}.`
+                      ? ` Códigos ARCA: ${record.errorCodes.join(", ")}.`
                       : ""}
                   </p>
                 )}
@@ -550,7 +550,7 @@ function FiscalFields({
         </select>
       </label>
       <label className="grid gap-2 text-sm">
-        Numero de documento
+        Número de documento
         <Input
           name="documentNumber"
           inputMode="numeric"
@@ -560,7 +560,7 @@ function FiscalFields({
         />
       </label>
       <label className="grid gap-2 text-sm sm:col-span-2">
-        Condicion frente al IVA
+        Condición frente al IVA
         <select className={selectClass} name="ivaCondition" required defaultValue="">
           <option value="">Seleccionar expresamente</option>
           {IVA_CONDITIONS.map(([id, label]) => (

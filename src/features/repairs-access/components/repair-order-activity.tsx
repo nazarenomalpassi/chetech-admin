@@ -88,7 +88,7 @@ export function RepairOrderActivity({ orderId }: { orderId: string }) {
           <p className="mt-2 text-xs text-muted-foreground">
             {page && page.events.length > 20
               ? `${page.events.length} movimientos cargados, del mas reciente al mas antiguo.`
-              : "Ultimos 20 movimientos, del mas reciente al mas antiguo."}
+              : "Últimos 20 movimientos, del mas reciente al mas antiguo."}
           </p>
           {page?.events.length ? (
             <ol className="mt-3 space-y-3 border-l border-border pl-3">

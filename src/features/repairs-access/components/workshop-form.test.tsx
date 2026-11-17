@@ -33,7 +33,7 @@ describe("borrador del taller", () => {
               <input aria-label="Importe" name="repairAmount" defaultValue="100" />
               <textarea aria-label="Detalle" name="budgetDetail" defaultValue="Fuente" />
               <input
-                aria-label="Confirmacion"
+                aria-label="Confirmación"
                 name="confirmCustomer"
                 type="checkbox"
                 defaultChecked

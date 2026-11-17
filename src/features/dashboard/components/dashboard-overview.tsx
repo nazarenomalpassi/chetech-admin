@@ -124,14 +124,14 @@ export function DashboardOverview({
     {
       key: "repairs",
       label: "Reparaciones",
-      description: "Servicio tecnico cobrado",
+      description: "Servicio técnico cobrado",
       value: repairsTodayTotal,
       tone: "service",
       icon: Wrench
     },
     {
       key: "invoicing",
-      label: "Facturacion",
+      label: "Facturación",
       description: "Comprobantes internos",
       value: invoiceIncomeToday,
       tone: "neutral",
@@ -200,7 +200,7 @@ export function DashboardOverview({
       {workshopInbox}
 
       <section
-        aria-label={`Metricas del ${formatDate(range.from)} al ${formatDate(range.to)}`}
+        aria-label={`Métricas del ${formatDate(range.from)} al ${formatDate(range.to)}`}
         className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
       >
         {metrics.map((metric) => (
@@ -309,7 +309,7 @@ export function DashboardOverview({
                 </p>
               </div>
               <div className="border-t border-border py-3">
-                <p className="text-sm font-semibold text-muted-foreground">Proxima visita</p>
+                <p className="text-sm font-semibold text-muted-foreground">Próxima visita</p>
                 {visitsDashboard.nextVisit ? (
                   <>
                     <p className="mt-2 text-base font-semibold text-foreground">
@@ -409,7 +409,7 @@ export function DashboardOverview({
           </DashboardDisclosure>
 
           <DashboardDisclosure
-            title="Productos mas vendidos"
+            title="Productos más vendidos"
             summary={
               topProducts.length
                 ? `${topProducts.length} productos destacados; ${topProducts.reduce((total, product) => total + product.quantity, 0)} unidades en esta lista del periodo.`

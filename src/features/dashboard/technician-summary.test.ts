@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { buildTechnicianRepairSummary } from "@/features/dashboard/technician-summary";
 
 describe("dashboard tecnico", () => {
-  it("mantiene equipos rechazados y sin solucion en custodia hasta su entrega", () => {
+  it("mantiene equipos rechazados y sin solución en custodia hasta su entrega", () => {
     const result = buildTechnicianRepairSummary(
       [
         { status: "presupuestado_rechazado", technicianId: "tech-1" },

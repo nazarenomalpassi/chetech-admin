@@ -27,14 +27,14 @@ beforeEach(() => {
   mocks.permission.mockResolvedValue({ role: "tecnico" });
   mocks.rpc.mockResolvedValue({ data: { id, version: 4, replayed: false }, error: null });
 });
-describe("reingresos por garantia", () => {
+describe("reingresos por garantía", () => {
   it("corrige garantia con version y motivo sin enviar entrega ni pagos", async () => {
     const f = form({
       expectedVersion: "3",
       hasWarranty: "on",
       warrantyDays: "90",
       warrantyConditions: "Fuente",
-      reason: "Garantia omitida al entregar",
+      reason: "Garantía omitida al entregar",
       confirmCorrection: "on",
       pickedUpAt: "2026-10-21",
       isPaid: "on"
@@ -48,7 +48,7 @@ describe("reingresos por garantia", () => {
       p_has_warranty: true,
       p_warranty_days: 90,
       p_conditions: "Fuente",
-      p_reason: "Garantia omitida al entregar",
+      p_reason: "Garantía omitida al entregar",
       p_confirm: true
     });
   });

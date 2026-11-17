@@ -33,7 +33,7 @@ export default async function ConfiguracionPage({
   return (
     <div className="space-y-4">
       <header>
-        <h1 className="text-2xl font-semibold text-foreground">Configuracion</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Exportaciones, objetivos del negocio, garantia y estado fiscal.
         </p>
@@ -142,7 +142,7 @@ export default async function ConfiguracionPage({
             </form>
           </Card>
           <Card>
-            <h2 className="text-lg font-semibold text-foreground">Garantia predeterminada</h2>
+            <h2 className="text-lg font-semibold text-foreground">Garantía predeterminada</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
               Se propone al asignar una garantia nueva. Cada orden puede conservar una duracion
               diferente y la cobertura empieza unicamente en la fecha efectiva de retiro.
@@ -157,7 +157,7 @@ export default async function ConfiguracionPage({
                   className="mb-2 block text-sm font-medium text-body"
                   htmlFor="repair-warranty-default-days"
                 >
-                  Duracion en dias
+                  Duración en dias
                 </label>
                 <Input
                   defaultValue={repairWarrantySettings.defaultDays}

@@ -118,7 +118,7 @@ describe("repair history import", () => {
         Equipo: "Televisor LED",
         Marca: "LG",
         Modelo: "43UH6500-SB",
-        Defecto: "Reparacion de led especial",
+        Defecto: "Reparación de led especial",
         "Fecha de ingreso": new Date("2024-11-27T03:00:48.000Z"),
         "Retiró (Sí-No)": true,
         "Fecha de retiro": null,
@@ -230,16 +230,16 @@ describe("repair history import", () => {
         { rowNumber: 2, legacyOrderNumber: "15" },
         { rowNumber: 3, legacyOrderNumber: "15" }
       ])
-    ).toThrow("Numero historico repetido 15");
+    ).toThrow("Número historico repetido 15");
   });
 
   it("rejects non-positive or non-numeric historical public numbers", () => {
     expect(() =>
       validateHistoricalOrderNumbers([{ rowNumber: 2, legacyOrderNumber: "ORDEN-SIN-NUMERO" }])
-    ).toThrow("Numero historico invalido");
+    ).toThrow("Número historico invalido");
     expect(() =>
       validateHistoricalOrderNumbers([{ rowNumber: 2, legacyOrderNumber: "0" }])
-    ).toThrow("Numero historico invalido");
+    ).toThrow("Número historico invalido");
   });
 
   it("maps the verified legacy suffix into the historical public range", () => {

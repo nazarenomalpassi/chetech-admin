@@ -77,8 +77,8 @@ const editing = intakeEditing as RepairAccessOrderRecord;
 
 const essentialLabels = [
   "Nombre y apellido",
-  "Telefono",
-  "Direccion",
+  "Teléfono",
+  "Dirección",
   "Fecha",
   "Equipo",
   "Marca",
@@ -190,7 +190,7 @@ describe("RepairAccessNewOrderWizard", () => {
       name: /El cliente acepta recibir por WhatsApp/
     }) as HTMLInputElement;
     expect(checkbox.checked).toBe(true);
-    fireEvent.change(screen.getByLabelText("Telefono"), { target: { value: "3571654321" } });
+    fireEvent.change(screen.getByLabelText("Teléfono"), { target: { value: "3571654321" } });
     expect(checkbox.checked).toBe(false);
     expect(new FormData(intakeForm()).get("whatsappDocumentConsent")).toBe("off");
     fireEvent.click(checkbox);
@@ -373,8 +373,8 @@ describe("RepairAccessNewOrderWizard", () => {
     const form = intakeForm();
     const name = screen.getByLabelText("Nombre y apellido");
     fireEvent.change(name, { target: { value: "Maria Perez corregido" } });
-    fireEvent.change(screen.getByLabelText("Direccion"), {
-      target: { value: "Direccion corregida" }
+    fireEvent.change(screen.getByLabelText("Dirección"), {
+      target: { value: "Dirección corregida" }
     });
     fireEvent.change(screen.getByLabelText("Fecha"), { target: { value: "2026-10-01" } });
     fireEvent.change(screen.getByLabelText("Serie"), { target: { value: "SERIE-CORREGIDA" } });
@@ -410,7 +410,7 @@ describe("RepairAccessNewOrderWizard", () => {
   it("preserves a restored edit draft when the same order refreshes", () => {
     const fields = {
       customerName: "Nombre recuperado",
-      customerAddress: "Direccion recuperada",
+      customerAddress: "Dirección recuperada",
       deviceColor: "Verde",
       issueReported: "Falla recuperada"
     };
@@ -462,7 +462,7 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(screen.getByRole("heading", { name: "Editar ingreso REP-000500" })).not.toBeNull();
   });
 
-  it.each(["Nombre y apellido", "Telefono"])(
+  it.each(["Nombre y apellido", "Teléfono"])(
     "keeps customer suggestions by %s and does not reuse a device",
     (label) => {
       renderIntake({ customers: [customer] });
@@ -544,7 +544,7 @@ describe("RepairAccessNewOrderWizard", () => {
       alternatePhone: "",
       dni: "35123456",
       email: "maria.actualizada@example.com",
-      address: "Direccion actualizada 200",
+      address: "Dirección actualizada 200",
       notes: ""
     };
     const cachedOnly = { ...customer, id: "cached-only", fullName: "Maria Gomez" };
@@ -695,13 +695,13 @@ describe("RepairAccessNewOrderWizard", () => {
     expect(screen.getByText(latest.fullName)).not.toBeNull();
   });
 
-  it.each(["Nombre y apellido", "Telefono"])(
+  it.each(["Nombre y apellido", "Teléfono"])(
     "selects the highlighted customer with arrow keys and Enter from %s",
     (label) => {
       const second = { ...customer, id: "customer-2", fullName: "Maria Diaz" };
       renderIntake({ customers: [customer, second] });
       const field = screen.getByLabelText(label);
-      fireEvent.change(field, { target: { value: label === "Telefono" ? "573744" : "Maria" } });
+      fireEvent.change(field, { target: { value: label === "Teléfono" ? "573744" : "Maria" } });
       fireEvent.keyDown(field, { key: "ArrowDown" });
       fireEvent.keyDown(field, { key: "ArrowDown" });
       expect(field.getAttribute("aria-expanded")).toBe("true");
@@ -796,7 +796,7 @@ describe("RepairAccessNewOrderWizard", () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(180);
     });
-    fireEvent.blur(field, { relatedTarget: screen.getByLabelText("Direccion") });
+    fireEvent.blur(field, { relatedTarget: screen.getByLabelText("Dirección") });
 
     expect(screen.queryByText(customer.fullName)).toBeNull();
     expect(fetchCustomers.mock.calls[0][1]?.signal?.aborted).toBe(true);
@@ -1035,7 +1035,7 @@ describe("RepairAccessNewOrderWizard", () => {
     );
     (screen.getByLabelText("Nombre y apellido") as HTMLInputElement).value =
       "Nombre autocompletado";
-    (screen.getByLabelText("Direccion") as HTMLInputElement).value = "Direccion autocompletada";
+    (screen.getByLabelText("Dirección") as HTMLInputElement).value = "Dirección autocompletada";
     (screen.getByLabelText("Color") as HTMLInputElement).value = "Plateado";
     const expected = Object.fromEntries(new FormData(intakeForm()).entries());
     fireEvent.submit(intakeForm());

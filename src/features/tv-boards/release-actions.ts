@@ -73,6 +73,6 @@ export async function releaseTvBoardToSaleAction(input: unknown): Promise<
     recordVersion: receipt.data.version,
     saleId: receipt.data.saleId,
     saleNumber: receipt.data.saleNumber,
-    message: `${receipt.data.replayed ? "Ya estaba registrada" : "Liberacion registrada"}: venta ${receipt.data.saleNumber}, cobrada en ${formatCashMethod(command.method)}.`
+    message: `${receipt.data.replayed ? "Ya estaba registrada" : "Liberación registrada"}: venta ${receipt.data.saleNumber}, cobrada en ${formatCashMethod(command.method)}.`
   };
 }

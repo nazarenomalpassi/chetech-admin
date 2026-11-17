@@ -147,7 +147,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
               detail={
                 totals.debt === null
                   ? `Subtotal parcial. ${totals.unknownChargeOrders} ordenes sin importe a cobrar definido; no representa toda la deuda.`
-                  : `Importe exigible menos pagos por orden. Credito conocido a favor: ${money(totals.knownCreditSubtotal)}.`
+                  : `Importe exigible menos pagos por orden. Crédito conocido a favor: ${money(totals.knownCreditSubtotal)}.`
               }
             />
             <Metric
@@ -225,7 +225,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
 
           <div className="grid gap-4 lg:grid-cols-2">
             <Card className="space-y-3">
-              <h3 className="text-lg font-semibold">Antiguedad desde ingreso</h3>
+              <h3 className="text-lg font-semibold">Antigüedad desde ingreso</h3>
               <dl className="grid grid-cols-2 gap-4">
                 <div>
                   <dt className="text-sm text-muted-foreground">Mediana</dt>
@@ -247,7 +247,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
               </p>
             </Card>
             <Card className="space-y-3">
-              <h3 className="text-lg font-semibold">Garantia registrada</h3>
+              <h3 className="text-lg font-semibold">Garantía registrada</h3>
               <dl className="grid grid-cols-3 gap-3">
                 {[
                   ["Con garantia", totals.warrantyOrders],
@@ -376,7 +376,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                       evidencia, o precio final historico unico, menos cobros reales por orden, con
                       piso cero. El cero por defecto del monto final no oculta un presupuesto
                       aceptado ni prueba que el servicio sea gratuito. Un presupuesto gratuito
-                      aceptado conserva el cero; uno pendiente no genera deuda conocida. Credito
+                      aceptado conserva el cero; uno pendiente no genera deuda conocida. Crédito
                       conocido: {money(totals.knownCreditSubtotal)}. Una marca de pagado o un
                       comprobante no es un pago.
                     </p>

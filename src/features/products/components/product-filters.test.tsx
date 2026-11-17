@@ -23,12 +23,12 @@ describe("URL-driven product controls", () => {
   it("discloses sorting and page size without hiding primary filters or losing their values", () => {
     mocks.query = "search=Cable&status=active&sort=stock&pageSize=50";
     render(<ProductFilters categories={categories} />);
-    const disclosure = screen.getByText("Mas opciones").closest("details")!;
+    const disclosure = screen.getByText("Más opciones").closest("details")!;
     expect(disclosure.open).toBe(false);
     expect(screen.getByLabelText("Ordenar por").closest("details")).toBe(disclosure);
     expect(screen.getByLabelText("Productos por pagina").closest("details")).toBe(disclosure);
     expect(screen.getByLabelText("Buscar productos").closest("details")).toBeNull();
-    fireEvent.click(screen.getByText("Mas opciones"));
+    fireEvent.click(screen.getByText("Más opciones"));
     expect(disclosure.open).toBe(true);
     fireEvent.change(screen.getByLabelText("Ordenar por"), { target: { value: "price" } });
     expect(mocks.replace).toHaveBeenLastCalledWith(
@@ -43,7 +43,7 @@ describe("URL-driven product controls", () => {
     fireEvent.change(screen.getByLabelText("Buscar productos"), {
       target: { value: "Cable nuevo" }
     });
-    fireEvent.change(screen.getByLabelText("Categoria"), { target: { value: categories[0].id } });
+    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: categories[0].id } });
     expect(mocks.replace).toHaveBeenLastCalledWith(
       `/productos?status=active&search=Cable+nuevo&category=${categories[0].id}`,
       { scroll: false }
@@ -91,7 +91,7 @@ describe("URL-driven product controls", () => {
     fireEvent.change(screen.getByLabelText("Buscar productos"), {
       target: { value: "Cable nuevo" }
     });
-    fireEvent.change(screen.getByLabelText("Categoria"), { target: { value: categories[0].id } });
+    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: categories[0].id } });
     act(() => vi.advanceTimersByTime(400));
     expect(mocks.replace).toHaveBeenCalledTimes(1);
     fireEvent.change(screen.getByLabelText("Estado"), { target: { value: "active" } });

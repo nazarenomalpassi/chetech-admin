@@ -164,7 +164,7 @@ export async function saveWorkshopForm(
           : {})
       }
     },
-    "Actualizacion guardada. Mostrador puede ver el avance."
+    "Actualización guardada. Mostrador puede ver el avance."
   );
 }
 
@@ -313,7 +313,7 @@ export async function saveQuickWorkshopForm(
     return {
       success: false,
       message:
-        'Falta probar el equipo. Despues de verificarlo, marca "Equipo probado y funcionando" y guarda otra vez. Tus datos se conservan.'
+        'Falta probar el equipo. Después de verificarlo, marca "Equipo probado y funcionando" y guarda otra vez. Tus datos se conservan.'
     };
   }
   if (result.error)
@@ -499,7 +499,7 @@ export async function saveWorkshopLocation(
         (/^\d{4}-\d{2}-\d{2}$/.test(value) &&
           !Number.isNaN(Date.parse(value)) &&
           new Date(value).toISOString().slice(0, 10) === value),
-      "Selecciona una fecha de revision valida."
+      "Selecciona una fecha de revisión valida."
     );
   const parsed = z
     .object({ id: uuid, version, location: optionalText(200), nextActionDate: date })
@@ -513,7 +513,7 @@ export async function saveWorkshopLocation(
       p_expected_version: p.version,
       p_payload: { physical_location: p.location, next_action_date: p.nextActionDate }
     },
-    "Ubicacion y proxima revision guardadas."
+    "Ubicación y proxima revision guardadas."
   );
 }
 

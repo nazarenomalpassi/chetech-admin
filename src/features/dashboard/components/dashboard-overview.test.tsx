@@ -39,9 +39,9 @@ const data: ComponentProps<typeof DashboardOverview> = {
 describe("dashboard independent disclosures", () => {
   it("keeps all five headline KPIs outside disclosures and preserves their values", () => {
     render(<DashboardOverview {...data} />);
-    const metrics = screen.getByRole("region", { name: /Metricas del/ });
+    const metrics = screen.getByRole("region", { name: /M[eé]tricas del/ });
     expect(metrics.closest("details")).toBeNull();
-    for (const label of ["Ventas", "Gastos", "Reparaciones", "Facturacion", "Flujo neto de caja"]) {
+    for (const label of ["Ventas", "Gastos", "Reparaciones", "Facturación", "Flujo neto de caja"]) {
       expect(within(metrics).getByText(label)).toBeTruthy();
     }
     expect(metrics.textContent).toMatch(/160/);
@@ -50,11 +50,11 @@ describe("dashboard independent disclosures", () => {
   it("folds every lower panel independently with useful summaries and native controls", () => {
     const { container } = render(<DashboardOverview {...data} />);
     const labels = [
-      "Reposicion sugerida",
+      "Reposición sugerida",
       "Saldo disponible por cuenta",
       "Visitas de hoy",
       "Cuotas por cobrar",
-      "Productos mas vendidos"
+      "Productos más vendidos"
     ];
     expect(container.querySelectorAll("details")).toHaveLength(labels.length);
     const panels = labels.map((label) => {

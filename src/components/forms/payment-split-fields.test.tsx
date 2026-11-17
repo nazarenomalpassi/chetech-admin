@@ -93,7 +93,7 @@ describe("payment amount synchronization", () => {
       />
     );
     expect(screen.getByText("Saldo luego del cobro")).toBeTruthy();
-    expect(screen.queryByText("Todavia falta asignar parte del cobro.")).toBeNull();
+    expect(screen.queryByText("Todavía falta asignar parte del cobro.")).toBeNull();
     expect(screen.getByRole("button", { name: "Quitar medio 1" })).toBeTruthy();
     expect(onChange).not.toHaveBeenCalled();
   });

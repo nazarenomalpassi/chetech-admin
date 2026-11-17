@@ -201,7 +201,7 @@ export async function saveVisitAction(formData: FormData) {
     }
     const message =
       error?.code === "23P01"
-        ? "La asignacion existente se superpone con otra visita. Elegi otro horario."
+        ? "La asignacion existente se superpone con otra visita. Elegí otro horario."
         : error?.code === "42P01" || error?.code === "42703"
           ? "Falta ejecutar la migracion de Visitas en Supabase antes de usar este modulo."
           : error?.code === "PGRST116"
@@ -333,7 +333,7 @@ export async function deleteVisitAction(formData: FormData) {
     entityId: id,
     action: "update",
     userId: user.id,
-    changes: { status: "cancelada", reason: "Cancelacion administrativa; historial conservado" }
+    changes: { status: "cancelada", reason: "Cancelación administrativa; historial conservado" }
   });
 
   revalidatePath("/visitas");

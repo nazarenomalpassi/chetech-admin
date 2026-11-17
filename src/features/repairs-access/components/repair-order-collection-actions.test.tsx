@@ -43,7 +43,7 @@ const lookupOrder = {
   customerName: "Cliente actual",
   customerPhone: "123",
   device: "TV actual",
-  issueDescription: "Reparacion actual",
+  issueDescription: "Reparación actual",
   intakeDate: "2026-11-01",
   amount: 100,
   paidTotal: 0,

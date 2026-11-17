@@ -24,7 +24,7 @@ export default function RootError({
           principal.
         </p>
         {error.digest ? (
-          <p className="mt-3 text-xs text-subtle-foreground">Codigo: {error.digest}</p>
+          <p className="mt-3 text-xs text-subtle-foreground">Código: {error.digest}</p>
         ) : null}
         <div className="mt-6 flex flex-col gap-2 sm:flex-row">
           <button

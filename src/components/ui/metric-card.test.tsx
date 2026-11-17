@@ -37,7 +37,7 @@ describe("semantic metrics", () => {
   });
   it("supports operational counts without currency or invented trend indicators", () => {
     const html = renderToStaticMarkup(
-      <MetricCard label="Ordenes" value={42} icon={Wallet} tone="service" />
+      <MetricCard label="Órdenes" value={42} icon={Wallet} tone="service" />
     );
     expect(html).toContain(">42<");
     expect(html).not.toContain("$");

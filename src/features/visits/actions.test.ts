@@ -35,7 +35,7 @@ const valid = {
   visitDate: "2026-10-05",
   timeFrom: "09:00",
   timeTo: "10:00",
-  reason: "Revision"
+  reason: "Revisión"
 };
 beforeEach(() => {
   vi.clearAllMocks();
@@ -64,7 +64,7 @@ describe("visit server actions", () => {
     expect(mocks.insert).not.toHaveBeenCalled();
   });
   it("rejects an edit with no concurrency version before writing", async () => {
-    await expect(saveVisitAction(form({ ...valid, id }))).rejects.toThrow(/version/);
+    await expect(saveVisitAction(form({ ...valid, id }))).rejects.toThrow(/versi[oó]n/);
     expect(mocks.update).not.toHaveBeenCalled();
   });
   it("translates a database overlap including concurrent booking failures", async () => {
@@ -254,7 +254,7 @@ describe("visit server actions", () => {
   it("rejects a technician profile not belonging to local staff", async () => {
     mocks.maybeSingle.mockResolvedValue({ data: { id, role: "customer" }, error: null });
     await expect(saveVisitAction(form({ ...valid, technicianId: id }))).rejects.toThrow(
-      /tecnico.valido/
+      /t[eé]cnico.v[aá]lido/
     );
     expect(mocks.insert).not.toHaveBeenCalled();
   });

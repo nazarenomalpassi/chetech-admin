@@ -116,7 +116,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
           />
         </label>
         <label className="space-y-1 text-sm font-medium text-body">
-          <span>Categoria</span>
+          <span>Categoría</span>
           <Select
             aria-label="Filtrar productos por categoria"
             value={state.category || "all"}
@@ -144,7 +144,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
       <div className="flex flex-wrap items-start justify-between gap-3">
         <details className="min-w-0 flex-1">
           <summary className="flex min-h-11 w-fit cursor-pointer flex-wrap items-center gap-2 rounded-lg px-2 text-sm font-medium text-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden">
-            <span>Mas opciones</span>
+            <span>Más opciones</span>
             {state.sort !== "name" || state.pageSize !== 25 ? (
               <span className="text-xs text-muted-foreground">
                 Orden: {{ name: "Nombre", sku: "SKU", stock: "Stock", price: "Precio" }[state.sort]}{" "}

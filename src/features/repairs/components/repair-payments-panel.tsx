@@ -313,7 +313,7 @@ export function RepairPaymentsPanel({
         <h3 className="mt-5 border-t border-border pt-4 font-semibold">Pagos registrados</h3>
         {!repair.payments.length ? (
           <p className="mt-2 text-sm text-muted-foreground">
-            Todavia no hay pagos registrados. Elegi la cuenta y el importe recibido para cargar el
+            Todavía no hay pagos registrados. Elegí la cuenta y el importe recibido para cargar el
             primer cobro.
           </p>
         ) : null}

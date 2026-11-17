@@ -34,7 +34,7 @@ describe("progressive inventory rendering", () => {
     );
     const row = screen.getByRole("article");
     expect(within(row).getByText("Disponible 7").closest("details")).toBeNull();
-    expect(within(row).getByText("Fisico 10").closest("details")).toBeTruthy();
+    expect(within(row).getByText("Físico 10").closest("details")).toBeTruthy();
     expect(within(row).getByText("Reservado 3").closest("details")).toBeTruthy();
     expect(
       within(row)
@@ -53,7 +53,7 @@ describe("progressive inventory rendering", () => {
         products={[{ ...products[0], stock: 7, reservedStock: 3, availableStock: 4 }]}
       />
     );
-    expect(screen.getAllByText("Fisico 7")).toHaveLength(2);
+    expect(screen.getAllByText("Físico 7")).toHaveLength(2);
     expect(screen.getAllByText("Reservado 3")).toHaveLength(2);
     expect(screen.getAllByText("Disponible 4")).toHaveLength(2);
   });
@@ -81,7 +81,7 @@ describe("progressive inventory rendering", () => {
       />
     );
     expect(screen.queryAllByText("Producto 50").length).toBeGreaterThan(0);
-    expect(screen.queryByRole("button", { name: /Mostrar mas productos/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Mostrar m[aá]s productos/i })).toBeNull();
     expect(screen.getByRole("link", { name: /Siguiente/i }).getAttribute("href")).toBe(
       "/productos?search=cable&status=active&pageSize=50&page=3"
     );
@@ -93,7 +93,7 @@ describe("progressive inventory rendering", () => {
   });
   it("loads more on demand without losing products", () => {
     render(<ProductTable canManage={false} onEdit={vi.fn()} products={products} />);
-    fireEvent.click(screen.getByRole("button", { name: /Mostrar mas productos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Mostrar m[aá]s productos/i }));
     expect(screen.queryAllByText("Producto 50").length).toBeGreaterThan(0);
     expect(screen.queryAllByText("Producto 51")).toHaveLength(0);
   });
@@ -101,7 +101,7 @@ describe("progressive inventory rendering", () => {
     const { rerender } = render(
       <ProductTable canManage={false} onEdit={vi.fn()} products={products} />
     );
-    fireEvent.click(screen.getByRole("button", { name: /Mostrar mas productos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Mostrar m[aá]s productos/i }));
     rerender(<ProductTable canManage={false} onEdit={vi.fn()} products={products.slice(1)} />);
     expect(screen.queryAllByText("Producto 27")).toHaveLength(0);
     expect(screen.queryAllByText("Producto 26").length).toBeGreaterThan(0);
@@ -110,7 +110,7 @@ describe("progressive inventory rendering", () => {
     const { rerender } = render(
       <ProductTable canManage={false} filterKey="all" onEdit={vi.fn()} products={products} />
     );
-    const more = screen.getByRole("button", { name: /Mostrar mas productos/i });
+    const more = screen.getByRole("button", { name: /Mostrar m[aá]s productos/i });
     more.focus();
     fireEvent.click(more);
     rerender(
@@ -128,7 +128,7 @@ describe("progressive inventory rendering", () => {
     const { rerender } = render(
       <ProductTable canManage={false} filterKey="all" onEdit={vi.fn()} products={products} />
     );
-    fireEvent.click(screen.getByRole("button", { name: /Mostrar mas productos/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Mostrar m[aá]s productos/i }));
     rerender(
       <ProductTable canManage={false} filterKey="Cables" onEdit={vi.fn()} products={products} />
     );

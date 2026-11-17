@@ -74,7 +74,7 @@ export function buildRepairDocumentData(
     sections.push(
       { label: "Falla declarada", value: order.issueReported },
       { label: "Accesorios recibidos", value: order.device.accessoryDetails || "No informados" },
-      { label: "Condicion de ingreso", value: order.device.visualCondition || "No informada" }
+      { label: "Condición de ingreso", value: order.device.visualCondition || "No informada" }
     );
   }
   if (kind === "estimate")
@@ -121,6 +121,6 @@ export function buildRepairDocumentData(
         : kind === "intake"
           ? "Comprobante de recepcion. Conserva el numero de orden para consultar el trabajo y retirar el equipo. No acredita un pago ni la entrega del equipo al cliente."
           : "Comprobante interno. No válido como factura fiscal.",
-    signatureLabel: kind === "estimate" ? "Recepcion del presupuesto / firma" : ""
+    signatureLabel: kind === "estimate" ? "Recepción del presupuesto / firma" : ""
   };
 }

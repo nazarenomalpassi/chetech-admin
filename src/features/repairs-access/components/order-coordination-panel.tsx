@@ -76,14 +76,14 @@ export function OrderCoordinationPanel({
   return (
     <section
       className={`min-w-0 bg-card ${compact ? "border-t border-border p-3" : "rounded-xl border border-border p-4"}`}
-      aria-label="Coordinacion de la orden"
+      aria-label="Coordinación de la orden"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">Proximo paso</p>
+          <p className="text-xs font-medium text-muted-foreground">Próximo paso</p>
           <p className="mt-1 text-sm font-semibold text-foreground">{nextAction}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {context.location || "Ubicacion sin informar"}
+            {context.location || "Ubicación sin informar"}
             {context.nextActionDate ? ` · Revisar ${formatDate(context.nextActionDate)}` : ""}
           </p>
         </div>
@@ -154,7 +154,7 @@ export function OrderCoordinationPanel({
             onClick={() => setModal("assignment")}
           >
             <UserRound className="h-4 w-4" aria-hidden="true" />
-            Ubicacion y revision
+            Ubicación y revision
           </Button>
         ) : null}
       </div>
@@ -274,9 +274,9 @@ export function OrderCoordinationPanel({
               : modal === "part"
                 ? "Solicitar repuesto"
                 : modal === "assignment"
-                  ? "Ubicacion y proxima revision"
+                  ? "Ubicación y proxima revision"
                   : modal === "responsibility"
-                    ? "Asignacion opcional"
+                    ? "Asignación opcional"
                     : modal === "rejected"
                       ? "Registrar rechazo del cliente"
                       : "Revocar aceptacion"
@@ -391,7 +391,7 @@ export function OrderCoordinationPanel({
           {modal === "assignment" || modal === "responsibility" ? (
             <>
               {modal === "responsibility" ? (
-                <DialogField label="Tecnico responsable">
+                <DialogField label="Técnico responsable">
                   <Select
                     name="technicianId"
                     defaultValue={context.assignedTechnicianId || ""}
@@ -402,7 +402,7 @@ export function OrderCoordinationPanel({
                   />
                 </DialogField>
               ) : null}
-              <DialogField label="Ubicacion del equipo">
+              <DialogField label="Ubicación del equipo">
                 <Input
                   name="location"
                   maxLength={200}
@@ -506,7 +506,7 @@ export function CoordinationDialog({
     if (
       !result?.success &&
       initialSnapshot.current !== editableDialogSnapshot(formRef.current) &&
-      !window.confirm("Hay cambios sin guardar. Queres descartarlos y cerrar?")
+      !window.confirm("Hay cambios sin guardar. Querés descartarlos y cerrar?")
     )
       return;
     onClose();
@@ -588,7 +588,7 @@ export function PartManagementDialog({
       <p className="rounded-xl bg-muted p-3 text-sm font-medium">
         {part.description} · {part.receivedQuantity}/{part.quantity} recibidos
       </p>
-      <DialogField label="Accion">
+      <DialogField label="Acción">
         <Select
           name="action"
           value={action}

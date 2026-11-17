@@ -236,7 +236,7 @@ export function RepairAccessOrderDetail({
             value={order.isPaid ? "Informado" : "Sin informar"}
           />
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Garantia</p>
+            <p className="text-sm text-muted-foreground">Garantía</p>
             <div className="mt-2">
               <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
             </div>
@@ -269,7 +269,7 @@ export function RepairAccessOrderDetail({
                 aria-expanded={advanced}
                 onClick={() => confirmSectionChange(() => setAdvanced(!advanced))}
               >
-                {advanced ? "Volver al editor simple" : "Mas campos administrativos"}
+                {advanced ? "Volver al editor simple" : "Más campos administrativos"}
               </Button>
             </div>
             {!advanced || order.deliveredAt || order.status === "retirado" ? (
@@ -301,11 +301,11 @@ export function RepairAccessOrderDetail({
             title="Cliente"
             rows={[
               ["Nombre", order.customer.fullName],
-              ["Telefono", order.customer.phone],
-              ["Telefono alt.", order.customer.alternatePhone],
+              ["Teléfono", order.customer.phone],
+              ["Teléfono alt.", order.customer.alternatePhone],
               ["DNI", order.customer.dni],
               ["Email", order.customer.email],
-              ["Direccion", order.customer.address],
+              ["Dirección", order.customer.address],
               ["Observaciones", order.customer.notes]
             ]}
           />
@@ -500,7 +500,7 @@ export function RepairAccessOrderDetail({
                   Cobro informativo y garantia
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  No modifica caja ni balances. Registra el cobro real en Pagos de reparaciones con
+                  No modifica caja ni balances. Registra el cobro real en Cobros de reparaciones con
                   este REP.
                 </p>
                 <div className="mt-4 grid gap-4 lg:grid-cols-6">
@@ -562,7 +562,7 @@ export function RepairAccessOrderDetail({
                     />
                     Esta reparacion tiene garantia
                   </label>
-                  <Field className="lg:col-span-2" label="Duracion de garantia en dias">
+                  <Field className="lg:col-span-2" label="Duración de garantía en dias">
                     <Input
                       disabled={
                         !hasWarranty ||
@@ -597,7 +597,7 @@ export function RepairAccessOrderDetail({
                     fecha de hoy.
                   </p>
                   <div className="text-sm text-muted-foreground lg:col-span-2">
-                    <span className="block text-sm text-muted-foreground">Estado de garantia</span>
+                    <span className="block text-sm text-muted-foreground">Estado de garantía</span>
                     <div className="mt-2">
                       <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
                     </div>
@@ -611,11 +611,11 @@ export function RepairAccessOrderDetail({
                     </span>
                   </div>
                   <div className="text-sm text-muted-foreground lg:col-span-2">
-                    <span className="block text-sm text-muted-foreground">Garantia hasta</span>
+                    <span className="block text-sm text-muted-foreground">Garantía hasta</span>
                     <span className="mt-1 block text-foreground">
                       {liveWarranty.expiresOn
                         ? formatDate(liveWarranty.expiresOn)
-                        : "Todavia no comenzo"}
+                        : "Todavía no comenzo"}
                     </span>
                   </div>
                   <Field className="lg:col-span-3" label="Notas de cobro">
@@ -625,14 +625,14 @@ export function RepairAccessOrderDetail({
                       placeholder="Senia, saldo o acuerdo"
                     />
                   </Field>
-                  <Field className="lg:col-span-3" label="Condiciones especiales de garantia">
+                  <Field className="lg:col-span-3" label="Condiciones especiales de garantía">
                     <Textarea
                       defaultValue={restoredValue(
                         "warrantyConditions",
                         order.warrantyConditions ?? ""
                       )}
                       name="warrantyConditions"
-                      placeholder="Condiciones de garantia entregadas al cliente"
+                      placeholder="Condiciones de garantía entregadas al cliente"
                     />
                   </Field>
                 </div>
@@ -650,7 +650,7 @@ export function RepairAccessOrderDetail({
               </div>
               {order.workflow && (order.deliveredAt || order.status === "retirado") ? (
                 <p className="text-sm text-muted-foreground lg:col-span-6">
-                  La orden original esta cerrada. Usa la correccion de garantia de arriba o registra
+                  La orden original esta cerrada. Usa la correccion de garantía de arriba o registra
                   un reingreso en esta misma REP.
                 </p>
               ) : null}

@@ -19,7 +19,7 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
         <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-4 transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid [&::-webkit-details-marker]:hidden">
           <div className="flex min-w-0 items-center gap-3">
             <div className="min-w-0">
-              <h2 className="text-lg font-semibold text-foreground">Reposicion sugerida</h2>
+              <h2 className="text-lg font-semibold text-foreground">Reposición sugerida</h2>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">
                 Productos por debajo del stock minimo.
               </p>
@@ -46,7 +46,7 @@ export function LowStockDisclosure({ products }: { products: LowStockProduct[] }
                     <div className="min-w-0">
                       <p className="font-medium wrap-break-word text-foreground">{product.name}</p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        Minimo recomendado: {product.min_stock} unidades
+                        Mínimo recomendado: {product.min_stock} unidades
                       </p>
                     </div>
                     <Badge

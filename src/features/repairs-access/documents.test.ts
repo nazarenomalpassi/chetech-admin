@@ -62,7 +62,7 @@ describe("customer-facing repair documents", () => {
     );
     expect(data.sections).toContainEqual({ label: "Color", value: "Gris" });
     expect(data.sections).toContainEqual({ label: "Accesorios recibidos", value: "Control" });
-    expect(data.sections).toContainEqual({ label: "Condicion de ingreso", value: "Buen estado" });
+    expect(data.sections).toContainEqual({ label: "Condición de ingreso", value: "Buen estado" });
   });
   it("uses the current quote snapshot and its real date/revision, not mutable fields or intake date", () => {
     const data = buildRepairDocumentData(order, "estimate", quote);
@@ -77,7 +77,7 @@ describe("customer-facing repair documents", () => {
     );
     expect(JSON.stringify(data)).not.toContain(order.budgetDetail);
     expect(data.notice).toContain("no acredita un pago");
-    expect(data.signatureLabel).toContain("Recepcion del presupuesto");
+    expect(data.signatureLabel).toContain("Recepción del presupuesto");
   });
 
   it("fails closed for absent, mismatched or invalid budget evidence instead of fabricating a dated estimate", () => {

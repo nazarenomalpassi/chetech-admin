@@ -173,7 +173,7 @@ export function getWarrantyState(input: WarrantyStateInput): RepairWarrantyState
       expiresOn: calculated.expiresOn,
       daysRemaining,
       daysElapsed: null,
-      description: `Quedan ${daysRemaining} dias de garantia.`
+      description: `Quedan ${daysRemaining} dias de garantía.`
     };
   }
 

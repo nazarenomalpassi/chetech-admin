@@ -159,7 +159,7 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
               {form.formState.errors.acquisitionCost?.message}
             </p>
             <p className="mt-1 text-sm text-muted-foreground">
-              Vacio: costo desconocido. Cero: costo confirmado. No registra un egreso.
+              Vacío: costo desconocido. Cero: costo confirmado. No registra un egreso.
             </p>
           </div>
           <div>

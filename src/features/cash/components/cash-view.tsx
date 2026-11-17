@@ -38,9 +38,9 @@ type CashData = {
 
 function formatMovementType(type: string) {
   if (type === "venta") return "Venta";
-  if (type === "reparacion") return "Reparacion";
+  if (type === "reparacion") return "Reparación";
   if (type === "gasto") return "Gasto";
-  if (type === "facturacion") return "Facturacion";
+  if (type === "facturacion") return "Facturación";
   if (type === "sueldo") return "Sueldo";
   return type;
 }
@@ -134,7 +134,7 @@ export function CashView({
             <ReconciliationPanel today={data.today} balances={data.balances} />
           ) : (
             <div className="mt-5 rounded-xl bg-muted p-5 text-sm leading-6 text-muted-foreground">
-              Podes consultar caja y movimientos, pero el cierre diario queda reservado para
+              Podés consultar caja y movimientos, pero el cierre diario queda reservado para
               administradores.
             </div>
           )}
@@ -161,7 +161,7 @@ export function CashView({
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground">Todavia no hay cierres registrados.</p>
+                <p className="text-sm text-muted-foreground">Todavía no hay cierres registrados.</p>
               )}
             </div>
           </div>
@@ -210,7 +210,7 @@ export function CashView({
               })}
               {!data.recentMovements.length ? (
                 <div className="bg-card px-4 py-8 text-sm text-muted-foreground">
-                  Todavia no hay movimientos de caja.
+                  Todavía no hay movimientos de caja.
                 </div>
               ) : null}
             </div>
@@ -262,7 +262,7 @@ export function CashView({
               </table>
               {!data.recentMovements.length ? (
                 <div className="bg-card px-4 py-8 text-sm text-muted-foreground">
-                  Todavia no hay movimientos de caja.
+                  Todavía no hay movimientos de caja.
                 </div>
               ) : null}
             </div>

@@ -87,7 +87,7 @@ export function RepairAccessCustomersSection({
         <div>
           <h2 className="text-xl font-semibold text-foreground">Clientes</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Ultimos 40 clientes. Escribi al menos 2 caracteres para buscar en toda la base.
+            Últimos 40 clientes. Escribí al menos 2 caracteres para buscar en toda la base.
           </p>
         </div>
         <div className="w-full lg:max-w-sm">
@@ -155,9 +155,9 @@ export function RepairAccessCustomersSection({
             <thead className="bg-muted text-left text-muted-foreground">
               <tr>
                 <th className="px-4 py-3 font-medium">Cliente</th>
-                <th className="px-4 py-3 font-medium">Telefono</th>
+                <th className="px-4 py-3 font-medium">Teléfono</th>
                 <th className="px-4 py-3 font-medium">DNI</th>
-                <th className="px-4 py-3 font-medium">Direccion</th>
+                <th className="px-4 py-3 font-medium">Dirección</th>
                 <th className="px-4 py-3 font-medium">Origen</th>
                 <th className="px-4 py-3 font-medium">Alta</th>
               </tr>

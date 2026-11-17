@@ -114,13 +114,13 @@ async function renderSavedLabel(id: string, variant: Selection) {
       try {
         returns = await getOrderWarrantyReturns([id]);
       } catch {
-        return error("No se pudo consultar el reingreso de garantia. Intenta nuevamente.", 503);
+        return error("No se pudo consultar el reingreso de garantía. Intenta nuevamente.", 503);
       }
       // A closed visit must never be represented as the equipment's current re-entry.
       const active = returns.find(
         (visit) => visit.orderId === id && !visit.closedAt && visit.status !== "retirado"
       );
-      if (!active) return error("Esta orden no tiene un reingreso de garantia activo.", 409);
+      if (!active) return error("Esta orden no tiene un reingreso de garantía activo.", 409);
       data = {
         ...data,
         variant: "warranty",

@@ -11,7 +11,7 @@ const events = Array.from({ length: 71 }, (_, index) => ({
   id: `22222222-2222-4222-8222-${String(71 - index).padStart(12, "0")}`,
   kind: "update",
   message: `Movimiento ${71 - index}`,
-  actorName: "Tecnico",
+  actorName: "Técnico",
   createdAt: date
 }));
 const response = (body: unknown, ok = true) => ({ ok, json: async () => body });
@@ -48,7 +48,7 @@ describe("lazy paged repair activity", () => {
     render(<RepairOrderActivity orderId={orderId} />);
     fireEvent.click(screen.getByRole("button", { name: "Historial de trabajo" }));
     await screen.findByText("Movimiento 52");
-    expect(screen.getByText(/Ultimos 20/)).toBeTruthy();
+    expect(screen.getByText(/[UÚ]ltimos 20/)).toBeTruthy();
     expect(
       new URL(fetchMock.mock.calls[0][0], "https://local.test").searchParams.get("limit")
     ).toBe("20");

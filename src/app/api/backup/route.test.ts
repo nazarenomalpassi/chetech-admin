@@ -91,7 +91,7 @@ describe("backup export route", () => {
       "Items venta",
       "Gastos",
       "Reparaciones",
-      "Facturacion",
+      "Facturación",
       "Caja",
       "Alcance"
     ]);
