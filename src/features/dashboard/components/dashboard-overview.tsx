@@ -16,13 +16,16 @@ import { Card } from "@/components/ui/card";
 import { MetricCard } from "@/components/ui/metric-card";
 import { getDashboardAccountLabel } from "@/features/dashboard/financial-summary";
 import { LowStockDisclosure } from "@/features/dashboard/components/low-stock-disclosure";
+import { CashFlowChart } from "@/features/dashboard/components/cash-flow-chart";
 import { DashboardDisclosure } from "@/features/dashboard/components/dashboard-disclosure";
+import type { DailyCashRow } from "@/features/dashboard/daily-cash";
 import { Input } from "@/components/ui/input";
 import { cn, formatCurrency, formatDate } from "@/lib/utils";
 
 type DashboardOverviewProps = {
   workshopToday?: ReactNode;
   workshopInbox?: ReactNode;
+  dailyCash?: DailyCashRow[] | null;
   salesTodayTotal: number;
   expensesTodayTotal: number;
   repairsTodayTotal: number;
@@ -75,6 +78,7 @@ export function DashboardOverview({
   realProfitToday,
   range,
   workshopToday,
+  dailyCash,
   workshopInbox
 }: DashboardOverviewProps) {
   const metrics = [
@@ -123,8 +127,6 @@ export function DashboardOverview({
   return (
     <div className="space-y-8">
       {workshopToday}
-
-      {workshopInbox}
 
       <section aria-labelledby="finanzas-del-local" className="space-y-4">
         <Card className="p-4 sm:p-5">
@@ -190,6 +192,8 @@ export function DashboardOverview({
             />
           ))}
         </section>
+
+        {dailyCash ? <CashFlowChart from={range.from} rows={dailyCash} to={range.to} /> : null}
 
         <div className="space-y-4">
           <LowStockDisclosure products={lowStockProducts} />
@@ -302,6 +306,8 @@ export function DashboardOverview({
           </div>
         </div>
       </section>
+
+      {workshopInbox}
     </div>
   );
 }

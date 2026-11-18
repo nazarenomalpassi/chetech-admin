@@ -8,6 +8,7 @@ import {
   type DashboardCashSummaryRow
 } from "@/features/dashboard/financial-summary";
 import { getTvBoardFinancialSummary } from "@/features/tv-boards/sales";
+import { getDailyCash } from "@/features/dashboard/daily-cash";
 import { getDashboardRange } from "@/features/dashboard/range";
 import { getVisitsTodayDashboardSummary } from "@/features/visits/queries";
 import { isMissingDatabaseFunctionError } from "@/lib/supabase/rpc-errors";
@@ -95,7 +96,8 @@ export async function getDashboardData({
     tvBoardSales,
     balanceTransfers,
     visitsDashboard,
-    cashSettings
+    cashSettings,
+    dailyCash
   ] = await Promise.all([
     readRecordPages<{ id: string; name: string; stock: number; min_stock: number }>(
       (from, to) =>
@@ -144,7 +146,11 @@ export async function getDashboardData({
       }),
     getBalanceTransfers(supabase as any),
     getVisitsTodayDashboardSummary(),
-    cashSettingsPromise
+    cashSettingsPromise,
+    getDailyCash(supabase, range).catch((error: unknown) => {
+      console.error("[inicio] caja por día", error);
+      return null;
+    })
   ]);
 
   for (const [label, result] of [
@@ -221,6 +227,7 @@ export async function getDashboardData({
     invoiceIncomeToday,
     realProfitToday,
     visitsDashboard,
+    dailyCash,
     range
   };
 }
