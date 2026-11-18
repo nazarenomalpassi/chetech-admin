@@ -8,6 +8,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { SidebarGroups } from "@/components/layout/sidebar-groups";
+import { DashboardOverview } from "@/features/dashboard/components/dashboard-overview";
 import { WorkshopTodaySection } from "@/features/dashboard/components/workshop-today-section";
 import type { WorkshopToday } from "@/features/dashboard/workshop-today";
 import { getSidebarGroupsForRole } from "@/lib/navigation";
@@ -68,8 +69,49 @@ const sidebar = renderToStaticMarkup(
   </aside>
 );
 
+const days = Array.from({ length: 18 }, (_, index) => {
+  const day = `2026-11-${String(index + 1).padStart(2, "0")}`;
+  const income = index % 7 === 6 ? 0 : 90000 + ((index * 37) % 11) * 21000;
+  const outcome = index % 5 === 0 ? 180000 : 30000 + ((index * 13) % 7) * 9000;
+  return {
+    day,
+    income,
+    outcome,
+    sales: income * 0.6,
+    repairs: income * 0.4,
+    invoices: 0,
+    expenses: outcome,
+    salaries: 0
+  };
+});
+
 const main = renderToStaticMarkup(
-  <WorkshopTodaySection canCreateOrder today={today} visits={visits} />
+  <DashboardOverview
+    accountBalances={[
+      { method: "efectivo", openingBalance: 0, balance: 1250000 },
+      { method: "nx_santi", openingBalance: 0, balance: 480000 },
+      { method: "nx_local", openingBalance: 0, balance: 915000 }
+    ]}
+    dailyCash={days}
+    expensesTodayTotal={1234000}
+    heldMercadoPagoClaimAmount={0}
+    invoiceIncomeToday={0}
+    lowStockProducts={[]}
+    pendingMercadoPagoReleaseAmount={0}
+    range={{
+      from: "2026-11-01",
+      to: "2026-11-18",
+      today: "2026-11-18",
+      isToday: false,
+      isCustomRange: false
+    }}
+    realProfitToday={1560000}
+    repairsTodayTotal={1480000}
+    salesTodayTotal={1314000}
+    topProducts={[]}
+    visitsDashboard={visits}
+    workshopToday={<WorkshopTodaySection canCreateOrder today={today} visits={visits} />}
+  />
 );
 
 process.stdout.write(`<!doctype html><html lang="es"><head><meta charset="utf-8">${css}</head>

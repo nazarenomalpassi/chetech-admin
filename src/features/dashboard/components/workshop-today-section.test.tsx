@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { cleanup, render, screen, within } from "@testing-library/react";
 
 import { WorkshopTodaySection } from "./workshop-today-section";
+import { buildDailyCashSeries } from "../daily-cash";
 import { daysSince, workshopTodaySchema, type WorkshopToday } from "../workshop-today";
 
 Object.assign(globalThis, { React });
@@ -54,17 +55,34 @@ describe("Hoy en el taller", () => {
     expect(screen.getByRole("link", { name: "1 orden espera repuestos." })).toBeTruthy();
   });
 
-  it("lists the longest waits with their days and a WhatsApp notice when there is a phone", () => {
-    render(<WorkshopTodaySection canCreateOrder today={today} visits={visits} />);
-    expect(screen.getByText("Listo hace 77 días")).toBeTruthy();
-    expect(screen.getByText("Ingresó hace 7 días")).toBeTruthy();
-    const notify = screen.getByRole("link", { name: "Avisar a Cliente de prueba por WhatsApp" });
-    expect(notify.getAttribute("href")).toMatch(/^https:\/\/wa\.me\/\d+\?text=/);
-    expect(screen.getByText("Sin teléfono")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Ver los 9" })).toBeTruthy();
-    expect(screen.getByRole("link", { name: "REP-000101" }).getAttribute("href")).toBe(
-      "/reparaciones-access/orden/6f3c2f8e-1a2b-4c3d-8e9f-0a1b2c3d4e5f"
+  it("keeps the home short: no retiro list, visits in one line", () => {
+    render(
+      <WorkshopTodaySection
+        canCreateOrder
+        today={today}
+        visits={{
+          todayCount: 2,
+          pendingCount: 1,
+          nextVisit: {
+            id: "v1",
+            customerName: "Cliente visita",
+            customerPhone: "",
+            address: "",
+            visitDate: "2026-11-17",
+            timeFrom: "15:00",
+            timeTo: "16:00",
+            reason: "",
+            notes: "",
+            status: "pendiente",
+            createdAt: "2026-11-16T10:00:00Z"
+          } as never
+        }}
+      />
     );
+    expect(screen.queryByText("Esperan retiro hace más tiempo")).toBeNull();
+    expect(screen.queryByRole("link", { name: /Avisar a/ })).toBeNull();
+    expect(screen.getByText(/2 visitas hoy; la próxima, Cliente visita/)).toBeTruthy();
+    expect(screen.getByRole("link", { name: "Abrir visitas" })).toBeTruthy();
   });
 
   it("offers a new order only to who can create one", () => {
@@ -92,5 +110,36 @@ describe("Hoy en el taller", () => {
     expect(daysSince("2026-11-01", "2026-11-17")).toBe(16);
     expect(daysSince(null, "2026-11-17")).toBeNull();
     expect(daysSince("2026-11-20", "2026-11-17")).toBe(0);
+  });
+
+  it("builds a continuous daily or weekly series for the chart", () => {
+    const rows = [
+      {
+        day: "2026-11-02",
+        income: 100,
+        outcome: 40,
+        sales: 100,
+        repairs: 0,
+        invoices: 0,
+        expenses: 40,
+        salaries: 0
+      },
+      {
+        day: "2026-11-04",
+        income: 50,
+        outcome: 0,
+        sales: 0,
+        repairs: 50,
+        invoices: 0,
+        expenses: 0,
+        salaries: 0
+      }
+    ];
+    const daily = buildDailyCashSeries(rows, "2026-11-01", "2026-11-05");
+    expect(daily.granularity).toBe("day");
+    expect(daily.points.map((point) => point.income)).toEqual([0, 100, 0, 50, 0]);
+    const weekly = buildDailyCashSeries(rows, "2026-09-01", "2026-11-30");
+    expect(weekly.granularity).toBe("week");
+    expect(weekly.points.find((point) => point.key === "2026-11-02")?.income).toBe(150);
   });
 });

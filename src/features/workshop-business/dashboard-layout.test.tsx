@@ -57,7 +57,7 @@ describe("dashboard headline and inbox placement", () => {
     expect(screen.getByText("1 orden asignada a vos.")).toBeTruthy();
     expect(screen.getByText("No hay órdenes activas para mostrar.")).toBeTruthy();
   });
-  it("puts the executive heading before the inbox without burying it after the long dashboard", () => {
+  it("shows the workshop, then the finances, and keeps the inbox folded at the end", () => {
     render(
       <DashboardOverview
         {...adminData}
@@ -66,14 +66,13 @@ describe("dashboard headline and inbox placement", () => {
       />
     );
     const heading = screen.getByRole("heading", { level: 1 });
+    const finances = screen.getByRole("heading", { level: 2, name: "Finanzas del local" });
     const details = screen.getByText("Bandeja del taller").closest("details")!;
     expect(
-      heading.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING
+      heading.compareDocumentPosition(finances) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(
-      details.compareDocumentPosition(
-        screen.getByRole("region", { name: "Métricas del 5 oct 2026 al 5 oct 2026" })
-      ) & Node.DOCUMENT_POSITION_FOLLOWING
+      finances.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
     expect(details.open).toBe(false);
   });
