@@ -92,6 +92,22 @@ describe("official WhatsApp document protocol", () => {
     expect(getWhatsAppConfig({})).toBeNull();
     expect(getWhatsAppConfig({ VERCEL_ENV: "preview" })).toBeNull();
   });
+  it("never sends from a Railway environment other than production", () => {
+    const credentials = {
+      WHATSAPP_ACCESS_TOKEN: "t",
+      WHATSAPP_PHONE_NUMBER_ID: "1",
+      WHATSAPP_BUSINESS_ACCOUNT_ID: "2",
+      WHATSAPP_GRAPH_VERSION: "v21.0",
+      WHATSAPP_APP_SECRET: "s",
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: "v".repeat(32),
+      WHATSAPP_WORKER_SECRET: "w".repeat(32),
+      SUPABASE_SERVICE_ROLE_KEY: "k"
+    };
+    expect(getWhatsAppConfig({ ...credentials, RAILWAY_ENVIRONMENT_NAME: "staging" })).toBeNull();
+    expect(
+      getWhatsAppConfig({ ...credentials, RAILWAY_ENVIRONMENT_NAME: "production" })
+    ).not.toBeNull();
+  });
 });
 
 describe("durable document worker", () => {
