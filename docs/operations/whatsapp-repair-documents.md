@@ -4,7 +4,7 @@
 
 El código prepara el ingreso al crear una orden y el documento de pago y garantía al registrar el primer retiro de la orden original. La ficha muestra los estados reales del envío en Documentos y cobros. Los reingresos por garantía no vuelven a emitir el comprobante original.
 
-La integración queda inicialmente pausada. El local actualmente usa WhatsApp Business en el celular y WhatsApp Web y todavía no tiene Meta Business. Hace falta completar esa vinculación antes de habilitar envíos reales. Crear el código o subirlo a Vercel no conecta por sí solo el número a Meta.
+La integración queda inicialmente pausada. El local actualmente usa WhatsApp Business en el celular y WhatsApp Web y todavía no tiene Meta Business. Hace falta completar esa vinculación antes de habilitar envíos reales. Crear el código o publicarlo no conecta por sí solo el número a Meta.
 
 ## Pasos del propietario
 
@@ -12,8 +12,8 @@ La integración queda inicialmente pausada. El local actualmente usa WhatsApp Bu
 2. Vincular el número comercial **3571 544683** a WhatsApp Business Platform. Como ese número ya se usa en la aplicación, elegir un proceso de incorporación de **coexistencia** compatible y confirmar su disponibilidad con Meta o un proveedor oficial. Conservar el uso de la aplicación y los chats durante esa incorporación.
 3. Habilitar la aplicación de Meta para WhatsApp, obtener el ID de la cuenta de WhatsApp Business, el ID del número y un token de usuario del sistema con permiso `whatsapp_business_messaging`. La lectura de plantillas también necesita `whatsapp_business_management`.
 4. Crear y aprobar las dos plantillas de utilidad descritas abajo, con encabezado DOCUMENTO y un PDF de ejemplo ficticio. Meta determina la aprobación y puede cobrar los mensajes enviados mediante la plataforma según su tarifa vigente.
-5. Configurar las credenciales en el entorno **production** de Vercel. No enviarlas por chat, guardarlas en Git ni ponerlas en variables `NEXT_PUBLIC_`.
-6. Configurar y verificar el webhook `https://chetech-admin.vercel.app/api/whatsapp/webhook`, usando el token de verificación del servidor. Suscribir el evento **messages** de la cuenta comercial a la aplicación.
+5. Configurar las credenciales en el entorno **production** del servicio "Sistema de gestion" en Railway. No enviarlas por chat, guardarlas en Git ni ponerlas en variables `NEXT_PUBLIC_`.
+6. Configurar y verificar el webhook `https://gestion.chetechstore.com/api/whatsapp/webhook`, usando el token de verificación del servidor. Suscribir el evento **messages** de la cuenta comercial a la aplicación.
 7. En Configuración, comprobar número, plantillas y confirmaciones de entrega. Activar los envíos cuando los tres controles estén confirmados. La activación configura el trabajador periódico con Supabase Cron y guarda su credencial en Vault.
 8. Crear una orden ficticia dirigida a un teléfono controlado por el propietario, registrar su autorización y comprobar ingreso, retiro y ambos PDF. Luego habilitar el uso cotidiano. No usar clientes reales para pruebas.
 
@@ -47,7 +47,7 @@ Las muestras del cuerpo pueden ser `Cliente de ejemplo` y `REP-000357`. Usar un 
 | `WHATSAPP_INTAKE_TEMPLATE` | `chetech_ingreso_equipo` |
 | `WHATSAPP_DELIVERY_TEMPLATE` | `chetech_pago_garantia` |
 
-Las previews de Vercel no envían mensajes. El trabajador no se ejecuta sin configuración completa. La activación no envía masivamente documentos históricos. Pausar cancela los documentos pendientes; no vuelve a enviar mensajes ya aceptados.
+Los entornos de Railway que no son producción no envían mensajes. El trabajador no se ejecuta sin configuración completa. La activación no envía masivamente documentos históricos. Pausar cancela los documentos pendientes; no vuelve a enviar mensajes ya aceptados.
 
 ## Operación
 

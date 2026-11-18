@@ -6,7 +6,7 @@ El sistema de gestión corre entero en el proyecto **chetech** del workspace **C
 
 - Sistema: `https://gestion.chetechstore.com`. El dominio raíz `chetechstore.com` queda reservado para la tienda.
 - DNS en Cloudflare: `gestion` es un CNAME al dominio que da Railway, **sin proxy** (nube gris), más el TXT `_railway-verify.gestion` que Railway pide para emitir el certificado. Con el proxy de Cloudflare activado el certificado no se renueva.
-- `chetech-admin.vercel.app` redirige al dominio nuevo (`vercel.json`): los QR ya impresos apuntan ahí.
+- Vercel ya no se usa para el sistema: el proyecto `chetech-admin` quedó pausado y `chetech-admin.vercel.app` no responde.
 
 ## Servicios
 
@@ -18,7 +18,7 @@ El sistema de gestión corre entero en el proyecto **chetech** del workspace **C
 | Postgrest | La API REST que usa la aplicación. |
 | Supabase Storage | Archivos de las órdenes y de la tienda, guardados en el bucket `S3` del proyecto. |
 | Envoy | Puerta de entrada: es la dirección de `NEXT_PUBLIC_SUPABASE_URL`. |
-| Supabase Studio y Postgres Meta | Panel para mirar tablas y correr SQL. |
+| Supabase Studio y Postgres Meta | Panel para mirar tablas y correr SQL. Apagados de uso diario (ver "Gasto"). |
 | Migracion Supabase | Tarea de una sola vez que copió la base y los archivos desde Supabase (`scripts/railway/migrator`). |
 
 La red privada de Railway entrega direcciones IPv6, así que cada servicio tiene que escuchar en IPv6. PostgREST escucha solo en IPv4 por defecto: necesita `PGRST_SERVER_HOST=*6`; sin eso Envoy responde 503 a todo lo que va a `/rest/v1`.
@@ -34,11 +34,11 @@ Todos los secretos de la base salen de un único `ROOT_SECRET`, guardado como va
 - Origen: este repositorio. Se construye y arranca a través de `with-supabase-keys.mjs`, y Railway controla `/api/health`, que responde sin consultar la base.
 - Una réplica y **Serverless** activado: si nadie usa el sistema durante un rato, se duerme y deja de consumir; el primer pedido después tarda unos segundos más.
 - Variables: `NEXT_PUBLIC_SUPABASE_URL` (dirección pública de Envoy), `SUPABASE_ROOT_SECRET` (referencia), `NEXT_PUBLIC_APP_URL=https://gestion.chetechstore.com` (QR y enlaces de los comprobantes) y `NEXT_TELEMETRY_DISABLED=1`.
-- Opcionales, como en Vercel: las de ARCA y las de WhatsApp (ver `.env.example`). Fuera del entorno `production` de Railway, WhatsApp nunca envía mensajes.
+- Opcionales: las de ARCA y las de WhatsApp (ver `.env.example`). Fuera del entorno `production` de Railway, WhatsApp nunca envía mensajes.
 
 ## Migraciones de esquema
 
-La base de Railway no tiene el historial `supabase_migrations` (la copia trajo solo los esquemas `public`, `private` y `document_access`). Las migraciones nuevas se escriben igual que antes (`supabase/migrations/`) y se aplican desde el editor SQL de Studio, en orden. El historial completo sigue en Supabase para `db:export-migrations`.
+La base de Railway no tiene el historial `supabase_migrations` (la copia trajo solo los esquemas `public`, `private` y `document_access`). Las migraciones nuevas se escriben igual que antes (`supabase/migrations/`) y se aplican desde el editor SQL de Studio, en orden (primero hay que encenderlo, ver "Gasto"). El historial completo sigue en Supabase para `db:export-migrations`.
 
 ## La copia desde Supabase
 
@@ -46,11 +46,14 @@ La base de Railway no tiene el historial `supabase_migrations` (la copia trajo s
 
 ## Gasto
 
-- El plan Pro incluye un monto de uso por mes. Cada servicio tiene un tope de memoria y CPU acorde a lo que usa.
-- Límite duro: **Workspace → Usage → Set Usage Limits**, con una alerta por correo y un límite de gasto. Al llegar al límite Railway apaga los servicios, así que conviene dejar margen.
-- Si hace falta recortar, Studio y Postgres Meta se pueden quitar: no los usa la aplicación.
+- Límites del workspace (**Workspace → Usage → Set limits**): aviso por correo a los USD 20 y corte a los USD 30. Al llegar al corte Railway apaga los servicios. El plan Pro ya incluye USD 20 de uso por mes.
+- Topes por servicio (memoria / CPU), con margen sobre lo que usan: aplicación 0,75 GB / 1; Postgres 1 GB / 1; PostgREST y Storage 0,5 GB / 0,5; GoTrue y Envoy 0,25 GB / 0,5; Studio 0,5 GB / 0,5; Postgres Meta 0,25 GB / 0,5. Railway cobra lo que se usa, no el tope: el tope solo evita que un error dispare el consumo.
+- La aplicación, Studio y Postgres Meta tienen **Serverless**: se duermen cuando no reciben pedidos.
+- Studio y Postgres Meta no están conectados a Envoy (`STUDIO_HOST` y `META_HOST` valen `not_present`), así Envoy no los despierta cada 5 segundos con sus controles y quedan dormidos. No se borran porque Studio guarda el `ROOT_SECRET` del que leen los demás servicios.
+- Para usar Studio (por ejemplo, para aplicar una migración): en Envoy, volver a poner `STUDIO_HOST=${{"Supabase Studio".RAILWAY_PRIVATE_DOMAIN}}` y `META_HOST=${{"Postgres Meta".RAILWAY_PRIVATE_DOMAIN}}`, entrar por la dirección de Envoy con el usuario del panel y, al terminar, volver a `not_present`.
+- La tarea de copia no consume: terminó y no queda corriendo.
 
 ## Respaldo
 
-- Railway guarda copias programadas del volumen de Postgres (Backups del servicio). Conviene una diaria y una semanal.
+- Railway guarda copias del volumen de Postgres: una diaria (se conserva 6 días) y una semanal (27 días), más la manual del 18/11/2026 posterior a la mudanza.
 - El respaldo propio del sistema (`/api/backup` y `docs/operations/backup-restore.md`) sigue igual.

@@ -14,7 +14,7 @@ No se solicita, lee, almacena ni transmite Clave Fiscal. El titular gestiona cer
 
 1. En homologacion, obtener el certificado mediante WSASS y asociarlo a `wsfe`. En produccion, obtenerlo mediante Administracion de Certificados Digitales y asociar/autorizar `wsfe` en el Administrador de Relaciones.
 2. Configurar un PV Web Services con modalidad CAE; en produccion debe ser diferente de 00001 para esta instalacion. En homologacion puede ser 00001 solo si esta explicitamente habilitado para WS/CAE. No reutilizar un PV de Comprobantes en Linea, controlador fiscal o CAEA.
-3. Guardar certificado y clave privada PEM en archivos externos al repositorio, separados por entorno, accesibles solo al usuario del proceso servidor, o como variables privadas del servidor en Vercel. Clave RSA minimo 2048 bits. Esta implementacion estricta requiere el CUIT emisor en `subject.serialNumber`; certificados de representantes con otro CUIT no se admiten.
+3. Guardar certificado y clave privada PEM en archivos externos al repositorio, separados por entorno, accesibles solo al usuario del proceso servidor, o como variables privadas del servicio en Railway. Clave RSA minimo 2048 bits. Esta implementacion estricta requiere el CUIT emisor en `subject.serialNumber`; certificados de representantes con otro CUIT no se admiten.
 4. Completar razon social legal, domicilio fiscal/comercial, identificacion de Ingresos Brutos (o condicion de exencion) y fecha real de inicio de actividades. No inventar estos datos.
 5. Revisar con el responsable fiscal el concepto, la condicion IVA y el documento/domicilio del receptor de cada emision. Categoria de Monotributo y limites del regimen no se verifican ni calculan automaticamente.
 
@@ -28,7 +28,7 @@ ARCA_PRODUCTION_ENABLED=false
 ARCA_ISSUER_CUIT=<CUIT-valida-del-emisor-solo-en-servidor>
 ARCA_HOMO_POINT_OF_SALE=<PV-Web-Services-de-homologacion-explicito>
 ARCA_HOMO_WS_POINT_OF_SALE_VERIFIED=true
-# Vercel: PEM como variables privadas, multilinea o con \\n escapados:
+# Railway: PEM como variables privadas, multilinea o con \\n escapados:
 ARCA_HOMO_CERTIFICATE_PEM=<contenido-PEM-certificado-homologacion>
 ARCA_HOMO_PRIVATE_KEY_PEM=<contenido-PEM-clave-homologacion>
 # Clave aleatoria de 32 bytes, base64 canonico, compartida por todas las instancias:

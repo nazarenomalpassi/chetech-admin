@@ -49,8 +49,8 @@ describe("repair QR links", () => {
     ).toBeNull();
   });
   it("contains only the immutable UUID, never a REP or a personal detail", () => {
-    expect(buildRepairQrUrl(id, "https://chetech-admin.vercel.app")).toBe(
-      `https://chetech-admin.vercel.app/q/${id}`
+    expect(buildRepairQrUrl(id, "https://gestion.chetechstore.com")).toBe(
+      `https://gestion.chetechstore.com/q/${id}`
     );
   });
   it("preserves a configured origin while discarding base path and arbitrary queries", () => {

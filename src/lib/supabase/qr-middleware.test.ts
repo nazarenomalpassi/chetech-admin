@@ -21,7 +21,7 @@ describe("QR routing does not expose the administrative login", () => {
     "/brand/document-logo-white.png",
   ])("allows only the neutral QR entry and branding for %s", async (path) => {
     const response = await updateSession(
-      new NextRequest(`https://chetech-admin.vercel.app${path}`),
+      new NextRequest(`https://gestion.chetechstore.com${path}`),
     );
     expect(response.headers.get("Location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
@@ -33,17 +33,17 @@ describe("QR routing does not expose the administrative login", () => {
     "/reparaciones-access/orden/00000000-0000-4000-8000-000000000742",
   ])("keeps unrelated private path protected: %s", async (path) => {
     const response = await updateSession(
-      new NextRequest(`https://chetech-admin.vercel.app${path}`),
+      new NextRequest(`https://gestion.chetechstore.com${path}`),
     );
     expect(response.headers.get("Location")).toBe(
-      "https://chetech-admin.vercel.app/login",
+      "https://gestion.chetechstore.com/login",
     );
   });
 });
 
 describe("legacy printed QR middleware classification", () => {
   const id = "00000000-0000-4000-8000-000000000742";
-  const origin = "https://chetech-admin.vercel.app";
+  const origin = "https://gestion.chetechstore.com";
   const legacyUrl = `${origin}/reparaciones-access?view=detalle&order=${id}`;
 
   it.each(["GET", "HEAD"])(

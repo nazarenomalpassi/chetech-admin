@@ -26,7 +26,7 @@ describe("manual customer document links", () => {
         name: "Belén & Juan",
         number: "REP-000513",
         kind: "delivery",
-        link: "https://chetech-admin.vercel.app/api/comprobantes/abc"
+        link: "https://gestion.chetechstore.com/api/comprobantes/abc"
       })
     );
     expect(url.origin + url.pathname).toBe("https://web.whatsapp.com/send");

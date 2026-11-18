@@ -202,7 +202,7 @@ describe("safe configuration", () => {
   it("never silently converts a misspelled environment into production or testing", () => {
     expect(readFiscalConfig({ ARCA_ENVIRONMENT: "prod" }).issues.join(" ")).toMatch(/entorno/i);
   });
-  it("accepts private server PEM configuration without filesystem paths for Vercel", () => {
+  it("accepts private server PEM configuration without filesystem paths", () => {
     const config = readFiscalConfig({
       ARCA_TICKET_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
       ARCA_ISSUER_CUIT: "20123456786",
