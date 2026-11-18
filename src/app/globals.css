@@ -14,7 +14,7 @@
   --color-foreground: oklch(0.225 0.008 95);
   --color-body: oklch(0.34 0.009 95);
   --color-muted-foreground: oklch(0.47 0.011 95);
-  --color-subtle-foreground: oklch(0.55 0.011 95);
+  --color-subtle-foreground: oklch(0.52 0.011 95);
   --color-card: oklch(0.995 0.002 95);
   --color-card-foreground: oklch(0.225 0.008 95);
   --color-muted: oklch(0.972 0.004 95);
@@ -553,7 +553,7 @@ textarea {
   justify-content: center;
   gap: 0.25rem;
   padding: 0.5rem 0.25rem;
-  font-size: 0.75rem;
+  font-size: 0.8125rem;
   line-height: 1rem;
   font-weight: 500;
   transition: color 120ms var(--ease-out);

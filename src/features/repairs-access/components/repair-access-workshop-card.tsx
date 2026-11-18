@@ -273,18 +273,6 @@ export function RepairAccessWorkshopCard({
           order={order}
           canManageIntake={canManageIntake}
         />
-        {canManageIntake ? (
-          <div className="flex flex-wrap gap-2">
-            <Button
-              className="min-h-11 w-full"
-              onClick={() => onOpenDetail(order)}
-              type="button"
-              variant="secondary"
-            >
-              Ficha completa
-            </Button>
-          </div>
-        ) : null}
         {order.workflow ? (
           <LazyDisclosure
             className="border-t border-border"
@@ -356,7 +344,10 @@ export function RepairAccessWorkshopCard({
         </div>
 
         {canManageIntake ? (
-          <div className="flex justify-end border-t border-border pt-2">
+          <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+            <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">
+              Ficha completa
+            </Button>
             <ActionMenu label="Más acciones">
               <a
                 className={buttonVariants({ variant: "secondary" })}

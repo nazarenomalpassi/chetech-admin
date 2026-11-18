@@ -119,7 +119,7 @@ function CollapsibleGroup({
           <span>{group.label}</span>
           <span className="flex items-center gap-1.5">
             {!open ? (
-              <span className="text-white/45 tabular-nums">{group.items.length}</span>
+              <span className="text-white/60 tabular-nums">{group.items.length}</span>
             ) : null}
             <ChevronDown
               aria-hidden="true"
