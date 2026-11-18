@@ -14,7 +14,7 @@ const sample = {
   accessories: "Control remoto + cable",
   intakeDate: "2026-11-10",
   orderUrl:
-    "https://chetech-admin.vercel.app/reparaciones-access?view=detalle&order=00000000-0000-4000-8000-000000000742"
+    "https://gestion.chetechstore.com/reparaciones-access?view=detalle&order=00000000-0000-4000-8000-000000000742"
 };
 
 // Observe real PDFKit output without replacing font metrics or the PDF stream.

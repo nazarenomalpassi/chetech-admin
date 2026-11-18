@@ -80,7 +80,7 @@ export async function GET(request: Request) {
         auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
       });
       const result = await createOperationalExport(supabase, {
-        sourceRevision: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.RAILWAY_GIT_COMMIT_SHA
+        sourceRevision: process.env.RAILWAY_GIT_COMMIT_SHA
       });
       const body = JSON.stringify(result);
       if (Buffer.byteLength(body, "utf8") > MAX_HTTP_JSON_BYTES) {

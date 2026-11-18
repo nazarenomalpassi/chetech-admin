@@ -42,7 +42,7 @@ The comprehensive JSON API additionally requires the existing server-only SUPABA
 
 The HTTP JSON download is limited to **4 MiB (4,194,304 UTF-8 bytes)** of the complete serialized artifact, including its manifest. The exact boundary is accepted. Any larger artifact returns **413** with a friendly instruction to use `scripts/backup-export.ts` with explicit `--env-path` and `--out-dir tmp/backups/application`. The error is private/no-store, has no download attachment and contains no exported rows, credentials or partial manifest. No tables/history are truncated, and no partial JSON backup is advertised as successful.
 
-This threshold leaves margin below Vercel's documented function response-body limit. It is a transport guard, not a guarantee against function memory/time limits while reading a growing export. Prefer the private CLI for comprehensive or recurring exports. The CLI remains unrestricted by this HTTP-only byte cap, writes the complete plain JSON plus sidecar, and uses the existing verification/restore workflow; no gzip format or parser change was introduced. [Vercel function limitations](https://vercel.com/docs/functions/limitations#request-body-size).
+It is a transport guard that keeps the in-memory response small on the app server, not a guarantee against memory/time limits while reading a growing export. Prefer the private CLI for comprehensive or recurring exports. The CLI remains unrestricted by this HTTP-only byte cap, writes the complete plain JSON plus sidecar, and uses the existing verification/restore workflow; no gzip format or parser change was introduced.
 
 ## Real PostgreSQL Dump and Restore
 

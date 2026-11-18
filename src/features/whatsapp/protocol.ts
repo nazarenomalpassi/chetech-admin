@@ -26,9 +26,8 @@ export type DocumentJob = {
 export function getWhatsAppConfig(
   env: Record<string, string | undefined> = process.env
 ): WhatsAppConfig | null {
-  // Solo producción envía mensajes: las vistas previas de Vercel y los entornos de Railway que no
-  // son producción nunca escriben a clientes reales.
-  if (env.VERCEL_ENV && env.VERCEL_ENV !== "production") return null;
+  // Solo producción envía mensajes: los entornos de Railway que no son producción nunca escriben
+  // a clientes reales.
   if (env.RAILWAY_ENVIRONMENT_NAME && env.RAILWAY_ENVIRONMENT_NAME !== "production") return null;
   const values = [
     env.WHATSAPP_ACCESS_TOKEN,

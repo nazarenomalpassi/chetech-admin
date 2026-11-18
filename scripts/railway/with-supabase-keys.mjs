@@ -8,7 +8,7 @@
 // como referencia a la variable del panel.
 //
 // Uso: node scripts/railway/with-supabase-keys.mjs npm run build
-// Sin SUPABASE_ROOT_SECRET (por ejemplo en Vercel) ejecuta el comando sin tocar nada.
+// Sin SUPABASE_ROOT_SECRET (por ejemplo en desarrollo local) ejecuta el comando sin tocar nada.
 import { spawn } from "node:child_process";
 import { createHmac } from "node:crypto";
 

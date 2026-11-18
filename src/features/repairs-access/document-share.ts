@@ -6,7 +6,6 @@ import type { RepairDocumentData } from "./documents";
 export const documentShareHeaders = {
   "Cache-Control": "private, no-store, max-age=0",
   "CDN-Cache-Control": "no-store",
-  "Vercel-CDN-Cache-Control": "no-store",
   "Referrer-Policy": "no-referrer",
   "X-Robots-Tag": "noindex, nofollow, noarchive, nosnippet",
   "X-Content-Type-Options": "nosniff",

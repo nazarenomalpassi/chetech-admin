@@ -25,7 +25,7 @@ vi.mock("@supabase/ssr", () => ({
 
 describe("updateSession refreshed request", () => {
   it("forwards refreshed cookie chunks to Server Components as well as the browser", async () => {
-    const request = new NextRequest("https://chetech-admin.vercel.app/dashboard", {
+    const request = new NextRequest("https://gestion.chetechstore.com/dashboard", {
       headers: { cookie: "sb-test-auth-token.0=expired-first-chunk; sb-test-auth-token.1=expired-second-chunk; preference=retained" }
     });
     const response = await updateSession(request);
@@ -51,11 +51,11 @@ describe("redirectPreservingCookies", () => {
     });
 
     const redirect = redirectPreservingCookies(
-      new URL("https://chetech-admin.vercel.app/dashboard"),
+      new URL("https://gestion.chetechstore.com/dashboard"),
       source
     );
 
-    expect(redirect.headers.get("location")).toBe("https://chetech-admin.vercel.app/dashboard");
+    expect(redirect.headers.get("location")).toBe("https://gestion.chetechstore.com/dashboard");
     expect(redirect.cookies.get("sb-test-auth-token")).toMatchObject({
       value: "renewed-session",
       httpOnly: true,

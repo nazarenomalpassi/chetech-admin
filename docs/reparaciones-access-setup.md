@@ -18,8 +18,8 @@ Copiar `.env.repairs-access.example` a `.env.local` y completar:
 ## Importante
 
 - No reutilizar las variables de produccion.
-- Configurar esas mismas variables en Vercel para `Preview`.
-- No hacer deploy `--prod`.
+- Configurar esas mismas variables solo en un entorno de pruebas.
+- No publicar en producción.
 - No mergear a `main` hasta validar el modulo nuevo.
 
 ## Proyecto Supabase recomendado
@@ -36,7 +36,7 @@ Despues de crear el proyecto:
 3. Copiar `anon public key`
 4. Copiar `service_role key`
 5. Pegarlas en `.env.local`
-6. Cargar esas mismas variables en Vercel Preview
+6. Cargar esas mismas variables en el entorno de pruebas
 
 ## Esquema inicial
 

@@ -88,9 +88,8 @@ describe("official WhatsApp document protocol", () => {
     });
     expect(JSON.stringify(message)).not.toContain("link");
   });
-  it("stays disconnected with absent credentials and never enables a Vercel preview", () => {
+  it("stays disconnected with absent credentials", () => {
     expect(getWhatsAppConfig({})).toBeNull();
-    expect(getWhatsAppConfig({ VERCEL_ENV: "preview" })).toBeNull();
   });
   it("never sends from a Railway environment other than production", () => {
     const credentials = {
