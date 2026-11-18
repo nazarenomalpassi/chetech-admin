@@ -644,6 +644,28 @@ describe("RepairAccessWorkshopCard", () => {
     expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="[^"]*hidden[^"]*lg:grid/);
   });
 
+  it("en columnas angostas deja WhatsApp y Llamar con ícono sin perder el nombre", () => {
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={order}
+      />
+    );
+    const contacts = document.querySelector('[data-workshop-contact-actions="true"]')!;
+    expect(contacts.parentElement!.className).toContain("@container");
+    for (const label of ["WhatsApp", "Llamar"]) {
+      const text = [...contacts.querySelectorAll("span")].find(
+        (span) => span.textContent === label
+      );
+      expect(text?.className).toContain("@max-[27rem]:sr-only");
+    }
+    expect(screen.getByRole("button", { name: /Ficha completa/ }).className).toContain(
+      "whitespace-nowrap"
+    );
+  });
+
   it("carga los controles de trabajo solo al abrir la ficha y conserva las advertencias", () => {
     render(
       <RepairAccessWorkshopCard
