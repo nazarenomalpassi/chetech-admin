@@ -6,11 +6,12 @@ import { LogOut } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { SidebarGroups } from "@/components/layout/sidebar-groups";
+import { UserBadge } from "@/components/layout/user-badge";
 import { getSidebarGroupsForRole } from "@/lib/navigation";
 import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
-export function Sidebar({ role }: { role: AppRole }) {
+export function Sidebar({ role, userName = "" }: { role: AppRole; userName?: string }) {
   const pathname = usePathname();
   const groups = getSidebarGroupsForRole(role);
 
@@ -39,16 +40,18 @@ export function Sidebar({ role }: { role: AppRole }) {
           </nav>
         </div>
 
-        <div className="mt-3 flex-none border-t border-white/10 pt-3">
+        <div className="mt-3 flex flex-none items-center justify-between gap-2 border-t border-white/10 pt-3">
+          <UserBadge name={userName} role={role} />
           <form action="/auth/sign-out" method="post">
             <button
+              aria-label="Cerrar sesión"
               className={cn(
-                buttonVariants({ variant: "secondary" }),
-                "w-full justify-center border-white/10 bg-white text-graphite hover:bg-brand-50"
+                buttonVariants({ variant: "ghost", size: "icon" }),
+                "shrink-0 text-white/75 hover:bg-white/10 hover:text-white focus-visible:ring-white focus-visible:ring-offset-graphite"
               )}
+              title="Cerrar sesión"
             >
               <LogOut className="h-4 w-4" />
-              Cerrar sesión
             </button>
           </form>
         </div>

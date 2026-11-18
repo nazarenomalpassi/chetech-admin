@@ -5,6 +5,7 @@ import type { Route } from "next";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { saveReplenishmentItemAction } from "@/features/replenishment/actions";
@@ -140,15 +141,13 @@ export function ReplenishmentView({
 
   return (
     <div className="space-y-4">
+      <PageHeader
+        description={`${data.monthLabel}. Reposición de productos vendidos en el mes.`}
+        title="Pedidos del mes"
+      />
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Pedidos del mes</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {data.monthLabel}. Reposición de productos vendidos en el mes.
-            </p>
-          </div>
-          <form className="grid gap-3 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)_auto]">
+          <form className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,170px)_minmax(0,1fr)_auto]">
             <label className="grid gap-2 text-sm font-medium text-body">
               Mes del pedido
               <Input defaultValue={data.monthKey} name="month" type="month" />

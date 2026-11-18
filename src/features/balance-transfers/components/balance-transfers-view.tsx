@@ -5,6 +5,7 @@ import { ArrowRightLeft, Ban, History, Repeat2, WalletCards } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -39,17 +40,13 @@ export function BalanceTransfersView({
 
   return (
     <div className="space-y-4">
+      <PageHeader
+        description="Mueve dinero entre Efectivo, NX SANTI y NX LOCAL sin alterar ventas, gastos ni ganancias."
+        title="Transferencias entre cuentas"
+      />
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold text-foreground">Transferencias entre cuentas</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Mueve dinero entre Efectivo, NX SANTI y NX LOCAL sin alterar ventas, gastos ni
-              ganancias.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3 xl:max-w-xl">
+          <div className="grid flex-1 gap-3 sm:grid-cols-3 xl:max-w-xl">
             <MetricCard
               icon={<ArrowRightLeft className="h-4 w-4" />}
               label="Transferencias activas"

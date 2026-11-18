@@ -29,27 +29,50 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-svh items-center justify-center px-4 py-10">
-      <section
-        className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 sm:p-8"
-        aria-labelledby="login-title"
+    <main className="grid min-h-svh lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+      <aside
+        aria-hidden="true"
+        className="relative hidden overflow-hidden bg-graphite p-10 text-white lg:flex lg:flex-col lg:justify-between"
       >
-        <div className="mb-6">
-          <div className="mb-6 flex items-center gap-3">
+        <img
+          alt=""
+          className="h-auto w-[180px]"
+          height={53}
+          src="/brand/chetech-horizontal-white.svg"
+          width={180}
+        />
+        <div className="relative">
+          <p className="max-w-md text-3xl leading-tight font-semibold text-balance">
+            Taller, mostrador y caja en un solo lugar.
+          </p>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-white/70">
+            Órdenes, cobros, ventas y comprobantes, con el historial de cada equipo a mano.
+          </p>
+        </div>
+        <p className="text-xs text-white/50">Sistema interno de CheTech</p>
+        <span className="pointer-events-none absolute -right-24 -bottom-24 h-96 w-96 rounded-full border border-white/8" />
+        <span className="pointer-events-none absolute -right-8 -bottom-8 h-64 w-64 rounded-full border border-white/8" />
+      </aside>
+
+      <div className="flex items-center justify-center px-4 py-10 sm:px-8">
+        <section aria-labelledby="login-title" className="w-full max-w-sm">
+          <div className="mb-8 flex items-center gap-3 lg:hidden">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
               <img alt="" src="/brand/chetech-isologo-white.svg" width={24} height={24} />
             </span>
             <span className="font-brand text-2xl text-foreground">Chetech</span>
           </div>
-          <h1 className="text-xl font-semibold text-foreground" id="login-title">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground" id="login-title">
             Ingresar al sistema
           </h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
             Usá tu cuenta para acceder al local y al taller.
           </p>
-        </div>
-        <LoginForm />
-      </section>
+          <div className="mt-8">
+            <LoginForm />
+          </div>
+        </section>
+      </div>
     </main>
   );
 }

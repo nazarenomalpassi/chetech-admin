@@ -6,6 +6,7 @@ import { PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ProductFilters } from "@/features/products/components/product-filters";
 import { ProductFormDialog } from "@/features/products/components/product-form-dialog";
 import { ProductTable } from "@/features/products/components/product-table";
@@ -59,36 +60,31 @@ export function ProductsView({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="panel-heading">Productos</h1>
-            <p aria-live="polite" className="mt-1 text-sm text-muted-foreground">
-              Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              En esta pagina: {activeProducts} activos, {lowStockProducts} con stock bajo.
-              {unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}
-            </p>
-          </div>
-
-          {canManage ? (
+      <PageHeader
+        actions={
+          canManage ? (
             <Button
               onClick={() => {
                 setSelectedProduct(null);
                 setOpen(true);
               }}
             >
-              <PackagePlus className="mr-2 h-4 w-4" />
+              <PackagePlus className="h-4 w-4" />
               Nuevo producto
             </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground">Catalogo de consulta</p>
-          )}
-        </div>
-        <div className="mt-4">
-          <ProductFilters categories={categories} />
-        </div>
+          ) : null
+        }
+        description={
+          <p aria-live="polite">
+            Mostrando {rangeStart} a {rangeEnd} de {totalProducts} productos. En esta página:{" "}
+            {activeProducts} activos, {lowStockProducts} con stock bajo.
+            {unknownAvailability ? ` ${unknownAvailability} sin disponibilidad confirmada.` : ""}
+          </p>
+        }
+        title="Productos"
+      />
+      <Card className="p-3 sm:p-4">
+        <ProductFilters categories={categories} />
       </Card>
 
       <ProductTable

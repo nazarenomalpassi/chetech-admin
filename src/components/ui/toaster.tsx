@@ -10,6 +10,7 @@ export function Toaster() {
     <Sonner
       position="bottom-right"
       closeButton
+      mobileOffset={{ bottom: "calc(4.75rem + env(safe-area-inset-bottom))" }}
       toastOptions={{
         classNames: {
           toast:

@@ -3,12 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { z } from "zod";
-import { CalendarRange, Search } from "lucide-react";
+import { CalendarRange, Plus, Search } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
 import { Button } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Input } from "@/components/ui/input";
@@ -162,6 +163,8 @@ export function RepairsList({
   const initialRepair = collectionTarget?.repair ?? null;
   const initialOrder = collectionTarget?.order ?? null;
   const [editing, setEditing] = useState<Repair | null>(initialRepair);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerRef = useRef<HTMLDetailsElement>(null);
   const [formValues, setFormValues] = useState<RepairFormFields>(() =>
     initialRepair
       ? fieldsFromRepair(initialRepair)
@@ -512,44 +515,65 @@ export function RepairsList({
     }
   }
 
+  const composerShouldOpen =
+    composerOpen ||
+    Boolean(editing) ||
+    Boolean(draft.pendingDraft) ||
+    Boolean(feedback && !feedback.success);
+
   return (
     <div className="space-y-4">
-      <header>
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-foreground">Cobros de reparaciones</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Selecciona la REP y registra solo el dinero recibido. Cobrar no entrega el equipo ni
-              inicia la garantia.
-            </p>
-          </div>
-
-          <dl className="grid gap-4 sm:grid-cols-2">
+      <PageHeader
+        actions={
+          !composerShouldOpen ? (
+            <Button
+              onClick={() => {
+                setComposerOpen(true);
+                window.requestAnimationFrame(() => {
+                  composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  composerRef.current
+                    ?.querySelector<HTMLInputElement>("input[name='accessOrderNumber']")
+                    ?.focus();
+                });
+              }}
+              type="button"
+            >
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Nuevo cobro
+            </Button>
+          ) : null
+        }
+        aside={
+          <dl className="flex gap-6 text-sm sm:text-right">
             <div>
-              <dt className="text-sm text-muted-foreground">Registros en esta pagina</dt>
-              <dd className="mt-1 text-xl font-semibold tabular-nums">{totalRepairs}</dd>
+              <dt className="text-muted-foreground">Registros en esta página</dt>
+              <dd className="mt-0.5 text-xl font-semibold tabular-nums">{totalRepairs}</dd>
             </div>
             <div>
-              <dt className="text-sm text-muted-foreground">Cobrado en esta pagina</dt>
-              <dd className="mt-1 text-xl font-semibold tabular-nums">{formatCurrency(revenue)}</dd>
+              <dt className="text-muted-foreground">Cobrado en esta página</dt>
+              <dd className="mt-0.5 text-xl font-semibold tabular-nums">
+                {formatCurrency(revenue)}
+              </dd>
             </div>
           </dl>
-        </div>
+        }
+        description="Seleccioná la REP y registrá solo el dinero recibido. Cobrar no entrega el equipo ni inicia la garantía."
+        title="Cobros de reparaciones"
+      />
 
-        {message ? (
-          <div
-            aria-live="polite"
-            className={
-              message.success
-                ? "status-banner status-banner--success mt-5"
-                : "status-banner status-banner--error mt-5"
-            }
-            role={message.success ? "status" : "alert"}
-          >
-            {message.message}
-          </div>
-        ) : null}
-      </header>
+      {message ? (
+        <div
+          aria-live="polite"
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
+        >
+          {message.message}
+        </div>
+      ) : null}
       {currentLedger ? (
         <div
           ref={ledgerRef}
@@ -566,8 +590,12 @@ export function RepairsList({
           />
         </div>
       ) : null}
-      <Card>
-        <details open={!editing || undefined}>
+      <Card className="scroll-mt-20">
+        <details
+          onToggle={(event) => setComposerOpen(event.currentTarget.open)}
+          open={composerShouldOpen}
+          ref={composerRef}
+        >
           <summary className="min-h-11 cursor-pointer py-2 text-lg font-semibold">
             {editing ? "Editar datos y precio del registro" : "Nuevo registro de cobro"}
           </summary>

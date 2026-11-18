@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { Plus, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -17,7 +19,7 @@ import { saveInvoiceAction, voidInvoiceAction } from "@/features/invoices/action
 import { formatInvoiceSource } from "@/features/invoices/labels";
 import { calculateInvoiceAmounts } from "@/features/invoices/document-model";
 import type { ActionResult } from "@/lib/form-state";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { cn, formatCurrency, formatDate } from "@/lib/utils";
 import type { PaginationMeta } from "@/lib/pagination";
 import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
@@ -129,6 +131,8 @@ export function InvoicesView({
   const initialPrimary = !editingInvoice
     ? options.primaryOrders.find((order) => order.id === initialPrimaryOrderId)
     : undefined;
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
   const [sourceType, setSourceType] = useState(
     editingInvoice?.sourceType ?? (initialPrimary ? "repair_access" : "manual")
   );
@@ -262,22 +266,59 @@ export function InvoicesView({
     [options.products]
   );
 
+  const showComposer =
+    composerOpen ||
+    Boolean(editingInvoice) ||
+    Boolean(initialPrimaryOrderId) ||
+    Boolean(message && !message.success);
+
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-foreground">Facturación interna</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Comprobantes de ventas y reparaciones. No son facturas fiscales autorizadas por ARCA.
+      <PageHeader
+        actions={
+          !showComposer ? (
+            <Button
+              onClick={() => {
+                setComposerOpen(true);
+                window.requestAnimationFrame(() =>
+                  composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+                );
+              }}
+              type="button"
+            >
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Nuevo comprobante
+            </Button>
+          ) : null
+        }
+        description="Comprobantes de ventas y reparaciones. No son facturas fiscales autorizadas por ARCA."
+        title="Facturación interna"
+      />
+      <Card className={cn("scroll-mt-20", !showComposer && "hidden")} ref={composerRef}>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            {editingInvoice
+              ? `Editar comprobante ${editingInvoice.invoiceNumber}`
+              : "Nuevo comprobante"}
+          </h2>
+          <div className="flex items-center gap-3">
+            <p className="text-sm text-muted-foreground">
+              Total
+              <span className="ml-2 text-xl font-semibold text-foreground tabular-nums">
+                {formatCurrency(total)}
+              </span>
             </p>
-          </div>
-
-          <div className="shrink-0 text-sm text-muted-foreground">
-            <p>Total del comprobante</p>
-            <p className="mt-1 text-xl font-semibold text-foreground tabular-nums">
-              {formatCurrency(total)}
-            </p>
+            {!editingInvoice ? (
+              <Button
+                aria-label="Cerrar el formulario"
+                onClick={() => setComposerOpen(false)}
+                size="icon"
+                type="button"
+                variant="ghost"
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+              </Button>
+            ) : null}
           </div>
         </div>
 

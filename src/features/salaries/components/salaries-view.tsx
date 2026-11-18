@@ -9,6 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { MoneyInput } from "@/components/ui/money-input";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -81,27 +82,27 @@ export function SalariesView({
 
   return (
     <div className="space-y-4">
-      <Card className="p-4 sm:p-5">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Liquidación de sueldos</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              {data.monthLabel}: caja, compromisos y retiros confirmados.
-            </p>
-          </div>
-          <form className="flex flex-col gap-2 sm:flex-row sm:items-end">
+      <PageHeader
+        actions={
+          <form className="flex items-end gap-2">
             <div>
               <label
-                className="mb-2 block text-xs font-semibold text-muted-foreground"
+                className="mb-1.5 block text-xs font-medium text-muted-foreground"
                 htmlFor="salary-month"
               >
                 Mes analizado
               </label>
               <Input defaultValue={data.monthKey} id="salary-month" name="month" type="month" />
             </div>
-            <Button type="submit">Ver mes</Button>
+            <Button size="sm" type="submit" variant="secondary">
+              Ver mes
+            </Button>
           </form>
-        </div>
+        }
+        description={`${data.monthLabel}: caja, compromisos y retiros confirmados.`}
+        title="Liquidación de sueldos"
+      />
+      <Card className="p-4 sm:p-5">
         {!data.migrationReady ? (
           <p className="status-banner status-banner--error mt-5">
             Falta activar la migracion de planificacion salarial.

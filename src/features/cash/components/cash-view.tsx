@@ -3,6 +3,7 @@
 import { ArrowDownLeft, ArrowUpRight, Landmark, LockKeyhole, Wallet } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { ReconciliationPanel } from "@/features/cash/components/reconciliation-panel";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod } from "@/lib/cash";
@@ -60,33 +61,36 @@ export function CashView({
 }) {
   return (
     <div className="space-y-4">
-      <Card className="overflow-hidden">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Caja</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Saldos disponibles y movimientos del {formatDate(data.today)}.
-            </p>
-          </div>
-          <div className="border-l border-border pl-4">
-            <p className="text-sm text-muted-foreground">Saldo total disponible</p>
-            <p className="mt-1 text-2xl font-semibold text-foreground tabular-nums">
+      <PageHeader
+        aside={
+          <p className="text-sm text-muted-foreground sm:text-right">
+            Saldo total disponible
+            <span className="mt-0.5 block text-2xl font-semibold text-foreground tabular-nums">
               {formatCurrency(data.totalBalance)}
-            </p>
-          </div>
-        </div>
-
-        {message ? (
-          <p
-            className={`mt-4 rounded-2xl px-4 py-3 text-sm ${message.success ? "bg-accent text-foreground" : "bg-danger-soft text-danger"}`}
-          >
-            {message.message}
+            </span>
           </p>
-        ) : null}
+        }
+        description={`Saldos disponibles y movimientos del ${formatDate(data.today)}.`}
+        title="Caja"
+      />
 
-        <div className="mt-4 grid gap-4 md:grid-cols-3">
+      {message ? (
+        <p
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
+        >
+          {message.message}
+        </p>
+      ) : null}
+
+      <Card className="overflow-hidden">
+        <div className="grid gap-4 md:grid-cols-3 md:divide-x md:divide-border">
           {data.balances.map((account) => (
-            <div key={account.method} className="min-w-0 border-t border-border py-4">
+            <div key={account.method} className="min-w-0 md:px-4 md:first:pl-0 md:last:pr-0">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">
