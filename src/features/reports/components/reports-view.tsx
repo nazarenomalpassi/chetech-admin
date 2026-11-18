@@ -17,6 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { MetricCard } from "@/components/ui/metric-card";
 import { BusinessChart, type BusinessChartRow } from "@/features/reports/components/business-chart";
@@ -213,14 +214,12 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <PageHeader
+        description="Compará resultados y exportá los movimientos del período."
+        title="Reportes"
+      />
+      <Card className="p-3 sm:p-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Reportes</h1>
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              Compara resultados y exporta los movimientos del periodo.
-            </p>
-          </div>
           <form className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,180px)_minmax(0,180px)_auto_auto]">
             <div>
               <label className="mb-2 block text-sm font-medium text-body" htmlFor="from">Desde</label>

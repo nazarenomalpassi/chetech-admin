@@ -92,8 +92,28 @@ describe("section navigation loading", () => {
       );
     }
     fireEvent.keyDown(nav, { key: "Escape" });
-    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Navegación del local" })).toBeNull();
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Abrir menú" }));
+  });
+
+  it("keeps a bottom bar with the four most used sections and the full menu", () => {
+    render(<MobileNavigation role="admin" />);
+    const bar = screen.getByRole("navigation", { name: "Accesos rápidos" });
+    expect(
+      within(bar)
+        .getAllByRole("link")
+        .map((link) => link.textContent)
+    ).toEqual(["Inicio", "Taller", "Ventas", "Caja"]);
+    fireEvent.click(within(bar).getByRole("button", { name: "Menú" }));
+    expect(screen.getByRole("navigation", { name: "Navegación del local" })).toBeTruthy();
+    cleanup();
+    render(<MobileNavigation role="tecnico" />);
+    const techBar = screen.getByRole("navigation", { name: "Accesos rápidos" });
+    expect(
+      within(techBar)
+        .getAllByRole("link")
+        .map((link) => link.textContent)
+    ).toEqual(["Inicio", "Taller", "Visitas", "Productos"]);
   });
 
   it("keeps the clicked mobile link mounted while navigation waits, then closes on arrival", () => {
@@ -106,11 +126,11 @@ describe("section navigation loading", () => {
     expect(link.querySelector(".nav-link-activity")).not.toBeNull();
     route.pathname = "/reparaciones-access";
     rerender(<MobileNavigation role="admin" />);
-    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Navegación del local" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Abrir menú" }));
     const active = screen.getByRole("link", { name: "Reparaciones" });
     active.addEventListener("click", (event) => event.preventDefault());
     fireEvent.click(active);
-    expect(screen.queryByRole("navigation")).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Navegación del local" })).toBeNull();
   });
 });

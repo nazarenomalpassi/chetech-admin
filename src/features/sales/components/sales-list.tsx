@@ -1,14 +1,15 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { CalendarRange, Trash2 } from "lucide-react";
+import { CalendarRange, Plus, Trash2, X } from "lucide-react";
 
 import { PaymentSplitFields } from "@/components/forms/payment-split-fields";
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
@@ -20,7 +21,7 @@ import { formatCashMethod } from "@/lib/cash";
 import type { PaymentSplit } from "@/lib/payment-splits";
 import type { PaginationMeta } from "@/lib/pagination";
 import { usePersistentFormDraft } from "@/hooks/use-persistent-form-draft";
-import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type ProductOption = {
@@ -92,6 +93,8 @@ export function SalesList({
 }) {
   const today = getLocalDateInputValue();
   const [editing, setEditing] = useState<Sale | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
   const [saleDate, setSaleDate] = useState(today);
   const [productId, setProductId] = useState(products[0]?.id ?? "");
   const [productSearch, setProductSearch] = useState(products[0]?.label ?? "");
@@ -225,6 +228,7 @@ export function SalesList({
       });
     }
     setEditing(sale);
+    setComposerOpen(true);
     setCart(nextCart);
     setProductId("");
     setProductSearch("");
@@ -237,6 +241,19 @@ export function SalesList({
     );
     setSaleDate(sale.soldAt.slice(0, 10));
     setNotes(sale.notes);
+  }
+
+  function openComposer() {
+    setComposerOpen(true);
+    window.requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      composerRef.current?.querySelector<HTMLInputElement>("#sale-product-search")?.focus();
+    });
+  }
+
+  function closeComposer() {
+    resetForm();
+    setComposerOpen(false);
   }
 
   function resetForm() {
@@ -259,41 +276,66 @@ export function SalesList({
       .join(" + ");
   }
 
+  const showComposer =
+    composerOpen || Boolean(editing) || Boolean(draft.pendingDraft) || hasUnsavedChanges;
+
   return (
     <div className="space-y-4">
-      <Card>
-        <div>
-          <h1 className="panel-heading">
-            {editing ? `Editar venta ${editing.saleNumber}` : "Nueva venta"}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Agrega productos y completa el cobro antes de guardar.
-          </p>
+      <PageHeader
+        actions={
+          !showComposer ? (
+            <Button onClick={openComposer} type="button">
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Nueva venta
+            </Button>
+          ) : null
+        }
+        description={`En esta página: ventas ${formatCurrency(totalRevenue)}, margen con costos conocidos ${formatCurrency(totalProfit)}. No es utilidad neta del local.`}
+        title="Ventas"
+      />
+
+      {message ? (
+        <div
+          aria-live="polite"
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
+        >
+          {message.message}
         </div>
+      ) : null}
 
-        {message ? (
-          <div
-            aria-live="polite"
-            className={
-              message.success
-                ? "status-banner status-banner--success mt-5"
-                : "status-banner status-banner--error mt-5"
-            }
-            role={message.success ? "status" : "alert"}
+      {draft.pendingDraft ? (
+        <DraftRecoveryBanner
+          onDiscard={draft.discardDraft}
+          onRestore={draft.restoreDraft}
+          updatedAt={draft.pendingDraft.updatedAt}
+        />
+      ) : null}
+
+      <Card className={cn("scroll-mt-20", !showComposer && "hidden")} ref={composerRef}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              {editing ? `Editar venta ${editing.saleNumber}` : "Nueva venta"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Agregá productos y completá el cobro antes de guardar.
+            </p>
+          </div>
+          <Button
+            aria-label="Cerrar el formulario"
+            onClick={closeComposer}
+            size="icon"
+            type="button"
+            variant="ghost"
           >
-            {message.message}
-          </div>
-        ) : null}
-
-        {draft.pendingDraft ? (
-          <div className="mt-5">
-            <DraftRecoveryBanner
-              onDiscard={draft.discardDraft}
-              onRestore={draft.restoreDraft}
-              updatedAt={draft.pendingDraft.updatedAt}
-            />
-          </div>
-        ) : null}
+            <X aria-hidden="true" className="h-4 w-4" />
+          </Button>
+        </div>
 
         <form action={saveSaleAction} className="mt-4 space-y-4">
           <input name="id" type="hidden" value={editing?.id ?? ""} />
@@ -591,11 +633,9 @@ export function SalesList({
                   idleLabel={editing ? "Actualizar venta" : "Guardar venta"}
                   pendingLabel={editing ? "Actualizando..." : "Guardando..."}
                 />
-                {editing ? (
-                  <Button onClick={resetForm} type="button" variant="secondary">
-                    Cancelar
-                  </Button>
-                ) : null}
+                <Button onClick={closeComposer} type="button" variant="secondary">
+                  Cancelar
+                </Button>
               </div>
               {draft.lastSavedAt && hasUnsavedChanges ? (
                 <p aria-live="polite" className="mt-3 text-sm text-muted-foreground">
@@ -608,15 +648,13 @@ export function SalesList({
       </Card>
 
       <div className="table-shell">
-        <div className="space-y-2 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <h2 className="text-base font-semibold text-foreground">Historial de ventas</h2>
-          <p className="text-sm text-muted-foreground">
-            En esta pagina: ventas {formatCurrency(totalRevenue)}, margen con costos conocidos{" "}
-            {formatCurrency(totalProfit)}. No es utilidad neta del local.
-          </p>
           {incompleteCostCount ? (
             <p className="text-sm text-muted-foreground">
-              {incompleteCostCount} venta(s) con costo desconocido, excluidas del margen.
+              {incompleteCostCount === 1
+                ? "1 venta con costo desconocido, excluida del margen."
+                : `${incompleteCostCount} ventas con costo desconocido, excluidas del margen.`}
             </p>
           ) : null}
         </div>
@@ -660,7 +698,7 @@ export function SalesList({
                     <Button onClick={() => startEdit(sale)} type="button" variant="secondary">
                       Editar
                     </Button>
-                    <ActionMenu label="Más acciones">
+                    <ActionMenu iconOnly label="Más acciones">
                       <form
                         action={deleteSaleAction}
                         onSubmit={(event) =>
@@ -739,7 +777,7 @@ export function SalesList({
                           >
                             Editar
                           </Button>
-                          <ActionMenu label="Más acciones">
+                          <ActionMenu iconOnly label="Más acciones">
                             <form
                               action={deleteSaleAction}
                               onSubmit={(event) =>
@@ -770,8 +808,8 @@ export function SalesList({
           </table>
         </div>
         {!sales.length ? (
-          <div className="empty-panel border-t border-border">
-            Cuando registres una venta, la vas a ver aca con sus productos y medios de cobro.
+          <div className="empty-panel rounded-none border-x-0 border-b-0">
+            Cuando registres una venta, la vas a ver acá con sus productos y medios de cobro.
           </div>
         ) : null}
         <PaginationNav meta={pagination} pathname="/ventas" />

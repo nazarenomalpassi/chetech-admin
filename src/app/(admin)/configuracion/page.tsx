@@ -1,5 +1,6 @@
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FiscalInvoicePanel } from "@/features/fiscal";
 import { Input } from "@/components/ui/input";
 import {
@@ -32,22 +33,22 @@ export default async function ConfiguracionPage({
 
   return (
     <div className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-foreground">Configuración</h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Exportaciones, objetivos del negocio, garantia y estado fiscal.
-        </p>
-      </header>
+      <PageHeader
+        description="Exportaciones, objetivos del negocio, garantía y estado fiscal."
+        title="Configuración"
+      />
 
       {message ? (
-        <Card>
-          <p
-            role={message.success ? "status" : "alert"}
-            className={`text-sm ${message.success ? "text-foreground" : "text-danger"}`}
-          >
-            {message.message}
-          </p>
-        </Card>
+        <p
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
+        >
+          {message.message}
+        </p>
       ) : null}
 
       {isAdmin ? (

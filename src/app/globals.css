@@ -470,6 +470,125 @@ textarea {
   @apply space-y-4 lg:space-y-5;
 }
 
+/* Cabecera de sección: título, contexto y acciones, igual en todas las pantallas. */
+.page-header {
+  @apply space-y-4;
+}
+
+.page-title {
+  @apply text-2xl leading-tight font-semibold tracking-tight text-foreground;
+  text-wrap: balance;
+}
+
+.page-description {
+  @apply mt-1.5 max-w-[68ch] text-sm leading-6 text-muted-foreground;
+  text-wrap: pretty;
+}
+
+@media (max-width: 639px) {
+  .page-actions > * {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* Barra inferior del celular: las secciones más usadas y el menú completo. */
+.mobile-quickbar-item {
+  display: flex;
+  min-height: 3.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.25rem;
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 500;
+  transition: color 120ms var(--ease-out);
+}
+
+.mobile-quickbar-item[aria-current="page"] svg,
+.mobile-quickbar-item[aria-expanded="true"] svg {
+  stroke-width: 2.4;
+}
+
+.mobile-quickbar-item:focus-visible {
+  outline: 2px solid var(--graphite);
+  outline-offset: -4px;
+  border-radius: 0.5rem;
+}
+
+/* Desplegables nativos: el marcador del navegador se reemplaza por una flecha que gira.
+   Los que ya traen su propio icono (svg) conservan el suyo. */
+details > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details > summary:not(:has(svg)) {
+  position: relative;
+  padding-right: 2rem;
+}
+
+details > summary:not(:has(svg))::after {
+  position: absolute;
+  top: 50%;
+  right: 0.75rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+  opacity: 0.6;
+  transform: translateY(-70%) rotate(45deg);
+  transition: transform 160ms var(--ease-out);
+}
+
+details[open] > summary:not(:has(svg))::after {
+  transform: translateY(-30%) rotate(225deg);
+}
+
+/* Selectores nativos con la misma flecha en todos los navegadores. */
+select:not([multiple]):not([size]) {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b6a64' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+  padding-right: 2.25rem;
+}
+
+/* Importes y números alineados en columnas. */
+.tabular,
+dd,
+output {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Los diálogos entran desde abajo en el celular y aparecen centrados en escritorio. */
+@keyframes dialog-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dialog-panel {
+  animation: dialog-rise 180ms var(--ease-out);
+}
+
+/* Enlaces de texto dentro del contenido. */
+.text-link {
+  @apply font-medium text-foreground underline decoration-border-strong underline-offset-4 transition-colors hover:decoration-foreground;
+}
+
 .panel-kicker {
   @apply text-xs font-medium text-muted-foreground;
 }
@@ -510,19 +629,20 @@ textarea {
 }
 
 .table-toolbar {
-  border-bottom: 1px solid rgba(29, 29, 27, 0.08);
-  background: #fafbf9;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-muted);
   padding: 0.875rem 1rem;
 }
 
 .empty-panel {
   border-radius: var(--radius-panel);
-  border: 1px dashed rgba(29, 29, 27, 0.15);
-  background: rgba(255, 255, 255, 0.7);
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
   padding: 1.5rem 1rem;
   font-size: 0.875rem;
   line-height: 1.5rem;
-  color: rgb(100 116 139);
+  color: var(--text-soft);
+  text-align: center;
 }
 
 .status-banner {
@@ -550,13 +670,36 @@ textarea {
 }
 
 .table-shell th {
-  background: #fafbf9;
-  color: #475569;
+  background: var(--surface-muted);
+  color: var(--text-soft);
   font-size: 0.8125rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.table-shell thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: inset 0 -1px 0 var(--line);
+}
+
+.table-shell td {
+  vertical-align: top;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-shell tbody tr {
+  transition: background-color 120ms var(--ease-out);
 }
 
 .table-shell tbody tr:hover {
-  background: #fafbf9;
+  background: var(--surface-muted);
+}
+
+.table-shell tbody tr:focus-within {
+  background: var(--surface-muted);
 }
 
 input[type="checkbox"],

@@ -5,6 +5,7 @@ import { PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { BoardFilters } from "@/features/tv-boards/components/board-filters";
 import { BoardClaimsSection } from "@/features/tv-boards/components/board-claims-section";
 import { BoardClaimDialog } from "@/features/tv-boards/components/board-claim-dialog";
@@ -54,16 +55,9 @@ export function BoardsView({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="panel-heading">Placas de televisores</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {summary.activeCount} disponibles, {summary.inactiveCount} dadas de baja. Valor
-              publicado: {formatCurrency(summary.activeValue)}.
-            </p>
-          </div>
-          {canManage ? (
+      <PageHeader
+        actions={
+          canManage ? (
             <Button
               onClick={() => {
                 setSelectedBoard(null);
@@ -73,12 +67,13 @@ export function BoardsView({
               <PackagePlus className="h-4 w-4" />
               Nueva placa
             </Button>
-          ) : (
-            <p className="text-sm text-muted-foreground">Inventario de consulta</p>
-          )}
-        </div>
-
-        <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-border py-3 lg:grid-cols-4">
+          ) : null
+        }
+        description={`${summary.activeCount} disponibles, ${summary.inactiveCount} dadas de baja. Valor publicado: ${formatCurrency(summary.activeValue)}.`}
+        title="Placas de televisores"
+      />
+      <Card>
+        <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <div className="min-w-0">
             <dt className="text-sm text-muted-foreground">Neto de ventas</dt>
             <dd className="mt-1 wrap-break-word">

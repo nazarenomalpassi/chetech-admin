@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { CalendarRange } from "lucide-react";
+import { useRef, useState } from "react";
+import { CalendarRange, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { PaginationNav } from "@/components/ui/pagination-nav";
@@ -17,7 +18,7 @@ import { ExpenseSaveForm } from "./expense-save-form";
 import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
 import { PAYMENT_METHODS } from "@/lib/payment-methods";
-import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { cn, formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 import type { PaginationMeta } from "@/lib/pagination";
 import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
@@ -55,6 +56,8 @@ export function ExpensesList({
 }) {
   const today = getLocalDateInputValue();
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
   const [linking, setLinking] = useState<Expense | null>(null);
   const [expenseDate, setExpenseDate] = useState(today);
   const totalExpenses = expenses
@@ -69,29 +72,79 @@ export function ExpensesList({
     setExpenseDate(today);
   }
 
+  function openComposer() {
+    setComposerOpen(true);
+    window.requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      composerRef.current?.querySelector<HTMLInputElement>("input[name='type']")?.focus();
+    });
+  }
+
+  function closeComposer() {
+    resetForm();
+    setComposerOpen(false);
+  }
+
+  function startEdit(expense: Expense) {
+    setEditing(expense);
+    setExpenseDate(expense.expenseDate);
+    setComposerOpen(true);
+    window.requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
+
+  const showComposer = composerOpen || Boolean(editing) || Boolean(message && !message.success);
+
   return (
     <div className="space-y-4">
-      <Card>
-        <div>
-          <h1 className="panel-heading">{editing ? "Editar gasto" : "Nuevo gasto"}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Registra el importe, la fecha y el medio de egreso.
-          </p>
-        </div>
+      <PageHeader
+        actions={
+          !showComposer ? (
+            <Button onClick={openComposer} type="button">
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Nuevo gasto
+            </Button>
+          ) : null
+        }
+        description={`En esta página: gastos ${formatCurrency(totalExpenses)}, egresos de caja ${formatCurrency(cashImpact)}.`}
+        title="Gastos"
+      />
 
-        {message ? (
-          <div
-            aria-live="polite"
-            className={
-              message.success
-                ? "status-banner status-banner--success mt-5"
-                : "status-banner status-banner--error mt-5"
-            }
-            role={message.success ? "status" : "alert"}
-          >
-            {message.message}
+      {message ? (
+        <div
+          aria-live="polite"
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
+        >
+          {message.message}
+        </div>
+      ) : null}
+
+      <Card className={cn("scroll-mt-20", !showComposer && "hidden")} ref={composerRef}>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-foreground">
+              {editing ? "Editar gasto" : "Nuevo gasto"}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Registrá el importe, la fecha y el medio de egreso.
+            </p>
           </div>
-        ) : null}
+          <Button
+            aria-label="Cerrar el formulario"
+            onClick={closeComposer}
+            size="icon"
+            type="button"
+            variant="ghost"
+          >
+            <X aria-hidden="true" className="h-4 w-4" />
+          </Button>
+        </div>
 
         <ExpenseSaveForm
           ownerId={ownerId}
@@ -207,11 +260,9 @@ export function ExpensesList({
               idleLabel={editing ? "Actualizar gasto" : "Guardar gasto"}
               pendingLabel={editing ? "Actualizando..." : "Guardando..."}
             />
-            {editing ? (
-              <Button onClick={resetForm} type="button" variant="secondary">
-                Cancelar
-              </Button>
-            ) : null}
+            <Button onClick={closeComposer} type="button" variant="secondary">
+              Cancelar
+            </Button>
           </div>
         </ExpenseSaveForm>
       </Card>
@@ -253,14 +304,10 @@ export function ExpensesList({
       ) : null}
 
       <div className="table-shell">
-        <div className="space-y-2 border-b border-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3">
           <h2 className="text-base font-semibold text-foreground">Historial de gastos</h2>
           <p className="text-sm text-muted-foreground">
-            En esta pagina: gastos {formatCurrency(totalExpenses)}, egresos de caja{" "}
-            {formatCurrency(cashImpact)}.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Vincula un pago existente para no registrarlo dos veces.
+            Vinculá un pago existente para no registrarlo dos veces.
           </p>
         </div>
         <div className="divide-y divide-border xl:hidden">
@@ -305,14 +352,7 @@ export function ExpensesList({
                 >
                   {expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}
                 </Button>
-                <Button
-                  onClick={() => {
-                    setEditing(expense);
-                    setExpenseDate(expense.expenseDate);
-                  }}
-                  type="button"
-                  variant="secondary"
-                >
+                <Button onClick={() => startEdit(expense)} type="button" variant="secondary">
                   Editar
                 </Button>
                 {canDelete ? (
@@ -382,10 +422,7 @@ export function ExpensesList({
                         {expense.repairOrderId ? "Revisar vinculo" : "Vincular pago"}
                       </Button>
                       <Button
-                        onClick={() => {
-                          setEditing(expense);
-                          setExpenseDate(expense.expenseDate);
-                        }}
+                        onClick={() => startEdit(expense)}
                         size="sm"
                         type="button"
                         variant="secondary"
@@ -393,7 +430,7 @@ export function ExpensesList({
                         Editar
                       </Button>
                       {canDelete ? (
-                        <ActionMenu label="Más acciones">
+                        <ActionMenu iconOnly label="Más acciones">
                           <form
                             action={deleteExpenseAction}
                             onSubmit={(event) =>

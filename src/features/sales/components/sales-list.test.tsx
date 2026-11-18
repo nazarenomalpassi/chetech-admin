@@ -147,7 +147,7 @@ it("totals only known margins and states how many sales were excluded", () => {
   render(<SalesList {...props} sales={[sale, boardSale]} />);
   const summary = screen.getByText(/En esta p[aá]gina:/);
   expect(summary.textContent).toContain(`margen con costos conocidos ${formatCurrency(70)}`);
-  expect(screen.getByText(/1 venta\(s\) con costo desconocido, excluidas del margen/)).toBeTruthy();
+  expect(screen.getByText(/1 venta con costo desconocido, excluida del margen/)).toBeTruthy();
 });
 
 it("keeps known zero board cost distinct from missing cost and protects known-cost board sales too", () => {

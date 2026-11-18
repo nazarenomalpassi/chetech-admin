@@ -2,10 +2,12 @@
 
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -65,7 +67,7 @@ function VisitActions({
         {canManage ? "Editar" : "Actualizar visita"}
       </Button>
       {canDelete ? (
-        <ActionMenu label="Más acciones">
+        <ActionMenu iconOnly label="Más acciones">
           <form
             action={deleteVisitAction}
             onSubmit={(event) =>
@@ -111,6 +113,7 @@ function VisitActions({
           disabled={!ready}
           idleLabel="Cambiar estado"
           pendingLabel="Guardando..."
+          variant="secondary"
         />
       </form>
     </div>
@@ -125,7 +128,7 @@ function VisitLocation({ address }: { address: string }) {
       rel="noreferrer"
       target="_blank"
     >
-      Abrir ubicacion
+      Abrir ubicación
     </a>
   );
 }
@@ -195,25 +198,24 @@ export function VisitsView({
 
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">Visitas</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Retiros, revisiones y reparaciones a domicilio.
-            </p>
-          </div>
-          {canManage ? (
+      <PageHeader
+        actions={
+          canManage ? (
             <Button
               disabled={!data.migrationReady}
               onClick={() => setEditor({ visit: null })}
               type="button"
             >
+              <Plus aria-hidden="true" className="h-4 w-4" />
               Nueva visita
             </Button>
-          ) : null}
-        </div>
-        <dl className="mt-4 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-3 text-sm">
+          ) : null
+        }
+        description="Retiros, revisiones y reparaciones a domicilio."
+        title="Visitas"
+      />
+      <Card className="p-3 sm:p-4">
+        <dl className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
           <div>
             <dt className="inline text-muted-foreground">Hoy: </dt>
             <dd className="inline font-semibold">

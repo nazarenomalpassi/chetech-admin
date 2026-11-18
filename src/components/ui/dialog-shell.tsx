@@ -81,7 +81,7 @@ export function DialogShell({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain bg-black/40 px-3 py-[calc(0.75rem+env(safe-area-inset-top))] pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:items-center sm:p-4"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-black/40 pt-[calc(2rem+env(safe-area-inset-top))] backdrop-blur-[2px] sm:items-center sm:p-4"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
@@ -90,7 +90,7 @@ export function DialogShell({
         aria-labelledby={labelledBy}
         aria-modal="true"
         className={cn(
-          "max-h-[calc(100svh-1.5rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full overflow-y-auto overscroll-contain rounded-xl border border-border bg-card p-4 shadow-pop sm:rounded-2xl sm:p-6",
+          "dialog-panel max-h-[calc(100svh-2rem-env(safe-area-inset-top))] w-full overflow-y-auto overscroll-contain rounded-t-2xl border border-border bg-card p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-pop sm:max-h-[calc(100svh-2rem)] sm:rounded-2xl sm:p-6 sm:pb-6",
           panelClassName
         )}
         ref={panelRef}

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { Input } from "@/components/ui/input";
 import { MoneyInput } from "@/components/ui/money-input";
 import { Select } from "@/components/ui/select";
@@ -144,16 +145,13 @@ export function InstallmentsView({
 
   return (
     <div className="space-y-4">
+      <PageHeader
+        description="Ventas financiadas. Cada cobro se registra en caja al pagar la cuota."
+        title="Cuotas"
+      />
       <Card className="p-4 sm:p-5">
         <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-          <div className="max-w-2xl">
-            <h1 className="text-2xl font-semibold text-foreground">Cuotas</h1>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Ventas financiadas. Cada cobro se registra en caja al pagar la cuota.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2 xl:max-w-lg xl:grid-cols-4">
+          <div className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="min-w-0 border-l border-border px-3 py-2">
               <p className="text-sm font-semibold text-muted-foreground">Ventas activas</p>
               <p className="mt-2 text-2xl font-semibold text-foreground">

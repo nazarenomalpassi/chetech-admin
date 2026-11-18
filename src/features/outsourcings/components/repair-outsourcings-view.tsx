@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Plus, Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ActionMenu } from "@/components/ui/action-menu";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { PageHeader } from "@/components/ui/page-header";
 import { FormSubmitButton } from "@/components/ui/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -28,7 +29,7 @@ import type {
   RepairOutsourcingSummary
 } from "@/features/outsourcings/queries";
 import type { ActionResult } from "@/lib/form-state";
-import { formatDate, getLocalDateInputValue } from "@/lib/utils";
+import { cn, formatDate, getLocalDateInputValue } from "@/lib/utils";
 import { confirmSubmit } from "@/components/ui/confirm-dialog";
 
 type LookupOrder = {
@@ -59,6 +60,8 @@ export function RepairOutsourcingsView({
   message: ActionResult | null;
 }) {
   const today = getLocalDateInputValue();
+  const [composerOpen, setComposerOpen] = useState(false);
+  const composerRef = useRef<HTMLDivElement>(null);
   const [orderNumber, setOrderNumber] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<LookupOrder | null>(null);
   const [sentAt, setSentAt] = useState(today);
@@ -83,6 +86,19 @@ export function RepairOutsourcingsView({
   });
   if (pagination.page > 1) params.set("page", String(pagination.page));
   const returnTo = `/terciarizaciones?${params.toString()}`;
+
+  function openComposer() {
+    setComposerOpen(true);
+    window.requestAnimationFrame(() => {
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      composerRef.current?.querySelector<HTMLInputElement>("input")?.focus();
+    });
+  }
+
+  function closeComposer() {
+    resetForm();
+    setComposerOpen(false);
+  }
 
   function resetForm() {
     setOrderNumber("");
@@ -143,47 +159,65 @@ export function RepairOutsourcingsView({
     }
   }
 
+  const showComposer =
+    composerOpen ||
+    Boolean(selectedOrder || workshopName || notes) ||
+    Boolean(message && !message.success);
+
   return (
     <div className="space-y-4">
-      <Card>
-        <div className="space-y-4">
-          <div className="max-w-3xl">
-            <h1 className="text-2xl font-semibold text-foreground">Terciarizaciones</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni
-              entrega al cliente.
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Indicadores de todo el resultado filtrado.
-            </p>
-          </div>
+      <PageHeader
+        actions={
+          !showComposer ? (
+            <Button onClick={openComposer} type="button">
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Registrar envío
+            </Button>
+          ) : null
+        }
+        description="Equipos enviados a talleres externos. Registrar costos o retornos no mueve caja ni entrega al cliente."
+        title="Terciarizaciones"
+      />
 
-          <dl className="grid grid-cols-2 gap-4 border-t border-border pt-4 sm:grid-cols-3 xl:grid-cols-6">
-            <SummaryValue label="En talleres externos" value={summary.active} />
-            <SummaryValue label="Retornadas al local" value={summary.retrieved} />
-            <SummaryValue label="Talleres" value={summary.workshops} />
-            <SummaryValue label="Enviadas hoy" value={summary.sentToday} />
-            <SummaryValue label="Promesas vencidas" value={summary.overdue} />
-            <SummaryValue label="Control pendiente" value={summary.pendingQuality} />
-          </dl>
+      {message ? (
+        <div
+          role={message.success ? "status" : "alert"}
+          aria-live="polite"
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+        >
+          {message.message}
         </div>
+      ) : null}
 
-        {message ? (
-          <div
-            role={message.success ? "status" : "alert"}
-            aria-live="polite"
-            className={
-              message.success
-                ? "status-banner status-banner--success mt-5"
-                : "status-banner status-banner--error mt-5"
-            }
-          >
-            {message.message}
+      <Card className="p-3 sm:p-4">
+        <dl className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <SummaryValue label="En talleres externos" value={summary.active} />
+          <SummaryValue label="Retornadas al local" value={summary.retrieved} />
+          <SummaryValue label="Talleres" value={summary.workshops} />
+          <SummaryValue label="Enviadas hoy" value={summary.sentToday} />
+          <SummaryValue label="Promesas vencidas" value={summary.overdue} />
+          <SummaryValue label="Control pendiente" value={summary.pendingQuality} />
+        </dl>
+      </Card>
+
+      <Card className={cn("scroll-mt-20", !showComposer && "hidden")} ref={composerRef}>
+        <form action={saveRepairOutsourcingAction} className="space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg font-semibold">Registrar envío a taller externo</h2>
+            <Button
+              aria-label="Cerrar el formulario"
+              onClick={closeComposer}
+              size="icon"
+              type="button"
+              variant="ghost"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </Button>
           </div>
-        ) : null}
-
-        <form action={saveRepairOutsourcingAction} className="mt-6 space-y-4">
-          <h2 className="text-lg font-semibold">Registrar envio a taller externo</h2>
           <input name="returnTo" type="hidden" value={returnTo} />
           <input name="repairAccessOrderId" type="hidden" value={selectedOrder?.id ?? ""} />
 
@@ -312,12 +346,10 @@ export function RepairOutsourcingsView({
           </div>
 
           <div className="flex flex-wrap justify-end gap-2">
-            {selectedOrder || workshopName || notes ? (
-              <Button onClick={resetForm} type="button" variant="secondary">
-                Limpiar
-              </Button>
-            ) : null}
-            <FormSubmitButton idleLabel="Guardar terciarizacion" pendingLabel="Guardando..." />
+            <Button onClick={closeComposer} type="button" variant="secondary">
+              Cancelar
+            </Button>
+            <FormSubmitButton idleLabel="Guardar terciarización" pendingLabel="Guardando..." />
           </div>
         </form>
       </Card>
@@ -381,11 +413,10 @@ export function RepairOutsourcingsView({
               />
             </label>
             <div className="flex flex-wrap gap-2">
-              <Button type="submit">Filtrar</Button>
-              <Link
-                className="inline-flex min-h-11 items-center underline"
-                href="/terciarizaciones"
-              >
+              <Button type="submit" variant="secondary">
+                Filtrar
+              </Button>
+              <Link className={cn(buttonVariants({ variant: "ghost" }))} href="/terciarizaciones">
                 Limpiar
               </Link>
             </div>

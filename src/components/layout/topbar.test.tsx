@@ -18,4 +18,11 @@ describe("Topbar", () => {
     expect(html).not.toContain('role="combobox"');
     expect(html).not.toContain("Buscar módulo");
   });
+
+  it("muestra la sección actual y el acceso a una orden nueva para el administrador", () => {
+    const html = renderToStaticMarkup(<Topbar role="admin" />);
+    expect(html).toContain("Inicio");
+    expect(html).toContain('href="/reparaciones-access?view=nueva"');
+    expect(renderToStaticMarkup(<Topbar role="tecnico" />)).not.toContain("Nueva orden");
+  });
 });
