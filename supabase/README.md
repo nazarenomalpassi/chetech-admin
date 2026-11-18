@@ -1,6 +1,8 @@
 # Base de datos
 
-El esquema vive en el proyecto de Supabase `chetechweb` (`sa-east-1`), compartido con la tienda online. Este repo es el dueño del esquema.
+Desde el 18/11/2026 la base del sistema corre en Railway (Supabase autoalojado, ver `docs/operations/railway.md`). El proyecto de Supabase `chetechweb` (`sa-east-1`) queda como respaldo de esa copia y lo sigue usando la tienda online hasta que se mude. Este repo es el dueño del esquema.
+
+La base de Railway no trae el historial `supabase_migrations`: lo que sigue sobre el historial se hace contra Supabase, y las migraciones nuevas se aplican en Railway desde el editor SQL de Studio.
 
 ## Estado del historial de migraciones (17/11/2026)
 
