@@ -93,3 +93,23 @@ it.each([
   );
   expect(onClose).toHaveBeenCalledOnce();
 });
+
+it("preselects the open box for a new board and lists the boxes by number", () => {
+  const boxes = [
+    { id: "11111111-1111-4111-8111-111111111111", number: 1, label: "Estante" },
+    { id: "22222222-2222-4222-8222-222222222222", number: 2, label: null }
+  ];
+  render(<BoardFormDialog boxes={boxes} defaultBoxId={boxes[1].id} onClose={vi.fn()} open />);
+  const select = screen.getByLabelText("Caja donde se guarda") as HTMLSelectElement;
+  expect(select.value).toBe(boxes[1].id);
+  expect([...select.options].map((option) => option.textContent)).toEqual([
+    "Sin caja",
+    "Caja 1: Estante",
+    "Caja 2"
+  ]);
+});
+
+it("does not show the box field while the boxes are not enabled", () => {
+  render(<BoardFormDialog onClose={vi.fn()} open />);
+  expect(screen.queryByLabelText("Caja donde se guarda")).toBeNull();
+});

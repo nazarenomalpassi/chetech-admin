@@ -7,6 +7,8 @@ export default async function PlacasTvPage({
 }: {
   searchParams: Promise<{
     search?: string;
+    brand?: string;
+    caja?: string;
     boardType?: "all" | "fuente" | "main" | "tcom" | "placa_unica";
     status?:
       | "all"
@@ -23,5 +25,17 @@ export default async function PlacasTvPage({
   const profile = await requirePermission("boards.manage");
   const data = await getTvBoardsPageData(params);
 
-  return <BoardsView {...data} canManage={profile.role === "admin"} />;
+  return (
+    <BoardsView
+      {...data}
+      canManage={profile.role === "admin"}
+      filters={{
+        search: params.search,
+        brand: params.brand,
+        boardType: params.boardType,
+        status: params.status,
+        caja: params.caja
+      }}
+    />
+  );
 }

@@ -37,6 +37,7 @@ const board: TvBoardRow = {
   brand: "LG",
   model: "Smart",
   boardType: "main",
+  boxId: null,
   price: 150000,
   acquisitionCost: null,
   isActive: false,

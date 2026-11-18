@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import {
   CircleCheck,
   MessageSquareWarning,
+  Package,
   Pencil,
   Power,
   Trash2,
@@ -16,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { deleteTvBoardAction, toggleTvBoardStatusAction } from "@/features/tv-boards/actions";
 import { BoardReleaseDialog } from "@/features/tv-boards/components/board-release-dialog";
 import { BoardSaleHistory } from "@/features/tv-boards/components/board-sale-history";
-import type { TvBoardRow } from "@/features/tv-boards/model";
+import { TV_BOARD_TYPE_LABELS, type TvBoardRow } from "@/features/tv-boards/model";
 import { getTvBoardMargin } from "@/features/tv-boards/sales";
 import type { ActionResult } from "@/lib/form-state";
 import { formatCashMethod } from "@/lib/cash";
@@ -25,12 +26,34 @@ import { confirmThen } from "@/components/ui/confirm-dialog";
 
 type TvBoard = TvBoardRow;
 
-const TYPE_LABELS: Record<TvBoard["boardType"], string> = {
-  fuente: "Fuente",
-  main: "Main",
-  tcom: "Tcom",
-  placa_unica: "Placa unica"
-};
+const TYPE_LABELS = TV_BOARD_TYPE_LABELS;
+
+/** Dónde está la placa: la respuesta que busca el buscador, siempre a la vista. */
+function BoxLocation({ number, sold }: { number: number | null | undefined; sold: boolean }) {
+  if (number == null) {
+    // Una placa vendida ya no ocupa lugar: no hace falta decir que no tiene caja.
+    if (sold) return <span className="text-sm text-muted-foreground">Vendida</span>;
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md border border-dashed border-border-strong px-2 py-0.5 text-xs font-medium text-muted-foreground">
+        <Package aria-hidden="true" className="h-3.5 w-3.5" />
+        Sin caja
+      </span>
+    );
+  }
+  return (
+    <span
+      className={
+        sold
+          ? "inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-0.5 text-xs font-medium text-muted-foreground"
+          : "inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-0.5 text-sm font-semibold text-primary-foreground"
+      }
+      title={sold ? `Estaba en la caja ${number}` : `Guardada en la caja ${number}`}
+    >
+      <Package aria-hidden="true" className="h-3.5 w-3.5" />
+      {sold ? `Estaba en caja ${number}` : `Caja ${number}`}
+    </span>
+  );
+}
 
 export function BoardTable({
   boards,
@@ -39,9 +62,14 @@ export function BoardTable({
   onSell,
   onStartClaim,
   onSaleChanged,
-  updatedVersions
+  updatedVersions,
+  boxNumbers,
+  emptyMessage = "No hay placas con estos filtros. Probá otra búsqueda o cambiá el estado."
 }: {
   boards: TvBoard[];
+  emptyMessage?: string;
+  /** Número de caja por id de caja. Si no viene, la columna de ubicación no se muestra. */
+  boxNumbers?: ReadonlyMap<string, number>;
   canManage: boolean;
   onEdit: (id: string) => void;
   onSell: (id: string) => void;
@@ -126,7 +154,7 @@ export function BoardTable({
   }
 
   function renderActions(board: TvBoard) {
-    if (!canManage) return <p className="text-sm text-muted-foreground">Solo administracion</p>;
+    if (!canManage) return <p className="text-sm text-muted-foreground">Solo administración</p>;
     const disabled =
       isPending || Boolean(releaseBoard) || (updatedVersions?.[board.id] ?? 0) > board.version;
     const canRelease =
@@ -247,6 +275,14 @@ export function BoardTable({
       <div className="divide-y divide-border xl:hidden">
         {boards.map((board) => (
           <article className="bg-card p-4" key={board.id}>
+            {boxNumbers && (board.boxId || !board.isSold) ? (
+              <div className="mb-2">
+                <BoxLocation
+                  number={board.boxId ? boxNumbers.get(board.boxId) : null}
+                  sold={board.isSold}
+                />
+              </div>
+            ) : null}
             <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-semibold wrap-break-word text-foreground">
@@ -300,6 +336,7 @@ export function BoardTable({
         <table className="min-w-full text-sm">
           <thead className="bg-muted text-left text-muted-foreground">
             <tr>
+              {boxNumbers ? <th className="px-4 py-3 font-medium">Ubicación</th> : null}
               <th className="px-4 py-3 font-medium">Placa</th>
               <th className="px-4 py-3 font-medium">Precio publicado</th>
               <th className="px-4 py-3 font-medium">Neto, costo y margen</th>
@@ -311,6 +348,14 @@ export function BoardTable({
           <tbody>
             {boards.map((board) => (
               <tr className="border-t border-border bg-card align-top" key={board.id}>
+                {boxNumbers ? (
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <BoxLocation
+                      number={board.boxId ? boxNumbers.get(board.boxId) : null}
+                      sold={board.isSold}
+                    />
+                  </td>
+                ) : null}
                 <td className="px-4 py-3">
                   <p className="font-medium wrap-break-word text-foreground">
                     {board.brand} {board.model}
@@ -350,11 +395,7 @@ export function BoardTable({
           </tbody>
         </table>
       </div>
-      {!boards.length ? (
-        <div className="empty-panel">
-          No hay placas con estos filtros. Probá otra busqueda o cambia el estado.
-        </div>
-      ) : null}
+      {!boards.length ? <div className="empty-panel">{emptyMessage}</div> : null}
       {releaseBoard ? (
         <BoardReleaseDialog
           board={releaseBoard}

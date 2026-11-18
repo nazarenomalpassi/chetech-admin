@@ -25,6 +25,7 @@ const board: TvBoardRow = {
   brand: "BGH",
   model: "Main",
   boardType: "main",
+  boxId: null,
   price: 100,
   acquisitionCost: 50,
   releaseEvidence: "unsold",

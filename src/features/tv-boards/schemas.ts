@@ -6,8 +6,13 @@ export const TV_BOARD_TYPES = [
   { label: "Fuente", value: "fuente" },
   { label: "Main", value: "main" },
   { label: "Tcom", value: "tcom" },
-  { label: "Placa unica", value: "placa_unica" }
+  { label: "Placa única", value: "placa_unica" }
 ] as const;
+
+const optionalUuid = z.preprocess(
+  (value) => (value === "" || value === "none" ? null : value),
+  z.string().uuid("Seleccioná una caja válida").nullable()
+);
 
 export const tvBoardSchema = z.object({
   id: z.string().uuid().optional(),
@@ -26,11 +31,17 @@ export const tvBoardSchema = z.object({
       .max(9999999999.99)
       .nullable()
   ),
-  isActive: z.boolean().default(true)
+  isActive: z.boolean().default(true),
+  /** Caja donde se guarda la placa. Sin caja: null. Si no viene, no se toca. */
+  boxId: optionalUuid.optional()
 });
 
 export const tvBoardFiltersSchema = z.object({
   search: z.string().optional(),
+  /** Marca normalizada (minúsculas, sin espacios extremos). */
+  brand: z.string().optional(),
+  /** Número de caja, o "sin" para las placas sin caja. */
+  caja: z.string().optional(),
   boardType: z.enum(["all", "fuente", "main", "tcom", "placa_unica"]).default("all"),
   status: z
     .enum([
@@ -57,5 +68,16 @@ export const tvBoardSaleSchema = z.object({
     .optional()
 });
 
+export const tvBoardBoxSchema = z.object({
+  id: z.string().uuid().optional(),
+  label: z
+    .string()
+    .trim()
+    .max(80, "La descripción puede tener hasta 80 caracteres")
+    .optional()
+    .transform((value) => (value ? value : null))
+});
+
 export type TvBoardFormValues = z.infer<typeof tvBoardSchema>;
+export type TvBoardBoxFormValues = z.input<typeof tvBoardBoxSchema>;
 export type TvBoardSaleFormValues = z.infer<typeof tvBoardSaleSchema>;

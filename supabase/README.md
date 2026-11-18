@@ -49,6 +49,7 @@ Genera `src/lib/db/database.types.ts` con las tablas y funciones del esquema `pu
   - `20261117220926_workshop_today.sql`: función de solo lectura `get_workshop_today()` del inicio "Hoy en el taller". Reversión: `drop function public.get_workshop_today(); drop function private.get_workshop_today();`.
   - `20261117220945_drop_duplicate_workshop_order_index.sql`: quita un índice idéntico a `repair_access_orders_created_at_id_idx`. Reversión: recrear `workshop_orders_creation_idx` sobre `(created_at desc, id desc)`.
   - `20261118134155_dashboard_daily_cash.sql` (aplicada el 18/11/2026): función de solo lectura `get_dashboard_daily_cash(p_start, p_end)` para el gráfico de ingresos y egresos del inicio. Reversión: `drop function public.get_dashboard_daily_cash(timestamptz, timestamptz);`.
+  - `20261118143122_tv_board_boxes.sql` (aplicada el 18/11/2026): organizador de placas por cajas. Tabla `tv_board_boxes` (número único y descripción opcional, RLS solo administración), columna opcional `tv_boards.box_id` (al borrar una caja queda en nulo) y función `create_tv_board_box(p_label)`, que asigna el número siguiente con un bloqueo transaccional. No cambia datos existentes. Reversión: `drop function public.create_tv_board_box(text); alter table public.tv_boards drop column box_id; drop table public.tv_board_boxes;`.
 - Pendientes de aplicar: ninguna.
 
 ## Ajustes que no son SQL

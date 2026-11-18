@@ -64,3 +64,24 @@ it("associates each external label with a unique filter control", () => {
     expect(container.querySelector(`label[for="${control.id}"]`)).toBeTruthy();
   }
 });
+
+it("filters by brand and keeps the open box while searching inside it", () => {
+  navigation.params = new URLSearchParams("caja=2");
+  render(
+    <BoardFilters
+      brands={[
+        { value: "lg", label: "LG" },
+        { value: "samsung", label: "Samsung" }
+      ]}
+    />
+  );
+  fireEvent.change(screen.getByLabelText("Filtrar placas por marca"), {
+    target: { value: "samsung" }
+  });
+  expect(navigation.replace).toHaveBeenLastCalledWith("/placas-tv?caja=2&brand=samsung");
+  fireEvent.change(screen.getByLabelText("Buscar placas"), { target: { value: "BN44" } });
+  act(() => {
+    vi.advanceTimersByTime(650);
+  });
+  expect(navigation.replace).toHaveBeenLastCalledWith("/placas-tv?caja=2&search=BN44");
+});
