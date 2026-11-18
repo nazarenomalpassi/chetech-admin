@@ -337,28 +337,26 @@ export function RepairAccessWorkshopCard({
             data-workshop-contact-actions="true"
             className={canManageIntake ? "hidden shrink-0 grid-cols-2 gap-2 lg:grid" : "hidden"}
           >
-            <RepairAccessWhatsAppButton
-              label="WhatsApp"
-              labelClassName="@max-[27rem]:sr-only"
-              order={order}
-              size="sm"
-            />
             {phone ? (
-              <a
-                className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
-                href={`tel:${phone.replace(/\D+/g, "")}`}
-                title={`Llamar al ${phone}`}
-              >
-                <Phone aria-hidden="true" className="h-4 w-4" />
-                <span className="@max-[27rem]:sr-only">Llamar</span>
-              </a>
+              <>
+                <RepairAccessWhatsAppButton
+                  label="WhatsApp"
+                  labelClassName="@max-[27rem]:sr-only"
+                  order={order}
+                  size="sm"
+                />
+                <a
+                  className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+                  href={`tel:${phone.replace(/\D+/g, "")}`}
+                  title={`Llamar al ${phone}`}
+                >
+                  <Phone aria-hidden="true" className="h-4 w-4" />
+                  <span className="@max-[27rem]:sr-only">Llamar</span>
+                </a>
+              </>
             ) : (
-              <span
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "cursor-not-allowed opacity-50"
-                )}
-              >
+              // Sin teléfono no hay a quién escribir ni llamar: un aviso, no dos botones apagados.
+              <span className="col-span-2 self-center text-sm text-muted-foreground">
                 Sin teléfono
               </span>
             )}

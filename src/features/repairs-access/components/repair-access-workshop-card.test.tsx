@@ -644,6 +644,23 @@ describe("RepairAccessWorkshopCard", () => {
     expect(html).toMatch(/data-workshop-contact-actions="true"[^>]*class="[^"]*hidden[^"]*lg:grid/);
   });
 
+  it("sin teléfono muestra un solo aviso en lugar de dos botones apagados", () => {
+    render(
+      <RepairAccessWorkshopCard
+        canManageIntake
+        onEdit={() => undefined}
+        onOpenDetail={() => undefined}
+        order={{
+          ...order,
+          customer: { ...order.customer, phone: "", phoneNormalized: "", alternatePhone: "" }
+        }}
+      />
+    );
+    const contacts = document.querySelector('[data-workshop-contact-actions="true"]')!;
+    expect(contacts.textContent).toBe("Sin teléfono");
+    expect(contacts.querySelector("a")).toBeNull();
+  });
+
   it("en columnas angostas deja WhatsApp y Llamar con ícono sin perder el nombre", () => {
     render(
       <RepairAccessWorkshopCard
