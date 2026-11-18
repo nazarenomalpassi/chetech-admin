@@ -67,6 +67,28 @@ describe("manual repair receipt sharing", () => {
     expect(button.closest("details")).toBeNull();
   });
 
+  it("lays out by the card width so the recipient never shrinks to a one-letter column", () => {
+    render(
+      <RepairDocumentShareActions
+        order={{ ...order, deliveredAt: "2026-10-21T12:00:00Z" }}
+        canManageIntake
+      />
+    );
+    const section = screen.getByRole("region", { name: "Comprobantes por WhatsApp" });
+    expect(section.className).toContain("@container");
+    const recipient = screen.getByText(/Destinatario: Cliente Ejemplo/);
+    const row = recipient.parentElement!.parentElement!;
+    // La fila solo se pone en línea cuando el recuadro mide al menos 42rem, no por el ancho
+    // de la pantalla: en una tarjeta de 350 px el destinatario va arriba de los botones.
+    expect(row.className).toContain("@2xl:flex-row");
+    expect(row.className).not.toMatch(/(^|\s)(sm|md|lg|xl):flex-row/);
+    for (const name of [intakeLabel, deliveryLabel]) {
+      const form = screen.getByRole("button", { name }).closest("form")!;
+      expect(form.className).toContain("flex-auto");
+      expect(form.parentElement!.className).toContain("flex-wrap");
+    }
+  });
+
   it("does not infer a pickup or payment from the retired status", () => {
     const retiredOrder = { ...order, status: "retirado" };
     render(<RepairDocumentShareActions order={retiredOrder} canManageIntake />);

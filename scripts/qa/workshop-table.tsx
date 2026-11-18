@@ -92,7 +92,10 @@ const orders = [
 
 const noop = () => undefined;
 const markup = renderToStaticMarkup(
-  <main className="admin-main page-shell mx-auto max-w-[1180px] p-4">
+  <main
+    className="admin-main page-shell mx-auto p-4"
+    style={{ maxWidth: process.env.QA_WIDTH ? `${process.env.QA_WIDTH}px` : "1180px" }}
+  >
     <RepairAccessOrdersSection
       canManageIntake
       initialPresentation={process.env.QA_CARDS ? "cards" : "table"}

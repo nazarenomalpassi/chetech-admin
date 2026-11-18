@@ -32,7 +32,8 @@ export function RepairAccessWhatsAppButton({
   size = "sm",
   variant = "secondary",
   label,
-  className
+  className,
+  labelClassName
 }: {
   order: RepairAccessOrderRecord;
   kind?: RepairAccessWhatsAppKind;
@@ -40,6 +41,8 @@ export function RepairAccessWhatsAppButton({
   variant?: "default" | "secondary" | "ghost";
   label?: string;
   className?: string;
+  /** Clase del texto del botón, para ocultarlo (sin quitarlo del nombre accesible) en lugares angostos. */
+  labelClassName?: string;
 }) {
   const whatsappOrder = toWhatsAppOrder(order);
   const template = getRepairAccessWhatsAppTemplate(whatsappOrder, kind);
@@ -68,7 +71,11 @@ export function RepairAccessWhatsAppButton({
       title={template.message}
     >
       <MessageCircle aria-hidden="true" className="h-4 w-4" />
-      {label ?? template.label}
+      {labelClassName ? (
+        <span className={labelClassName}>{label ?? template.label}</span>
+      ) : (
+        (label ?? template.label)
+      )}
     </a>
   );
 }

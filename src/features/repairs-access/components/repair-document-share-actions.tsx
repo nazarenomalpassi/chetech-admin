@@ -79,9 +79,11 @@ export function RepairDocumentShareActions({
   return (
     <section
       aria-label="Comprobantes por WhatsApp"
-      className="min-w-0 space-y-2 border-t border-border pt-3"
+      className="@container min-w-0 space-y-2 border-t border-border pt-3"
     >
-      <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+      {/* Se acomoda al ancho de la tarjeta, no al de la pantalla: en una columna angosta
+          el destinatario va arriba y los botones debajo, nunca apretados al costado. */}
+      <div className="flex min-w-0 flex-col gap-2 @2xl:flex-row @2xl:items-center @2xl:justify-between">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium wrap-break-word text-foreground">
             Destinatario: {order.customer.fullName} -{" "}
@@ -91,7 +93,7 @@ export function RepairDocumentShareActions({
             Se envía desde WhatsApp Web del local; confirmá Enviar.
           </p>
         </div>
-        <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+        <div className="flex min-w-0 flex-wrap gap-2 @2xl:shrink-0 @2xl:justify-end">
           {kinds.map((kind) => (
             <form
               key={kind}
@@ -99,7 +101,7 @@ export function RepairDocumentShareActions({
               action={endpoint}
               target="_blank"
               rel="noopener"
-              className="min-w-0 sm:flex-1 lg:flex-none"
+              className="min-w-0 flex-auto @2xl:flex-none"
             >
               <input type="hidden" name="orderId" value={order.id} />
               <input type="hidden" name="kind" value={kind} />
@@ -108,7 +110,7 @@ export function RepairDocumentShareActions({
                 type="submit"
                 variant="secondary"
                 size="sm"
-                className="w-full whitespace-normal lg:w-auto"
+                className="w-full whitespace-normal @2xl:w-auto"
                 disabled={!hasValidPhone || revoking !== null}
                 aria-describedby={hasValidPhone ? helpId : `${helpId} ${phoneHelpId}`}
               >

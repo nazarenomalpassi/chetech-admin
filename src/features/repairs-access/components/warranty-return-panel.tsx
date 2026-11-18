@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { LazyDisclosure } from "@/components/ui/lazy-disclosure";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { formatDate } from "@/lib/utils";
+import { cn, formatDate } from "@/lib/utils";
 import type { RepairAccessOrderRecord } from "../queries";
 import { getOperationalDate, toWarrantyDateOnly } from "../warranty";
 import { saveWarrantyReturn, startWarrantyReturn } from "../warranty-actions";
@@ -65,7 +65,11 @@ export function WarrantyReturnPanel({
   return (
     <section
       aria-label="Garantía de la orden"
-      className="min-w-0 space-y-3 rounded-xl border border-border-strong bg-muted p-4"
+      className={cn(
+        "min-w-0 space-y-3 rounded-xl border border-border-strong bg-muted",
+        // Solo con "Registrar reingreso" el recuadro queda del alto de un botón, sin aire doble.
+        active || history.length ? "p-4" : "px-1 py-0.5"
+      )}
     >
       {active ? <WarrantyReturnCase key={active.id} record={active} canManage={canManage} /> : null}
       {canStart ? (

@@ -330,19 +330,27 @@ export function RepairAccessWorkshopCard({
           />
         </LazyDisclosure>
 
-        <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+        {/* El pie se acomoda al ancho de la tarjeta: en columnas angostas WhatsApp y Llamar
+            quedan solo con el ícono para que "Ficha completa" no se salga. */}
+        <div className="@container flex items-center justify-between gap-2 border-t border-border pt-3">
           <div
             data-workshop-contact-actions="true"
             className={canManageIntake ? "hidden shrink-0 grid-cols-2 gap-2 lg:grid" : "hidden"}
           >
-            <RepairAccessWhatsAppButton label="WhatsApp" order={order} size="sm" />
+            <RepairAccessWhatsAppButton
+              label="WhatsApp"
+              labelClassName="@max-[27rem]:sr-only"
+              order={order}
+              size="sm"
+            />
             {phone ? (
               <a
                 className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
                 href={`tel:${phone.replace(/\D+/g, "")}`}
+                title={`Llamar al ${phone}`}
               >
                 <Phone aria-hidden="true" className="h-4 w-4" />
-                Llamar
+                <span className="@max-[27rem]:sr-only">Llamar</span>
               </a>
             ) : (
               <span
@@ -359,6 +367,7 @@ export function RepairAccessWorkshopCard({
           {canManageIntake ? (
             <div className="ml-auto flex items-center gap-2">
               <Button
+                className="whitespace-nowrap"
                 onClick={() => onOpenDetail(order)}
                 size="sm"
                 type="button"
