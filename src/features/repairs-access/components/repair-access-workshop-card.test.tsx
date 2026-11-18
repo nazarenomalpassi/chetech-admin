@@ -308,7 +308,7 @@ describe("RepairAccessWorkshopCard", () => {
       expect(screen.getByText(activeReturn.issueReported)).toBeTruthy();
       expect(screen.getByText("Falla original")).toBeTruthy();
       expect(screen.getByText(order.issueReported)).toBeTruthy();
-      expect(screen.queryByText("Corregir garantia")).toBeNull();
+      expect(screen.queryByText("Corregir garantía")).toBeNull();
       expect(screen.queryByText("Actualizar trabajo")).toBeNull();
       const details = screen.getByText("Actualizar reingreso").closest("details")!;
       details.open = true;
@@ -373,7 +373,7 @@ describe("RepairAccessWorkshopCard", () => {
         }}
       />
     );
-    expect(screen.getByText("Corregir garantia")).toBeTruthy();
+    expect(screen.getByText("Corregir garantía")).toBeTruthy();
     const send = screen.getByRole("button", { name: "Enviar pago y garant\u00eda" });
     expect(send.closest("details")).toBeNull();
     expect(send.closest("form")?.parentElement?.closest("form")).toBeNull();
@@ -441,7 +441,7 @@ describe("RepairAccessWorkshopCard", () => {
       expect(screen.queryByRole("button", { name: "Editar ingreso" })).toBeNull();
       expect(Boolean(screen.queryByText("Registrar reingreso por garantía"))).toBe(canManageIntake);
       if (canManageIntake) {
-        const correction = screen.getByText("Corregir garantia").closest("details")!;
+        const correction = screen.getByText("Corregir garantía").closest("details")!;
         correction.open = true;
         fireEvent(correction, new Event("toggle"));
         expect(screen.getByLabelText("Motivo de la correccion de garantía")).toBeTruthy();
@@ -612,7 +612,7 @@ describe("RepairAccessWorkshopCard", () => {
       const notice = screen.getByRole("note", { name: "Antes de marcar listo para retirar" });
       if (status === "ordered") {
         expect(notice.textContent).toContain("Repuestos pendientes de recibir");
-        expect(notice.textContent).toContain("recepcion");
+        expect(notice.textContent).toContain("recepción");
       } else expect(notice.textContent).not.toContain("Repuestos pendientes");
     }
   );
@@ -658,7 +658,7 @@ describe("RepairAccessWorkshopCard", () => {
     fireEvent(details, new Event("toggle"));
     expect(screen.getByLabelText(/^Presupuesto · visible para el cliente/)).toBeTruthy();
     expect(screen.getByLabelText("Detalle del presupuesto · visible para el cliente")).toBeTruthy();
-    expect(screen.getByLabelText("Avance de reparacion · visible para el cliente")).toBeTruthy();
+    expect(screen.getByLabelText("Avance de reparación · visible para el cliente")).toBeTruthy();
     const portal = screen.getByText("Portal del cliente").closest("details")!;
     portal.open = true;
     fireEvent(portal, new Event("toggle"));

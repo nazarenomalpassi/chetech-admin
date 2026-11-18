@@ -135,11 +135,11 @@ export function BoardSaleDialog({ board, open, onClose }: BoardSaleDialogProps) 
 
           <div>
             <label className="mb-2 block text-sm font-medium text-body" htmlFor="releaseDate">
-              Fecha prevista de liberacion
+              Fecha prevista de liberación
             </label>
             <Input id="releaseDate" type="date" {...form.register("releaseDate")} />
             <p className="mt-2 text-sm text-muted-foreground">
-              La fecha no confirma el deposito. Confirma la liberacion cuando Mercado Pago la
+              La fecha no confirma el deposito. Confirmá la liberación cuando Mercado Pago la
               informe.
             </p>
             <p className="mt-1 text-sm text-danger">{form.formState.errors.releaseDate?.message}</p>

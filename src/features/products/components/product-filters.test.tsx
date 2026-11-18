@@ -26,7 +26,7 @@ describe("URL-driven product controls", () => {
     const disclosure = screen.getByText("Más opciones").closest("details")!;
     expect(disclosure.open).toBe(false);
     expect(screen.getByLabelText("Ordenar por").closest("details")).toBe(disclosure);
-    expect(screen.getByLabelText("Productos por pagina").closest("details")).toBe(disclosure);
+    expect(screen.getByLabelText("Productos por página").closest("details")).toBe(disclosure);
     expect(screen.getByLabelText("Buscar productos").closest("details")).toBeNull();
     fireEvent.click(screen.getByText("Más opciones"));
     expect(disclosure.open).toBe(true);
@@ -68,7 +68,7 @@ describe("URL-driven product controls", () => {
     rerender(<ProductFilters categories={categories} />);
     expect((screen.getByLabelText("Estado") as HTMLSelectElement).value).toBe("inactive");
     expect((screen.getByLabelText("Ordenar por") as HTMLSelectElement).value).toBe("stock");
-    expect((screen.getByLabelText("Productos por pagina") as HTMLSelectElement).value).toBe("50");
+    expect((screen.getByLabelText("Productos por página") as HTMLSelectElement).value).toBe("50");
   });
   it("keeps newer keystrokes and trailing spaces when an older request returns", () => {
     const { rerender } = render(<ProductFilters categories={categories} />);

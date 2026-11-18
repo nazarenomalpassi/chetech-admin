@@ -140,9 +140,9 @@ export function RepairPaymentsPanel({
   }
   return (
     <Card>
-      <section aria-label="Cobros acumulativos de la reparacion">
+      <section aria-label="Cobros acumulativos de la reparación">
         <h2 className="text-lg font-semibold">
-          Cobros de la reparacion
+          Cobros de la reparación
           {orderNumber ? (
             <span className="mt-1 block text-base wrap-break-word">{orderNumber}</span>
           ) : null}
@@ -270,7 +270,7 @@ export function RepairPaymentsPanel({
                 syncAmountWithTotal={false}
               />
               <p className="text-sm text-muted-foreground">
-                Indica solo el importe recibido. Puede ser menor al saldo pendiente.
+                Indicá solo el importe recibido. Puede ser menor al saldo pendiente.
               </p>
               <label className="block text-sm">
                 Fecha de cobro
@@ -307,7 +307,7 @@ export function RepairPaymentsPanel({
           </form>
         ) : (
           <p className="mt-4 rounded-xl bg-success-soft p-3 text-sm text-success">
-            Esta reparacion ya esta cobrada. Los pagos incorrectos se corrigen desde el historial.
+            Esta reparación ya esta cobrada. Los pagos incorrectos se corrigen desde el historial.
           </p>
         )}
         <h3 className="mt-5 border-t border-border pt-4 font-semibold">Pagos registrados</h3>
@@ -382,7 +382,7 @@ export function RepairPaymentsPanel({
               pagos no se eliminan.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
-              La correccion usa la fecha actual y conserva el historial. No es una devolucion al
+              La correccion usa la fecha actual y conserva el historial. No es una devolución al
               cliente. Los pagos historicos sin respaldo requieren conciliacion.
             </p>
             <form action={reverseRepairPaymentAction} className="mt-5 space-y-4">

@@ -338,7 +338,7 @@ export function RepairAccessNewOrderWizard({
         </div>
         {editing ? (
           <Button className="w-full sm:w-auto" onClick={onCancel} type="button" variant="secondary">
-            Cancelar edicion
+            Cancelar edición
           </Button>
         ) : null}
       </div>
@@ -370,7 +370,7 @@ export function RepairAccessNewOrderWizard({
         <input name="customerId" type="hidden" value={customerForm.id} />
         <input name="deviceId" type="hidden" value={editing?.device.id ?? ""} />
 
-        <section aria-label="Ficha de recepcion" className="grid gap-4 sm:grid-cols-6">
+        <section aria-label="Ficha de recepción" className="grid gap-4 sm:grid-cols-6">
           <Field
             className="relative min-w-0 sm:col-span-3"
             htmlFor="customerName"
@@ -593,7 +593,7 @@ export function RepairAccessNewOrderWizard({
               options={repairAccessIntakeStatusOptions}
             />
           </Field>
-          <Field className="lg:col-span-6" label="Observaciones internas de recepcion">
+          <Field className="lg:col-span-6" label="Observaciones internas de recepción">
             <Textarea
               defaultValue={restoredValue("notes", editing?.notes ?? "")}
               name="notes"
@@ -602,7 +602,7 @@ export function RepairAccessNewOrderWizard({
           </Field>
           <p className="text-sm leading-6 text-muted-foreground lg:col-span-6">
             Si elegis un cliente existente, solo se copian sus datos personales. El equipo, la falla
-            y la reparacion siempre se cargan como una orden nueva.
+            y la reparación siempre se cargan como una orden nueva.
           </p>
         </OptionalFields>
 

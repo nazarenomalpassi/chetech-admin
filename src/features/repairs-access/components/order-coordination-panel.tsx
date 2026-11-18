@@ -224,7 +224,7 @@ export function OrderCoordinationPanel({
               className={buttonVariants({ variant: "secondary" })}
               href={`/facturacion?order=${order.id}`}
             >
-              Facturar esta reparacion
+              Facturar esta reparación
             </a>
           </div>
           <DocumentDeliveryStatus
@@ -333,14 +333,14 @@ export function OrderCoordinationPanel({
                 />
               </DialogField>
               <p className="text-xs text-muted-foreground">
-                Se registra el usuario, la fecha y el presupuesto exacto. Esta accion no registra un
+                Se registra el usuario, la fecha y el presupuesto exacto. Esta acción no registra un
                 cobro.
               </p>
             </>
           ) : null}
           {modal === "part" ? (
             <>
-              <DialogField label="Repuesto / codigo / equipo compatible">
+              <DialogField label="Repuesto / código / equipo compatible">
                 <Input
                   autoFocus
                   name="description"
@@ -411,7 +411,7 @@ export function OrderCoordinationPanel({
                   placeholder="Ej: Taller, estante 2"
                 />
               </DialogField>
-              <DialogField label="Fecha de proxima revision">
+              <DialogField label="Fecha de próxima revisión">
                 <Input
                   name="nextActionDate"
                   type="date"
@@ -611,7 +611,7 @@ export function PartManagementDialog({
               ? [{ value: "receive", label: "Recibir repuestos" }]
               : []),
             ...(part.receivedQuantity > part.installedQuantity
-              ? [{ value: "install", label: "Registrar uso en reparacion" }]
+              ? [{ value: "install", label: "Registrar uso en reparación" }]
               : []),
             ...(canManage && part.installedQuantity === 0
               ? [{ value: "cancel", label: "Cancelar solicitud" }]
@@ -646,7 +646,7 @@ export function PartManagementDialog({
         </>
       )}
       {["receive", "reserve", "install"].includes(action) ? (
-        <DialogField label="Cantidad en esta operacion">
+        <DialogField label="Cantidad en esta operación">
           <Input name="quantity" type="number" min={1} step={1} defaultValue={1} required />
         </DialogField>
       ) : (
@@ -663,7 +663,7 @@ export function PartManagementDialog({
       </DialogField>
       {action === "order" ? (
         <p className="text-xs text-muted-foreground">
-          La compra no registra un pago automatico. Registra el egreso real en Gastos cuando
+          La compra no registra un pago automatico. Registrá el egreso real en Gastos cuando
           corresponda.
         </p>
       ) : null}

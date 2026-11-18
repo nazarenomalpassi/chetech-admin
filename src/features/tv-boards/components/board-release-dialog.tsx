@@ -138,14 +138,14 @@ export function BoardReleaseDialog({
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="text-xl font-semibold text-foreground" id={`${id}-title`}>
-            Confirmar liberacion
+            Confirmar liberación
           </h2>
           <p className="mt-2 font-medium wrap-break-word text-foreground">
             {board.brand} {board.model}
           </p>
         </div>
         <Button
-          aria-label="Cerrar liberacion"
+          aria-label="Cerrar liberación"
           className="h-11 w-11 flex-none p-0"
           disabled={isPending}
           onClick={requestClose}
@@ -156,7 +156,7 @@ export function BoardReleaseDialog({
         </Button>
       </div>
       <p className="mt-3 text-sm leading-6 text-muted-foreground" id={`${id}-outcome`}>
-        Registra el neto recibido despues de las retenciones de MercadoLibre. Se crea una venta
+        Registrá el neto recibido despues de las retenciones de MercadoLibre. Se crea una venta
         numerada con el detalle de la placa y un movimiento de caja en la cuenta elegida, sin
         descontar stock de productos.
       </p>
@@ -190,7 +190,7 @@ export function BoardReleaseDialog({
               if (!needsRefresh) setMessage("");
             }}
             options={[
-              { value: "", label: "Selecciona una cuenta" },
+              { value: "", label: "Seleccioná una cuenta" },
               { value: "nx", label: "NX SANTI" },
               { value: "mp", label: "NX LOCAL" }
             ]}

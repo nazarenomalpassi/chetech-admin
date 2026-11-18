@@ -209,7 +209,7 @@ export function DashboardOverview({
               }
             >
               <p className="text-sm text-muted-foreground">
-                Saldos actuales, no del periodo filtrado.
+                Saldos actuales, no del período filtrado.
               </p>
 
               <div className="mt-4 space-y-3">

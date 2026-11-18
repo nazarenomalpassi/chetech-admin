@@ -164,7 +164,7 @@ export function ReplenishmentView({
 
         {!data.migrationReady ? (
           <p className="status-banner status-banner--error mt-5">
-            Falta activar la migracion de planificacion.
+            Falta activar la migración de planificacion.
           </p>
         ) : null}
         {message ? (
@@ -200,7 +200,7 @@ export function ReplenishmentView({
             </Link>
           </div>
           <p className="text-sm text-muted-foreground">
-            Los repuestos de una reparacion se gestionan en su orden, no en este pedido mensual.
+            Los repuestos de una reparación se gestionan en su orden, no en este pedido mensual.
           </p>
         </div>
 

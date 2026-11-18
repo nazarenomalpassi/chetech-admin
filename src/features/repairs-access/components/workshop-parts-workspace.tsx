@@ -260,7 +260,7 @@ export function WorkshopPartsWorkspace({
                 Reclamos al proveedor
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Separados de la garantia del cliente. No generan devoluciones de dinero ni
+                Separados de la garantía del cliente. No generan devoluciones de dinero ni
                 movimientos de stock.
               </p>
             </div>

@@ -437,7 +437,7 @@ export function SalesList({
                       ))
                     ) : (
                       <p className="px-3 py-3 text-sm text-muted-foreground">
-                        Sin resultados. Proba otro nombre o SKU.
+                        Sin resultados. Probá otro nombre o SKU.
                       </p>
                     )}
                   </div>

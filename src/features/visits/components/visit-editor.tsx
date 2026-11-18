@@ -182,7 +182,7 @@ export function VisitEditor({
               <>
                 <input name="repairAccessOrderId" type="hidden" value={visit.repairAccessOrderId} />
                 <p className="col-span-full text-sm text-muted-foreground">
-                  Se conserva la reparacion vinculada.
+                  Se conserva la reparación vinculada.
                 </p>
               </>
             ) : (

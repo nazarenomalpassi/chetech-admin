@@ -181,7 +181,7 @@ export function InstallmentsView({
 
         {!data.migrationReady ? (
           <p className="mt-4 rounded-2xl bg-warning-soft px-4 py-3 text-sm text-warning">
-            Falta ejecutar la migracion de cuotas en Supabase para activar este modulo.
+            Falta ejecutar la migración de cuotas en Supabase para activar este modulo.
           </p>
         ) : null}
 

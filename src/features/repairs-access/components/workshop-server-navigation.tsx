@@ -148,7 +148,7 @@ export function WorkshopServerNavigation({
       <div className="flex flex-wrap gap-2">
         {pageInfo.cursor ? (
           <Button variant="secondary" type="button" onClick={first}>
-            Primera pagina
+            Primera página
           </Button>
         ) : null}
         <Button variant="secondary" type="button" disabled={!pageInfo.nextCursor} onClick={next}>

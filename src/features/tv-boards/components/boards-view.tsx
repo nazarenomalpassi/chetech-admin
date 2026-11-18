@@ -119,7 +119,7 @@ export function BoardsView({
         </dl>
         <p className="mt-3 text-sm text-muted-foreground">
           Totales globales, independientes de los filtros. Una fecha prevista no confirma un
-          deposito ni mueve caja.
+          depósito ni mueve caja.
         </p>
         <details className="mt-1">
           <summary className="flex min-h-11 w-fit cursor-pointer items-center rounded-lg px-2 text-sm font-medium text-body focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden">

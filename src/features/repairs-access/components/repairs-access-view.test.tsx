@@ -367,7 +367,7 @@ describe("workshop section navigation", () => {
         .getAllByRole("button")
         .filter((button) => !button.closest("details"))
         .map((button) => button.textContent)
-    ).toEqual(["Órdenes", "Garantías (0)", "Repuestos", "Métricas", "Nueva orden", "Clientes"]);
+    ).toEqual(["Órdenes", "Garantías (0)", "Repuestos", "Métricas", "Clientes", "Nueva orden"]);
     fireEvent.click(within(nav).getByText("Más opciones"));
     expect(more?.open).toBe(true);
     expect(within(nav).getByRole("button", { name: "Resumen" })).toBeTruthy();
@@ -670,9 +670,11 @@ describe("workshop section navigation", () => {
     expect(wizardEditing.mock.calls.at(-1)![0]).toBe(order);
   });
 
-  it("integrates the list's direct new-order callback", () => {
+  it("keeps a single new-order action in the section navigation", () => {
     render(<RepairsAccessView {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: "Crear desde listado" }));
+    expect(screen.queryByRole("button", { name: "Crear desde listado" })).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
+    fireEvent.click(within(nav).getByRole("button", { name: "Nueva orden" }));
     expect(screen.getByRole("heading", { name: "Ingreso nuevo" })).toBeTruthy();
   });
 

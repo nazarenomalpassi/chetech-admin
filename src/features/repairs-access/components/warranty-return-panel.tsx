@@ -307,7 +307,7 @@ export function WarrantyReturnCase({
                           htmlFor={`${fieldId}-delivery`}
                           className="flex min-h-11 flex-1 items-center"
                         >
-                          Confirmo la devolucion del equipo de este reingreso.
+                          Confirmo la devolución del equipo de este reingreso.
                         </label>
                       </div>
                       <p className="text-sm text-muted-foreground">

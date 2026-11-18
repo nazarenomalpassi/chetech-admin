@@ -157,7 +157,7 @@ describe("server order navigation", () => {
 
   it("returns to the first page with filters and custom parameters intact", () => {
     render(<WorkshopServerNavigation {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: "Primera pagina" }));
+    fireEvent.click(screen.getByRole("button", { name: "Primera página" }));
     expect(Object.fromEntries(pushedParams())).toEqual({
       view: "ordenes",
       q: "telefono",

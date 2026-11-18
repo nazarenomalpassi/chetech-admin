@@ -57,7 +57,7 @@ it.each([true, false])(
     }
     expect(container.querySelector('[name="finalAmount"]')).toBeTruthy();
     expect(screen.getByText("Registrar reingreso por garantía")).toBeTruthy();
-    expect(screen.getByText("Retiro y garantia")).toBeTruthy();
+    expect(screen.getByText("Retiro y garantía")).toBeTruthy();
   }
 );
 
@@ -88,10 +88,10 @@ it("la ficha abre el editor diario y reserva el formulario administrativo para m
   expect(screen.getByLabelText("Estado de la orden")).toBeTruthy();
   expect(screen.getByLabelText("El cliente confirmo este presupuesto")).toBeTruthy();
   expect(
-    (screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked
+    (screen.getByLabelText("Esta reparación tiene garantía") as HTMLInputElement).checked
   ).toBe(false);
-  fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-  expect((screen.getByLabelText("Duración de garantía en dias") as HTMLInputElement).value).toBe(
+  fireEvent.click(screen.getByLabelText("Esta reparación tiene garantía"));
+  expect((screen.getByLabelText("Duración de garantía en días") as HTMLInputElement).value).toBe(
     "90"
   );
   vi.spyOn(window, "confirm").mockReturnValue(true);

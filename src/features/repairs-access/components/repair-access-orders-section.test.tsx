@@ -40,7 +40,7 @@ vi.mock("./repair-access-whatsapp-actions", () => ({
 vi.mock("./repair-quick-editor", () => ({
   RepairQuickEditor: ({ order }: { order: RepairAccessOrderRecord }) => (
     <form data-workshop-form>
-      <input aria-label="Avance rapido" defaultValue={order.repairProgress ?? ""} />
+      <input aria-label="Avance rápido" defaultValue={order.repairProgress ?? ""} />
     </form>
   )
 }));
@@ -203,7 +203,7 @@ describe("order workspace list", () => {
         .querySelector('input[name="id"]')
         ?.getAttribute("value")
     ).toBe("return-1");
-    expect(screen.queryByLabelText("Avance rapido")).toBeNull();
+    expect(screen.queryByLabelText("Avance rápido")).toBeNull();
   });
 
   it("matches names with accents and repeated spaces without changing the actual search input", () => {
@@ -304,13 +304,13 @@ describe("order workspace list", () => {
     const quick = screen.getByText("Actualizar trabajo").closest("details")!;
     quick.open = true;
     fireEvent(quick, new Event("toggle"));
-    const progress = screen.getByRole("textbox", { name: "Avance rapido" });
+    const progress = screen.getByRole("textbox", { name: "Avance rápido" });
     fireEvent.change(progress, { target: { value: "Fuente reparada" } });
     quick.open = false;
     fireEvent(quick, new Event("toggle"));
     quick.open = true;
     fireEvent(quick, new Event("toggle"));
-    expect((screen.getByRole("textbox", { name: "Avance rapido" }) as HTMLInputElement).value).toBe(
+    expect((screen.getByRole("textbox", { name: "Avance rápido" }) as HTMLInputElement).value).toBe(
       "Fuente reparada"
     );
   });
@@ -381,7 +381,7 @@ describe("order workspace list", () => {
     const many = Array.from({ length: 40 }, (_, index) => makeOrder(index + 1));
     const { rerender } = render(<RepairAccessOrdersSection {...props} orders={many} />);
     expect(screen.getAllByRole("article")).toHaveLength(36);
-    fireEvent.click(screen.getByRole("button", { name: "Cargar mas ordenes" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cargar más ordenes" }));
     expect(screen.getAllByRole("article")).toHaveLength(40);
     rerender(<RepairAccessOrdersSection {...props} orders={many} search="REP-000040" />);
     expect(screen.getAllByRole("article")).toHaveLength(1);

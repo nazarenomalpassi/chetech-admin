@@ -112,7 +112,7 @@ describe("board evidence labels", () => {
       />
     );
     expect(screen.queryByRole("button", { name: "Registrar venta" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Confirmar liberacion" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Confirmar liberación" })).toBeNull();
   });
 
   it("offers an explicit claim action only for an unreleased pending sale", () => {
@@ -184,7 +184,7 @@ describe("board evidence labels", () => {
         />
       );
       expect(screen.getAllByText(label)).toHaveLength(2);
-      expect(screen.queryByRole("button", { name: "Confirmar liberacion" })).toBeNull();
+      expect(screen.queryByRole("button", { name: "Confirmar liberación" })).toBeNull();
       expect(screen.queryByRole("button", { name: "Iniciar reclamo" })).toBeNull();
       expect(screen.queryByText(/Margen directo:.*30/)).toBeNull();
       expect(screen.getAllByText("Excluida del margen directo")).toHaveLength(2);
@@ -232,8 +232,8 @@ describe("board evidence labels", () => {
     };
     const props = { canManage: true, onEdit: vi.fn(), onSell: vi.fn(), onStartClaim: vi.fn() };
     render(<BoardTable {...props} boards={[pending]} />);
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
-    expect(screen.getByRole("dialog", { name: "Confirmar liberacion" })).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberación" })[0]);
+    expect(screen.getByRole("dialog", { name: "Confirmar liberación" })).toBeTruthy();
     expect(markTvBoardReleasedAction).not.toHaveBeenCalled();
     expect(
       (screen.getAllByRole("button", { name: "Iniciar reclamo" })[0] as HTMLButtonElement).disabled
@@ -269,7 +269,7 @@ describe("board evidence labels", () => {
         ]}
       />
     );
-    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberacion" })[0]);
+    fireEvent.click(screen.getAllByRole("button", { name: "Confirmar liberación" })[0]);
     const dialog = screen.getByRole("dialog");
     fireEvent.change(within(dialog).getByLabelText("Cuenta de destino"), {
       target: { value: "nx" }
@@ -299,7 +299,7 @@ describe("board evidence labels", () => {
       />
     );
     expect(screen.getAllByText(/V-0123.*NX SANTI/)).toHaveLength(2);
-    expect(screen.queryByRole("button", { name: "Confirmar liberacion" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Confirmar liberación" })).toBeNull();
     rerender(
       <BoardTable
         canManage
@@ -309,7 +309,7 @@ describe("board evidence labels", () => {
         boards={[released]}
       />
     );
-    expect(screen.getAllByText("Liberación historica sin venta vinculada")).toHaveLength(2);
+    expect(screen.getAllByText("Liberación histórica sin venta vinculada")).toHaveLength(2);
     expect(screen.queryByText(/NX SANTI/)).toBeNull();
   });
 });

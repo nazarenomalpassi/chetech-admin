@@ -138,7 +138,7 @@ export function WarrantyReturnsSection({
               </p>
               {pageOutOfRange ? (
                 <Button type="button" variant="secondary" onClick={() => navigate({ page: 1 })}>
-                  Ir a la primera pagina
+                  Ir a la primera página
                 </Button>
               ) : null}
             </div>

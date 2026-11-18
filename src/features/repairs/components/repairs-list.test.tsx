@@ -266,7 +266,7 @@ describe("REP collection screen opening", () => {
     expect(form.get("expectedVersion")).toBe("4");
     expect(form.get("repairAccessOrderId")).toBe(native.id);
     expect(
-      screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })
+      screen.getByRole("region", { name: "Cobros acumulativos de la reparación" })
     ).toBeTruthy();
     expect(screen.getByRole("button", { name: "Registrar cobro adicional" })).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Guardar registro y cobro" })).toBeNull();
@@ -315,7 +315,7 @@ describe("REP collection screen opening", () => {
     await waitFor(() =>
       expect(document.activeElement).toBe(
         screen
-          .getByRole("region", { name: "Cobros acumulativos de la reparacion" })
+          .getByRole("region", { name: "Cobros acumulativos de la reparación" })
           .closest('[tabindex="-1"]')
       )
     );
@@ -383,11 +383,11 @@ describe("REP collection screen opening", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Más acciones" })[0]);
     fireEvent.click(screen.getAllByRole("button", { name: "Eliminar pago" })[0]);
     expect(
-      screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })
+      screen.getByRole("region", { name: "Cobros acumulativos de la reparación" })
     ).toBeTruthy();
     fireEvent.click(
       within(
-        screen.getByRole("region", { name: "Cobros acumulativos de la reparacion" })
+        screen.getByRole("region", { name: "Cobros acumulativos de la reparación" })
       ).getByRole("button", { name: "Más acciones" })
     );
     fireEvent.click(screen.getByRole("button", { name: "Eliminar pago" }));
@@ -398,7 +398,7 @@ describe("REP collection screen opening", () => {
     const { container } = render(
       <RepairsList {...props} collectionTarget={{ order: native, repair: null, error: null }} />
     );
-    const price = screen.getByLabelText("Precio de reparacion") as HTMLInputElement;
+    const price = screen.getByLabelText("Precio de reparación") as HTMLInputElement;
     fireEvent.change(price, { target: { value: "80000," } });
     expect(price.value).toBe("80000,");
     fireEvent.change(price, { target: { value: "80000,25" } });

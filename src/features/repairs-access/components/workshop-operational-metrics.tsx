@@ -24,10 +24,10 @@ export function WorkshopOperationalMetrics({
     );
   const { current, periodFlow, warranty, phaseDurations, quality } = metrics;
   const ageRows = [
-    { label: "0 a 7 dias", value: current.age.days0to7 },
-    { label: "8 a 14 dias", value: current.age.days8to14 },
-    { label: "15 a 30 dias", value: current.age.days15to30 },
-    { label: "31 dias o mas", value: current.age.days31plus }
+    { label: "0 a 7 días", value: current.age.days0to7 },
+    { label: "8 a 14 días", value: current.age.days8to14 },
+    { label: "15 a 30 días", value: current.age.days15to30 },
+    { label: "31 días o más", value: current.age.days31plus }
   ];
   return (
     <div className="min-w-0 space-y-4">
@@ -35,7 +35,7 @@ export function WorkshopOperationalMetrics({
         <div>
           <h2 className="text-xl font-semibold text-foreground">Métricas operativas</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Todas las ordenes del taller, no solo las de la pagina actual.
+            Todas las ordenes del taller, no solo las de la página actual.
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
@@ -53,7 +53,7 @@ export function WorkshopOperationalMetrics({
           detail="En custodia, incluso sin solución o sin fallas, hasta registrar retiro."
         />
         <Stat
-          label="Sin movimiento hace 7 dias"
+          label="Sin movimiento hace 7 días"
           value={current.inactivity.staleOrders}
           detail={`Sobre ${number(current.inactivity.knownActivityOrders)} ordenes con actividad verificable.`}
           warning
@@ -118,10 +118,10 @@ export function WorkshopOperationalMetrics({
         </Card>
       </div>
 
-      <Card role="region" aria-label="Movimiento del periodo">
+      <Card role="region" aria-label="Movimiento del período">
         <div className="flex flex-col justify-between gap-2 sm:flex-row">
           <div>
-            <h3 className="text-base font-semibold text-foreground">Movimiento del periodo</h3>
+            <h3 className="text-base font-semibold text-foreground">Movimiento del período</h3>
             <p className="mt-1 text-xs text-muted-foreground">
               {date(metrics.period.from)} al {date(metrics.period.to)}. Los retiros pueden
               corresponder a ingresos de otros meses.
@@ -139,7 +139,7 @@ export function WorkshopOperationalMetrics({
           <div className="max-h-72 overflow-auto">
             <table className="w-full text-left text-sm">
               <caption className="sr-only">
-                Ingresos y retiros por dia en el periodo seleccionado
+                Ingresos y retiros por dia en el período seleccionado
               </caption>
               <thead>
                 <tr>
@@ -207,20 +207,20 @@ export function WorkshopOperationalMetrics({
         <Card role="region" aria-label="Reingresos por garantía">
           <h3 className="text-base font-semibold text-foreground">Reingresos por garantía</h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            Circuito separado del ingreso y retiro de la reparacion original.
+            Circuito separado del ingreso y retiro de la reparación original.
           </p>
           <dl className="mt-4 grid grid-cols-3 gap-3">
             <Datum label="Activos hoy" value={number(warranty.activeReturns)} />
-            <Datum label="Ingresos del periodo" value={number(warranty.openedInPeriod)} />
-            <Datum label="Retiros del periodo" value={number(warranty.closedInPeriod)} />
+            <Datum label="Ingresos del período" value={number(warranty.openedInPeriod)} />
+            <Datum label="Retiros del período" value={number(warranty.closedInPeriod)} />
           </dl>
           <p className="mt-3 text-xs text-muted-foreground">
             {number(warranty.uniqueOrdersInPeriod)} ordenes distintas con reingreso en el periodo.
           </p>
           <div className="mt-4 border-t border-border pt-4">
-            <p className="text-sm font-medium">Cohorte de entregas con garantia vencida</p>
+            <p className="text-sm font-medium">Cohorte de entregas con garantía vencida</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Entregadas en el periodo seleccionado y con plazo de garantía ya vencido.
+              Entregadas en el período seleccionado y con plazo de garantía ya vencido.
             </p>
             <p className="mt-2 text-sm text-muted-foreground">
               {number(warranty.matureCohort.maturedOrders)} ordenes maduras /{" "}
@@ -252,7 +252,7 @@ export function WorkshopOperationalMetrics({
           </p>
           <p>
             Actividad: cambios reales de estado y eventos operativos identificables. No se usa la
-            ultima edicion de la ficha ni eventos genericos.
+            última edición de la ficha ni eventos genericos.
           </p>
           <p>
             {number(current.ready.unknownDateOrders)} equipos sin fecha de listo verificable. La
@@ -264,8 +264,8 @@ export function WorkshopOperationalMetrics({
             {number(quality.invalidStatusIntervals)} intervalos inconsistentes excluidos.
           </p>
           <p>
-            Las garantias maduras se agrupan por fecha de entrega original dentro del periodo. Sin
-            observacion continua verificada, no se supone que una orden sin reingreso registrado
+            Las garantías maduras se agrupan por fecha de entrega original dentro del periodo. Sin
+            observación continua verificada, no se supone que una orden sin reingreso registrado
             nunca volvio.
           </p>
         </div>

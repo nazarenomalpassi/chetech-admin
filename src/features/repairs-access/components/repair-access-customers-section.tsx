@@ -95,7 +95,7 @@ export function RepairAccessCustomersSection({
             <span>Buscar cliente</span>
             <Input
               onChange={(event) => onSearchChange(event.target.value)}
-              placeholder="Nombre, telefono, DNI o email"
+              placeholder="Nombre, teléfono, DNI o email"
               value={search}
             />
           </label>

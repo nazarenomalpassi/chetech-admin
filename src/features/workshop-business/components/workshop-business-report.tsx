@@ -62,7 +62,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
   const { report, range } = data;
   const totals = report?.totals;
   const categories: { key: WorkshopCategory; label: string }[] = [
-    { key: "unassigned", label: "Sin tecnico asignado" },
+    { key: "unassigned", label: "Sin técnico asignado" },
     { key: "waiting_customer", label: "Esperando cliente" },
     { key: "parts", label: "Repuestos pendientes" },
     { key: "ready", label: "Listos para retirar" },
@@ -124,7 +124,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
       {!report || !totals ? (
         <Card role="status" className="border-warning-border">
           <p>
-            Informe no disponible: falta habilitar la migracion de lectura de negocio del taller. No
+            Informe no disponible: falta habilitar la migración de lectura de negocio del taller. No
             se muestran totales ficticios.
           </p>
         </Card>
@@ -261,7 +261,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                 ))}
               </dl>
               <p className="text-sm text-muted-foreground">
-                Cuenta ordenes con cobertura, no reingresos ni tasa de retrabajo. No existe aqui
+                Cuenta ordenes con cobertura, no reingresos ni tasa de retrabajo. No existe aquí
                 evidencia suficiente para esas metricas.
               </p>
             </Card>
@@ -269,7 +269,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
 
           <Card className="space-y-4">
             <div>
-              <h3 className="text-lg font-semibold">Por tecnico asignado</h3>
+              <h3 className="text-lg font-semibold">Por técnico asignado</h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 Agrupa por responsable actual de la REP, no por quien la creo. No atribuye
                 historicamente trabajo o cobros anteriores a una reasignacion.
@@ -373,7 +373,7 @@ export function WorkshopBusinessReportView({ data }: { data: WorkshopBusinessRep
                     </p>
                     <p>
                       Deuda: monto final distinto de cero, o presupuesto vigente aceptado con
-                      evidencia, o precio final historico unico, menos cobros reales por orden, con
+                      evidencia, o precio final histórico único, menos cobros reales por orden, con
                       piso cero. El cero por defecto del monto final no oculta un presupuesto
                       aceptado ni prueba que el servicio sea gratuito. Un presupuesto gratuito
                       aceptado conserva el cero; uno pendiente no genera deuda conocida. Crédito

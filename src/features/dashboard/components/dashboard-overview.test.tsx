@@ -69,7 +69,7 @@ describe("dashboard independent disclosures", () => {
     expect((panels[2].parentElement as HTMLDetailsElement).open).toBe(true);
     fireEvent.click(panels[1]);
     expect((panels[2].parentElement as HTMLDetailsElement).open).toBe(true);
-    expect(container.textContent).toContain("Saldos actuales, no del periodo filtrado.");
+    expect(container.textContent).toContain("Saldos actuales, no del período filtrado.");
     expect(container.textContent).toContain("15");
   });
 });

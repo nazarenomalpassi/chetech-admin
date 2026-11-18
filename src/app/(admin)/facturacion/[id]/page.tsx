@@ -39,7 +39,7 @@ export default async function InvoiceDetailPage({
           className="text-sm font-medium text-foreground underline decoration-border-strong underline-offset-4"
           href="/facturacion"
         >
-          Volver a facturacion
+          Volver a facturación
         </Link>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
           <Link
@@ -71,7 +71,7 @@ export default async function InvoiceDetailPage({
               src="/brand/chetech-horizontal-black.svg"
             />
             <h1 className="mt-6 text-3xl font-semibold text-foreground">Comprobante interno</h1>
-            <p className="mt-2 text-sm text-muted-foreground">No valido como factura fiscal.</p>
+            <p className="mt-2 text-sm text-muted-foreground">No válido como factura fiscal.</p>
           </div>
           <div className="rounded-xl border border-border bg-muted px-4 py-3 text-left md:text-right">
             <p className="text-sm text-muted-foreground">Documento interno</p>
@@ -180,7 +180,7 @@ export default async function InvoiceDetailPage({
             <h2 className="font-semibold text-foreground">Operación registrada</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
               Emitir o reimprimir este documento no registra dinero ni mueve stock. Los cobros
-              provienen de la operacion vinculada. No es una factura fiscal.
+              provienen de la operación vinculada. No es una factura fiscal.
             </p>
             <h3 className="mt-4 font-semibold">Cobros efectivos vinculados</h3>
             {invoice.payments.length ? (

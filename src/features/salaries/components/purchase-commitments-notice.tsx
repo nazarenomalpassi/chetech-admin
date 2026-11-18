@@ -31,8 +31,8 @@ export function PurchaseCommitmentsNotice({ commitments }: { commitments: Purcha
         </>
       ) : (
         <p className="mt-2 text-warning" role="alert">
-          El sugerido no incluye compromisos: falta la migracion de vinculos o no se pudo consultar.
-          Revisa las compras antes de retirar.
+          El sugerido no incluye compromisos: falta la migración de vinculos o no se pudo consultar.
+          Revisá las compras antes de retirar.
         </p>
       )}
       <p className="mt-2">

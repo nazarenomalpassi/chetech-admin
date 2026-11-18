@@ -200,7 +200,7 @@ describe("RepairAccessNewOrderWizard", () => {
     renderIntake();
 
     expectEssentialFieldsVisible();
-    const sheet = screen.getByRole("region", { name: "Ficha de recepcion" });
+    const sheet = screen.getByRole("region", { name: "Ficha de recepción" });
     essentialLabels.forEach((label) =>
       expect(sheet.contains(screen.getByLabelText(label)), label).toBe(true)
     );
@@ -347,7 +347,7 @@ describe("RepairAccessNewOrderWizard", () => {
       },
       {
         group: "Otros datos (opcionales)",
-        label: "Observaciones internas de recepcion",
+        label: "Observaciones internas de recepción",
         name: "notes",
         value: "Etiqueta nueva"
       }
@@ -992,7 +992,7 @@ describe("RepairAccessNewOrderWizard", () => {
       { onCaughtError: () => undefined }
     );
     fillEssentialFields();
-    fireEvent.change(screen.getByLabelText("Observaciones internas de recepcion"), {
+    fireEvent.change(screen.getByLabelText("Observaciones internas de recepción"), {
       target: { value: "Notas sin guardar" }
     });
     const expected = Object.fromEntries(new FormData(intakeForm()).entries());

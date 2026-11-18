@@ -684,7 +684,7 @@ export function RepairsList({
                   </p>
                 ) : (
                   <p className="mt-3 text-sm text-muted-foreground">
-                    La orden de Reparaciones trae cliente, telefono, equipo y falla. El saldo se
+                    La orden de Reparaciones trae cliente, teléfono, equipo y falla. El saldo se
                     modifica recien cuando guardas el cobro en esta pantalla.
                   </p>
                 )}
@@ -729,7 +729,7 @@ export function RepairsList({
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-body" htmlFor="amount">
-                    Precio de reparacion
+                    Precio de reparación
                   </label>
                   <MoneyInput
                     key={`${editing?.id}-amount`}
@@ -767,7 +767,7 @@ export function RepairsList({
                 ) : (
                   <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">
-                      El precio puede quedar pendiente o cobrarse parcialmente. Registra solo el
+                      El precio puede quedar pendiente o cobrarse parcialmente. Registrá solo el
                       dinero recibido.
                     </p>
                     <PaymentSplitFields
@@ -849,7 +849,7 @@ export function RepairsList({
               ) : null}
               <div className="min-w-0 flex-1">
                 <label className="mb-2 block text-sm font-medium text-body" htmlFor="repair-search">
-                  Buscar cobros de reparacion
+                  Buscar cobros de reparación
                 </label>
                 <div className="relative">
                   <Search
@@ -862,7 +862,7 @@ export function RepairsList({
                     name="search"
                     defaultValue={searchQuery}
                     maxLength={200}
-                    placeholder="Orden, cliente, telefono o equipo..."
+                    placeholder="Orden, cliente, teléfono o equipo..."
                     className="pl-10"
                   />
                 </div>

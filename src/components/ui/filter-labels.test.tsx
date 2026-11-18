@@ -14,7 +14,7 @@ describe("filter accessible names", () => {
     const html = renderToStaticMarkup(<ProductFilters categories={[]} />);
     for (const label of [
       "Buscar productos",
-      "Filtrar productos por categoria",
+      "Filtrar productos por categoría",
       "Filtrar productos por estado"
     ]) {
       expect(html).toContain(`aria-label="${label}"`);

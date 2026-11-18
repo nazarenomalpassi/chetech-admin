@@ -32,7 +32,7 @@ export function RepairQuickEditor({
       <RepairWarrantyCorrection order={order} defaultWarrantyDays={defaultWarrantyDays} />
     ) : (
       <p className="p-4 text-sm text-muted-foreground">
-        Esta orden ya fue entregada. La garantia se corrige desde administracion.
+        Esta orden ya fue entregada. La garantía se corrige desde administracion.
       </p>
     );
   const pendingParts =
@@ -300,7 +300,7 @@ export function RepairQuickEditor({
                             ? "Motivo del trabajo sin cargo"
                             : rejecting
                               ? "Nota del rechazo (opcional)"
-                              : "Nota de confirmacion (opcional)"}
+                              : "Nota de confirmación (opcional)"}
                       </span>
                       <Textarea
                         id={`quick-${order.id}-decision-notes`}

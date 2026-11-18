@@ -180,7 +180,7 @@ export function BoardTable({
             variant="secondary"
           >
             <CircleCheck className="h-4 w-4" />
-            Confirmar liberacion
+            Confirmar liberación
           </Button>
         ) : null}
         <ActionMenu label="Más acciones">
@@ -226,7 +226,7 @@ export function BoardTable({
             {board.linkedSale.method ? ` - ${formatCashMethod(board.linkedSale.method)}` : ""}
           </p>
         ) : board.releasedAt ? (
-          <p>Liberación historica sin venta vinculada</p>
+          <p>Liberación histórica sin venta vinculada</p>
         ) : null}
         {board.saleNotes ? <p className="wrap-break-word">{board.saleNotes}</p> : null}
         <BoardSaleHistory events={board.events} />
@@ -352,7 +352,7 @@ export function BoardTable({
       </div>
       {!boards.length ? (
         <div className="empty-panel">
-          No hay placas con estos filtros. Proba otra busqueda o cambia el estado.
+          No hay placas con estos filtros. Probá otra busqueda o cambia el estado.
         </div>
       ) : null}
       {releaseBoard ? (
