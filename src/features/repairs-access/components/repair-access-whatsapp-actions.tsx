@@ -55,9 +55,10 @@ export function RepairAccessWhatsAppButton({
           buttonVariants({ size, variant, className }),
           "cursor-not-allowed opacity-50"
         )}
-        title="El cliente no tiene un telefono valido para WhatsApp"
+        title="El cliente no tiene un teléfono válido para WhatsApp"
       >
-        Sin WhatsApp
+        <MessageCircle aria-hidden="true" className="h-4 w-4" />
+        {labelClassName ? <span className={labelClassName}>Sin WhatsApp</span> : "Sin WhatsApp"}
       </span>
     );
   }
