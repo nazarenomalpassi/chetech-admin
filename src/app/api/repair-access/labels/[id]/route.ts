@@ -92,7 +92,7 @@ async function renderSavedLabel(id: string, variant: Selection) {
     const order = mapOrder(result.data);
     const orderUrl = buildRepairQrUrl(
       id,
-      process.env.NEXT_PUBLIC_APP_URL || "https://chetech-admin.vercel.app"
+      process.env.NEXT_PUBLIC_APP_URL || "https://gestion.chetechstore.com"
     );
     let data: WorkshopLabelData = {
       number: order.repairNumber,

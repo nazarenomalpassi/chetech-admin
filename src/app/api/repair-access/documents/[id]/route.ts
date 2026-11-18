@@ -139,7 +139,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   }
   const orderUrl = new URL(
     "/reparaciones-access",
-    process.env.NEXT_PUBLIC_APP_URL || "https://chetech-admin.vercel.app"
+    process.env.NEXT_PUBLIC_APP_URL || "https://gestion.chetechstore.com"
   );
   orderUrl.searchParams.set("order", id.data);
   let pdf: Buffer;

@@ -89,7 +89,7 @@ describe("private, read-only workshop labels", () => {
         variant: "accessory",
         accessoryDescription: "Control remoto negro",
         accessoryIndex: 2,
-        orderUrl: `https://chetech-admin.vercel.app/q/${id}`
+        orderUrl: `https://gestion.chetechstore.com/q/${id}`
       })
     );
     expect(result.headers.get("Cache-Control")).toBe("private, no-store");
@@ -190,7 +190,7 @@ describe("private, read-only workshop labels", () => {
         issueReported: activeReturn.issueReported,
         intakeDate: activeReturn.receivedOn,
         accessories: activeReturn.accessories,
-        orderUrl: `https://chetech-admin.vercel.app/q/${id}`
+        orderUrl: `https://gestion.chetechstore.com/q/${id}`
       })
     );
   });
@@ -236,7 +236,7 @@ describe("private, read-only workshop labels", () => {
       issueReported: order.issueReported,
       accessories: "Control",
       intakeDate: order.intakeDate,
-      orderUrl: `https://chetech-admin.vercel.app/q/${id}`
+      orderUrl: `https://gestion.chetechstore.com/q/${id}`
     });
     expect(response.headers.get("Content-Type")).toBe("application/pdf");
     expect(response.headers.get("Content-Disposition")).toContain("REP-000742-etiqueta-80x50.pdf");

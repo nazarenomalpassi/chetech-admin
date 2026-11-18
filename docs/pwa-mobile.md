@@ -39,7 +39,7 @@ Si queres reemplazarlos por otro diseno final, mantené los mismos nombres y tam
 
 ## Como probar en Android
 
-1. Abrir `https://chetech-admin.vercel.app` desde Chrome.
+1. Abrir `https://gestion.chetechstore.com` desde Chrome.
 2. Iniciar sesion normalmente.
 3. Abrir el menu de Chrome.
 4. Tocar `Agregar a pantalla principal` o `Instalar app`.
@@ -48,7 +48,7 @@ Si queres reemplazarlos por otro diseno final, mantené los mismos nombres y tam
 
 ## Como probar en iPhone
 
-1. Abrir `https://chetech-admin.vercel.app` desde Safari.
+1. Abrir `https://gestion.chetechstore.com` desde Safari.
 2. Iniciar sesion normalmente.
 3. Tocar compartir.
 4. Elegir `Agregar a pantalla de inicio`.
@@ -79,7 +79,7 @@ Los celulares cachean mucho los iconos PWA. Si seguis viendo el icono viejo:
 
 1. Borra el acceso anterior de la pantalla de inicio.
 2. En Safari iPhone, cerra la pestana de CheTech.
-3. Volve a entrar a `https://chetech-admin.vercel.app`.
+3. Volve a entrar a `https://gestion.chetechstore.com`.
 4. Toca compartir y `Agregar a pantalla de inicio`.
 5. En Android, desde Chrome, borra la app instalada o el acceso viejo y volve a usar `Instalar app`.
 
