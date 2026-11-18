@@ -411,7 +411,7 @@ function CollectionActions({ order }: { order: RepairAccessOrderRecord }) {
                 />
               ) : (
                 <p role="alert" className="mt-4 text-sm text-danger">
-                  La orden ya no permite registrar esta entrega. Revisa su estado.
+                  La orden ya no permite registrar esta entrega. Revisá su estado.
                 </p>
               )}
               {mode === "collection" && balances(snapshot).balance === 0 && showDelivery ? (
@@ -675,7 +675,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
         {storageUnavailable ? (
           <div className="space-y-2 rounded-xl bg-warning-soft p-3 text-sm text-warning">
             <p>
-              Sin almacenamiento local, cerrar o recargar pierde el intento. Verifica el saldo antes
+              Sin almacenamiento local, cerrar o recargar pierde el intento. Verificá el saldo antes
               de volver a cobrar.
             </p>
             <label className="flex min-h-11 items-start gap-3">
@@ -691,7 +691,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
         ) : null}
       </fieldset>
       <p className="text-xs leading-5 text-muted-foreground">
-        Registra solo el dinero recibido. Cobrar no entrega el equipo ni cambia el presupuesto o la
+        Registrá solo el dinero recibido. Cobrar no entrega el equipo ni cambia el presupuesto o la
         garantia.
       </p>
       {draft.lastSavedAt ? (

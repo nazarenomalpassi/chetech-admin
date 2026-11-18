@@ -257,7 +257,7 @@ export function RepairOutsourcingsView({
               </p>
             ) : (
               <p className="mt-3 text-sm text-muted-foreground">
-                Carga la REP para traer el cliente, equipo y falla.
+                Cargá la REP para traer el cliente, equipo y falla.
               </p>
             )}
           </div>
@@ -337,7 +337,7 @@ export function RepairOutsourcingsView({
               </label>
               <Textarea
                 name="notes"
-                aria-label="Observaciones de la terciarizacion"
+                aria-label="Observaciones de la terciarización"
                 onChange={(event) => setNotes(event.target.value)}
                 placeholder="Que se llevo, quien lo recibio, repuestos o indicaciones..."
                 value={notes}
@@ -359,7 +359,7 @@ export function RepairOutsourcingsView({
           <form className="grid items-end gap-3 min-[1600px]:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))_auto] md:grid-cols-2">
             <div className="max-w-lg">
               <label htmlFor="search" className="mb-2 block text-sm font-medium text-body">
-                Buscar terciarizacion
+                Buscar terciarización
               </label>
               <div className="relative">
                 <Search
@@ -378,7 +378,7 @@ export function RepairOutsourcingsView({
             <label className="grid gap-2 text-sm">
               Estado
               <Select
-                aria-label="Estado de terciarizacion"
+                aria-label="Estado de terciarización"
                 name="outsourceStatus"
                 defaultValue={filters.status}
                 options={[

@@ -69,10 +69,10 @@ function openDialog(input = board) {
       onStartClaim={vi.fn()}
     />
   );
-  const trigger = screen.getAllByRole("button", { name: "Confirmar liberacion" })[0];
+  const trigger = screen.getAllByRole("button", { name: "Confirmar liberación" })[0];
   trigger.focus();
   fireEvent.click(trigger);
-  return { dialog: screen.getByRole("dialog", { name: "Confirmar liberacion" }), trigger };
+  return { dialog: screen.getByRole("dialog", { name: "Confirmar liberación" }), trigger };
 }
 
 function confirm(dialog: HTMLElement, method: "nx" | "mp" = "nx") {
@@ -189,7 +189,7 @@ it("prevents duplicate submission, account changes, cancellation and Escape whil
   });
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(screen.getByRole("status").textContent).toContain("V-0123");
-  expect(screen.queryByRole("button", { name: "Confirmar liberacion" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Confirmar liberación" })).toBeNull();
 });
 
 it("blocks stale retries until an explicit read refresh and requires transfer confirmation again", async () => {
@@ -275,7 +275,7 @@ it("leaves cancellation free of mutations", () => {
 
 it("keeps keyboard focus inside the modal and restores it on backdrop cancellation", () => {
   const { dialog, trigger } = openDialog();
-  const close = within(dialog).getByRole("button", { name: "Cerrar liberacion" });
+  const close = within(dialog).getByRole("button", { name: "Cerrar liberación" });
   const submit = within(dialog).getByRole("button", { name: "Confirmar y registrar venta" });
   close.focus();
   fireEvent.keyDown(document, { key: "Tab", shiftKey: true });

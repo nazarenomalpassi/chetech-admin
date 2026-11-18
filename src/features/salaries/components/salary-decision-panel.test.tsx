@@ -36,7 +36,7 @@ describe("salary simulation detail", () => {
     expect(container.querySelector("details")).toBeNull();
     const allocations = getByRole("region", { name: "Reparto por integrante" });
     expect(within(allocations).getAllByRole("heading", { level: 3 })).toHaveLength(4);
-    const amount = getByLabelText("Dinero a retirar en esta operacion") as HTMLInputElement;
+    const amount = getByLabelText("Dinero a retirar en esta operación") as HTMLInputElement;
     fireEvent.change(amount, { target: { value: "200" } });
     expect(allocations.textContent).toContain("Santi");
     const progress = within(allocations).getByRole("progressbar", {
@@ -71,7 +71,7 @@ describe("salary simulation detail", () => {
           suggestedAmount={200}
         />
       );
-      fireEvent.change(getByLabelText("Dinero a retirar en esta operacion"), {
+      fireEvent.change(getByLabelText("Dinero a retirar en esta operación"), {
         target: { value: "200" }
       });
       fireEvent.click(getByRole("button", { name: "Revisar y confirmar retiro" }));

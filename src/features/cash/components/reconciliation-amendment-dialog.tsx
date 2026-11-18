@@ -85,7 +85,7 @@ export function ReconciliationAmendmentDialog({
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
             El saldo esperado sigue siendo el del cierre historico. Esto no corrige balances ni
-            registra pagos posteriores. El original y cada revision se conservan.
+            registra pagos posteriores. El original y cada revisión se conservan.
           </p>
           <form
             className="mt-4 space-y-4"

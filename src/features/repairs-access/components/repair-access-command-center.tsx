@@ -36,7 +36,7 @@ export function RepairAccessCommandCenter({
             <div>
               <h1 className="text-xl font-semibold text-foreground">Resumen del taller</h1>
               <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-                Selecciona un estado para continuar el trabajo.
+                Seleccioná un estado para continuar el trabajo.
               </p>
             </div>
             <div className="grid gap-2 sm:flex sm:flex-wrap">
@@ -75,7 +75,7 @@ export function RepairAccessCommandCenter({
             />
             <MetricCard
               icon={Wrench}
-              label="Pendientes / revision"
+              label="Pendientes / revisión"
               tone="warning"
               value={summary.pendingBudget}
             />

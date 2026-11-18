@@ -17,7 +17,7 @@ export function WarrantyObservationControl({ startedOn }: { startedOn: string | 
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="max-w-2xl text-muted-foreground">
-            Las tasas de garantía necesitan un periodo de registro completo. Los casos antiguos sin
+            Las tasas de garantía necesitan un período de registro completo. Los casos antiguos sin
             reingresos registrados no se interpretan como cero fallas.
           </p>
           <Button
@@ -32,13 +32,13 @@ export function WarrantyObservationControl({ startedOn }: { startedOn: string | 
       )}
       {open ? (
         <CoordinationDialog
-          title="Iniciar seguimiento de garantias"
+          title="Iniciar seguimiento de garantías"
           action={startWarrantyObservation}
           onClose={() => setOpen(false)}
         >
           <p className="text-sm text-muted-foreground">
             No modifica ninguna orden ni fecha historica. Se conserva la fecha real de inicio y no
-            se puede retroceder. La tasa necesita esperar a que venzan las primeras garantias
+            se puede retroceder. La tasa necesita esperar a que venzan las primeras garantías
             observadas completas.
           </p>
           <label className="flex min-h-11 items-start gap-3 text-sm">

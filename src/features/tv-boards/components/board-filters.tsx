@@ -51,7 +51,7 @@ export function BoardFilters() {
           aria-label="Buscar placas"
           id={`${id}-search`}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Marca o modelo"
+          placeholder="Marcá o modelo"
           value={search}
         />
       </div>

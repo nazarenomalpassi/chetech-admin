@@ -24,7 +24,7 @@ export function OperationalInboxSection({ inbox }: { inbox: InboxData | null }) 
             </summary>
             <div className="space-y-3 border-t border-border p-3 sm:p-4">
               <p className="text-sm text-muted-foreground">
-                Cola actual completa. No depende del periodo financiero seleccionado en el
+                Cola actual completa. No depende del período financiero seleccionado en el
                 dashboard.
               </p>
               <WorkshopInbox inbox={inbox} />

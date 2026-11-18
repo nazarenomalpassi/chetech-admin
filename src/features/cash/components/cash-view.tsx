@@ -50,6 +50,32 @@ function isIncome(type: string) {
   return type === "venta" || type === "reparacion" || type === "facturacion";
 }
 
+const uuidPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+
+/**
+ * Los movimientos históricos guardaron el identificador interno en la descripción
+ * ("Venta 3f2a…"). En pantalla se quita: el tipo ya dice de qué se trata.
+ */
+export function describeMovement(description: string, type: string) {
+  const cleaned = description
+    .replace(uuidPattern, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  const bare = cleaned
+    .toLowerCase()
+    .replace(/[.:\-–]+$/, "")
+    .trim();
+  if (!bare) return "";
+  if (
+    bare === formatMovementType(type).toLowerCase() ||
+    bare === type ||
+    bare === "cobro reparacion" ||
+    bare === "cobro reparación"
+  )
+    return "";
+  return cleaned;
+}
+
 export function CashView({
   canClose,
   data,
@@ -204,9 +230,9 @@ export function CashView({
                         {income ? "+" : "-"} {formatCurrency(movement.amount)}
                       </p>
                     </div>
-                    {movement.description ? (
+                    {describeMovement(movement.description, movement.type) ? (
                       <p className="mt-2 text-xs leading-5 wrap-break-word text-muted-foreground">
-                        {movement.description}
+                        {describeMovement(movement.description, movement.type)}
                       </p>
                     ) : null}
                   </article>
@@ -247,9 +273,9 @@ export function CashView({
                               {formatMovementType(movement.type)}
                             </span>
                           </div>
-                          {movement.description ? (
+                          {describeMovement(movement.description, movement.type) ? (
                             <p className="mt-1 text-xs text-muted-foreground">
-                              {movement.description}
+                              {describeMovement(movement.description, movement.type)}
                             </p>
                           ) : null}
                         </td>

@@ -492,6 +492,58 @@ textarea {
   }
 }
 
+/* Pestañas de sección: subrayado, sin relleno; la activa en grafito. */
+.section-tab {
+  position: relative;
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border-bottom: 2px solid transparent;
+  color: var(--text-soft);
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    color 120ms var(--ease-out),
+    border-color 120ms var(--ease-out);
+}
+
+.section-tab:hover {
+  color: var(--text);
+}
+
+.section-tab[aria-current="page"] {
+  color: var(--text);
+  border-bottom-color: var(--graphite);
+}
+
+.section-tab:focus-visible {
+  outline: 2px solid var(--graphite);
+  outline-offset: -2px;
+  border-radius: 0.5rem;
+}
+
+.section-tab-count {
+  display: inline-flex;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.375rem;
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--text);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-tab[aria-current="page"] .section-tab-count {
+  background: var(--graphite);
+  color: #fff;
+}
+
 /* Barra inferior del celular: las secciones más usadas y el menú completo. */
 .mobile-quickbar-item {
   display: flex;

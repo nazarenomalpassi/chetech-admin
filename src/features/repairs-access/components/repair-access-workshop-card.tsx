@@ -155,7 +155,7 @@ export function RepairAccessWorkshopCard({
               <>
                 <span className="flex items-center gap-2">
                   <ClipboardPenLine aria-hidden="true" className="h-4 w-4" />
-                  {delivered ? "Corregir garantia" : "Actualizar trabajo"}
+                  {delivered ? "Corregir garantía" : "Actualizar trabajo"}
                 </span>
                 <ChevronDown
                   aria-hidden="true"
@@ -234,7 +234,7 @@ export function RepairAccessWorkshopCard({
 
                 <label>
                   <span className="mb-2 block text-sm font-medium text-body">
-                    Avance de reparacion · visible para el cliente
+                    Avance de reparación · visible para el cliente
                   </span>
                   <Textarea
                     className="min-h-24"
@@ -259,7 +259,7 @@ export function RepairAccessWorkshopCard({
                 </label>
                 <FormSubmitButton
                   className="min-h-12 w-full"
-                  idleLabel="Guardar actualizacion"
+                  idleLabel="Guardar actualización"
                   pendingLabel="Guardando cambios..."
                 />
               </WorkshopCardForm>
@@ -350,7 +350,7 @@ export function RepairAccessWorkshopCard({
                 "w-full cursor-not-allowed opacity-50"
               )}
             >
-              Sin telefono
+              Sin teléfono
             </span>
           )}
         </div>

@@ -125,7 +125,7 @@ export function SalaryDecisionPanel({
             className="mb-2 block text-sm font-medium text-muted-foreground"
             htmlFor="salary-intended-amount"
           >
-            Dinero a retirar en esta operacion
+            Dinero a retirar en esta operación
           </label>
           <MoneyInput
             className="font-semibold"
@@ -270,7 +270,7 @@ export function SalaryDecisionPanel({
                 Retiro de {monthLabel}
               </h2>
               <p className="mt-2 text-sm text-muted-foreground">
-                Indica de que cuentas sale el total. Los movimientos se guardan juntos o no se
+                Indicá de que cuentas sale el total. Los movimientos se guardan juntos o no se
                 guarda ninguno.
               </p>
             </div>

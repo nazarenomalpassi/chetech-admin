@@ -43,10 +43,10 @@ describe("editor unico de reparaciones", () => {
   it("expone garantia y dias sin marcar garantia por defecto", () => {
     render(<RepairQuickEditor order={order} canManage defaultWarrantyDays={90} />);
     expect(
-      (screen.getByLabelText("Esta reparacion tiene garantia") as HTMLInputElement).checked
+      (screen.getByLabelText("Esta reparación tiene garantía") as HTMLInputElement).checked
     ).toBe(false);
-    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-    expect((screen.getByLabelText("Duración de garantía en dias") as HTMLInputElement).value).toBe(
+    fireEvent.click(screen.getByLabelText("Esta reparación tiene garantía"));
+    expect((screen.getByLabelText("Duración de garantía en días") as HTMLInputElement).value).toBe(
       "90"
     );
     expect(screen.getByLabelText("Condiciones especiales de garantía")).toBeTruthy();
@@ -60,8 +60,8 @@ describe("editor unico de reparaciones", () => {
   it("envia garantia, dias y condiciones en el guardado unico sin cambiar importe ni cobro", async () => {
     mocks.save.mockResolvedValue({ success: true, message: "Guardado", recordVersion: 2 });
     render(<RepairQuickEditor order={order} canManage defaultWarrantyDays={90} />);
-    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
-    fireEvent.change(screen.getByLabelText("Duración de garantía en dias"), {
+    fireEvent.click(screen.getByLabelText("Esta reparación tiene garantía"));
+    fireEvent.change(screen.getByLabelText("Duración de garantía en días"), {
       target: { value: "30" }
     });
     fireEvent.change(screen.getByLabelText("Condiciones especiales de garantía"), {
@@ -85,7 +85,7 @@ describe("editor unico de reparaciones", () => {
         defaultWarrantyDays={90}
       />
     );
-    fireEvent.click(screen.getByLabelText("Esta reparacion tiene garantia"));
+    fireEvent.click(screen.getByLabelText("Esta reparación tiene garantía"));
     fireEvent.change(screen.getByLabelText("Estado de la orden"), {
       target: { value: "retirado" }
     });
@@ -105,7 +105,7 @@ describe("editor unico de reparaciones", () => {
         canManage
       />
     );
-    expect(screen.getByLabelText("Esta reparacion tiene garantia")).toBeTruthy();
+    expect(screen.getByLabelText("Esta reparación tiene garantía")).toBeTruthy();
     expect(screen.getByLabelText("Motivo de la correccion de garantía")).toBeTruthy();
     expect(
       (screen.getByLabelText("Confirmo la correccion desde el retiro original") as HTMLInputElement)
@@ -456,7 +456,7 @@ describe("editor unico de reparaciones", () => {
       fireEvent.change(
         screen.getByLabelText(
           status === "presupuestado_aceptado"
-            ? "Nota de confirmacion (opcional)"
+            ? "Nota de confirmación (opcional)"
             : "Nota del rechazo (opcional)"
         ),
         { target: { value: "Respuesta del cliente" } }
@@ -563,7 +563,7 @@ describe("editor unico de reparaciones", () => {
       screen.getByText("Al guardar se registra que el cliente acepto este presupuesto.")
     ).toBeTruthy();
     expect(screen.queryByLabelText("El cliente confirmo este presupuesto")).toBeNull();
-    expect(screen.getByLabelText("Nota de confirmacion (opcional)")).toBeTruthy();
+    expect(screen.getByLabelText("Nota de confirmación (opcional)")).toBeTruthy();
     expect(screen.queryByLabelText("Equipo probado y funcionando")).toBeNull();
     fireEvent.change(screen.getByLabelText("Estado de la orden"), {
       target: { value: "listo_para_retirar" }
@@ -616,7 +616,7 @@ describe("editor unico de reparaciones", () => {
     );
     expect((screen.getByLabelText("Presupuesto") as HTMLInputElement).value).toBe("0");
     expect(screen.queryByLabelText("Motivo del trabajo sin cargo")).toBeNull();
-    expect(screen.queryByLabelText("Nota de confirmacion (opcional)")).toBeNull();
+    expect(screen.queryByLabelText("Nota de confirmación (opcional)")).toBeNull();
     expect(screen.getByText(/La aceptacion de este presupuesto ya esta registrada/)).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Avance / trabajo realizado"), {
       target: { value: "Nota sin cambiar autorizacion" }

@@ -69,7 +69,7 @@ describe("warranty inbox", () => {
       <WarrantyReturnsSection data={{ ...page, total: 30 }} search="TV" closed={false} canManage />
     );
     expect(screen.getByText("No hay reingresos en esta pagina.")).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: "Ir a la primera pagina" }));
+    fireEvent.click(screen.getByRole("button", { name: "Ir a la primera página" }));
     const url = new URL(router.push.mock.calls[0][0], window.location.origin);
     expect(url.searchParams.get("wp")).toBeNull();
     expect(url.searchParams.get("wq")).toBe("TV");

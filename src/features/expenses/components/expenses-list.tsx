@@ -294,7 +294,7 @@ export function ExpensesList({
               }}
             />
             <div className="flex flex-wrap gap-2">
-              <FormSubmitButton idleLabel="Guardar vinculo" pendingLabel="Vinculando..." />
+              <FormSubmitButton idleLabel="Guardar vínculo" pendingLabel="Vinculando..." />
               <Button type="button" variant="secondary" onClick={() => setLinking(null)}>
                 Cancelar
               </Button>
@@ -457,7 +457,7 @@ export function ExpensesList({
         </div>
         {!expenses.length ? (
           <div className="empty-panel border-t border-border">
-            Cuando registres gastos del local, van a aparecer aca con fecha, categoria y cuenta
+            Cuando registres gastos del local, van a aparecer acá con fecha, categoría y cuenta
             usada.
           </div>
         ) : null}

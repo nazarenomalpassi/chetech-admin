@@ -89,7 +89,7 @@ export function ExpenseLinkSelector({
         value={kind}
         onChange={(event) => changeKind(event.target.value as typeof kind)}
         options={[
-          { value: "none", label: "Sin vinculo" },
+          { value: "none", label: "Sin vínculo" },
           { value: "part", label: "Pago de compra de repuesto" },
           { value: "repair", label: "Otro gasto directo de REP" }
         ]}
@@ -135,7 +135,7 @@ export function ExpenseLinkSelector({
               Seleccionado: {selected.repairNumber} / {selected.description}
             </p>
           ) : (
-            <p className="text-sm text-muted-foreground">Selecciona un destino antes de guardar.</p>
+            <p className="text-sm text-muted-foreground">Seleccioná un destino antes de guardar.</p>
           )}
           <div aria-live="polite" aria-busy={loading}>
             {loading ? <p className="text-sm text-muted-foreground">Cargando destinos...</p> : null}

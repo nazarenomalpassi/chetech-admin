@@ -2,6 +2,7 @@
 
 import type { FormEvent, ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
 
 import { DraftRecoveryBanner } from "@/components/forms/draft-recovery-banner";
 import { Button } from "@/components/ui/button";
@@ -193,31 +194,40 @@ export function RepairAccessOrderDetail({
   return (
     <div className="min-w-0 space-y-4">
       <Card className="overflow-hidden bg-card">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <button
+          className="-ml-2 inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden"
+          onClick={() => confirmSectionChange(onBack)}
+          type="button"
+        >
+          <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+          Órdenes
+        </button>
+        <div className="mt-3 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-center gap-3">
-              <h1 className="w-full text-2xl font-semibold wrap-anywhere wrap-break-word text-foreground">
+              <h1 className="font-mono text-2xl font-semibold tracking-tight wrap-anywhere text-foreground">
                 {order.repairNumber}
               </h1>
               <RepairAccessStatusBadge status={status} />
             </div>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              {order.customer.fullName} - {order.customer.phone || "sin telefono"} -{" "}
-              {deviceLabel || "Equipo"} - ingreso {formatDate(order.intakeDate)}
+            <p className="mt-2 text-base font-medium text-foreground">
+              {order.customer.fullName}
+              <span className="font-normal text-muted-foreground">
+                {order.customer.phone ? ` · ${order.customer.phone}` : ""}
+              </span>
             </p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {deviceLabel || "Equipo"}. Ingresó el {formatDate(order.intakeDate)}.
+            </p>
+            {order.issueReported ? (
+              <p className="mt-3 max-w-3xl border-l-2 border-border-strong pl-3 text-sm leading-6 text-body">
+                {order.issueReported}
+              </p>
+            ) : null}
           </div>
-          <div className="grid gap-2 sm:flex sm:flex-wrap">
+          <div className="flex flex-wrap gap-2 xl:justify-end">
             <RepairLabelPrintLink orderId={order.id} reprint />
             <Button
-              className="w-full sm:w-auto"
-              onClick={() => confirmSectionChange(onBack)}
-              type="button"
-              variant="secondary"
-            >
-              Volver a ordenes
-            </Button>
-            <Button
-              className="w-full sm:w-auto"
               onClick={() => confirmSectionChange(() => onEditIntake(order))}
               type="button"
               variant="secondary"
@@ -323,7 +333,7 @@ export function RepairAccessOrderDetail({
             ]}
           />
           <Card>
-            <h2 className="text-lg font-semibold text-foreground">Retiro y garantia</h2>
+            <h2 className="text-lg font-semibold text-foreground">Retiro y garantía</h2>
             <div className="mt-3">
               <RepairAccessWarrantyBadge showDetail warranty={liveWarranty} />
             </div>
@@ -342,10 +352,10 @@ export function RepairAccessOrderDetail({
               />
               <WarrantyInfoRow
                 label="Plazo asignado"
-                value={hasWarranty ? `${toNumber(warrantyDays)} dias` : "Sin garantia"}
+                value={hasWarranty ? `${toNumber(warrantyDays)} días` : "Sin garantía"}
               />
               {order.legacyOrderNumber ? (
-                <WarrantyInfoRow label="Orden historica" value={order.legacyOrderNumber} />
+                <WarrantyInfoRow label="Orden histórica" value={order.legacyOrderNumber} />
               ) : null}
             </div>
             {order.warrantyConditions ? (
@@ -437,12 +447,12 @@ export function RepairAccessOrderDetail({
                   }
                   type="checkbox"
                 />
-                No tiene reparacion
+                No tiene reparación
               </label>
 
               <Field
                 className="lg:col-span-3"
-                label="Avance de reparacion · visible para el cliente"
+                label="Avance de reparación · visible para el cliente"
               >
                 <Textarea
                   defaultValue={restoredValue("repairProgress", order.repairProgress ?? "")}
@@ -497,10 +507,10 @@ export function RepairAccessOrderDetail({
 
               <div className="border-t border-border pt-4 lg:col-span-6">
                 <h3 className="text-base font-semibold text-foreground">
-                  Cobro informativo y garantia
+                  Cobro informativo y garantía
                 </h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                  No modifica caja ni balances. Registra el cobro real en Cobros de reparaciones con
+                  No modifica caja ni balances. Registrá el cobro real en Cobros de reparaciones con
                   este REP.
                 </p>
                 <div className="mt-4 grid gap-4 lg:grid-cols-6">
@@ -560,9 +570,9 @@ export function RepairAccessOrderDetail({
                       }}
                       type="checkbox"
                     />
-                    Esta reparacion tiene garantia
+                    Esta reparación tiene garantía
                   </label>
-                  <Field className="lg:col-span-2" label="Duración de garantía en dias">
+                  <Field className="lg:col-span-2" label="Duración de garantía en días">
                     <Input
                       disabled={
                         !hasWarranty ||
@@ -593,7 +603,7 @@ export function RepairAccessOrderDetail({
                     className="text-xs leading-5 text-muted-foreground lg:col-span-6"
                     id="pickup-date-help"
                   >
-                    La garantia comienza con el retiro efectivo. Al elegir Retirado se propone la
+                    La garantía comienza con el retiro efectivo. Al elegir Retirado se propone la
                     fecha de hoy.
                   </p>
                   <div className="text-sm text-muted-foreground lg:col-span-2">
@@ -603,7 +613,7 @@ export function RepairAccessOrderDetail({
                     </div>
                   </div>
                   <div className="text-sm text-muted-foreground lg:col-span-2">
-                    <span className="block text-sm text-muted-foreground">Inicio garantia</span>
+                    <span className="block text-sm text-muted-foreground">Inicio garantía</span>
                     <span className="mt-1 block text-foreground">
                       {liveWarranty.startsOn
                         ? formatDate(liveWarranty.startsOn)
@@ -650,7 +660,7 @@ export function RepairAccessOrderDetail({
               </div>
               {order.workflow && (order.deliveredAt || order.status === "retirado") ? (
                 <p className="text-sm text-muted-foreground lg:col-span-6">
-                  La orden original esta cerrada. Usa la correccion de garantía de arriba o registra
+                  La orden original esta cerrada. Usá la correccion de garantía de arriba o registra
                   un reingreso en esta misma REP.
                 </p>
               ) : null}

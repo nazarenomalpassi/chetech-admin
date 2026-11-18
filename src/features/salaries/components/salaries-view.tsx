@@ -105,7 +105,7 @@ export function SalariesView({
       <Card className="p-4 sm:p-5">
         {!data.migrationReady ? (
           <p className="status-banner status-banner--error mt-5">
-            Falta activar la migracion de planificacion salarial.
+            Falta activar la migración de planificación salarial.
           </p>
         ) : null}
         {message ? (
@@ -174,7 +174,7 @@ export function SalariesView({
               </p>
             </div>
             <div className="border-t border-border py-3">
-              <p className="text-xs text-muted-foreground">Costo historico vendido</p>
+              <p className="text-xs text-muted-foreground">Costo histórico vendido</p>
               <p className="mt-2 text-lg font-semibold">
                 {formatCurrency(data.merchandise.historicalCost)}
               </p>
@@ -186,7 +186,7 @@ export function SalariesView({
               </p>
             </div>
             <div className="border-t border-border py-3">
-              <p className="text-xs text-success">Margen bruto historico</p>
+              <p className="text-xs text-success">Margen bruto histórico</p>
               <p className="mt-2 text-lg font-semibold text-success">
                 {formatCurrency(data.merchandise.grossMargin)}
               </p>

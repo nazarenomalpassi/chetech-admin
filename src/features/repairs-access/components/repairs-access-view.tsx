@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Route } from "next";
 
+import { Plus } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { saveRepairAccessOrderAction } from "@/features/repairs-access/actions";
@@ -59,7 +61,6 @@ const primarySections: { key: RepairAccessSection; label: string }[] = [
   { key: "garantias", label: "Garantías" },
   { key: "repuestos", label: "Repuestos" },
   { key: "metricas", label: "Métricas" },
-  { key: "nueva", label: "Nueva orden" },
   { key: "clientes", label: "Clientes" }
 ];
 const secondarySections: { key: RepairAccessSection; label: string }[] = [
@@ -121,11 +122,11 @@ export function RepairsAccessView({
 }) {
   const router = useRouter();
   const initialSelectedOrder = orders.find((order) => order.id === initialOrderId) ?? null;
-  const requestedSection = [...primarySections, ...secondarySections].some(
-    (section) => section.key === initialView
-  )
-    ? (initialView as RepairAccessSection)
-    : null;
+  const requestedSection =
+    initialView === "nueva" ||
+    [...primarySections, ...secondarySections].some((section) => section.key === initialView)
+      ? (initialView as RepairAccessSection)
+      : null;
   const intakeSaved =
     actionStatus === "repair_access_created" || actionStatus === "repair_access_intake_updated";
   let entrySection: RepairAccessSection = "ordenes";
@@ -271,7 +272,11 @@ export function RepairsAccessView({
   }
 
   function navigate(section: string) {
-    if (![...primarySections, ...secondarySections].some((item) => item.key === section)) return;
+    if (
+      section !== "nueva" &&
+      ![...primarySections, ...secondarySections].some((item) => item.key === section)
+    )
+      return;
     if (
       !canManageIntake &&
       section !== "ordenes" &&
@@ -384,7 +389,12 @@ export function RepairsAccessView({
     <div className="space-y-5">
       {message ? (
         <p
-          className={`rounded-xl px-5 py-4 text-sm ${message.success ? "bg-success-soft text-success" : "bg-danger-soft text-danger"}`}
+          className={
+            message.success
+              ? "status-banner status-banner--success"
+              : "status-banner status-banner--error"
+          }
+          role={message.success ? "status" : "alert"}
         >
           {message.message}
         </p>
@@ -410,50 +420,73 @@ export function RepairsAccessView({
 
       <nav
         aria-label="Secciones de reparaciones"
-        className="flex flex-wrap items-start gap-2 border-b border-border pb-3"
+        className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-border"
       >
-        {primarySections
-          .filter(
-            (section) =>
-              canManageIntake ||
-              section.key === "ordenes" ||
-              section.key === "garantias" ||
-              section.key === "repuestos"
-          )
-          .map((section) => (
-            <button
-              aria-current={activeSection === section.key ? "page" : undefined}
-              className={`min-h-11 rounded-lg px-3 py-2 text-sm font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${activeSection === section.key ? "bg-primary text-white" : "text-muted-foreground hover:bg-accent"}`}
-              key={section.key}
-              onClick={() => navigate(section.key)}
-              type="button"
-            >
-              {section.key === "garantias"
-                ? `${section.label} (${warrantyReturnsCount})`
-                : section.label}
-            </button>
-          ))}
+        <div className="-mb-px flex min-w-0 flex-1 gap-1 overflow-x-auto">
+          {primarySections
+            .filter(
+              (section) =>
+                canManageIntake ||
+                section.key === "ordenes" ||
+                section.key === "garantias" ||
+                section.key === "repuestos"
+            )
+            .map((section) => (
+              <button
+                aria-current={activeSection === section.key ? "page" : undefined}
+                className="section-tab"
+                key={section.key}
+                onClick={() => navigate(section.key)}
+                type="button"
+              >
+                {section.label}
+                {section.key === "garantias" ? (
+                  <>
+                    {" "}
+                    {warrantyReturnsCount ? (
+                      <span aria-hidden="true" className="section-tab-count">
+                        {warrantyReturnsCount}
+                      </span>
+                    ) : null}
+                    <span className="sr-only">({warrantyReturnsCount})</span>
+                  </>
+                ) : null}
+              </button>
+            ))}
+        </div>
         {canManageIntake ? (
-          <details className="min-w-0 sm:ml-auto" ref={moreOptionsRef}>
-            <summary
-              className={`flex min-h-11 cursor-pointer items-center rounded-lg px-3 py-2 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${secondarySections.some((section) => section.key === activeSection) ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent"}`}
+          <div className="flex items-center gap-2 pb-2">
+            <Button
+              aria-current={activeSection === "nueva" ? "page" : undefined}
+              onClick={() => navigate("nueva")}
+              size="sm"
+              type="button"
+              variant={activeSection === "nueva" ? "secondary" : "default"}
             >
-              Más opciones
-            </summary>
-            <div className="flex flex-wrap gap-2 pt-2">
-              {secondarySections.map((section) => (
-                <Button
-                  aria-current={activeSection === section.key ? "page" : undefined}
-                  key={section.key}
-                  onClick={() => navigate(section.key)}
-                  type="button"
-                  variant="ghost"
-                >
-                  {section.label}
-                </Button>
-              ))}
-            </div>
-          </details>
+              <Plus aria-hidden="true" className="h-4 w-4" />
+              Nueva orden
+            </Button>
+            <details className="relative min-w-0" ref={moreOptionsRef}>
+              <summary
+                className={`flex min-h-9 cursor-pointer items-center rounded-lg px-3 text-sm font-medium focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden ${secondarySections.some((section) => section.key === activeSection) ? "bg-accent text-foreground" : "text-muted-foreground hover:bg-accent"}`}
+              >
+                Más opciones
+              </summary>
+              <div className="absolute right-0 z-20 mt-1 flex min-w-40 flex-col gap-1 rounded-xl border border-border bg-card p-1 shadow-pop">
+                {secondarySections.map((section) => (
+                  <Button
+                    aria-current={activeSection === section.key ? "page" : undefined}
+                    key={section.key}
+                    onClick={() => navigate(section.key)}
+                    type="button"
+                    variant="ghost"
+                  >
+                    {section.label}
+                  </Button>
+                ))}
+              </div>
+            </details>
+          </div>
         ) : null}
       </nav>
 
@@ -524,7 +557,7 @@ export function RepairsAccessView({
               />
             </label>
             <Button type="submit" className="min-h-11">
-              Aplicar periodo
+              Aplicar período
             </Button>
           </form>
           <WorkshopOperationalMetrics metrics={operationalMetrics} />
@@ -620,7 +653,7 @@ function RepairAccessQueriesPlaceholder({
         <div>
           <h2 className="text-xl font-semibold text-foreground">Consultas del taller</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-            Abri una vista filtrada para revisar esperas, entregas y garantias del taller.
+            Abri una vista filtrada para revisar esperas, entregas y garantías del taller.
           </p>
         </div>
         <Button onClick={() => onNavigate("ordenes")} type="button" variant="secondary">

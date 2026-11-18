@@ -232,7 +232,7 @@ export function VisitsView({
           </div>
         </dl>
         <p className="mt-1 text-xs text-muted-foreground">
-          Indicadores de esta pagina, no del historial completo.
+          Indicadores de esta página, no del historial completo.
         </p>
         {!data.migrationReady ? (
           <p role="alert" className="mt-4 rounded-xl bg-warning-soft p-3 text-sm text-warning">
@@ -253,7 +253,7 @@ export function VisitsView({
         ) : null}
         {data.summary.nextVisit ? (
           <div className="mt-3 border-t border-border pt-3 text-sm">
-            <p className="font-medium text-muted-foreground">Próxima salida de esta pagina</p>
+            <p className="font-medium text-muted-foreground">Próxima salida de esta página</p>
             <p className="mt-1 font-semibold">
               {data.summary.nextVisit.customerName} | {formatDate(data.summary.nextVisit.visitDate)}{" "}
               | {getVisitTimeLabel(data.summary.nextVisit.timeFrom, data.summary.nextVisit.timeTo)}
@@ -413,7 +413,7 @@ export function VisitsView({
         </div>
         {!data.visits.length ? (
           <div className="empty-panel mt-4">
-            No hay visitas para estos filtros. Proba otra fecha o usa Nueva visita para agendar una
+            No hay visitas para estos filtros. Probá otra fecha o usa Nueva visita para agendar una
             salida.
           </div>
         ) : null}

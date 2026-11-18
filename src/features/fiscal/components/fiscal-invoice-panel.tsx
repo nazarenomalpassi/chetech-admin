@@ -169,7 +169,7 @@ export function FiscalInvoicePanel({
           </span>
         </div>
         <p className="mt-2 max-w-[75ch] text-sm leading-6 text-muted-foreground">
-          Solo se emite con vista previa y confirmacion manual. No registra cobros ni mueve stock.
+          Solo se emite con vista previa y confirmación manual. No registra cobros ni mueve stock.
           Una factura fiscal requiere CAE autorizado por ARCA.
         </p>
         {!invoiceId ? (
@@ -193,7 +193,7 @@ export function FiscalInvoicePanel({
               </p>
             ) : (
               <div className="border-l-2 border-border-strong pl-4">
-                <p className="font-semibold">Integracion pendiente: todavia no puede emitir</p>
+                <p className="font-semibold">Integracion pendiente: todavía no puede emitir</p>
                 <ul className="mt-2 list-disc space-y-1 pl-4 text-sm text-body">
                   {state.readiness.issues.map((issue) => (
                     <li key={issue}>{issue}</li>
@@ -201,19 +201,19 @@ export function FiscalInvoicePanel({
                 </ul>
                 <p className="mt-3 text-sm">
                   Produccion: PV00001 queda bloqueado para esta instalacion. Homologacion: cualquier
-                  PV exige configuracion explicita y habilitacion WS verificada. No se solicita ni
+                  PV exige configuración explicita y habilitacion WS verificada. No se solicita ni
                   almacena Clave Fiscal.
                 </p>
               </div>
             )}
             {!eligible ? (
               <p className="text-sm">
-                Selecciona un comprobante interno vinculado a una venta o reparacion.
+                Seleccioná un comprobante interno vinculado a una venta o reparacion.
               </p>
             ) : null}
             {accepted ? (
               <p className="text-sm">
-                Esta operacion ya tiene una factura C autorizada en este entorno.
+                Esta operación ya tiene una factura C autorizada en este entorno.
               </p>
             ) : active ? (
               <p className="text-sm">
@@ -342,9 +342,9 @@ export function FiscalInvoicePanel({
             {preview ? (
               <div className="mt-5 space-y-4">
                 <p className="text-sm leading-6">
-                  Esta confirmacion solicita una autorizacion real al entorno indicado. En
+                  Esta confirmación solicita una autorizacion real al entorno indicado. En
                   produccion es irreversible: no elimina ni anula el comprobante. Una nota de
-                  credito debe gestionarse por separado.
+                  crédito debe gestionarse por separado.
                 </p>
                 <dl className="grid gap-4 border-y border-border py-4 text-sm sm:grid-cols-2">
                   <div>
@@ -378,7 +378,7 @@ export function FiscalInvoicePanel({
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-muted-foreground">Fecha / periodo / vencimiento</dt>
+                    <dt className="text-muted-foreground">Fecha / período / vencimiento</dt>
                     <dd>{preview.snapshot.issuedOn}</dd>
                     {preview.snapshot.concept !== 1 ? (
                       <dd>

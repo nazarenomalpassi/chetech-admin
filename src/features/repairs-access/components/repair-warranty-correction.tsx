@@ -58,7 +58,7 @@ export function RepairWarrantyCorrection({
           </label>
           {missingPickup ? (
             <p role="alert" className="text-sm text-warning">
-              Falta la fecha efectiva del retiro original. No se puede iniciar la garantia con la
+              Falta la fecha efectiva del retiro original. No se puede iniciar la garantía con la
               fecha de hoy.
             </p>
           ) : null}

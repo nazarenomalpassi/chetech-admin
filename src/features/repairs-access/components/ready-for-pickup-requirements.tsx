@@ -60,7 +60,7 @@ export function ReadyForPickupRequirements({
           <li>
             <p className="font-medium">Repuestos pendientes de recibir</p>
             <p className="mt-1 text-warning">
-              Mostrador debe registrar la recepcion o cancelar la solicitud.
+              Mostrador debe registrar la recepción o cancelar la solicitud.
             </p>
           </li>
         ) : null}

@@ -118,11 +118,11 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
         <label className="space-y-1 text-sm font-medium text-body">
           <span>Categoría</span>
           <Select
-            aria-label="Filtrar productos por categoria"
+            aria-label="Filtrar productos por categoría"
             value={state.category || "all"}
             onChange={(event) => navigate({ category: event.target.value })}
             options={[
-              { label: "Todas las categorias", value: "all" },
+              { label: "Todas las categorías", value: "all" },
               ...categories.map((category) => ({ label: category.name, value: category.id }))
             ]}
           />
@@ -167,7 +167,7 @@ export function ProductFilters({ categories }: { categories: { id: string; name:
               />
             </label>
             <label className="space-y-1 text-sm font-medium text-body">
-              <span>Productos por pagina</span>
+              <span>Productos por página</span>
               <Select
                 value={String(state.pageSize)}
                 onChange={(event) => navigate({ pageSize: event.target.value })}

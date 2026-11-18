@@ -329,7 +329,7 @@ export function InvoicesView({
               className="font-semibold underline decoration-border-strong underline-offset-4"
               href="/facturacion"
             >
-              Salir de edicion
+              Salir de edición
             </Link>
           </div>
         ) : null}
@@ -364,7 +364,7 @@ export function InvoicesView({
           </p>
           {documentLocked ? (
             <p className="status-banner" role="status">
-              Documento bloqueado por anulacion o circuito fiscal. Su contenido no puede
+              Documento bloqueado por anulación o circuito fiscal. Su contenido no puede
               modificarse.
             </p>
           ) : null}
@@ -387,7 +387,7 @@ export function InvoicesView({
                 options={[
                   { label: "Manual", value: "manual" },
                   { label: "REP (orden principal)", value: "repair_access" },
-                  { label: "Reparación (registro historico)", value: "repair" },
+                  { label: "Reparación (registro histórico)", value: "repair" },
                   { label: "Venta", value: "sale" }
                 ]}
                 value={sourceType}
@@ -418,7 +418,7 @@ export function InvoicesView({
             </div>
             <div>
               <label className="mb-2 block text-sm font-medium text-body" htmlFor="repairId">
-                Reparación historica
+                Reparación histórica
               </label>
               <SearchableSelect
                 searchLabel="Buscar reparacion o cliente"
@@ -533,7 +533,7 @@ export function InvoicesView({
               </div>
               <p className="text-sm text-muted-foreground md:col-span-3">
                 Vincular una referencia no solicita ni acredita autorizacion ARCA. Al guardarla, se
-                bloquea la edicion del documento interno.
+                bloquea la edición del documento interno.
               </p>
             </fieldset>
           </details>

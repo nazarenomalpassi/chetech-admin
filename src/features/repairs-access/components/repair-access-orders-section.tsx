@@ -233,12 +233,12 @@ export function RepairAccessOrdersSection({
                 name="warrantyFilter"
                 onChange={(event) => onWarrantyFilterChange(event.target.value)}
                 options={[
-                  { value: "todos", label: "Todas las garantias" },
+                  { value: "todos", label: "Todas las garantías" },
                   { value: "active", label: "Garantía vigente" },
                   { value: "expired", label: "Garantía vencida" },
                   { value: "pending_delivery", label: "Pendiente de retiro" },
                   { value: "needs_review", label: "Garantía incompleta" },
-                  { value: "none", label: "Sin garantia" }
+                  { value: "none", label: "Sin garantía" }
                 ]}
                 value={warrantyFilter}
               />
@@ -447,7 +447,7 @@ export function RepairAccessOrdersSection({
                                 summaryClassName="min-h-11 cursor-pointer px-3 py-3 text-sm font-semibold text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40"
                                 summary={
                                   order.status === "retirado" || order.deliveredAt
-                                    ? "Corregir garantia"
+                                    ? "Corregir garantía"
                                     : "Actualizar trabajo"
                                 }
                               >
@@ -490,7 +490,7 @@ export function RepairAccessOrdersSection({
             type="button"
             variant="secondary"
           >
-            Cargar mas ordenes
+            Cargar más ordenes
           </Button>
         </div>
       ) : null}

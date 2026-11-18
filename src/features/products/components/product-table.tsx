@@ -296,14 +296,14 @@ export function ProductTable({
               type="button"
               variant="secondary"
             >
-              Mostrar mas productos
+              Mostrar más productos
             </Button>
           ) : null}
         </div>
       ) : null}
       {!products.length ? (
         <div className="empty-panel border-t border-border">
-          No hay productos que coincidan con estos filtros. Proba otra busqueda o limpia los
+          No hay productos que coincidan con estos filtros. Probá otra busqueda o limpia los
           filtros.
         </div>
       ) : null}

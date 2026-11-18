@@ -36,9 +36,9 @@ describe("report business overview", () => {
     expect(quality.querySelector("summary")?.textContent).toContain("2 ventas");
     fireEvent.click(quality.querySelector("summary")!);
     expect(quality.textContent).toContain("no se cuentan como ganancia");
-    expect(screen.getByRole("figure", { name: "Actividad registrada del periodo" })).toBeTruthy();
+    expect(screen.getByRole("figure", { name: "Actividad registrada del período" })).toBeTruthy();
     expect(screen.getByRole("figure", { name: "Comparacion mensual por actividad" })).toBeTruthy();
-    expect(screen.getByRole("figure", { name: "Categorías con mas ventas" })).toBeTruthy();
+    expect(screen.getByRole("figure", { name: "Categorías con más ventas" })).toBeTruthy();
     expect(screen.getByLabelText("Variacion de Gastos").className).toContain("text-danger");
     const links = screen.getAllByRole("link", { name: "Exportar CSV" });
     expect(links).toHaveLength(6);

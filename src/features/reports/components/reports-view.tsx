@@ -89,7 +89,7 @@ const EXPORT_MODULES = [
   {
     slug: "ventas",
     title: "Ventas",
-    description: "Descarga numero, fecha, total, costo y ganancia del periodo."
+    description: "Descarga número, fecha, total, costo y ganancia del periodo."
   },
   {
     slug: "reparaciones",
@@ -99,7 +99,7 @@ const EXPORT_MODULES = [
   {
     slug: "gastos",
     title: "Gastos",
-    description: "Baja un CSV limpio con categoria, descripcion, monto y cuenta."
+    description: "Baja un CSV limpio con categoría, descripción, monto y cuenta."
   },
   {
     slug: "facturacion",
@@ -109,7 +109,7 @@ const EXPORT_MODULES = [
   {
     slug: "caja",
     title: "Caja",
-    description: "Todos los movimientos operativos del periodo por tipo y cuenta."
+    description: "Todos los movimientos operativos del período por tipo y cuenta."
   },
   {
     slug: "sueldos",
@@ -196,12 +196,12 @@ function RankingMargin({ row }: { row: RankingRow }) {
 export function ReportsView({ canExport, data }: ReportsViewProps) {
   const { metrics, range, monthlyComparison, monthlyGoals, rankings, sellerSummary, technicianSummary } = data;
   const metricCards = [
-    { label: "Ventas del periodo", value: metrics.salesTotal, icon: TrendingUp, tone: "income", description: "Importe registrado en ventas" },
+    { label: "Ventas del período", value: metrics.salesTotal, icon: TrendingUp, tone: "income", description: "Importe registrado en ventas" },
     { label: "Margen registrado de ventas", value: metrics.salesProfit, icon: TrendingUp, tone: "success", description: "Subtotal con costo conocido; no es ganancia total ni utilidad neta." },
     { label: "Importe declarado en reparaciones", value: metrics.repairsTotal, icon: Wrench, tone: "service", description: "Importes declarados; no equivale a cobros" },
-    { label: "Gastos del periodo", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
-    { label: "Facturación emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del periodo" },
-    { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del periodo" }
+    { label: "Gastos del período", value: metrics.expensesTotal, icon: TrendingDown, tone: "expense", description: "Egresos operativos" },
+    { label: "Facturación emitida", value: metrics.invoicesTotal, icon: FileSpreadsheet, tone: "neutral", description: "Comprobantes internos del período" },
+    { label: "Retiros de sueldo", value: metrics.salariesTotal, icon: ShieldCheck, tone: "warning", description: "Retiros registrados del período" }
   ] as const;
 
   const exportQuery = `from=${range.from}&to=${range.to}`;
@@ -267,7 +267,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </div>
       </details>
 
-      <BusinessChart title="Actividad registrada del periodo" description={`Del ${formatDate(range.from)} al ${formatDate(range.to)}. Ventas registradas, reparaciones declaradas y comprobantes emitidos no equivalen a cobros. No se suman entre si: pueden representar la misma operacion. Gastos y retiros se muestran separados; no es un calculo de utilidad.`} rows={[
+      <BusinessChart title="Actividad registrada del período" description={`Del ${formatDate(range.from)} al ${formatDate(range.to)}. Ventas registradas, reparaciones declaradas y comprobantes emitidos no equivalen a cobros. No se suman entre si: pueden representar la misma operacion. Gastos y retiros se muestran separados; no es un calculo de utilidad.`} rows={[
         { label: "Ventas registradas", value: metrics.salesTotal, tone: "income" },
         { label: "REP declaradas", value: metrics.repairsTotal, tone: "service" },
         { label: "Comprobantes", value: metrics.invoicesTotal, tone: "neutral" },
@@ -336,7 +336,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           <GoalCard progress={monthlyGoals.goals.sales} title="Meta de ventas" />
           <GoalCard progress={monthlyGoals.goals.profit} title="Meta de margen conocido" />
           <GoalCard progress={monthlyGoals.goals.repairs} title="Meta de reparaciones" />
-          <GoalCard progress={monthlyGoals.goals.invoicing} title="Meta de facturacion" />
+          <GoalCard progress={monthlyGoals.goals.invoicing} title="Meta de facturación" />
         </div>
       </Card>
 
@@ -376,7 +376,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-foreground">Reparaciones por quien las registro</h2>
-              <p className="mt-2 text-xs text-muted-foreground">Muestra importes declarados, no dinero cobrado. El responsable tecnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
+              <p className="mt-2 text-xs text-muted-foreground">Muestra importes declarados, no dinero cobrado. El responsable técnico, los pagos y la deuda de la REP se consultan en Negocio del taller.</p>
             </div>
             <Badge>{technicianSummary.length} perfiles</Badge>
           </div>
@@ -406,7 +406,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
 
         <Card className="space-y-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Resultado de caja del periodo</h2>
+            <h2 className="text-xl font-semibold text-foreground">Resultado de caja del período</h2>
           </div>
           <div className="space-y-3 border-t border-border pt-4">
             <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
@@ -471,13 +471,13 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
         </Card>
 
         <div className="space-y-3">
-          <BusinessChart title="Categorías con mas ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
+          <BusinessChart title="Categorías con más ventas" description="Ranking disponible del rango seleccionado, hasta 8 categorias. Importes de ventas registradas, no cobros ni participacion sobre todo el negocio. Los conceptos sin inventario se identifican por separado." rows={rankings.categories.map((row) => ({ label: row.label, value: row.revenue, tone: "income" }))} />
           <Card>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-xl font-semibold text-foreground">Ventas por categoria</h2>
+              <h2 className="text-xl font-semibold text-foreground">Ventas por categoría</h2>
             </div>
-            <Badge>Por facturacion</Badge>
+            <Badge>Por facturación</Badge>
           </div>
           <div className="mt-4 space-y-3">
             {rankings.categories.length ? (
@@ -496,7 +496,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground">No hay categorias con ventas en este rango.</p>
+              <p className="text-sm text-muted-foreground">No hay categorías con ventas en este rango.</p>
             )}
           </div>
           </Card>
@@ -506,7 +506,7 @@ export function ReportsView({ canExport, data }: ReportsViewProps) {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-foreground">Exportar movimientos del periodo</h2>
+            <h2 className="text-xl font-semibold text-foreground">Exportar movimientos del período</h2>
           </div>
           {canExport ? (
             <Badge variant="success">Admin habilitado</Badge>

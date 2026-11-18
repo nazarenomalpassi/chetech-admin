@@ -57,9 +57,9 @@ export default async function ConfiguracionPage({
           <Card>
             <h2 className="text-lg font-semibold text-foreground">Exportar datos del sistema</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              El Excel es una exportacion parcial para consulta. El JSON incluye los registros y un
+              El Excel es una exportación parcial para consulta. El JSON incluye los registros y un
               manifiesto para comprobar cantidades e integridad. Ninguno reemplaza el respaldo
-              tecnico de PostgreSQL, usuarios y archivos privados.
+              técnico de PostgreSQL, usuarios y archivos privados.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a className={cn(buttonVariants())} href="/api/backup">
@@ -125,7 +125,7 @@ export default async function ConfiguracionPage({
                   className="mb-2 block text-sm font-medium text-body"
                   htmlFor="invoicingTarget"
                 >
-                  Meta de facturacion
+                  Meta de facturación
                 </label>
                 <Input
                   defaultValue={businessGoals.invoicingTarget}
@@ -145,7 +145,7 @@ export default async function ConfiguracionPage({
           <Card>
             <h2 className="text-lg font-semibold text-foreground">Garantía predeterminada</h2>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Se propone al asignar una garantia nueva. Cada orden puede conservar una duracion
+              Se propone al asignar una garantía nueva. Cada orden puede conservar una duración
               diferente y la cobertura empieza unicamente en la fecha efectiva de retiro.
             </p>
 
@@ -158,7 +158,7 @@ export default async function ConfiguracionPage({
                   className="mb-2 block text-sm font-medium text-body"
                   htmlFor="repair-warranty-default-days"
                 >
-                  Duración en dias
+                  Duración en días
                 </label>
                 <Input
                   defaultValue={repairWarrantySettings.defaultDays}
@@ -171,7 +171,7 @@ export default async function ConfiguracionPage({
                 />
               </div>
               <button className={cn(buttonVariants())} type="submit">
-                Guardar garantia
+                Guardar garantía
               </button>
             </form>
           </Card>

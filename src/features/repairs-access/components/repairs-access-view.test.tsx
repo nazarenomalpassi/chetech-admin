@@ -367,7 +367,7 @@ describe("workshop section navigation", () => {
         .getAllByRole("button")
         .filter((button) => !button.closest("details"))
         .map((button) => button.textContent)
-    ).toEqual(["Órdenes", "Garantías (0)", "Repuestos", "Métricas", "Nueva orden", "Clientes"]);
+    ).toEqual(["Órdenes", "Garantías (0)", "Repuestos", "Métricas", "Clientes", "Nueva orden"]);
     fireEvent.click(within(nav).getByText("Más opciones"));
     expect(more?.open).toBe(true);
     expect(within(nav).getByRole("button", { name: "Resumen" })).toBeTruthy();
