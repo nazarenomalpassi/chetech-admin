@@ -4,7 +4,9 @@ const mocks = vi.hoisted(() => ({
   select: vi.fn(),
   cap: 500,
   boards: [] as Record<string, unknown>[],
-  events: [] as Record<string, unknown>[]
+  events: [] as Record<string, unknown>[],
+  boxes: [] as Record<string, unknown>[],
+  boxesError: null as { code: string; message: string } | null
 }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: async () => ({ from: mocks.from })
@@ -33,9 +35,23 @@ beforeEach(() => {
   mocks.select.mockClear();
   mocks.boards = [board];
   mocks.events = [];
+  mocks.boxes = [];
+  mocks.boxesError = null;
   mocks.cap = 500;
   mocks.from.mockImplementation((table: string) => {
     const builder: Record<string, unknown> = {};
+    if (table === "tv_board_boxes") {
+      builder.select = (columns: string) => {
+        mocks.select(table, columns);
+        return builder;
+      };
+      builder.order = () =>
+        Promise.resolve({
+          data: mocks.boxesError ? null : mocks.boxes,
+          error: mocks.boxesError
+        });
+      return builder;
+    }
     builder.select = (columns: string) => {
       mocks.select(table, columns);
       return builder;
@@ -145,5 +161,69 @@ describe("TV board financial read paths", () => {
     expect(page.boards).toHaveLength(1007);
     expect(page.boards.every((row) => row.events.length === 1)).toBe(true);
     expect(page.summary.pendingAmount).toBe(104000.25 * 1007);
+  });
+});
+
+describe("TV board boxes", () => {
+  const stored = { ...board, is_active: true, sold_at: null, mercado_libre_net_amount: null };
+  const boxes = [
+    { id: "box-1", number: 1, label: "Estante de arriba", created_at: "2026-11-18" },
+    { id: "box-2", number: 2, label: null, created_at: "2026-11-18" }
+  ];
+
+  beforeEach(() => {
+    mocks.boxes = boxes;
+    mocks.boards = [
+      { ...stored, id: "a", brand: "LG", model: "EAX123", board_type: "main", box_id: "box-1" },
+      { ...stored, id: "b", brand: " lg ", model: "PSU900", board_type: "fuente", box_id: "box-2" },
+      { ...stored, id: "c", brand: "Samsung", model: "BN44", board_type: "fuente", box_id: null },
+      { ...board, id: "d", brand: "Samsung", model: "BN41", box_id: "box-1" }
+    ];
+  });
+
+  it("finds which box a model is in and searches by box number", async () => {
+    const page = await getTvBoardsPageData({ search: "eax123" });
+    expect(page.boards.map((row) => row.id)).toEqual(["a"]);
+    expect(page.boxes.find((box) => box.id === page.boards[0].boxId)?.number).toBe(1);
+    expect((await getTvBoards({ search: "caja 2" })).map((row) => row.id)).toEqual(["b"]);
+    expect(mocks.select).toHaveBeenCalledWith("tv_boards", expect.stringContaining("box_id"));
+  });
+
+  it("filters by brand regardless of spacing or case, and by type", async () => {
+    expect((await getTvBoards({ brand: "lg" })).map((row) => row.id).sort()).toEqual(["a", "b"]);
+    expect((await getTvBoards({ brand: "LG", boardType: "fuente" })).map((row) => row.id)).toEqual([
+      "b"
+    ]);
+  });
+
+  it("counts only boards still stored in each box and lists brands once", async () => {
+    const page = await getTvBoardsPageData();
+    expect(page.boxesReady).toBe(true);
+    expect(page.boxes.map((box) => [box.number, box.inStock])).toEqual([
+      [1, 1],
+      [2, 1]
+    ]);
+    expect(page.boxes[0].byType).toMatchObject({ main: 1, fuente: 0 });
+    expect(page.unboxedCount).toBe(1);
+    expect(page.brands.map((brand) => brand.value)).toEqual(["lg", "samsung"]);
+  });
+
+  it("opens a box with its stored boards, leaving sold ones out unless asked", async () => {
+    const page = await getTvBoardsPageData({ caja: "1" });
+    expect(page.selectedBox?.number).toBe(1);
+    expect(page.boards.map((row) => row.id)).toEqual(["a"]);
+    const sold = await getTvBoardsPageData({ caja: "1", status: "sold" });
+    expect(sold.boards.map((row) => row.id)).toEqual(["d"]);
+    const unboxed = await getTvBoardsPageData({ caja: "sin" });
+    expect(unboxed.selectedBox).toBeNull();
+    expect(unboxed.boards.map((row) => row.id)).toEqual(["c"]);
+  });
+
+  it("keeps the section working when the boxes table is not there yet", async () => {
+    mocks.boxesError = { code: "PGRST205", message: "missing" };
+    const page = await getTvBoardsPageData();
+    expect(page.boxesReady).toBe(false);
+    expect(page.boxes).toEqual([]);
+    expect(mocks.select).toHaveBeenCalledWith("tv_boards", expect.not.stringContaining("box_id"));
   });
 });

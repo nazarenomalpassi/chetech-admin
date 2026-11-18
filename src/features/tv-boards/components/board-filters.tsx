@@ -3,12 +3,22 @@
 import { useCallback, useEffect, useId, useState } from "react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Search, X } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TV_BOARD_TYPES } from "@/features/tv-boards/schemas";
 
-export function BoardFilters() {
+const SEARCH_DELAY_MS = 350;
+
+export function BoardFilters({
+  brands = [],
+  placeholder = "Modelo, marca o número de caja"
+}: {
+  placeholder?: string;
+  /** Marcas cargadas (valor normalizado y nombre para mostrar). */
+  brands?: Array<{ value: string; label: string }>;
+}) {
   const id = useId();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -36,23 +46,55 @@ export function BoardFilters() {
   useEffect(() => {
     const timeout = window.setTimeout(() => {
       updateParam("search", search.trim());
-    }, 650);
+    }, SEARCH_DELAY_MS);
 
     return () => window.clearTimeout(timeout);
   }, [search, updateParam]);
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <div className="space-y-1 text-sm font-medium text-body">
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-[minmax(0,2fr)_repeat(3,minmax(0,1fr))]">
+      <div className="col-span-2 space-y-1 text-sm font-medium text-body md:col-span-1">
         <label className="block" htmlFor={`${id}-search`}>
-          Buscar placas
+          Buscar placa
         </label>
-        <Input
-          aria-label="Buscar placas"
-          id={`${id}-search`}
-          onChange={(event) => setSearch(event.target.value)}
-          placeholder="Marcá o modelo"
-          value={search}
+        <div className="relative">
+          <Search
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+          />
+          <Input
+            aria-label="Buscar placas"
+            autoComplete="off"
+            className="pr-10 pl-9"
+            id={`${id}-search`}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={placeholder}
+            type="search"
+            value={search}
+          />
+          {search ? (
+            <button
+              aria-label="Borrar búsqueda"
+              className="absolute top-1/2 right-1.5 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+              onClick={() => setSearch("")}
+              type="button"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="space-y-1 text-sm font-medium text-body">
+        <label className="block" htmlFor={`${id}-brand`}>
+          Marca
+        </label>
+        <Select
+          aria-label="Filtrar placas por marca"
+          id={`${id}-brand`}
+          defaultValue={searchParams.get("brand") ?? "all"}
+          onChange={(event) => updateParam("brand", event.target.value)}
+          options={[{ label: "Todas las marcas", value: "all" }, ...brands]}
         />
       </div>
 
@@ -72,7 +114,7 @@ export function BoardFilters() {
         />
       </div>
 
-      <div className="space-y-1 text-sm font-medium text-body">
+      <div className="col-span-2 space-y-1 text-sm font-medium text-body md:col-span-1">
         <label className="block" htmlFor={`${id}-status`}>
           Estado
         </label>

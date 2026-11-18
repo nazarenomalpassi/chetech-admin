@@ -21,6 +21,10 @@ type BoardFormDialogProps = {
   board?: TvBoardFormValues | null;
   open: boolean;
   onClose: () => void;
+  /** Cajas disponibles. Sin cajas (base sin el organizador) el campo no aparece. */
+  boxes?: Array<{ id: string; number: number; label: string | null }>;
+  /** Caja que se propone al crear una placa desde adentro de una caja. */
+  defaultBoxId?: string | null;
 };
 
 const defaultValues: TvBoardFormValues = {
@@ -32,7 +36,13 @@ const defaultValues: TvBoardFormValues = {
   isActive: true
 };
 
-export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) {
+export function BoardFormDialog({
+  board,
+  open,
+  onClose,
+  boxes,
+  defaultBoxId = null
+}: BoardFormDialogProps) {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const form = useForm<TvBoardFormValues>({
@@ -41,10 +51,15 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
   });
   const hasChanges = form.formState.isDirty;
 
+  const boxesEnabled = Boolean(boxes);
+
   useEffect(() => {
-    form.reset(board ?? defaultValues);
+    const base = board ?? defaultValues;
+    form.reset(
+      boxesEnabled ? { ...base, boxId: board ? (board.boxId ?? null) : defaultBoxId } : base
+    );
     setMessage(null);
-  }, [board, form, open]);
+  }, [board, boxesEnabled, defaultBoxId, form, open]);
 
   if (!open) {
     return null;
@@ -100,6 +115,32 @@ export function BoardFormDialog({ board, open, onClose }: BoardFormDialogProps) 
         )}
       >
         <div className="grid gap-4 md:grid-cols-2">
+          {boxes ? (
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-medium text-body" htmlFor="boxId">
+                Caja donde se guarda
+              </label>
+              <Select
+                id="boxId"
+                options={[
+                  { label: "Sin caja", value: "" },
+                  ...boxes.map((box) => ({
+                    label: box.label ? `Caja ${box.number}: ${box.label}` : `Caja ${box.number}`,
+                    value: box.id
+                  }))
+                ]}
+                value={form.watch("boxId") ?? ""}
+                onChange={(event) =>
+                  form.setValue("boxId", event.target.value || null, { shouldDirty: true })
+                }
+              />
+              <p className="mt-1 text-sm text-muted-foreground">
+                {boxes.length
+                  ? "Así el buscador te dice dónde está cuando la necesites."
+                  : "Todavía no hay cajas. Creá una desde Nueva caja."}
+              </p>
+            </div>
+          ) : null}
           <div>
             <label className="mb-2 block text-sm font-medium text-body" htmlFor="brand">
               Marca

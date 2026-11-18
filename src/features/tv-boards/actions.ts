@@ -45,7 +45,9 @@ export async function upsertTvBoardAction(input: unknown) {
     board_type: parsed.data.boardType,
     listed_price: parsed.data.price,
     acquisition_cost: parsed.data.acquisitionCost,
-    is_active: soldLocked ? false : parsed.data.isActive
+    is_active: soldLocked ? false : parsed.data.isActive,
+    // Solo se envía si el formulario la trae: así una base sin cajas sigue funcionando.
+    ...(parsed.data.boxId !== undefined ? { box_id: parsed.data.boxId } : {})
   };
 
   const { data, error } = parsed.data.id

@@ -667,6 +667,38 @@ output {
   z-index: 1;
 }
 
+/* Caja de placas: tarjeta que se abre. El borde se marca al pasar y el foco se ve con teclado. */
+.box-card {
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.box-card:hover {
+  border-color: var(--line-strong);
+  background-color: #fff;
+}
+
+.box-card:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+}
+
+.box-card:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .box-card {
+    transition: none;
+  }
+
+  .box-card:active {
+    transform: none;
+  }
+}
+
 .table-shell {
   overflow: hidden;
   border-radius: var(--radius-panel);

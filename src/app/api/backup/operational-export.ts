@@ -58,6 +58,7 @@ export const OPERATIONAL_TABLES: TableSpec[] = [
   })),
   { table: "operations_cash_reconciliations", module: "finance", identity: "id", optional: true },
   { table: "tv_board_sale_events", module: "commercial", identity: "id", optional: true },
+  { table: "tv_board_boxes", module: "commercial", identity: "id", optional: true },
   ...[
     "repair_budget_versions",
     "repair_customer_decisions",
