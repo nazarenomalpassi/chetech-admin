@@ -130,7 +130,7 @@ describe("manual repair receipt sharing", () => {
   it("discloses the sender session, manual confirmation, expiry and one-document forwarded access", () => {
     render(<RepairDocumentShareActions order={order} canManageIntake />);
     const instruction = screen.getByText(
-      "Usa la sesi\u00f3n de WhatsApp Web del local. Revis\u00e1 el destinatario y confirm\u00e1 Enviar."
+      "Se env\u00eda desde WhatsApp Web del local; confirm\u00e1 Enviar."
     );
     expect(instruction.closest("details")).toBeNull();
     const details = screen.getByText("Enlaces compartidos").closest("details")!;

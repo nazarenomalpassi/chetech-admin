@@ -1,3 +1,5 @@
+import { MessageCircle } from "lucide-react";
+
 import { buttonVariants } from "@/components/ui/button";
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 import {
@@ -65,6 +67,7 @@ export function RepairAccessWhatsAppButton({
       target="_blank"
       title={template.message}
     >
+      <MessageCircle aria-hidden="true" className="h-4 w-4" />
       {label ?? template.label}
     </a>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { RepairAccessOrderRecord } from "../queries";
 import { normalizeWhatsAppPhone } from "../whatsapp";
@@ -80,47 +81,52 @@ export function RepairDocumentShareActions({
       aria-label="Comprobantes por WhatsApp"
       className="min-w-0 space-y-2 border-t border-border pt-3"
     >
-      <p className="text-sm font-medium wrap-break-word text-foreground">
-        Destinatario: {order.customer.fullName} - {order.customer.phone || "Sin telefono principal"}
-      </p>
-      <p className="text-xs leading-5 text-muted-foreground" id={helpId}>
-        {
-          "Usa la sesi\u00f3n de WhatsApp Web del local. Revis\u00e1 el destinatario y confirm\u00e1 Enviar."
-        }
-      </p>
-      <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-        {kinds.map((kind) => (
-          <form
-            key={kind}
-            method="post"
-            action={endpoint}
-            target="_blank"
-            rel="noopener"
-            className="min-w-0 sm:flex-1"
-          >
-            <input type="hidden" name="orderId" value={order.id} />
-            <input type="hidden" name="kind" value={kind} />
-            <input type="hidden" name="intent" value="send" />
-            <Button
-              type="submit"
-              variant="secondary"
-              className="min-h-11 w-full whitespace-normal"
-              disabled={!hasValidPhone || revoking !== null}
-              aria-describedby={hasValidPhone ? helpId : `${helpId} ${phoneHelpId}`}
+      <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium wrap-break-word text-foreground">
+            Destinatario: {order.customer.fullName} -{" "}
+            {order.customer.phone || "Sin teléfono principal"}
+          </p>
+          <p className="text-xs leading-5 text-muted-foreground" id={helpId}>
+            Se envía desde WhatsApp Web del local; confirmá Enviar.
+          </p>
+        </div>
+        <div className="flex min-w-0 shrink-0 flex-col gap-2 sm:flex-row sm:flex-wrap lg:justify-end">
+          {kinds.map((kind) => (
+            <form
+              key={kind}
+              method="post"
+              action={endpoint}
+              target="_blank"
+              rel="noopener"
+              className="min-w-0 sm:flex-1 lg:flex-none"
             >
-              {documents[kind].send}
-            </Button>
-          </form>
-        ))}
+              <input type="hidden" name="orderId" value={order.id} />
+              <input type="hidden" name="kind" value={kind} />
+              <input type="hidden" name="intent" value="send" />
+              <Button
+                type="submit"
+                variant="secondary"
+                size="sm"
+                className="w-full whitespace-normal lg:w-auto"
+                disabled={!hasValidPhone || revoking !== null}
+                aria-describedby={hasValidPhone ? helpId : `${helpId} ${phoneHelpId}`}
+              >
+                <MessageCircle aria-hidden="true" className="h-4 w-4" />
+                {documents[kind].send}
+              </Button>
+            </form>
+          ))}
+        </div>
       </div>
       {!hasValidPhone ? (
         <p className="text-xs leading-5 text-warning" id={phoneHelpId}>
-          El cliente no tiene un telefono principal valido para WhatsApp. Corregilo en Editar
+          El cliente no tiene un teléfono principal válido para WhatsApp. Corregilo en Editar
           ingreso.
         </p>
       ) : null}
       <details className="min-w-0">
-        <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
+        <summary className="min-h-9 cursor-pointer rounded-lg py-2 text-sm font-medium text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden">
           Enlaces compartidos
         </summary>
         <div className="space-y-2 pb-2">

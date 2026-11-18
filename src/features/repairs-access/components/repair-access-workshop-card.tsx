@@ -7,9 +7,7 @@ import {
   ClipboardPenLine,
   FileText,
   Globe2,
-  MonitorCog,
   Phone,
-  UserRound,
   Wrench
 } from "lucide-react";
 
@@ -69,56 +67,75 @@ export function RepairAccessWorkshopCard({
   const summary = getWorkshopOrderSummary(order);
   const activeReturn = summary.activeReturn;
 
+  const daysInShop = (() => {
+    const from = Date.parse(`${order.intakeDate}T00:00:00Z`);
+    if (Number.isNaN(from)) return null;
+    const until = delivered && order.deliveredAt ? Date.parse(order.deliveredAt) : Date.now();
+    return Math.max(0, Math.floor((until - from) / 86_400_000));
+  })();
+
   return (
-    <article className="min-w-0 overflow-hidden rounded-xl border border-border bg-card">
-      <header className="grid min-w-0 gap-2 border-b border-border p-4">
-        <div className="min-w-0">
-          {canManageIntake ? (
-            <button
-              aria-label={`Abrir orden ${order.repairNumber}`}
-              className="block min-h-11 w-full rounded-lg text-left text-xl leading-tight font-semibold wrap-anywhere wrap-break-word whitespace-normal text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
-              onClick={() => onOpenDetail(order)}
-              type="button"
+    <article className="workshop-card group/card min-w-0 overflow-hidden rounded-xl border border-border bg-card">
+      <header className="min-w-0 px-4 pt-4 pb-3">
+        <div className="flex min-w-0 items-start justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+            {canManageIntake ? (
+              <button
+                aria-label={`Abrir orden ${order.repairNumber}`}
+                className="-mx-1 rounded-md px-1 font-mono text-lg leading-7 font-semibold tracking-tight wrap-anywhere text-foreground underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-hidden"
+                onClick={() => onOpenDetail(order)}
+                type="button"
+              >
+                {order.repairNumber}
+              </button>
+            ) : (
+              <p className="font-mono text-lg leading-7 font-semibold tracking-tight wrap-anywhere text-foreground">
+                {order.repairNumber}
+              </p>
+            )}
+            <RepairAccessStatusBadge status={summary.status} />
+            <RepairAccessWarrantyBadge warranty={order.warranty} />
+          </div>
+          {daysInShop !== null ? (
+            <p
+              className={cn(
+                "shrink-0 text-sm leading-7 tabular-nums",
+                !delivered && daysInShop > 30 ? "font-medium text-warning" : "text-muted-foreground"
+              )}
+              title={delivered ? "Días que estuvo en el local" : "Días en el local"}
             >
-              {order.repairNumber}
-            </button>
-          ) : (
-            <p className="block w-full text-xl leading-tight font-semibold wrap-anywhere wrap-break-word whitespace-normal text-foreground">
-              {order.repairNumber}
+              {daysInShop === 1 ? "1 día" : `${daysInShop} días`}
             </p>
-          )}
+          ) : null}
         </div>
-        <div className="flex max-w-full min-w-0 flex-wrap items-start gap-2">
-          <RepairAccessStatusBadge status={summary.status} />
-          <RepairAccessWarrantyBadge warranty={order.warranty} />
-        </div>
+        <p className="mt-2 flex min-w-0 flex-wrap items-baseline gap-x-2 text-base leading-6">
+          <span className="font-semibold wrap-break-word text-foreground">
+            {order.customer.fullName}
+          </span>
+          {phone ? (
+            <span className="text-sm text-muted-foreground tabular-nums">{phone}</span>
+          ) : null}
+        </p>
+        <p className="mt-0.5 text-sm leading-5 wrap-break-word text-muted-foreground">
+          {deviceLabel || "Equipo sin descripción"}
+        </p>
       </header>
 
-      <div className="space-y-3 p-4">
-        <WorkshopOrderNextStep repairNumber={order.repairNumber} summary={summary} />
+      <div className="space-y-3 px-4 pb-4">
+        <WorkshopOrderNextStep compact repairNumber={order.repairNumber} summary={summary} />
         <WarrantyReturnPanel order={order} canManage={canManageIntake} />
-        <section>
-          <div className="flex items-center gap-2 text-muted-foreground">
+
+        <section className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             <Wrench aria-hidden="true" className="h-4 w-4" />
-            <p className="text-sm font-medium">
-              {activeReturn ? "Falla original" : "Falla reportada"}
-            </p>
-          </div>
+            {activeReturn ? "Falla original" : "Falla reportada"}
+          </p>
           <p className="mt-1 text-sm leading-6 wrap-break-word whitespace-pre-wrap text-foreground">
             {order.issueReported || "Sin falla declarada"}
           </p>
         </section>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          <WorkshopInfo
-            icon={MonitorCog}
-            label="Equipo"
-            value={deviceLabel || "Equipo sin descripcion"}
-          />
-          <WorkshopInfo icon={UserRound} label="Cliente" value={order.customer.fullName} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-4 gap-y-3 border-y border-border py-3 text-sm">
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-lg bg-muted/60 px-3 py-2.5 text-sm">
           <WorkshopMeta
             icon={CircleDollarSign}
             label={activeReturn ? "Monto original" : "Monto actual"}
@@ -145,12 +162,12 @@ export function RepairAccessWorkshopCard({
               value={order.repairProgress}
             />
           ) : null}
-        </div>
+        </dl>
 
         {!activeReturn && (!delivered || (canManageIntake && order.workflow)) ? (
           <LazyDisclosure
-            className="group overflow-hidden rounded-xl border border-border-strong bg-card"
-            summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 bg-muted px-3 py-3 text-sm font-semibold text-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
+            className="group overflow-hidden rounded-lg border border-border-strong bg-card shadow-[var(--shadow-panel)]"
+            summaryClassName="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-sm font-semibold text-foreground hover:bg-accent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
             summary={
               <>
                 <span className="flex items-center gap-2">
@@ -276,7 +293,7 @@ export function RepairAccessWorkshopCard({
         {order.workflow ? (
           <LazyDisclosure
             className="border-t border-border"
-            summaryClassName="min-h-11 cursor-pointer rounded-lg py-3 text-sm font-medium text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40"
+            summaryClassName="min-h-10 cursor-pointer rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40"
             summary={delivered ? "Historial de la orden original" : "Coordinación y repuestos"}
           >
             <OrderCoordinationPanel
@@ -291,7 +308,7 @@ export function RepairAccessWorkshopCard({
 
         <LazyDisclosure
           className="group border-t border-border"
-          summaryClassName="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-3 text-sm font-medium text-muted-foreground hover:bg-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
+          summaryClassName="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden"
           summary={
             <>
               <span className="flex items-center gap-2">
@@ -313,75 +330,77 @@ export function RepairAccessWorkshopCard({
           />
         </LazyDisclosure>
 
-        <div
-          data-workshop-contact-actions="true"
-          className={canManageIntake ? "hidden grid-cols-2 gap-2 lg:grid" : "hidden"}
-        >
-          <RepairAccessWhatsAppButton
-            className="w-full"
-            label="WhatsApp"
-            order={order}
-            size="default"
-          />
-          {phone ? (
-            <a
-              className={cn(buttonVariants({ variant: "secondary" }), "w-full")}
-              href={`tel:${phone.replace(/\D+/g, "")}`}
-            >
-              <Phone aria-hidden="true" className="h-4 w-4" />
-              Llamar
-            </a>
-          ) : (
-            <span
-              className={cn(
-                buttonVariants({ variant: "ghost" }),
-                "w-full cursor-not-allowed opacity-50"
-              )}
-            >
-              Sin teléfono
-            </span>
-          )}
-        </div>
-
-        {canManageIntake ? (
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
-            <Button onClick={() => onOpenDetail(order)} size="sm" type="button" variant="secondary">
-              Ficha completa
-            </Button>
-            <ActionMenu label="Más acciones">
+        <div className="flex items-center justify-between gap-2 border-t border-border pt-3">
+          <div
+            data-workshop-contact-actions="true"
+            className={canManageIntake ? "hidden shrink-0 grid-cols-2 gap-2 lg:grid" : "hidden"}
+          >
+            <RepairAccessWhatsAppButton label="WhatsApp" order={order} size="sm" />
+            {phone ? (
               <a
-                className={buttonVariants({ variant: "secondary" })}
-                href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}
+                className={cn(buttonVariants({ variant: "secondary", size: "sm" }))}
+                href={`tel:${phone.replace(/\D+/g, "")}`}
               >
-                Registrar cobro
+                <Phone aria-hidden="true" className="h-4 w-4" />
+                Llamar
               </a>
+            ) : (
+              <span
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "cursor-not-allowed opacity-50"
+                )}
+              >
+                Sin teléfono
+              </span>
+            )}
+          </div>
+
+          {canManageIntake ? (
+            <div className="ml-auto flex items-center gap-2">
               <Button
-                className="w-full"
-                onClick={() => onEdit(order)}
+                onClick={() => onOpenDetail(order)}
+                size="sm"
                 type="button"
                 variant="secondary"
               >
-                Editar ingreso
+                Ficha completa
               </Button>
-              <form
-                action={cancelRepairAccessOrderAction}
-                onSubmit={(event) =>
-                  confirmSubmit(event, {
-                    title: `¿Anular la orden ${order.repairNumber}?`,
-                    description: "Se conserva todo el historial de la orden.",
-                    confirmLabel: "Anular orden",
-                    tone: "danger"
-                  })
-                }
-              >
-                <input name="id" type="hidden" value={order.id} />
-                <Button className="w-full" type="submit" variant="danger">
-                  Anular orden
+              <ActionMenu iconOnly label="Más acciones">
+                <a
+                  className={buttonVariants({ variant: "secondary" })}
+                  href={`/reparaciones?rep=${encodeURIComponent(order.repairNumber)}`}
+                >
+                  Registrar cobro
+                </a>
+                <Button
+                  className="w-full"
+                  onClick={() => onEdit(order)}
+                  type="button"
+                  variant="secondary"
+                >
+                  Editar ingreso
                 </Button>
-              </form>
-            </ActionMenu>
-          </div>
-        ) : null}
+                <form
+                  action={cancelRepairAccessOrderAction}
+                  onSubmit={(event) =>
+                    confirmSubmit(event, {
+                      title: `¿Anular la orden ${order.repairNumber}?`,
+                      description: "Se conserva todo el historial de la orden.",
+                      confirmLabel: "Anular orden",
+                      tone: "danger"
+                    })
+                  }
+                >
+                  <input name="id" type="hidden" value={order.id} />
+                  <Button className="w-full" type="submit" variant="danger">
+                    Anular orden
+                  </Button>
+                </form>
+              </ActionMenu>
+            </div>
+          ) : null}
+        </div>
       </div>
     </article>
   );
@@ -409,28 +428,6 @@ function WorkshopCardForm({
   );
 }
 
-function WorkshopInfo({
-  icon: Icon,
-  label,
-  value
-}: {
-  icon: typeof MonitorCog;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="min-w-0">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon aria-hidden="true" className="h-4 w-4" />
-        <p className="text-sm font-medium">{label}</p>
-      </div>
-      <p className="mt-1.5 text-sm leading-5 font-semibold wrap-break-word text-foreground">
-        {value}
-      </p>
-    </div>
-  );
-}
-
 function WorkshopMeta({
   icon: Icon,
   label,
@@ -444,11 +441,13 @@ function WorkshopMeta({
 }) {
   return (
     <div className={cn("min-w-0", className)}>
-      <div className="flex items-center gap-2 text-muted-foreground">
+      <dt className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <Icon aria-hidden="true" className="h-3.5 w-3.5" />
-        <p className="text-sm font-medium">{label}</p>
-      </div>
-      <p className="mt-1 leading-5 font-medium wrap-break-word text-foreground">{value}</p>
+        {label}
+      </dt>
+      <dd className="mt-0.5 leading-5 font-medium wrap-break-word text-foreground tabular-nums">
+        {value}
+      </dd>
     </div>
   );
 }

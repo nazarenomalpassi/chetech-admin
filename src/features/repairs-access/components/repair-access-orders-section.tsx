@@ -74,7 +74,7 @@ export function RepairAccessOrdersSection({
   onNew,
   headingRef,
   canManageIntake,
-  initialPresentation = "table",
+  initialPresentation = "cards",
   defaultWarrantyDays
 }: {
   orders: RepairAccessOrderRecord[];
