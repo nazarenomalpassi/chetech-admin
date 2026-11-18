@@ -11,12 +11,13 @@ import type { AppRole } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 
 function getArgentinaDateLabel() {
-  return new Intl.DateTimeFormat("es-AR", {
+  const label = new Intl.DateTimeFormat("es-AR", {
     weekday: "long",
     day: "numeric",
     month: "long",
     timeZone: "America/Argentina/Buenos_Aires"
   }).format(new Date());
+  return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /** Dónde está la persona y la acción más frecuente del mostrador, siempre a mano. */
@@ -45,7 +46,7 @@ export function Topbar({ role = "admin" }: { role?: AppRole }) {
         </span>
       </p>
       <div className="flex shrink-0 items-center gap-4">
-        <time className="text-sm text-muted-foreground first-letter:uppercase">{dateLabel}</time>
+        <time className="text-sm text-muted-foreground">{dateLabel}</time>
         {role === "admin" && !onIntake ? (
           <Link
             className={cn(buttonVariants({ size: "sm", variant: "secondary" }))}
