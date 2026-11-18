@@ -278,13 +278,15 @@ describe("order workspace list", () => {
     expect(container.querySelectorAll("form[data-workshop-form]")).toHaveLength(1);
   });
 
-  it("opens the admin workspace in the compact table by default", () => {
+  it("opens the admin workspace in cards by default and keeps the table one click away", () => {
     const { initialPresentation: _cards, ...defaults } = props;
     void _cards;
     render(<RepairAccessOrdersSection {...defaults} />);
+    expect(screen.queryByRole("table")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Ver tabla" }));
     expect(screen.getByRole("table")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Ver tarjetas" })).toBeTruthy();
     expect(screen.getByText(/días?$/)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Ver tarjetas" })).toBeTruthy();
   });
 
   it("does not offer the table or new intake to technicians", () => {

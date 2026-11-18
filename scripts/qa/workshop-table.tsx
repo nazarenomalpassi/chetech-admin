@@ -1,13 +1,31 @@
 /**
  * Mesa de trabajo con datos de prueba, para revisar la tabla con el CSS compilado.
  * Uso: npm run build && npx tsx scripts/qa/workshop-table.tsx > tmp/qa/workshop-table.html
+ * Con QA_CARDS=1 muestra las tarjetas (vista principal).
  */
 import { readdirSync } from "node:fs";
 import path from "node:path";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { RepairAccessOrdersSection } from "@/features/repairs-access/components/repair-access-orders-section";
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Module = require("node:module");
+const originalLoad = Module._load;
+Module._load = function patchedLoad(request: string, ...rest: unknown[]) {
+  if (request === "next/navigation") {
+    return {
+      usePathname: () => "/reparaciones-access",
+      useRouter: () => ({ push() {}, refresh() {}, replace() {} }),
+      useSearchParams: () => new URLSearchParams()
+    };
+  }
+  return originalLoad.call(this, request, ...rest);
+};
+/* eslint-disable @typescript-eslint/no-require-imports */
+const {
+  RepairAccessOrdersSection
+} = require("@/features/repairs-access/components/repair-access-orders-section");
+/* eslint-enable @typescript-eslint/no-require-imports */
 import type { RepairAccessOrderRecord } from "@/features/repairs-access/queries";
 
 Object.assign(globalThis, { React });
@@ -34,6 +52,8 @@ function order(
     intakeDate: daysAgo(intakeDays),
     budgetAmount: index % 3 === 0 ? 0 : 90000 + index * 7000,
     finalAmount: 0,
+    budgetDetail: index === 3 ? "Cambio de placa fuente y limpieza general." : "",
+    repairProgress: index === 4 ? "Se cambió el capacitor, falta probar 24 h." : "",
     issueReported: [
       "No enciende después de una tormenta.",
       "Falla de retroiluminación, se ve muy oscuro.",
@@ -75,6 +95,7 @@ const markup = renderToStaticMarkup(
   <main className="admin-main page-shell mx-auto max-w-[1180px] p-4">
     <RepairAccessOrdersSection
       canManageIntake
+      initialPresentation={process.env.QA_CARDS ? "cards" : "table"}
       orders={orders}
       search=""
       statusFilter="todos"
