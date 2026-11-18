@@ -670,9 +670,11 @@ describe("workshop section navigation", () => {
     expect(wizardEditing.mock.calls.at(-1)![0]).toBe(order);
   });
 
-  it("integrates the list's direct new-order callback", () => {
+  it("keeps a single new-order action in the section navigation", () => {
     render(<RepairsAccessView {...props} />);
-    fireEvent.click(screen.getByRole("button", { name: "Crear desde listado" }));
+    expect(screen.queryByRole("button", { name: "Crear desde listado" })).toBeNull();
+    const nav = screen.getByRole("navigation", { name: "Secciones de reparaciones" });
+    fireEvent.click(within(nav).getByRole("button", { name: "Nueva orden" }));
     expect(screen.getByRole("heading", { name: "Ingreso nuevo" })).toBeTruthy();
   });
 

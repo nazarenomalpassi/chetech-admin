@@ -594,7 +594,6 @@ export function RepairsAccessView({
           headingRef={orderHeadingRef}
           onEdit={startEdit}
           onOpenDetail={openDetail}
-          onNew={canManageIntake ? () => navigate("nueva") : undefined}
           onSearchChange={(value) => updateOrderFilter("search", value)}
           onSearchCompositionChange={setIsSearchComposing}
           onStatusFilterChange={(value) => updateOrderFilter("status", value)}
