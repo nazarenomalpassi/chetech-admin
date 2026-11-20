@@ -1,4 +1,10 @@
 import { RepairsList } from "@/features/repairs/components/repairs-list";
+import { PaidAwaitingPickupPanel } from "@/features/repairs/components/paid-awaiting-pickup-panel";
+import {
+  listPaidOrdersAwaitingPickup,
+  type PaidOrderAwaitingPickup
+} from "@/features/repairs-access/pickup-server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getRepairs } from "@/features/repairs/queries";
 import { requirePermission } from "@/lib/auth";
 import { getStatusMessage } from "@/lib/form-state";
@@ -21,12 +27,13 @@ export default async function ReparacionesPage({
   const params = await searchParams;
   const profile = await requirePermission("repairs.manage");
   const receipt = z.string().uuid().safeParse(params.receipt);
-  const repairsResult = await getRepairs(
-    parsePage(params.page),
-    params.rep,
-    params.edit,
-    params.search ?? ""
-  );
+  const [repairsResult, awaitingPickup] = await Promise.all([
+    getRepairs(parsePage(params.page), params.rep, params.edit, params.search ?? ""),
+    // Si la lista no responde, Cobros sigue funcionando sin ella.
+    createServerSupabaseClient()
+      .then((supabase) => listPaidOrdersAwaitingPickup(supabase))
+      .catch((): PaidOrderAwaitingPickup[] => [])
+  ]);
   const message = params.error
     ? { success: false, message: params.error }
     : getStatusMessage(params.status);
@@ -41,6 +48,7 @@ export default async function ReparacionesPage({
       message={message}
       pagination={repairsResult.pagination}
       repairs={repairsResult.items}
+      pickupBacklog={<PaidAwaitingPickupPanel orders={awaitingPickup} />}
     />
   );
 }

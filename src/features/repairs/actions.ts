@@ -9,6 +9,8 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { parsePaymentSplits } from "@/lib/payment-splits";
 import { getRepairValidationError } from "./validation";
 import { readRepairPaymentTiming } from "./payment-timing";
+import { readPickupAnswer, type PickupOutcome } from "@/features/repairs-access/pickup";
+import { registerPickupForPaidOrder } from "@/features/repairs-access/pickup-server";
 
 const paymentSchema = z.object({
   method: z.enum(["efectivo", "nx", "mp"]),
@@ -57,7 +59,42 @@ function refreshRepairs() {
     revalidatePath(path);
 }
 
-export type RepairPaymentSaveResult = { success: boolean; message: string; repairId?: string };
+export type RepairPaymentSaveResult = {
+  success: boolean;
+  message: string;
+  repairId?: string;
+  /** Resultado de marcar el retiro cuando se respondió "Sí" a "¿Retiró el cliente?". */
+  pickup?: PickupOutcome;
+};
+
+const PICKUP_NOTE = "Retiró al pagar.";
+
+/**
+ * Con "Sí, lo retiró" se registra la entrega después del cobro. Si falla, el cobro ya
+ * quedó guardado: se avisa para marcar el retiro desde la ficha.
+ */
+async function registerPickupAfterPayment(
+  supabase: unknown,
+  orderId: string | null | undefined,
+  answer: FormDataEntryValue | null,
+  paidMessage: string
+): Promise<Pick<RepairPaymentSaveResult, "message" | "pickup">> {
+  if (readPickupAnswer(answer) !== "si" || !orderId) return { message: paidMessage };
+  try {
+    const pickup = await registerPickupForPaidOrder(supabase, orderId, PICKUP_NOTE);
+    if (pickup.success)
+      return { message: `${paidMessage} Retiro del equipo marcado.`, pickup: "done" };
+    return {
+      message: `${paidMessage} No se pudo marcar el retiro: ${pickup.message} Marcalo desde la ficha de la orden con Registrar entrega.`,
+      pickup: "failed"
+    };
+  } catch {
+    return {
+      message: `${paidMessage} No se pudo marcar el retiro. Marcalo desde la ficha de la orden con Registrar entrega.`,
+      pickup: "failed"
+    };
+  }
+}
 
 export async function saveRepairFormAction(formData: FormData): Promise<RepairPaymentSaveResult> {
   await requireAdmin();
@@ -104,12 +141,16 @@ export async function saveRepairFormAction(formData: FormData): Promise<RepairPa
       message:
         "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el mismo guardado."
     };
+  const pickup = parsed.data.id
+    ? { message: "Datos actualizados." }
+    : await registerPickupAfterPayment(
+        supabase,
+        parsed.data.repairAccessOrderId,
+        formData.get("pickedUp"),
+        "Registro y cobro guardados."
+      );
   refreshRepairs();
-  return {
-    success: true,
-    message: parsed.data.id ? "Datos actualizados." : "Registro y cobro guardados.",
-    repairId: savedId.data
-  };
+  return { success: true, ...pickup, repairId: savedId.data };
 }
 
 export async function saveRepairAction(formData: FormData) {
@@ -161,8 +202,29 @@ export async function addRepairPaymentFormAction(
       message:
         "No se pudo confirmar el resultado. Reintenta sin cambiar los datos para recuperar el mismo cobro."
     };
+  let orderId: string | null = null;
+  if (readPickupAnswer(formData.get("pickedUp")) === "si") {
+    const link = await (supabase as any)
+      .from("repairs")
+      .select("repair_access_order_id")
+      .eq("id", parsed.data.repairId)
+      .maybeSingle();
+    orderId = z.string().uuid().safeParse(link.data?.repair_access_order_id).data ?? null;
+  }
+  const pickup = await registerPickupAfterPayment(
+    supabase,
+    orderId,
+    formData.get("pickedUp"),
+    "Cobro registrado."
+  );
+  if (readPickupAnswer(formData.get("pickedUp")) === "si" && !orderId)
+    Object.assign(pickup, {
+      message:
+        "Cobro registrado. Este cobro no está vinculado a una orden del taller: no hay retiro para marcar.",
+      pickup: "failed"
+    });
   refreshRepairs();
-  return { success: true, message: "Cobro registrado.", repairId: parsed.data.repairId };
+  return { success: true, ...pickup, repairId: parsed.data.repairId };
 }
 
 export async function addRepairPaymentAction(formData: FormData) {

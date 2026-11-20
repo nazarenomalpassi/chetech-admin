@@ -120,6 +120,45 @@ describe("REP collection screen opening", () => {
     ).toBe(next.id);
     expectNoMoneyWritten();
   });
+  it("asks about pickup when the first payment settles a ready REP and sends the answer", async () => {
+    actions.save.mockResolvedValue({ success: false, message: "Sin conexion" });
+    render(
+      <RepairsList
+        {...props}
+        collectionTarget={{
+          order: { ...native, status: "listo_para_retirar", deliveredAt: null },
+          repair: null,
+          error: null
+        }}
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "30000" } });
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "80000" } });
+    expect(screen.getByText("¿El cliente retiró el equipo?")).toBeTruthy();
+    const form = screen.getByRole("button", { name: "Guardar registro y cobro" }).closest("form")!;
+    fireEvent.submit(form);
+    expect(await screen.findByText("Indicá si el cliente retiró el equipo.")).toBeTruthy();
+    expect(actions.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Sí, lo retiró"));
+    fireEvent.submit(form);
+    await waitFor(() => expect(actions.save).toHaveBeenCalledOnce());
+    expect(actions.save.mock.calls[0][0].get("pickedUp")).toBe("si");
+  });
+  it("does not ask about pickup for a REP that is still in the workshop", () => {
+    render(
+      <RepairsList
+        {...props}
+        collectionTarget={{
+          order: { ...native, status: "en_reparacion", deliveredAt: null },
+          repair: null,
+          error: null
+        }}
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "80000" } });
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+  });
   it("recovers an owner-scoped unsaved payment only after explicit recovery", async () => {
     const initial = {
       ...props,

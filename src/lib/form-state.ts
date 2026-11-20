@@ -38,6 +38,19 @@ export function getStatusMessage(status?: string | string[] | null): ActionResul
       success: true,
       message: "Cobro registrado. El saldo y la caja estan actualizados."
     },
+    repair_created_picked_up: {
+      success: true,
+      message: "Registro y cobro guardados. Retiro del equipo marcado."
+    },
+    repair_payment_added_picked_up: {
+      success: true,
+      message: "Cobro registrado y retiro del equipo marcado."
+    },
+    repair_payment_pickup_pending: {
+      success: false,
+      message:
+        "El cobro quedó registrado, pero no se pudo marcar el retiro. Marcalo desde la ficha de la orden con Registrar entrega."
+    },
     repair_payment_reversed: {
       success: true,
       message: "Pago eliminado con motivo. Se corrigio caja y se conservo el historial original."

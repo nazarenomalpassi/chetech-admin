@@ -6,7 +6,7 @@ import { mapPrimaryOrderOption } from "@/features/invoices/primary-order-mapper"
 import { z } from "zod";
 
 const financialRepairColumns =
-  "id, repair_access_order_id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, financial_version, status, observations, entry_date, created_at, updated_at, repair_access_orders(repair_number, repair_access_payments(id, method, amount, payment_date, created_at, legacy_repair_payment_id, voided_at)), repair_payments(id, method, amount, payment_date, created_at)";
+  "id, repair_access_order_id, customer_name, customer_phone, device, order_number, issue_description, final_price, estimated_price, financial_version, status, observations, entry_date, created_at, updated_at, repair_access_orders(repair_number, status, delivered_at, repair_access_payments(id, method, amount, payment_date, created_at, legacy_repair_payment_id, voided_at)), repair_payments(id, method, amount, payment_date, created_at)";
 const historySearchRelations =
   "history_search:repair_access_orders(id,search_customer:repair_access_customers(),search_device:repair_access_devices())";
 
@@ -72,6 +72,8 @@ export type RepairCollectionOrder = {
   amount: number;
   paymentMethod: string;
   observations: string;
+  status?: string;
+  deliveredAt?: string | null;
 };
 export type RepairCollectionTarget = {
   order: RepairCollectionOrder | null;
@@ -121,7 +123,7 @@ async function getRepairCollectionTarget(
   const result = await supabase
     .from("repair_access_orders")
     .select(
-      "id,repair_number,intake_date,final_amount,approved_amount,budget_amount,budget_detail,issue_reported,payment_method,repair_access_customers(full_name,phone),repair_access_devices(device_type,brand,model)"
+      "id,repair_number,status,delivered_at,intake_date,final_amount,approved_amount,budget_amount,budget_detail,issue_reported,payment_method,repair_access_customers(full_name,phone),repair_access_devices(device_type,brand,model)"
     )
     .eq("repair_number", number)
     .maybeSingle();
@@ -149,7 +151,9 @@ async function getRepairCollectionTarget(
       issueDescription: raw.budget_detail || raw.issue_reported || "",
       amount: option.amount,
       paymentMethod: raw.payment_method || "efectivo",
-      observations: ""
+      observations: "",
+      status: typeof raw.status === "string" ? raw.status : "",
+      deliveredAt: raw.delivered_at ?? null
     };
     return {
       order,

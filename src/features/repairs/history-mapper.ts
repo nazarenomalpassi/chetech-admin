@@ -51,6 +51,14 @@ export function mapRepairsHistoryRows(rows: any[]) {
       id: repair.id,
       repairAccessOrderId: repair.repair_access_order_id ?? null,
       repairAccessOrderNumber: readRelated(repair.repair_access_orders)?.repair_number ?? "",
+      // Estado de la orden vinculada: decide si al saldarla se pregunta por el retiro.
+      ...(accessOrder
+        ? {
+            accessOrderStatus: typeof accessOrder.status === "string" ? accessOrder.status : null,
+            accessOrderDeliveredAt:
+              typeof accessOrder.delivered_at === "string" ? accessOrder.delivered_at : null
+          }
+        : {}),
       customerName: repair.customer_name,
       customerPhone: repair.customer_phone ?? "",
       device: repair.device,

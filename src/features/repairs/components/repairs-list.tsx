@@ -21,15 +21,24 @@ import type { RepairCollectionTarget } from "@/features/repairs/queries";
 import { RepairPaymentsPanel } from "./repair-payments-panel";
 import { formatCashMethod } from "@/lib/cash";
 import type { ActionResult } from "@/lib/form-state";
-import type { PaymentSplit } from "@/lib/payment-splits";
+import { getPaymentTotal, type PaymentSplit } from "@/lib/payment-splits";
 import type { PaginationMeta } from "@/lib/pagination";
 import { formatCurrency, formatDate, getLocalDateInputValue } from "@/lib/utils";
 import { confirmSubmit, confirmThen } from "@/components/ui/confirm-dialog";
+import { PickupQuestion } from "@/features/repairs-access/components/pickup-question";
+import {
+  getPaymentStatusCode,
+  shouldAskPickup,
+  type PickupAnswer,
+  type PickupOrderState
+} from "@/features/repairs-access/pickup";
 
 type Repair = {
   id: string;
   repairAccessOrderId: string | null;
   repairAccessOrderNumber: string;
+  accessOrderStatus?: string | null;
+  accessOrderDeliveredAt?: string | null;
   customerName: string;
   customerPhone: string;
   device: string;
@@ -65,6 +74,9 @@ type AccessOrder = {
   amount: number;
   paymentMethod: string;
   observations: string;
+  status?: string;
+  deliveredAt?: string | null;
+  paidTotal?: number;
 };
 
 type RepairFormFields = {
@@ -148,7 +160,8 @@ export function RepairsList({
   message,
   collectionTarget,
   draftOwnerId,
-  searchQuery = ""
+  searchQuery = "",
+  pickupBacklog
 }: {
   canDelete: boolean;
   repairs: Repair[];
@@ -157,6 +170,8 @@ export function RepairsList({
   collectionTarget?: RepairCollectionTarget | null;
   draftOwnerId?: string;
   searchQuery?: string;
+  /** Lista de órdenes cobradas sin retiro registrado (solo en la página de Cobros). */
+  pickupBacklog?: import("react").ReactNode;
 }) {
   const router = useRouter();
   const today = getLocalDateInputValue();
@@ -200,6 +215,18 @@ export function RepairsList({
         : ""
   );
   const [payments, setPayments] = useState<PaymentSplit[]>([{ method: "efectivo", amount: 0 }]);
+  // Estado de la REP cargada: si el cobro la salda, se pregunta si el cliente retiró el equipo.
+  const [linkedOrder, setLinkedOrder] = useState<(PickupOrderState & { paidTotal: number }) | null>(
+    () =>
+      initialOrder && !initialRepair
+        ? {
+            status: initialOrder.status,
+            deliveredAt: initialOrder.deliveredAt ?? null,
+            paidTotal: 0
+          }
+        : null
+  );
+  const [pickup, setPickup] = useState<PickupAnswer | null>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -273,6 +300,14 @@ export function RepairsList({
   const filteredRepairs = repairs;
 
   const amountValue = Number(amount || 0);
+  const askPickup =
+    !editing &&
+    Boolean(formValues.repairAccessOrderId) &&
+    shouldAskPickup(
+      linkedOrder,
+      Math.round((amountValue - (linkedOrder?.paidTotal ?? 0)) * 100),
+      Math.round(getPaymentTotal(payments) * 100)
+    );
   const currentLedger = editing
     ? (repairs.find((repair) => repair.id === editing.id) ?? editing)
     : null;
@@ -356,6 +391,10 @@ export function RepairsList({
 
   async function submitEditor(data: FormData) {
     if (savingRef.current || saved || lookupStatus.loading) return;
+    if (askPickup && !pickup) {
+      setFeedback({ success: false, message: "Indicá si el cliente retiró el equipo." });
+      return;
+    }
     if (draft.pendingDraft) {
       setFeedback({
         success: false,
@@ -375,7 +414,9 @@ export function RepairsList({
         setDirty(false);
         setSaved(true);
         const params = new URLSearchParams({
-          status: editing ? "repair_updated" : "repair_created",
+          status: editing
+            ? "repair_updated"
+            : getPaymentStatusCode("repair_created", result.pickup),
           edit: result.repairId
         });
         params.set("receipt", requestId);
@@ -410,6 +451,8 @@ export function RepairsList({
     setFeedback(null);
     setRequestId(crypto.randomUUID());
     setEditing(repair);
+    setLinkedOrder(null);
+    setPickup(null);
     setLookupStatus({ loading: false, message: "", success: false });
     setFormValues(fieldsFromRepair(repair));
     setEntryDate(repair.entryDate);
@@ -427,6 +470,8 @@ export function RepairsList({
     setFeedback(null);
     setRequestId(crypto.randomUUID());
     setEditing(null);
+    setLinkedOrder(null);
+    setPickup(null);
     setLookupStatus({ loading: false, message: "", success: false });
     setFormValues(emptyRepairFormFields);
     setEntryDate(today);
@@ -496,12 +541,18 @@ export function RepairsList({
       setFeedback(null);
       setRequestId(crypto.randomUUID());
       setFormValues(fieldsFromOrder(order));
+      setLinkedOrder({
+        status: order.status,
+        deliveredAt: order.deliveredAt ?? null,
+        paidTotal: Number(order.paidTotal ?? 0)
+      });
+      setPickup(null);
       setEntryDate(order.intakeDate || today);
       setAmount(String(order.amount));
       setPayments([{ method: "efectivo", amount: 0 }]);
       setLookupStatus({
         loading: false,
-        message: `Orden ${order.repairNumber} cargada. El cobro actualiza caja, no entrega el equipo ni inicia garantia. Si ya existe un registro financiero, agrega alli la sena o saldo.`,
+        message: `Orden ${order.repairNumber} cargada. Si el cobro salda la orden, te preguntamos si el cliente retiró el equipo.`,
         success: true
       });
     } catch {
@@ -557,7 +608,7 @@ export function RepairsList({
             </div>
           </dl>
         }
-        description="Seleccioná la REP y registrá solo el dinero recibido. Cobrar no entrega el equipo ni inicia la garantía."
+        description="Seleccioná la REP y registrá solo el dinero recibido. Si el cobro salda la orden, te preguntamos si el cliente retiró el equipo."
         title="Cobros de reparaciones"
       />
 
@@ -574,6 +625,7 @@ export function RepairsList({
           {message.message}
         </div>
       ) : null}
+      {pickupBacklog}
       {currentLedger ? (
         <div
           ref={ledgerRef}
@@ -782,6 +834,16 @@ export function RepairsList({
                       totalAmount={amountValue}
                       syncAmountWithTotal={false}
                     />
+                    {askPickup ? (
+                      <PickupQuestion
+                        value={pickup}
+                        onChange={(answer) => {
+                          setPickup(answer);
+                          setFeedback(null);
+                        }}
+                        customerName={formValues.customerName}
+                      />
+                    ) : null}
                     <label className="block text-sm">
                       Fecha de cobro
                       <Input
