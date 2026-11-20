@@ -22,6 +22,12 @@ import {
 } from "../actions";
 import { usePaymentDraft } from "../use-payment-draft";
 import { confirmThen } from "@/components/ui/confirm-dialog";
+import { PickupQuestion } from "@/features/repairs-access/components/pickup-question";
+import {
+  getPaymentStatusCode,
+  shouldAskPickup,
+  type PickupAnswer
+} from "@/features/repairs-access/pickup";
 
 const paymentDraftSchema = z.object({
   requestId: z.string().uuid(),
@@ -44,6 +50,9 @@ export function RepairPaymentsPanel({
   repair: {
     id: string;
     repairAccessOrderNumber?: string;
+    accessOrderStatus?: string | null;
+    accessOrderDeliveredAt?: string | null;
+    customerName?: string;
     orderNumber?: string | null;
     paidTotal: number;
     balance: number;
@@ -70,6 +79,7 @@ export function RepairPaymentsPanel({
   const [recovered, setRecovered] = useState(false);
   const [balanceAtStart, setBalanceAtStart] = useState(repair.balance);
   const [feedback, setFeedback] = useState<RepairPaymentSaveResult | null>(null);
+  const [pickup, setPickup] = useState<PickupAnswer | null>(null);
   const savingRef = useRef(false);
   const draft = usePaymentDraft({
     ownerId: draftOwnerId,
@@ -106,6 +116,11 @@ export function RepairPaymentsPanel({
   const amountInCents = Math.round(getPaymentTotal(payments) * 100);
   const balanceInCents = Math.round((recovered ? balanceAtStart : repair.balance) * 100);
   const orderNumber = repair.repairAccessOrderNumber || repair.orderNumber;
+  const askPickup = shouldAskPickup(
+    { status: repair.accessOrderStatus, deliveredAt: repair.accessOrderDeliveredAt },
+    balanceInCents,
+    amountInCents
+  );
   function changePaymentIntent() {
     setDirty(true);
     setRecovered(false);
@@ -162,7 +177,9 @@ export function RepairPaymentsPanel({
           </div>
         </dl>
         <p className="mt-3 text-sm text-muted-foreground">
-          Cobrar o corregir un pago no cambia la entrega ni la garantia.
+          {repair.accessOrderDeliveredAt
+            ? "El equipo ya figura retirado. Corregir un pago no cambia la entrega."
+            : "Si el cobro salda la orden, te preguntamos si el cliente retiró el equipo. Corregir un pago no cambia la entrega."}
         </p>
         {feedback ? (
           <p
@@ -196,6 +213,10 @@ export function RepairPaymentsPanel({
                 });
                 return;
               }
+              if (askPickup && !pickup) {
+                setFeedback({ success: false, message: "Indicá si el cliente retiró el equipo." });
+                return;
+              }
               const data = new FormData(event.currentTarget);
               savingRef.current = true;
               setSaving(true);
@@ -208,7 +229,7 @@ export function RepairPaymentsPanel({
                   setDirty(false);
                   setSaved(true);
                   const params = new URLSearchParams(window.location.search);
-                  params.set("status", "repair_payment_added");
+                  params.set("status", getPaymentStatusCode("repair_payment_added", result.pickup));
                   params.set("edit", repair.id);
                   params.set("receipt", requestId);
                   params.delete("error");
@@ -272,6 +293,16 @@ export function RepairPaymentsPanel({
               <p className="text-sm text-muted-foreground">
                 Indicá solo el importe recibido. Puede ser menor al saldo pendiente.
               </p>
+              {askPickup ? (
+                <PickupQuestion
+                  value={pickup}
+                  onChange={(answer) => {
+                    setPickup(answer);
+                    setFeedback(null);
+                  }}
+                  customerName={repair.customerName}
+                />
+              ) : null}
               <label className="block text-sm">
                 Fecha de cobro
                 <Input

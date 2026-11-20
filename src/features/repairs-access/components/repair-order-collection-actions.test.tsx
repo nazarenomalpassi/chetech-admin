@@ -241,8 +241,10 @@ describe("in-place repair collection", () => {
     mount();
     await openCollection();
     enterPayment("60");
+    fireEvent.click(screen.getByLabelText("No, todavía no"));
     submit();
     await waitFor(() => expect(mocks.refresh).toHaveBeenCalled());
+    expect(mocks.add.mock.calls[0][0].get("pickedUp")).toBe("no");
     expect(screen.getByRole("button", { name: "Cobrar" }).hasAttribute("disabled")).toBe(true);
     expect(mocks.deliver).not.toHaveBeenCalled();
     finishLookup(
@@ -272,9 +274,11 @@ describe("in-place repair collection", () => {
     const firstMount = mount();
     await openCollection();
     enterPayment("100");
+    fireEvent.click(screen.getByLabelText("No, todavía no"));
     submit();
     await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
     const original = Object.fromEntries(mocks.save.mock.calls[0][0]);
+    delete original.pickedUp;
     firstMount.unmount();
     mocks.save.mockClear();
     mocks.fetch.mockResolvedValue(reply(response({ ...financial, paidTotal: 100, balance: 0 })));
@@ -285,10 +289,53 @@ describe("in-place repair collection", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Recuperar borrador" }));
     expect((screen.getByLabelText("Monto") as HTMLInputElement).value).toBe("100");
     expect(mocks.save).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("No, todavía no"));
     submit();
     await waitFor(() => expect(mocks.save).toHaveBeenCalledOnce());
-    expect(Object.fromEntries(mocks.save.mock.calls[0][0])).toEqual(original);
+    const retry = Object.fromEntries(mocks.save.mock.calls[0][0]);
+    expect(retry.pickedUp).toBe("no");
+    delete retry.pickedUp;
+    expect(retry).toEqual(original);
     expect(mocks.add).not.toHaveBeenCalled();
+  });
+
+  it("asks whether the customer picked up the device when the payment settles a ready order", async () => {
+    mocks.add.mockResolvedValue({
+      success: true,
+      message: "Cobro registrado. Retiro del equipo marcado.",
+      repairId: financialId,
+      pickup: "done"
+    });
+    mount();
+    await openCollection();
+    enterPayment("30");
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+    enterPayment("60");
+    expect(screen.getByText("¿El cliente retiró el equipo?")).toBeTruthy();
+    submit();
+    expect((await screen.findByRole("alert")).textContent).toContain(
+      "Indicá si el cliente retiró el equipo."
+    );
+    expect(mocks.add).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("Sí, lo retiró"));
+    submit();
+    await waitFor(() => expect(mocks.add).toHaveBeenCalledOnce());
+    expect(mocks.add.mock.calls[0][0].get("pickedUp")).toBe("si");
+    expect(await screen.findByText("Cobro registrado. Retiro del equipo marcado.")).toBeTruthy();
+    expect(mocks.deliver).not.toHaveBeenCalled();
+  });
+
+  it("does not ask about pickup for an order that is not ready to deliver", async () => {
+    mocks.fetch.mockResolvedValue(
+      reply(response(financial, { order: { ...lookupOrder, status: "en_reparacion" } }))
+    );
+    mount({ ...order, status: "en_reparacion" } as RepairAccessOrderRecord);
+    await openCollection();
+    enterPayment("60");
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+    submit();
+    await waitFor(() => expect(mocks.add).toHaveBeenCalledOnce());
+    expect(mocks.add.mock.calls[0][0].get("pickedUp")).toBeNull();
   });
 
   it("requires explicit consent to proceed without local storage and retains in-memory retry identity", async () => {

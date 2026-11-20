@@ -1,8 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ admin: vi.fn(), rpc: vi.fn(), refresh: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  admin: vi.fn(),
+  rpc: vi.fn(),
+  refresh: vi.fn(),
+  rows: {} as Record<string, unknown>
+}));
 vi.mock("@/lib/auth", () => ({ requireAdmin: mocks.admin }));
 vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: async () => ({ rpc: mocks.rpc })
+  createServerSupabaseClient: async () => ({
+    rpc: mocks.rpc,
+    from: (table: string) => {
+      const query = {
+        select: () => query,
+        eq: () => query,
+        maybeSingle: async () => ({ data: mocks.rows[table] ?? null, error: null })
+      };
+      return query;
+    }
+  })
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.refresh }));
 vi.mock("next/navigation", () => ({
@@ -159,5 +174,111 @@ describe("repair payment actions", () => {
       reverseRepairPaymentAction(form({ repairId, paymentId, reason: "Pago de prueba" }))
     ).rejects.toThrow("Acceso denegado");
     expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+});
+
+describe("pickup when the payment settles the order", () => {
+  const orderId = "00000000-0000-4000-8000-000000000003";
+  const readyOrder = {
+    id: orderId,
+    repair_number: "REP-000123",
+    status: "listo_para_retirar",
+    is_paid: true,
+    delivered_at: null,
+    workflow_version: 7,
+    repair_access_customers: { full_name: "Ana Pérez" }
+  };
+  const created = (pickedUp?: string) =>
+    form({
+      requestId: paymentId,
+      repairAccessOrderId: orderId,
+      customerName: "Ana Pérez",
+      device: "TV",
+      amount: "100",
+      entryDate: "2026-11-11",
+      paymentDate: "2026-11-11",
+      paymentsJson: '[{"method":"efectivo","amount":100}]',
+      ...(pickedUp ? { pickedUp } : {})
+    });
+  beforeEach(() => {
+    vi.resetAllMocks();
+    mocks.rows = { repair_access_orders: readyOrder, repairs: { repair_access_order_id: orderId } };
+    mocks.rpc.mockImplementation(async (name: string) =>
+      name === "workshop_deliver"
+        ? { data: { id: orderId }, error: null }
+        : { data: { id: repairId }, error: null }
+    );
+  });
+
+  it("registers the delivery with the fresh order version after a yes", async () => {
+    await expect(saveRepairFormAction(created("si"))).resolves.toMatchObject({
+      success: true,
+      pickup: "done",
+      message: "Registro y cobro guardados. Retiro del equipo marcado."
+    });
+    expect(mocks.rpc).toHaveBeenLastCalledWith("workshop_deliver", {
+      p_order_id: orderId,
+      p_expected_version: 7,
+      p_recipient: "Ana Pérez",
+      p_notes: "Retiró al pagar.",
+      p_allow_balance: false
+    });
+  });
+
+  it("keeps the order paid but not delivered after a no", async () => {
+    await expect(saveRepairFormAction(created("no"))).resolves.toMatchObject({ success: true });
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+    expect(mocks.rpc.mock.calls[0][0]).toBe("save_repair_financial_atomic");
+  });
+
+  it("keeps the payment and explains how to finish when the order still has a balance", async () => {
+    mocks.rows.repair_access_orders = { ...readyOrder, is_paid: false };
+    const result = await saveRepairFormAction(created("si"));
+    expect(result).toMatchObject({ success: true, pickup: "failed" });
+    expect(result.message).toContain("saldo pendiente");
+    expect(result.message).toContain("Registrar entrega");
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+  });
+
+  it("reports an already delivered order as done without delivering twice", async () => {
+    mocks.rows.repair_access_orders = { ...readyOrder, delivered_at: "2026-11-11T12:00:00Z" };
+    await expect(saveRepairFormAction(created("si"))).resolves.toMatchObject({ pickup: "done" });
+    expect(mocks.rpc).toHaveBeenCalledOnce();
+  });
+
+  it("looks up the linked order for an additional payment", async () => {
+    await expect(
+      addRepairPaymentFormAction(
+        form({
+          repairId,
+          requestId: paymentId,
+          paymentDate: "2026-11-11",
+          paymentsJson: '[{"method":"mp","amount":60}]',
+          pickedUp: "si"
+        })
+      )
+    ).resolves.toMatchObject({
+      success: true,
+      pickup: "done",
+      message: "Cobro registrado. Retiro del equipo marcado."
+    });
+    expect(mocks.rpc.mock.calls.map(([name]) => name)).toEqual([
+      "add_repair_payment_atomic",
+      "workshop_deliver"
+    ]);
+  });
+
+  it("surfaces a delivery error without undoing the payment", async () => {
+    mocks.rpc.mockImplementation(async (name: string) =>
+      name === "workshop_deliver"
+        ? {
+            data: null,
+            error: { message: "La orden cambio. Revisa el estado antes de entregarla." }
+          }
+        : { data: { id: repairId }, error: null }
+    );
+    const result = await saveRepairFormAction(created("si"));
+    expect(result).toMatchObject({ success: true, pickup: "failed", repairId });
+    expect(result.message).toContain("La orden cambio");
   });
 });

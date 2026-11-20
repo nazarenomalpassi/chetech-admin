@@ -29,13 +29,9 @@ import { formatCurrency, getLocalDateInputValue } from "@/lib/utils";
 import { deliverRepairOrder } from "../coordination-actions";
 import type { RepairAccessOrderRecord } from "../queries";
 import { hasWorkshopDeliveryBalance } from "../workflow";
+import { canRegisterPickup, shouldAskPickup, type PickupAnswer } from "../pickup";
+import { PickupQuestion } from "./pickup-question";
 
-const deliveryStatuses = [
-  "listo_para_retirar",
-  "no_presenta_fallas",
-  "sin_solucion",
-  "presupuestado_rechazado"
-];
 const money = z.number().finite().nonnegative();
 const lookupSchema = z.object({
   draftOwnerId: z.string().min(1),
@@ -133,7 +129,7 @@ function balances(snapshot: Lookup) {
       };
 }
 function canDeliver(order: { status: string; deliveredAt?: string | null }) {
-  return !order.deliveredAt && deliveryStatuses.includes(order.status);
+  return canRegisterPickup(order);
 }
 function operationFingerprint(operation: CollectionDraft["operation"]) {
   // Financial actions omit unused rows before the RPC's idempotency check.
@@ -463,6 +459,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
   const [recovered, setRecovered] = useState(false);
   const [storageUnavailable, setStorageUnavailable] = useState(false);
   const [allowWithoutDraft, setAllowWithoutDraft] = useState(false);
+  const [pickup, setPickup] = useState<PickupAnswer | null>(null);
   const submitting = useRef(false);
   const isDirty = value.fingerprint !== initialFingerprint.current;
   const draft = usePaymentDraft<CollectionDraft>({
@@ -485,14 +482,15 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
   });
   const [result, submitAction, pending] = useActionState<
     RepairPaymentSaveResult | null,
-    CollectionDraft
-  >(async (_previous, intent) => {
+    { intent: CollectionDraft; pickedUp: PickupAnswer | null }
+  >(async (_previous, { intent, pickedUp }) => {
     try {
       const form = new FormData();
       Object.entries(intent.operation.payload).forEach(([key, field]) => {
         if (field !== undefined) form.set(key, field);
       });
       form.set("requestId", intent.requestId);
+      if (pickedUp) form.set("pickedUp", pickedUp);
       const saved = await (intent.operation.mode === "create"
         ? saveRepairFormAction(form)
         : addRepairPaymentFormAction(form));
@@ -586,6 +584,12 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
       </div>
     </div>
   ) : null;
+  const payingCents = Math.round(getPaymentTotal(paymentsFromDraft(value)) * 100);
+  const askPickup = shouldAskPickup(
+    snapshot.order,
+    Math.round((recovered ? value.availableBalance : balances(snapshot).balance) * 100),
+    payingCents
+  );
   if (balances(snapshot).balance === 0 && !recovered)
     return (
       <div className="mt-4 grid gap-3">
@@ -620,6 +624,10 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
           setError(validation);
           return;
         }
+        if (askPickup && !pickup) {
+          setError("Indicá si el cliente retiró el equipo.");
+          return;
+        }
         if (draft.pendingDraft) {
           setError("Recupera o descarta el borrador pendiente antes de cobrar.");
           return;
@@ -635,7 +643,7 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
         }
         submitting.current = true;
         setError("");
-        startTransition(() => submitAction(value));
+        startTransition(() => submitAction({ intent: value, pickedUp: askPickup ? pickup : null }));
       }}
     >
       {recovery}
@@ -672,6 +680,16 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
           syncAmountWithTotal={false}
           onChange={(payments) => update({ paymentsJson: JSON.stringify(payments) })}
         />
+        {askPickup ? (
+          <PickupQuestion
+            value={pickup}
+            onChange={(answer) => {
+              setPickup(answer);
+              setError("");
+            }}
+            customerName={snapshot.order.customerName}
+          />
+        ) : null}
         {storageUnavailable ? (
           <div className="space-y-2 rounded-xl bg-warning-soft p-3 text-sm text-warning">
             <p>
@@ -691,8 +709,8 @@ function CollectionForm({ snapshot, closeForm, onSaved }: FormProps) {
         ) : null}
       </fieldset>
       <p className="text-xs leading-5 text-muted-foreground">
-        Registrá solo el dinero recibido. Cobrar no entrega el equipo ni cambia el presupuesto o la
-        garantia.
+        Registrá solo el dinero recibido. Si el cobro salda la orden, te preguntamos si el cliente
+        retiró el equipo.
       </p>
       {draft.lastSavedAt ? (
         <p className="text-xs text-muted-foreground">Borrador guardado en este dispositivo.</p>

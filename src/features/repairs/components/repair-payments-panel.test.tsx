@@ -168,4 +168,48 @@ describe("repair collection and erroneous payment removal", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(actions.reverse).not.toHaveBeenCalled();
   });
+
+  it("asks whether the customer picked up the device when the payment settles a ready order", async () => {
+    actions.add.mockResolvedValue({ success: false, message: "Sin conexion" });
+    render(
+      <RepairPaymentsPanel
+        repair={{
+          ...repair,
+          customerName: "Ana Pérez",
+          accessOrderStatus: "listo_para_retirar",
+          accessOrderDeliveredAt: null
+        }}
+        canReverse
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "40" } });
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "70" } });
+    expect(screen.getByText("¿El cliente retiró el equipo?")).toBeTruthy();
+    expect(screen.getByText(/a nombre de Ana Pérez/)).toBeTruthy();
+    const form = screen.getByRole("button", { name: "Registrar cobro adicional" }).closest("form")!;
+    fireEvent.submit(form);
+    expect(await screen.findByText("Indicá si el cliente retiró el equipo.")).toBeTruthy();
+    expect(actions.add).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("No, todavía no"));
+    expect(screen.getByText(/se marca después desde la ficha/)).toBeTruthy();
+    fireEvent.submit(form);
+    await waitFor(() => expect(actions.add).toHaveBeenCalledOnce());
+    expect(actions.add.mock.calls[0][0].get("pickedUp")).toBe("no");
+  });
+  it("does not ask about pickup once the device is already delivered", () => {
+    render(
+      <RepairPaymentsPanel
+        repair={{
+          ...repair,
+          accessOrderStatus: "retirado",
+          accessOrderDeliveredAt: "2026-11-10T12:00:00Z"
+        }}
+        canReverse
+      />
+    );
+    fireEvent.change(screen.getByLabelText("Monto"), { target: { value: "70" } });
+    expect(screen.queryByText("¿El cliente retiró el equipo?")).toBeNull();
+    expect(screen.getByText(/El equipo ya figura retirado/)).toBeTruthy();
+  });
 });
