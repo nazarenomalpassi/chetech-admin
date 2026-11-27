@@ -25,7 +25,7 @@ export async function correctRepairWarranty(
           .min(3, "Indica el motivo de la correccion de garantía.")
           .max(2000),
         confirmCorrection: z.literal(true, {
-          errorMap: () => ({ message: "Confirma la correccion desde el retiro original." })
+          error: "Confirma la correccion desde el retiro original."
         })
       })
     )

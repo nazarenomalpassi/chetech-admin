@@ -12,7 +12,8 @@ export const DELIVERY_DOCUMENT_SELECT = `*,
 
 const money = z
   .union([z.number(), z.string().min(1)])
-  .pipe(z.coerce.number().finite().nonnegative());
+  .transform(Number)
+  .pipe(z.number().nonnegative());
 const payment = z.object({
   id: z.string().min(1),
   method: z.string().nullable(),

@@ -66,7 +66,7 @@ export async function POST(request: Request, { params }: Context) {
     request.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase() !== "application/json"
   )
     return error("Envia los datos en formato JSON.", 415);
-  let parsed: z.SafeParseReturnType<unknown, Selection>;
+  let parsed: z.ZodSafeParseResult<Selection>;
   try {
     const body = await request.text();
     if (body.length > 4096) return error("Los datos de la etiqueta son demasiado extensos.", 413);

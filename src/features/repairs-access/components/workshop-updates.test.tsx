@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   refresh: vi.fn(),
   remove: vi.fn(),
+  channels: 0,
   event: null as null | (() => void),
   status: null as null | ((value: string) => void)
 }));
@@ -13,6 +14,7 @@ vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("@/lib/supabase/client", () => ({
   createClientSupabaseClient: () => ({
     channel: () => {
+      mocks.channels++;
       const channel = {
         on: (_name: unknown, _filter: unknown, callback: () => void) => {
           mocks.event = callback;
@@ -33,11 +35,14 @@ Object.assign(globalThis, { React });
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();
+  mocks.channels = 0;
+  vi.stubEnv("NEXT_PUBLIC_SUPABASE_REALTIME", "on");
   Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
   document.documentElement.removeAttribute("data-unsaved-changes");
 });
 afterEach(() => {
   cleanup();
+  vi.unstubAllEnvs();
   vi.useRealTimers();
   document.documentElement.removeAttribute("data-unsaved-changes");
 });
@@ -93,5 +98,27 @@ describe("sincronizacion del taller", () => {
     view.unmount();
     expect(mocks.remove).toHaveBeenCalledTimes(1);
     expect(vi.getTimerCount()).toBe(0);
+  });
+  it("sin tiempo real disponible no abre la conexion y actualiza cada 25 segundos", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_REALTIME", "");
+    render(<WorkshopUpdates />);
+    await vi.dynamicImportSettled();
+    expect(mocks.channels).toBe(0);
+    act(() => {
+      vi.advanceTimersByTime(25000);
+    });
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
+  });
+  it("deja de reintentar si el tiempo real falla y sigue con la consulta periodica", async () => {
+    render(<WorkshopUpdates />);
+    await vi.dynamicImportSettled();
+    act(() => {
+      mocks.status?.("CHANNEL_ERROR");
+    });
+    expect(mocks.remove).toHaveBeenCalledTimes(1);
+    act(() => {
+      vi.advanceTimersByTime(25000);
+    });
+    expect(mocks.refresh).toHaveBeenCalledTimes(1);
   });
 });

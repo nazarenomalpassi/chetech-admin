@@ -16,7 +16,8 @@ const version = z.coerce.number().int().positive("Actualiza la orden antes de gu
 const optionalText = (max = 2000) => z.string().max(max).default("");
 const deliveryMoney = z
   .union([z.number(), z.string().regex(/^\d+(?:\.\d{1,2})?$/)])
-  .pipe(z.coerce.number().finite().nonnegative());
+  .transform(Number)
+  .pipe(z.number().nonnegative());
 const nativeDeliveryBalanceSchema = z.object({
   final_amount: deliveryMoney.nullable(),
   approved_amount: deliveryMoney.nullable(),

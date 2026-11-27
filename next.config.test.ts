@@ -149,3 +149,17 @@ describe("legacy QR framework request matching", () => {
     expect(getServerActionRequestMetadata(request).isPossibleServerAction).toBe(false);
   });
 });
+
+describe("security headers", () => {
+  it("sends the security headers on every route and hides the framework", async () => {
+    const { default: config, securityHeaders } = await import("./next.config");
+    expect(config.poweredByHeader).toBe(false);
+    await expect(config.headers?.()).resolves.toEqual([
+      { source: "/:path*", headers: securityHeaders }
+    ]);
+    const byName = Object.fromEntries(securityHeaders.map(({ key, value }) => [key, value]));
+    expect(byName["Strict-Transport-Security"]).toContain("max-age=31536000");
+    expect(byName["X-Frame-Options"]).toBe("SAMEORIGIN");
+    expect(byName["X-Content-Type-Options"]).toBe("nosniff");
+  });
+});
