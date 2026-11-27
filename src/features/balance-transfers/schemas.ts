@@ -3,7 +3,7 @@ import { z } from "zod";
 import { BALANCE_TRANSFER_METHODS } from "@/features/balance-transfers/model";
 
 export const balanceTransferMethodSchema = z.enum(BALANCE_TRANSFER_METHODS, {
-  required_error: "Selecciona un medio."
+  error: "Selecciona un medio."
 });
 
 export const balanceTransferSchema = z

@@ -26,7 +26,7 @@ const jobSchema = z.object({
   recipient: z.string().regex(/^549\d{10}$/),
   media_id: z.string().nullable(),
   created_at: z.string(),
-  snapshot: z.record(z.any())
+  snapshot: z.record(z.string(), z.any())
 });
 
 export async function runWhatsAppWorker() {
