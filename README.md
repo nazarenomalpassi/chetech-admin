@@ -4,7 +4,7 @@ Sistema de gestión de CheTech, taller técnico y local de tecnología. Ordena e
 
 **Next.js 15 · React 19 · TypeScript · Tailwind CSS · Supabase / PostgreSQL**
 
-[Tienda online de CheTech](https://chetech-tienda.vercel.app/) · [GitHub](https://github.com/nazarenomalpassi) · [LinkedIn](https://www.linkedin.com/in/nazareno-malpassi-8813bb1bb/)
+[Tienda online de CheTech](https://chetechstore.com/) · [GitHub](https://github.com/nazarenomalpassi) · [LinkedIn](https://www.linkedin.com/in/nazareno-malpassi-8813bb1bb/)
 
 ## Secciones
 
