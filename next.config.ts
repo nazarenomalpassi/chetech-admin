@@ -4,7 +4,22 @@ import {
   LEGACY_REPAIR_QR_MISSING_HEADERS
 } from "./src/features/repairs-access/repair-qr-links";
 
+// Railway no agrega cabeceras de seguridad (Vercel ponía HSTS por su cuenta). El sistema solo se
+// enmarca a sí mismo: la impresión de etiquetas usa un iframe propio.
+export const securityHeaders = [
+  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  { key: "X-Frame-Options", value: "SAMEORIGIN" },
+  { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" }
+];
+
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
   distDir: process.env.CHETECH_LOCAL_STAGING === "1" ? ".next-staging" : ".next",
   typedRoutes: true,
   serverExternalPackages: ["pdfkit"],

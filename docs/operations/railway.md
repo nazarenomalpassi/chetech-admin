@@ -23,13 +23,15 @@ El sistema de gestión corre entero en el proyecto **chetech** del workspace **C
 
 La red privada de Railway entrega direcciones IPv6, así que cada servicio tiene que escuchar en IPv6. PostgREST escucha solo en IPv4 por defecto: necesita `PGRST_SERVER_HOST=*6`; sin eso Envoy responde 503 a todo lo que va a `/rest/v1`.
 
-Realtime, Supavisor e Imgproxy no se instalaron: el taller vuelve a consultar cada 25 segundos cuando no hay tiempo real, y la aplicación no usa los otros dos.
+Realtime, Supavisor e Imgproxy no se instalaron: la mesa del taller consulta cada 25 segundos y no intenta conectarse al tiempo real salvo que `NEXT_PUBLIC_SUPABASE_REALTIME=on`; la aplicación no usa los otros dos.
 
 ## Claves
 
 Todos los secretos de la base salen de un único `ROOT_SECRET`, guardado como variable en Railway. La aplicación recibe `SUPABASE_ROOT_SECRET` como referencia a esa variable y `scripts/railway/with-supabase-keys.mjs` calcula la clave anónima al construir y al arrancar, con la misma derivación que los servicios de la base. Ninguna clave se copia a mano ni queda en el repositorio.
 
 ## Aplicación
+
+- Railway no agrega cabeceras de seguridad: las define `next.config.ts` (HSTS, marco solo propio, `nosniff`, `Referrer-Policy`, `Permissions-Policy`) y oculta `X-Powered-By`.
 
 - Origen: este repositorio. Se construye y arranca a través de `with-supabase-keys.mjs`, y Railway controla `/api/health`, que responde sin consultar la base.
 - Una réplica y **Serverless** activado: si nadie usa el sistema durante un rato, se duerme y deja de consumir; el primer pedido después tarda unos segundos más.
