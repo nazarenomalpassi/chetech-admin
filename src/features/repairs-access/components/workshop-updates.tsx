@@ -6,6 +6,10 @@ import { RefreshCw, WifiOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { confirmThen } from "@/components/ui/confirm-dialog";
 
+export function isRealtimeEnabled() {
+  return process.env.NEXT_PUBLIC_SUPABASE_REALTIME === "on";
+}
+
 export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
   const router = useRouter();
   const dirty = useRef(false);
@@ -55,28 +59,38 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
         schedule();
       }, 25000);
     }
-    // El cliente de Supabase del navegador pesa unos 50 kB: se descarga después de pintar la mesa.
-    void import("@/lib/supabase/client").then(({ createClientSupabaseClient }) => {
-      if (disposed) return;
-      const supabase = createClientSupabaseClient();
-      const channel = supabase
-        .channel("workshop-updates")
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "workshop_events" },
-          () => {
-            if (timer) clearTimeout(timer);
-            timer = setTimeout(() => {
-              refresh();
-              schedule();
-            }, 400);
-          }
-        )
-        .subscribe((status) => {
-          connected = status === "SUBSCRIBED";
-        });
-      removeChannel = () => void supabase.removeChannel(channel);
-    });
+    // Tiempo real solo donde la base lo ofrece (NEXT_PUBLIC_SUPABASE_REALTIME=on). En Railway no
+    // está instalado: sin esto, el navegador reintenta la conexión cada 10 segundos sin éxito.
+    // Sin tiempo real, la mesa se actualiza sola cada 25 segundos.
+    if (isRealtimeEnabled())
+      // El cliente de Supabase del navegador pesa unos 50 kB: se descarga después de pintar la mesa.
+      void import("@/lib/supabase/client").then(({ createClientSupabaseClient }) => {
+        if (disposed) return;
+        const supabase = createClientSupabaseClient();
+        const channel = supabase
+          .channel("workshop-updates")
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "workshop_events" },
+            () => {
+              if (timer) clearTimeout(timer);
+              timer = setTimeout(() => {
+                refresh();
+                schedule();
+              }, 400);
+            }
+          )
+          .subscribe((status) => {
+            connected = status === "SUBSCRIBED";
+            // Si el servicio no responde, se deja de reintentar y queda la consulta periódica.
+            if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") removeChannel?.();
+          });
+        removeChannel = () => {
+          removeChannel = undefined;
+          connected = false;
+          void supabase.removeChannel(channel);
+        };
+      });
     document.addEventListener("input", edited);
     document.addEventListener("change", edited);
     document.addEventListener("visibilitychange", refresh);
@@ -108,7 +122,7 @@ export function WorkshopUpdates({ disabled = false }: { disabled?: boolean }) {
       <span className="flex items-center gap-2">
         {offline ? <WifiOff className="h-4 w-4" /> : <RefreshCw className="h-4 w-4" />}
         {offline
-          ? "Sin conexion. Los cambios no estan guardados en el servidor hasta que recibas la confirmacion."
+          ? "Sin conexión. Los cambios no están guardados en el servidor hasta que recibas la confirmación."
           : "Hay novedades en el taller. Tus cambios sin guardar se conservan."}
       </span>
       {waiting && !offline ? (
